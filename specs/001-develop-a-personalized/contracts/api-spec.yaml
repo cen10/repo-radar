@@ -1,0 +1,444 @@
+openapi: 3.0.0
+info:
+  title: Repo Radar API
+  version: 0.1.0
+  description: GitHub Repository Momentum Dashboard API
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://repo-radar.vercel.app/api
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/github:
+    post:
+      summary: Initiate GitHub OAuth flow
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                redirect_url:
+                  type: string
+                  format: uri
+      responses:
+        200:
+          description: OAuth URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_url:
+                    type: string
+                    format: uri
+
+  /auth/callback:
+    get:
+      summary: Handle GitHub OAuth callback
+      tags: [Authentication]
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        302:
+          description: Redirect to dashboard with session
+        400:
+          description: Invalid OAuth response
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      tags: [Authentication]
+      responses:
+        200:
+          description: Successfully logged out
+
+  /user/profile:
+    get:
+      summary: Get current user profile
+      tags: [User]
+      responses:
+        200:
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /user/repos:
+    get:
+      summary: Get user's starred repositories
+      tags: [Repositories]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 100
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [all, following, trending]
+            default: all
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [stars, growth, recent, name]
+            default: growth
+      responses:
+        200:
+          description: List of repositories with metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RepositoryWithMetrics'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /repos/{repoId}/metrics:
+    get:
+      summary: Get detailed metrics for a repository
+      tags: [Repositories]
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [24h, 7d, 30d, 90d]
+            default: 7d
+      responses:
+        200:
+          description: Repository metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedMetrics'
+
+  /user/preferences:
+    get:
+      summary: Get user preferences
+      tags: [User]
+      responses:
+        200:
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPreference'
+
+    put:
+      summary: Update user preferences
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository_id:
+                  type: string
+                  format: uuid
+                is_following:
+                  type: boolean
+                display_order:
+                  type: integer
+      responses:
+        200:
+          description: Preference updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreference'
+
+  /sync/trigger:
+    post:
+      summary: Manually trigger repository sync
+      tags: [Sync]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                repository_id:
+                  type: string
+                  format: uuid
+                  description: Optional - sync specific repo
+      responses:
+        202:
+          description: Sync job queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, processing]
+
+  /sync/status:
+    get:
+      summary: Get sync status
+      tags: [Sync]
+      responses:
+        200:
+          description: Current sync status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  last_sync:
+                    type: string
+                    format: date-time
+                  next_sync:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                    enum: [idle, syncing, failed]
+                  repos_synced:
+                    type: integer
+                  repos_total:
+                    type: integer
+
+  /user/delete:
+    post:
+      summary: Delete user account
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirmation:
+                  type: string
+                  description: User must type "DELETE" to confirm
+              required: [confirmation]
+      responses:
+        200:
+          description: Account scheduled for deletion
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deletion_date:
+                    type: string
+                    format: date
+                  recovery_token:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        github_username:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        last_sync:
+          type: string
+          format: date-time
+
+    Repository:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        github_id:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        full_name:
+          type: string
+        description:
+          type: string
+        current_stars:
+          type: integer
+        language:
+          type: string
+        is_private:
+          type: boolean
+
+    RepositoryWithMetrics:
+      allOf:
+        - $ref: '#/components/schemas/Repository'
+        - type: object
+          properties:
+            metrics:
+              type: object
+              properties:
+                star_growth_24h:
+                  type: number
+                star_growth_7d:
+                  type: number
+                growth_rate:
+                  type: number
+                is_trending:
+                  type: boolean
+                last_release:
+                  type: string
+                  format: date-time
+                open_issues:
+                  type: integer
+                issue_velocity:
+                  type: number
+            user_preference:
+              $ref: '#/components/schemas/UserPreference'
+
+    DetailedMetrics:
+      type: object
+      properties:
+        repository:
+          $ref: '#/components/schemas/Repository'
+        star_history:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+              count:
+                type: integer
+              change:
+                type: integer
+        releases:
+          type: array
+          items:
+            type: object
+            properties:
+              version:
+                type: string
+              published_at:
+                type: string
+                format: date-time
+              tag_name:
+                type: string
+        issue_metrics:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date-time
+              open_count:
+                type: integer
+              closed_count:
+                type: integer
+              velocity:
+                type: number
+
+    UserPreference:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        repository_id:
+          type: string
+          format: uuid
+        is_following:
+          type: boolean
+        display_order:
+          type: integer
+        notification_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        status_code:
+          type: integer
