@@ -48,7 +48,7 @@
 *Goal: Basic dashboard showing starred repositories*
 
 ## Phase 3.1: Setup (T001-T005)
-- [ ] T001 Initialize React project with Vite: `npm create vite@latest . -- --template react-ts`
+- [X] T001 Initialize React project with Vite: `npm create vite@latest . -- --template react-ts`
 - [ ] T002 Install core dependencies: `npm install @tanstack/react-query tailwindcss @headlessui/react`
 - [ ] T003 [P] Configure TailwindCSS in `tailwind.config.js` and `src/index.css`
 - [ ] T004 [P] Set up ESLint and Prettier with configs in `.eslintrc.json` and `.prettierrc`
