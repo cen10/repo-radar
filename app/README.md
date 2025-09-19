@@ -1,6 +1,20 @@
-# React + TypeScript + Vite
+# Repo Radar - Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the main application directory for Repo Radar, a GitHub repository momentum dashboard built with React, TypeScript, and Vite.
+
+## Project Structure
+
+The application code is intentionally placed in an `/app` directory at the root instead of the traditional `/src` pattern. This architectural decision is inspired by projects like [GitHub Spec Kit](https://github.com/github/spec-kit), which maintain multiple documentation folders at the repository root.
+
+### Benefits of this structure:
+- **Clear separation** between application code and project-level documentation
+- **Scalability** for adding documentation folders (docs/, specs/, guides/) without cluttering the app structure
+- **Flexibility** to add additional apps or services at the root level in the future
+- **Clean organization** that distinguishes between what runs (app/) and what documents (other root folders)
+
+## Tech Stack
+
+This application uses React with Vite for fast development and optimized production builds.
 
 Currently, two official plugins are available:
 

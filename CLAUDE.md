@@ -94,6 +94,10 @@ npm run build        # Build for production
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
 
+## Commit Message Rules
+- Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
+- Body: wrap at 72 chars; explain the _why_; list notable changes _when compared to the previous state of the repo at the time of last commit_
+
 ## Environment Variables
 ```env
 VITE_SUPABASE_URL=
