@@ -93,6 +93,7 @@ npm run build        # Build for production
 3. Maintain >80% test coverage
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
+6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
