@@ -95,6 +95,15 @@ npm run build        # Build for production
 5. Progressive enhancement approach
 6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 
+## Branching Strategy
+Before starting any task:
+1. Ensure you're on the main branch (`git checkout main`)
+2. Pull the latest version of main (`git pull origin main`)
+3. Create a new branch named `t{task-number}-{brief-description}`
+   - Example: `t002-install-core-dependencies`
+4. Each task gets its own branch
+5. Create PR when task is complete
+
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
 - Body: wrap at 72 chars; explain the _why_
