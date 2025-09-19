@@ -96,7 +96,7 @@ npm run build        # Build for production
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
-- Body: wrap at 72 chars; explain the _why_; list notable changes _when compared to the previous state of the repo at the time of last commit_
+- Body: wrap at 72 chars; explain the _why_
 
 ## Environment Variables
 ```env
