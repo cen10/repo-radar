@@ -1,68 +1,98 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+1@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --color-github-bg: #0d1117;
+    --color-github-bg-secondary: #161b22;
+    --color-github-border: #30363d;
+    --color-github-text: #c9d1d9;
+    --color-github-text-secondary: #8b949e;
+    --color-github-accent: #58a6ff;
+    --color-github-success: #3fb950;
+    --color-github-warning: #d29922;
+    --color-github-danger: #f85149;
   }
-  a:hover {
-    color: #747bff;
+
+  body {
+    @apply bg-github-bg text-github-text antialiased;
   }
-  button {
-    background-color: #f9f9f9;
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-github-bg-secondary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-github-border rounded-full hover:bg-github-text-secondary;
+  }
+}
+
+@layer components {
+  /* Reusable component styles */
+  .btn-primary {
+    @apply px-4 py-2 bg-github-accent text-white rounded-md hover:bg-opacity-90
+           transition-colors duration-200 font-medium disabled:opacity-50
+           disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-github-bg-secondary text-github-text border
+           border-github-border rounded-md hover:bg-github-border
+           transition-colors duration-200 font-medium;
+  }
+
+  .card {
+    @apply bg-github-bg-secondary border border-github-border rounded-lg
+           p-4 hover:border-github-text-secondary transition-colors duration-200;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 bg-github-bg border border-github-border
+           rounded-md text-github-text placeholder-github-text-secondary
+           focus:outline-none focus:ring-2 focus:ring-github-accent
+           focus:border-transparent transition-all duration-200;
+  }
+
+  .link {
+    @apply text-github-accent hover:underline cursor-pointer;
+  }
+
+  /* Loading skeleton animation */
+  .skeleton {
+    @apply animate-shimmer bg-gradient-to-r from-github-bg-secondary
+           via-github-border to-github-bg-secondary bg-[length:200%_100%];
+  }
+}
+
+@layer utilities {
+  /* Custom utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-github-accent to-github-success
+           bg-clip-text text-transparent;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-github-bg-secondary bg-opacity-50 backdrop-blur-md;
   }
 }
