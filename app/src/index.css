@@ -1,33 +1,43 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
+
+/* Design tokens → creates bg-github-*, text-github-*, font-mono, animate-* */
+@theme {
+  --color-github-bg: #0d1117;
+  --color-github-bg-secondary: #161b22;
+  --color-github-border: #30363d;
+  --color-github-text: #c9d1d9;
+  --color-github-text-secondary: #8b949e;
+  --color-github-accent: #58a6ff;
+  --color-github-success: #3fb950;
+  --color-github-warning: #d29922;
+  --color-github-danger: #f85149;
+
+  --font-mono: "Fira Code", "SF Mono", monospace;
+
+  /* animations → gives you animate-pulse-slow / animate-shimmer */
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-shimmer: shimmer 2s ease-in-out infinite;
+}
+
+/* Keyframes should live outside @theme */
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* (Optional but tidy) declare layer order if you later import split files
+@layer theme, base, components, utilities;
+*/
 
 @layer base {
-  :root {
-    --color-github-bg: #0d1117;
-    --color-github-bg-secondary: #161b22;
-    --color-github-border: #30363d;
-    --color-github-text: #c9d1d9;
-    --color-github-text-secondary: #8b949e;
-    --color-github-accent: #58a6ff;
-    --color-github-success: #3fb950;
-    --color-github-warning: #d29922;
-    --color-github-danger: #f85149;
-  }
-
   body {
     @apply bg-github-bg text-github-text antialiased;
   }
 
   /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    @apply w-2 h-2;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-github-bg-secondary;
-  }
-
+  ::-webkit-scrollbar { @apply w-2 h-2; }
+  ::-webkit-scrollbar-track { @apply bg-github-bg-secondary; }
   ::-webkit-scrollbar-thumb {
     @apply bg-github-border rounded-full hover:bg-github-text-secondary;
   }
@@ -36,9 +46,10 @@
 @layer components {
   /* Reusable component styles */
   .btn-primary {
-    @apply px-4 py-2 bg-github-accent text-white rounded-md hover:bg-opacity-90
-           transition-colors duration-200 font-medium disabled:opacity-50
-           disabled:cursor-not-allowed;
+    /* use slash opacity instead of bg-opacity-* */
+    @apply px-4 py-2 bg-github-accent text-white rounded-md
+           hover:bg-github-accent/90 transition-colors duration-200
+           font-medium disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
@@ -59,31 +70,23 @@
            focus:border-transparent transition-all duration-200;
   }
 
-  .link {
-    @apply text-github-accent hover:underline cursor-pointer;
-  }
+  .link { @apply text-github-accent hover:underline cursor-pointer; }
 
   /* Loading skeleton animation */
   .skeleton {
     @apply animate-shimmer bg-gradient-to-r from-github-bg-secondary
-           via-github-border to-github-bg-secondary bg-[length:200%_100%];
+           via-github-border to-github-bg-secondary;
+    /* arbitrary value utilities don't @apply reliably — just set it directly */
+    background-size: 200% 100%;
   }
 }
 
 @layer utilities {
   /* Custom utilities */
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 
   /* Gradient text */
   .gradient-text {
@@ -93,6 +96,7 @@
 
   /* Glass morphism effect */
   .glass {
-    @apply bg-github-bg-secondary bg-opacity-50 backdrop-blur-md;
+    /* use slash opacity instead of bg-opacity-* */
+    @apply bg-github-bg-secondary/50 backdrop-blur-md;
   }
 }
