@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Config files that should maintain original formatting
+*.min.js
+*.min.css
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Coverage
+coverage/
+
+# TailwindCSS output
+src/index.css
