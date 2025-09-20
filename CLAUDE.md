@@ -3,8 +3,24 @@
 ## Project Overview
 GitHub Repository Momentum Dashboard - Track star growth, releases, and issue activity across starred repositories.
 
-## Current Working Branch
-`001-develop-a-personalized`
+## CRITICAL: Task Workflow
+  **⚠️ ALWAYS follow this sequence when starting ANY 
+  task:**
+
+  1. **FIRST**: Check current branch (`git branch
+  --show-current`)
+  2. **IF NOT ON MAIN**:
+     - Check for changes (`git status`). Ask the user if they would like to commit or stash any changes that exist.
+     - Switch to main (`git checkout main`)
+     - Pull latest (`git pull origin main`)
+  3. **CREATE TASK BRANCH**: `git checkout -b
+  t{task-number}-{brief-description}`
+  4. **THEN**: Begin implementing the task
+  5. Mark the task as complete in tasks.md when finished.
+  
+
+  **Never start work without creating a task branch 
+  first!**
 
 ## Tech Stack
 
@@ -94,15 +110,6 @@ npm run build        # Build for production
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
 6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
-
-## Branching Strategy
-Before starting any task:
-1. Ensure you're on the main branch (`git checkout main`)
-2. Pull the latest version of main (`git pull origin main`)
-3. Create a new branch named `t{task-number}-{brief-description}`
-   - Example: `t002-install-core-dependencies`
-4. Each task gets its own branch
-5. Create PR when task is complete
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
