@@ -52,14 +52,14 @@
 - [X] T002 Install core dependencies: `npm install @tanstack/react-query tailwindcss @headlessui/react`
 - [X] T003 [P] Configure TailwindCSS in `tailwind.config.js` and `src/index.css`
 - [X] T004 [P] Set up ESLint and Prettier with configs in `.eslintrc.json` and `.prettierrc`
-- [ ] T005 [P] Create environment variables file `.env.local` with VITE_GITHUB_CLIENT_ID placeholder
+- [X] T005 [P] Create environment variables file `.env.local` with VITE_GITHUB_CLIENT_ID placeholder
 
 ## Phase 3.2: Type Definitions (T006-T007)
-- [ ] T006 [P] Create TypeScript interfaces in `src/types/index.ts` for User and Repository
-- [ ] T007 [P] Create API response types in `src/types/api.ts` for GitHub API responses
+- [X] T006 [P] Create TypeScript interfaces in `src/types/index.ts` for User and Repository
+- [X] T007 [P] Create API response types in `src/types/api.ts` for GitHub API responses
 
 ## Phase 3.3: Authentication Setup (T008-T011)
-- [ ] T008 Create Supabase project and configure GitHub OAuth provider in dashboard
+- [X] T008 Create Supabase project and configure GitHub OAuth provider in dashboard
 - [ ] T009 Install Supabase client: `npm install @supabase/supabase-js`
 - [ ] T010 Create Supabase client configuration in `src/services/supabase.ts`
 - [ ] T011 Create auth context provider in `src/contexts/AuthContext.tsx`
