@@ -1,38 +1,8 @@
 export interface Database {
   public: {
     Tables: {
-      users: {
-        Row: {
-          id: string;
-          github_username: string;
-          github_id: string;
-          email: string | null;
-          avatar_url: string | null;
-          last_sync: string | null;
-          created_at: string;
-          deleted_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          github_username: string;
-          github_id: string;
-          email?: string | null;
-          avatar_url?: string | null;
-          last_sync?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          github_username?: string;
-          github_id?: string;
-          email?: string | null;
-          avatar_url?: string | null;
-          last_sync?: string | null;
-          created_at?: string;
-          deleted_at?: string | null;
-        };
-      };
+      // For MVP, we'll rely on Supabase Auth's built-in user management
+      // and only create custom tables as needed for user preferences
       repositories: {
         Row: {
           id: string;
