@@ -60,7 +60,7 @@
 
 ## Phase 3.3: Authentication Setup (T008-T011)
 - [X] T008 Create Supabase project and configure GitHub OAuth provider in dashboard
-- [ ] T009 Install Supabase client: `npm install @supabase/supabase-js`
+- [X] T009 Install Supabase client: `npm install @supabase/supabase-js`
 - [ ] T010 Create Supabase client configuration in `src/services/supabase.ts`
 - [ ] T011 Create auth context provider in `src/contexts/AuthContext.tsx`
 
