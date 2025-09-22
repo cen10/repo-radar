@@ -1,72 +1,12 @@
+// Database types for Supabase
+// Will be expanded in T033-T036 when we set up the actual database schema
+// For MVP Slice 1-2, we only need Supabase Auth (no custom tables yet)
+
 export interface Database {
   public: {
     Tables: {
-      // For MVP, we'll rely on Supabase Auth's built-in user management
-      // and only create custom tables as needed for user preferences
-      repositories: {
-        Row: {
-          id: string;
-          github_id: string;
-          name: string;
-          owner: string;
-          description: string | null;
-          current_stars: number;
-          language: string | null;
-          is_private: boolean;
-          last_fetched: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          github_id: string;
-          name: string;
-          owner: string;
-          description?: string | null;
-          current_stars?: number;
-          language?: string | null;
-          is_private?: boolean;
-          last_fetched?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          github_id?: string;
-          name?: string;
-          owner?: string;
-          description?: string | null;
-          current_stars?: number;
-          language?: string | null;
-          is_private?: boolean;
-          last_fetched?: string | null;
-          created_at?: string;
-        };
-      };
-      user_preferences: {
-        Row: {
-          id: string;
-          user_id: string;
-          repository_id: string;
-          is_following: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          repository_id: string;
-          is_following?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          repository_id?: string;
-          is_following?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
+      // Placeholder - will add tables as we implement them
+      [_ in never]: never;
     };
     Views: {
       [_ in never]: never;
