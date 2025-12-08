@@ -62,7 +62,7 @@
 - [X] T008 Create Supabase project and configure GitHub OAuth provider in dashboard
 - [X] T009 Install Supabase client: `npm install @supabase/supabase-js`
 - [X] T010 Create Supabase client configuration in `src/services/supabase.ts`
-- [ ] T011 Create auth context provider in `src/contexts/AuthContext.tsx`
+- [X] T011 Create auth context provider in `src/contexts/AuthContext.tsx`
 
 ## Phase 3.4: Core Components (T012-T016)
 - [ ] T012 Create Login page component in `src/pages/Login.tsx` with GitHub OAuth button
