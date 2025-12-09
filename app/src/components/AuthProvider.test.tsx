@@ -51,24 +51,24 @@ describe('AuthProvider', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  it('should provide auth methods through context', async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>{children}</AuthProvider>
-    );
+  it('should provide auth methods through context', () => {
+    let signInWithGitHub: (() => Promise<void>) | undefined;
+    let signOut: (() => Promise<void>) | undefined;
 
     const TestMethodComponent = () => {
-      const { signInWithGitHub, signOut } = useAuth();
-
-      expect(typeof signInWithGitHub).toBe('function');
-      expect(typeof signOut).toBe('function');
-
-      return <div>Methods Available</div>;
+      const auth = useAuth();
+      signInWithGitHub = auth.signInWithGitHub;
+      signOut = auth.signOut;
+      return null;
     };
 
-    render(<TestMethodComponent />, { wrapper });
+    render(
+      <AuthProvider>
+        <TestMethodComponent />
+      </AuthProvider>
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText('Methods Available')).toBeInTheDocument();
-    });
+    expect(typeof signInWithGitHub).toBe('function');
+    expect(typeof signOut).toBe('function');
   });
 });
