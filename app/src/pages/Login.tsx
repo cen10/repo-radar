@@ -11,6 +11,15 @@ export default function Login() {
   const { user, signInWithGitHub, signOut, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Helper function to extract error message with fallback
+  const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+    if (error instanceof Error && error.message?.trim() !== '') {
+      return error.message;
+    }
+    return defaultMessage;
+  };
 
   const handleGitHubLogin = async () => {
     try {
@@ -20,12 +29,25 @@ export default function Login() {
     } catch (error) {
       console.error('Login failed:', error);
       setError(
-        error instanceof Error && error.message?.trim() !== ''
-          ? error.message
-          : 'An unexpected error occurred during login. Please try again.',
+        getErrorMessage(error, 'An unexpected error occurred during login. Please try again.'),
       );
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setError(null);
+      setIsSigningOut(true);
+      await signOut();
+    } catch (error) {
+      console.error('Sign out failed:', error);
+      setError(
+        getErrorMessage(error, 'An unexpected error occurred during sign out. Please try again.'),
+      );
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -58,8 +80,34 @@ export default function Login() {
               You're now connected to GitHub. Ready to track your starred repositories!
             </p>
 
-            <button onClick={signOut} className="btn-outline">
-              Sign Out<span className="sr-only"> of {user.login}'s account</span>
+            {error && (
+              <div
+                className="bg-red-50 border border-red-200 rounded-md p-4"
+                role="alert"
+                aria-live="assertive"
+              >
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <ExclamationCircleIcon />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">Sign Out Failed</h3>
+                    <p className="mt-2 text-sm text-red-700">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button onClick={handleSignOut} disabled={isSigningOut} className="btn-outline">
+              {isSigningOut ? (
+                <>
+                  <LoadingSpinner className="mr-3" />
+                  Signing out...
+                </>
+              ) : (
+                'Sign Out'
+              )}
+              <span className="sr-only"> of {user.login}'s account</span>
             </button>
           </div>
         </div>
