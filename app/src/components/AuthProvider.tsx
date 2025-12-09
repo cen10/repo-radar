@@ -4,20 +4,20 @@ import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 
+const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
+  return {
+    id: supabaseUser.id,
+    login: supabaseUser.user_metadata?.user_name || supabaseUser.email?.split('@')[0] || '',
+    name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
+    avatar_url: supabaseUser.user_metadata?.avatar_url || '',
+    email: supabaseUser.email || null,
+  };
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
-    return {
-      id: supabaseUser.id,
-      login: supabaseUser.user_metadata?.user_name || supabaseUser.email?.split('@')[0] || '',
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
-      avatar_url: supabaseUser.user_metadata?.avatar_url || '',
-      email: supabaseUser.email || null,
-    };
-  };
 
   useEffect(() => {
     // Get initial session
