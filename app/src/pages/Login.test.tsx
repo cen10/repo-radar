@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from './Login';
 import { mockSupabaseClient } from '../test/mocks/supabase';
@@ -36,7 +36,9 @@ describe('Login', () => {
 
       expect(screen.getByText('Repo Radar')).toBeInTheDocument();
       expect(
-        screen.getByText('Track star growth, releases, and issue activity across your starred repositories')
+        screen.getByText(
+          'Track star growth, releases, and issue activity across your starred repositories'
+        )
       ).toBeInTheDocument();
     });
 
@@ -172,7 +174,9 @@ describe('Login', () => {
       render(<Login />);
 
       expect(
-        screen.getByText("You're now connected to GitHub. Ready to track your starred repositories!")
+        screen.getByText(
+          "You're now connected to GitHub. Ready to track your starred repositories!"
+        )
       ).toBeInTheDocument();
     });
 

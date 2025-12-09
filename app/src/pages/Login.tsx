@@ -37,7 +37,7 @@ export default function Login() {
     } catch (error) {
       console.error('Login failed:', error);
       setError(
-        getErrorMessage(error, 'An unexpected error occurred during login. Please try again.'),
+        getErrorMessage(error, 'An unexpected error occurred during login. Please try again.')
       );
     } finally {
       setIsLoggingIn(false);
@@ -52,7 +52,7 @@ export default function Login() {
     } catch (error) {
       console.error('Sign out failed:', error);
       setError(
-        getErrorMessage(error, 'An unexpected error occurred during sign out. Please try again.'),
+        getErrorMessage(error, 'An unexpected error occurred during sign out. Please try again.')
       );
     } finally {
       setIsSigningOut(false);
