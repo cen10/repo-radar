@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
+
+// Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient } from '../test/mocks/supabase';
 
 const TestComponent = () => {
