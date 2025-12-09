@@ -18,17 +18,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
+  const getSession = async () => {
+    try {
+      setLoading(true);
+      setConnectionError(null);
+
       const {
         data: { session: initialSession },
         error,
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Error getting session:', error);
+        console.error('Error connecting to Supabase:', error);
+        setConnectionError(
+          'Failed to connect to authentication service. Please check your internet connection and try again.'
+        );
+        setLoading(false);
+        return;
       }
 
       setSession(initialSession);
@@ -36,8 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(mapSupabaseUserToUser(initialSession.user));
       }
       setLoading(false);
-    };
+    } catch (err) {
+      console.error('Unexpected error getting session:', err);
+      setConnectionError('An unexpected error occurred. Please try again.');
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     getSession();
 
     // Listen for auth changes
@@ -58,6 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Clear connection error on successful auth
+  useEffect(() => {
+    if (session && connectionError) {
+      setConnectionError(null);
+    }
+  }, [session, connectionError]);
 
   const signInWithGitHub = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -87,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     user,
     loading,
+    connectionError,
     signInWithGitHub,
     signOut,
   };

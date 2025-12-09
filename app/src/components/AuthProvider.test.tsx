@@ -4,16 +4,17 @@ import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
-import { mockSupabaseClient } from '../test/mocks/supabase';
+import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
 
 const TestComponent = () => {
-  const { user, loading, session } = useAuth();
+  const { user, loading, session, connectionError } = useAuth();
   return (
     <div>
       {loading && <span>Loading...</span>}
       {user && <span>User: {user.login}</span>}
       {session && <span>Session exists</span>}
-      {!loading && !user && <span>No user</span>}
+      {connectionError && <span>Connection Error: {connectionError}</span>}
+      {!loading && !user && !connectionError && <span>No user</span>}
     </div>
   );
 };

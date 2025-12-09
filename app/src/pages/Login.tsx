@@ -8,8 +8,9 @@ import {
 } from '../components/icons';
 
 export default function Login() {
-  const { user, signInWithGitHub, signOut, loading } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const { user, signInWithGitHub, signOut, loading, connectionError, retryAuth } = useAuth();
+  // Local error state for user-initiated auth actions (sign in/sign out failures)
+  const [authActionError, setAuthActionError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -31,12 +32,19 @@ export default function Login() {
 
   const handleGitHubLogin = async () => {
     try {
-      setError(null);
+      setAuthActionError(null);
       setIsLoggingIn(true);
+
+      // If there's a connection error, try to retry connection first
+      if (connectionError) {
+        await retryAuth();
+      }
+
+      // Then attempt sign in
       await signInWithGitHub();
     } catch (error) {
       console.error('Login failed:', error);
-      setError(
+      setAuthActionError(
         getErrorMessage(error, 'An unexpected error occurred during login. Please try again.')
       );
     } finally {
@@ -46,18 +54,19 @@ export default function Login() {
 
   const handleSignOut = async () => {
     try {
-      setError(null);
+      setAuthActionError(null);
       setIsSigningOut(true);
       await signOut();
     } catch (error) {
       console.error('Sign out failed:', error);
-      setError(
+      setAuthActionError(
         getErrorMessage(error, 'An unexpected error occurred during sign out. Please try again.')
       );
     } finally {
       setIsSigningOut(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -92,7 +101,7 @@ export default function Login() {
               You're now connected to GitHub. Ready to track your starred repositories!
             </p>
 
-            {error && (
+            {authActionError && (
               <div
                 className="bg-red-50 border border-red-200 rounded-md p-4"
                 role="alert"
@@ -104,7 +113,7 @@ export default function Login() {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">Sign Out Failed</h3>
-                    <p className="mt-2 text-sm text-red-700">{error}</p>
+                    <p className="mt-2 text-sm text-red-700">{authActionError}</p>
                   </div>
                 </div>
               </div>
@@ -117,14 +126,14 @@ export default function Login() {
                   Signing out...
                 </>
               ) : (
-                'Sign Out'
+                authActionError ? 'Try Again' : 'Sign Out'
               )}
               <span className="sr-only"> of {user.login}'s account</span>
             </button>
           </div>
         ) : (
           <main className="mt-8 space-y-4">
-            {error && (
+            {(connectionError || authActionError) && (
               <div
                 className="bg-red-50 border border-red-200 rounded-md p-4"
                 role="alert"
@@ -135,8 +144,7 @@ export default function Login() {
                     <ExclamationCircleIcon />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Login Failed</h3>
-                    <p className="mt-2 text-sm text-red-700">{error}</p>
+                    <p className="text-sm text-red-700">{connectionError || authActionError}</p>
                   </div>
                 </div>
               </div>
@@ -156,7 +164,7 @@ export default function Login() {
               ) : (
                 <>
                   <GitHubIcon />
-                  {error ? 'Try Again' : 'Continue with GitHub'}
+                  {(connectionError || authActionError) ? 'Try Again' : 'Continue with GitHub'}
                 </>
               )}
             </button>
