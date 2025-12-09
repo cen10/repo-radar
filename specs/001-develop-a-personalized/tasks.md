@@ -65,7 +65,7 @@
 - [X] T011 Create auth context provider in `src/contexts/AuthContext.tsx`
 
 ## Phase 3.4: Core Components (T012-T016)
-- [ ] T012 Create Login page component in `src/pages/Login.tsx` with GitHub OAuth button
+- [X] T012 Create Login page component in `src/pages/Login.tsx` with GitHub OAuth button
 - [ ] T013 Create Header component in `src/components/Header.tsx` with user info and logout
 - [ ] T014 Create RepoCard component in `src/components/RepoCard.tsx` to display repository info
 - [ ] T015 Create Dashboard page in `src/pages/Dashboard.tsx` with repository list
