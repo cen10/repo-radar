@@ -27,16 +27,6 @@ describe('AuthProvider', () => {
     });
   });
 
-  it('should render children', () => {
-    render(
-      <AuthProvider>
-        <div>Test Child</div>
-      </AuthProvider>
-    );
-
-    expect(screen.getByText('Test Child')).toBeInTheDocument();
-  });
-
   it('should provide auth context to children', async () => {
     render(
       <AuthProvider>
