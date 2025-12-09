@@ -21,7 +21,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
-      const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+      const {
+        data: { session: initialSession },
+        error,
+      } = await supabase.auth.getSession();
 
       if (error) {
         console.error('Error getting session:', error);
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
 
+      // Set loading to false when auth state change completes
       setLoading(false);
     });
 
