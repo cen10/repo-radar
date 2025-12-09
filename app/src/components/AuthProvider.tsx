@@ -111,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     connectionError,
     signInWithGitHub,
     signOut,
+    retryAuth: getSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
