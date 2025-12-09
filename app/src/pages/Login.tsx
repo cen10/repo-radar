@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   GitHubIcon,
@@ -11,20 +11,6 @@ export default function Login() {
   const { user, signInWithGitHub, signOut, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
-
-  // Only show loading spinner after 500ms to prevent flashing
-  useEffect(() => {
-    if (loading) {
-      const timer = setTimeout(() => {
-        setShowLoadingSpinner(true);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    } else {
-      setShowLoadingSpinner(false);
-    }
-  }, [loading]);
 
   const handleGitHubLogin = async () => {
     try {
@@ -42,17 +28,6 @@ export default function Login() {
       setIsLoggingIn(false);
     }
   };
-
-  if (showLoadingSpinner) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
-          <LoadingSpinner className="h-8 w-8 text-gray-600" />
-          <span className="sr-only">Loading authentication status...</span>
-        </div>
-      </div>
-    );
-  }
 
   // Show logged-in state
   if (user) {
