@@ -58,6 +58,20 @@
            transition-colors duration-200 font-medium;
   }
 
+  .btn-github {
+    @apply w-full flex justify-center items-center px-4 py-3
+           bg-gray-900 hover:bg-gray-800 text-white rounded-md text-base font-medium
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+           disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-outline {
+    @apply w-full flex justify-center items-center px-4 py-3
+           border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 rounded-md text-base font-medium
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500
+           transition-colors;
+  }
+
   .card {
     @apply bg-github-bg-secondary border border-github-border rounded-lg
            p-4 hover:border-github-text-secondary transition-colors duration-200;
