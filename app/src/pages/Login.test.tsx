@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from './Login';
-import { mockSupabaseClient } from '../test/mocks/supabase';
 import type { User } from '../types';
 
 const mockUseAuth = vi.fn();

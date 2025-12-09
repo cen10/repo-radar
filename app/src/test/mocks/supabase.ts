@@ -34,7 +34,3 @@ export const mockSupabaseClient = {
     signOut: vi.fn(() => Promise.resolve({ error: null })),
   },
 };
-
-vi.mock('../../services/supabase', () => ({
-  supabase: mockSupabaseClient,
-}));
