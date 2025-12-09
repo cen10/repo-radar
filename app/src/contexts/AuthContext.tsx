@@ -51,7 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
 
-      // Don't set loading to false here - only do it in getSession
+      // Set loading to false when auth state change completes
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
