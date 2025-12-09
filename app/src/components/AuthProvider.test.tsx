@@ -55,11 +55,13 @@ describe('AuthProvider', () => {
   it('should provide auth methods through context', () => {
     let signInWithGitHub: (() => Promise<void>) | undefined;
     let signOut: (() => Promise<void>) | undefined;
+    let retryAuth: (() => Promise<void>) | undefined;
 
     const TestMethodComponent = () => {
       const auth = useAuth();
       signInWithGitHub = auth.signInWithGitHub;
       signOut = auth.signOut;
+      retryAuth = auth.retryAuth;
       return null;
     };
 
@@ -71,5 +73,197 @@ describe('AuthProvider', () => {
 
     expect(typeof signInWithGitHub).toBe('function');
     expect(typeof signOut).toBe('function');
+    expect(typeof retryAuth).toBe('function');
+  });
+
+  describe('Error Handling', () => {
+    it('should handle connection errors from getSession API error', async () => {
+      // Use 'as any' to bypass strict Supabase types for test mocking - we only need basic error structure
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: null },
+        error: { message: 'Network error' }
+      } as any);
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/Connection Error: Failed to connect to authentication service/)).toBeInTheDocument();
+      expect(screen.queryByText('No user')).not.toBeInTheDocument();
+    });
+
+    it('should handle unexpected errors during getSession', async () => {
+      mockSupabaseClient.auth.getSession.mockRejectedValue(new Error('Unexpected error'));
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/Connection Error: An unexpected error occurred/)).toBeInTheDocument();
+    });
+
+    it('should clear connection error on successful auth state change', async () => {
+      // Start with connection error
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: null },
+        error: { message: 'Network error' }
+      } as any);
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      // Wait for connection error to appear
+      await waitFor(() => {
+        expect(screen.getByText(/Connection Error: Failed to connect/)).toBeInTheDocument();
+      });
+
+      // Simulate successful auth state change
+      const authStateChangeCallback = mockSupabaseClient.auth.onAuthStateChange.mock.calls[0][0];
+      authStateChangeCallback('SIGNED_IN', mockSession);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Connection Error/)).not.toBeInTheDocument();
+        expect(screen.getByText('User: testuser')).toBeInTheDocument();
+      });
+    });
+
+    it('should provide retry functionality through retryAuth', async () => {
+      let retryAuth: (() => Promise<void>) | undefined;
+
+      const TestRetryComponent = () => {
+        const auth = useAuth();
+        retryAuth = auth.retryAuth;
+        return <div>Retry Available</div>;
+      };
+
+      // Start with successful getSession
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestRetryComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Retry Available')).toBeInTheDocument();
+      });
+
+      expect(typeof retryAuth).toBe('function');
+
+      // Test that retryAuth calls getSession again
+      mockSupabaseClient.auth.getSession.mockClear();
+      await retryAuth!();
+
+      expect(mockSupabaseClient.auth.getSession).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Auth Methods Error Handling', () => {
+    it('should throw error from signInWithGitHub when OAuth fails', async () => {
+      let signInWithGitHub: (() => Promise<void>) | undefined;
+
+      const TestMethodComponent = () => {
+        const auth = useAuth();
+        signInWithGitHub = auth.signInWithGitHub;
+        return null;
+      };
+
+      mockSupabaseClient.auth.signInWithOAuth.mockResolvedValue({
+        data: {},
+        error: { message: 'OAuth failed' }
+      } as any);
+
+      render(
+        <AuthProvider>
+          <TestMethodComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(typeof signInWithGitHub).toBe('function');
+      });
+
+      await expect(signInWithGitHub!()).rejects.toThrow('OAuth failed');
+    });
+
+    it('should throw error from signOut when logout fails', async () => {
+      let signOut: (() => Promise<void>) | undefined;
+
+      const TestMethodComponent = () => {
+        const auth = useAuth();
+        signOut = auth.signOut;
+        return null;
+      };
+
+      mockSupabaseClient.auth.signOut.mockResolvedValue({
+        error: { message: 'Sign out failed' }
+      } as any);
+
+      render(
+        <AuthProvider>
+          <TestMethodComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(typeof signOut).toBe('function');
+      });
+
+      await expect(signOut!()).rejects.toThrow('Sign out failed');
+    });
+
+    it('should call signInWithOAuth with correct parameters', async () => {
+      let signInWithGitHub: (() => Promise<void>) | undefined;
+
+      const TestMethodComponent = () => {
+        const auth = useAuth();
+        signInWithGitHub = auth.signInWithGitHub;
+        return null;
+      };
+
+      mockSupabaseClient.auth.signInWithOAuth.mockResolvedValue({
+        data: {},
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestMethodComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(typeof signInWithGitHub).toBe('function');
+      });
+
+      await signInWithGitHub!();
+
+      expect(mockSupabaseClient.auth.signInWithOAuth).toHaveBeenCalledWith({
+        provider: 'github',
+        options: {
+          scopes: 'read:user user:email',
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+    });
   });
 });
