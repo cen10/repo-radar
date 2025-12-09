@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
 
 export const mockSession: Session = {
   access_token: 'mock-access-token',
@@ -24,13 +24,13 @@ export const mockSession: Session = {
 export const mockSupabaseClient = {
   auth: {
     getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-    onAuthStateChange: vi.fn((callback: any) => {
-      const unsubscribe = vi.fn();
-      return { data: { subscription: { unsubscribe } }, error: null };
-    }),
-    signInWithOAuth: vi.fn(() =>
-      Promise.resolve({ data: {}, error: null })
+    onAuthStateChange: vi.fn(
+      (_callback: (event: AuthChangeEvent, session: Session | null) => void) => {
+        const unsubscribe = vi.fn();
+        return { data: { subscription: { unsubscribe } }, error: null };
+      }
     ),
+    signInWithOAuth: vi.fn(() => Promise.resolve({ data: {}, error: null })),
     signOut: vi.fn(() => Promise.resolve({ error: null })),
   },
 };
