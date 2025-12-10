@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
+import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
@@ -94,7 +95,7 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(screen.getByText(/Connection Error: Failed to connect to authentication service/)).toBeInTheDocument();
+      expect(screen.getByText(`Connection Error: ${CONNECTION_FAILED}`)).toBeInTheDocument();
       expect(screen.queryByText('No user')).not.toBeInTheDocument();
     });
 
@@ -111,7 +112,7 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(screen.getByText(/Connection Error: An unexpected error occurred/)).toBeInTheDocument();
+      expect(screen.getByText(`Connection Error: ${UNEXPECTED_ERROR}`)).toBeInTheDocument();
     });
 
     it('should clear connection error on successful auth state change', async () => {
@@ -129,7 +130,7 @@ describe('AuthProvider', () => {
 
       // Wait for connection error to appear
       await waitFor(() => {
-        expect(screen.getByText(/Connection Error: Failed to connect/)).toBeInTheDocument();
+        expect(screen.getByText(`Connection Error: ${CONNECTION_FAILED}`)).toBeInTheDocument();
       });
 
       // Simulate successful auth state change

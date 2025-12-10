@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '../components/icons';
+import { LOGIN_FAILED, SIGNOUT_FAILED } from '../constants/errorMessages';
 
 export default function Login() {
   const { user, signInWithGitHub, signOut, loading, connectionError, retryAuth } = useAuth();
@@ -45,7 +46,7 @@ export default function Login() {
     } catch (error) {
       console.error('Login failed:', error);
       setAuthActionError(
-        getErrorMessage(error, 'An unexpected error occurred during login. Please try again.')
+        getErrorMessage(error, LOGIN_FAILED)
       );
     } finally {
       setIsLoggingIn(false);
@@ -60,7 +61,7 @@ export default function Login() {
     } catch (error) {
       console.error('Sign out failed:', error);
       setAuthActionError(
-        getErrorMessage(error, 'An unexpected error occurred during sign out. Please try again.')
+        getErrorMessage(error, SIGNOUT_FAILED)
       );
     } finally {
       setIsSigningOut(false);

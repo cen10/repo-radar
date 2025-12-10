@@ -3,6 +3,7 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
+import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   return {
@@ -32,9 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error connecting to Supabase:', error);
-        setConnectionError(
-          'Failed to connect to authentication service. Please check your internet connection and try again.'
-        );
+        setConnectionError(CONNECTION_FAILED);
         setLoading(false);
         return;
       }
@@ -46,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     } catch (err) {
       console.error('Unexpected error getting session:', err);
-      setConnectionError('An unexpected error occurred. Please try again.');
+      setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
     }
   };

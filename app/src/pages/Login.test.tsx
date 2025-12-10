@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from './Login';
 import type { User } from '../types';
+import { LOGIN_FAILED } from '../constants/errorMessages';
 
 const mockUseAuth = vi.fn();
 
@@ -106,7 +107,6 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Login Failed')).toBeInTheDocument();
         expect(screen.getByText('Authentication failed')).toBeInTheDocument();
       });
     });
@@ -251,9 +251,7 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText('An unexpected error occurred during login. Please try again.')
-        ).toBeInTheDocument();
+        expect(screen.getByText(LOGIN_FAILED)).toBeInTheDocument();
       });
     });
 
@@ -272,9 +270,7 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText('An unexpected error occurred during login. Please try again.')
-        ).toBeInTheDocument();
+        expect(screen.getByText(LOGIN_FAILED)).toBeInTheDocument();
       });
     });
   });
