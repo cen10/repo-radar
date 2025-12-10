@@ -41,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(initialSession);
       if (initialSession?.user) {
         setUser(mapSupabaseUserToUser(initialSession.user));
+      } else {
+        setUser(null);
       }
       setLoading(false);
     } catch (err) {

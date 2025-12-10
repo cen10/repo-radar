@@ -143,6 +143,40 @@ describe('AuthProvider', () => {
       });
     });
 
+    it('should clear user state when session is null on initial load', async () => {
+      // Mock getSession to return no session (e.g., expired session)
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      const TestComponent = () => {
+        const auth = useAuth();
+        return (
+          <div>
+            <div>User: {auth.user ? auth.user.login : 'none'}</div>
+            <div>Session: {auth.session ? 'active' : 'none'}</div>
+            <div>Loading: {auth.loading ? 'yes' : 'no'}</div>
+          </div>
+        );
+      };
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.getByText('Loading: no')).toBeInTheDocument();
+      });
+
+      // Verify both user and session are null
+      expect(screen.getByText('User: none')).toBeInTheDocument();
+      expect(screen.getByText('Session: none')).toBeInTheDocument();
+    });
+
     it('should provide retry functionality through retryAuth', async () => {
       let retryAuth: (() => Promise<void>) | undefined;
 
