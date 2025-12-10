@@ -110,6 +110,7 @@ npm run build        # Build for production
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
 6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
+7. **Auto-format code**: Run `npm run format` after creating/editing any files to ensure consistent formatting
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
