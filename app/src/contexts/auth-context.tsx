@@ -6,8 +6,10 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  connectionError: string | null;
   signInWithGitHub: () => Promise<void>;
   signOut: () => Promise<void>;
+  retryAuth: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

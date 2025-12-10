@@ -3,6 +3,7 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
+import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   return {
@@ -18,26 +19,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
+  const getSession = async () => {
+    try {
+      setLoading(true);
+      setConnectionError(null);
+
       const {
         data: { session: initialSession },
         error,
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Error getting session:', error);
+        console.error('Error connecting to Supabase:', error);
+        setConnectionError(CONNECTION_FAILED);
+        setLoading(false);
+        return;
       }
 
       setSession(initialSession);
       if (initialSession?.user) {
         setUser(mapSupabaseUserToUser(initialSession.user));
+      } else {
+        setUser(null);
       }
       setLoading(false);
-    };
+    } catch (err) {
+      console.error('Unexpected error getting session:', err);
+      setConnectionError(UNEXPECTED_ERROR);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     getSession();
 
     // Listen for auth changes
@@ -58,6 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Clear connection error on successful auth
+  useEffect(() => {
+    if (session && connectionError) {
+      setConnectionError(null);
+    }
+  }, [session, connectionError]);
 
   const signInWithGitHub = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -87,8 +109,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     user,
     loading,
+    connectionError,
     signInWithGitHub,
     signOut,
+    retryAuth: getSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
