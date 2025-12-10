@@ -39,9 +39,14 @@ export default function Login() {
       // If there's a connection error, try to retry connection first
       if (connectionError) {
         await retryAuth();
+        // Check if the retry was successful
+        if (connectionError) {
+          // Still have connection error, don't proceed
+          return;
+        }
       }
 
-      // Then attempt sign in
+      // Only attempt sign in if connection is successful
       await signInWithGitHub();
     } catch (error) {
       console.error('Login failed:', error);
