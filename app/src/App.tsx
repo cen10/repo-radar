@@ -1,7 +1,7 @@
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from './components/AuthProvider';
 import Login from './pages/Login';
-import { AuthErrorFallback } from './components/ErrorFallback';
+import { AuthErrorFallback } from './components/AuthErrorFallback';
 
 function App() {
   return (

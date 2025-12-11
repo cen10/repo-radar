@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
 import './index.css';
 import App from './App.tsx';
-import { ErrorFallback } from './components/ErrorFallback';
+import { GenericErrorFallback } from './components/GenericErrorFallback';
 
 // Error logging function for root boundary
 function logError(error: Error, errorInfo: ErrorInfo) {
@@ -19,7 +19,7 @@ function logError(error: Error, errorInfo: ErrorInfo) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary
-      FallbackComponent={ErrorFallback}
+      FallbackComponent={GenericErrorFallback}
       onError={logError}
       onReset={() => {
         console.log('Root error boundary reset');

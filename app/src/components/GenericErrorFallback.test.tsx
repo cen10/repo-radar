@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
-import { ErrorFallback, AuthErrorFallback } from './ErrorFallback';
+import { GenericErrorFallback } from './GenericErrorFallback';
 
 // Test component that throws an error
 function ThrowError({ shouldThrow = false }: { shouldThrow?: boolean }) {
@@ -13,7 +12,7 @@ function ThrowError({ shouldThrow = false }: { shouldThrow?: boolean }) {
   return <div>No Error</div>;
 }
 
-describe('ErrorBoundary with ErrorFallback', () => {
+describe('GenericErrorFallback', () => {
   // Suppress console.error for these tests since we expect errors
   const originalError = console.error;
   beforeEach(() => {
@@ -26,7 +25,7 @@ describe('ErrorBoundary with ErrorFallback', () => {
 
   it('should render children when no error occurs', () => {
     render(
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ErrorBoundary FallbackComponent={GenericErrorFallback}>
         <ThrowError shouldThrow={false} />
       </ErrorBoundary>
     );
@@ -34,9 +33,9 @@ describe('ErrorBoundary with ErrorFallback', () => {
     expect(screen.getByText('No Error')).toBeInTheDocument();
   });
 
-  it('should render ErrorFallback when error occurs', () => {
+  it('should render GenericErrorFallback when error occurs', () => {
     render(
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ErrorBoundary FallbackComponent={GenericErrorFallback}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
@@ -52,7 +51,7 @@ describe('ErrorBoundary with ErrorFallback', () => {
     const onReset = vi.fn();
 
     render(
-      <ErrorBoundary FallbackComponent={ErrorFallback} onReset={onReset}>
+      <ErrorBoundary FallbackComponent={GenericErrorFallback} onReset={onReset}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
@@ -71,7 +70,7 @@ describe('ErrorBoundary with ErrorFallback', () => {
     const onError = vi.fn();
 
     render(
-      <ErrorBoundary FallbackComponent={ErrorFallback} onError={onError}>
+      <ErrorBoundary FallbackComponent={GenericErrorFallback} onError={onError}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
@@ -90,7 +89,7 @@ describe('ErrorBoundary with ErrorFallback', () => {
     process.env.NODE_ENV = 'development';
 
     render(
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <ErrorBoundary FallbackComponent={GenericErrorFallback}>
         <ThrowError shouldThrow={true} />
       </ErrorBoundary>
     );
@@ -99,39 +98,5 @@ describe('ErrorBoundary with ErrorFallback', () => {
 
     // Restore environment
     process.env.NODE_ENV = originalEnv;
-  });
-});
-
-describe('AuthErrorFallback', () => {
-  const originalError = console.error;
-  beforeEach(() => {
-    console.error = vi.fn();
-  });
-
-  afterEach(() => {
-    console.error = originalError;
-  });
-
-  it('should render auth-specific error message', () => {
-    render(
-      <ErrorBoundary FallbackComponent={AuthErrorFallback}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText('Authentication Error')).toBeInTheDocument();
-    expect(screen.getByText(/We're having trouble with the login system/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /get help/i })).toBeInTheDocument();
-  });
-
-  it('should show timestamp for support reference', () => {
-    render(
-      <ErrorBoundary FallbackComponent={AuthErrorFallback}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText(/timestamp:/)).toBeInTheDocument();
   });
 });
