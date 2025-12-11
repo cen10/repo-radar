@@ -8,14 +8,11 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
         <div className="mb-6">
           <ExclamationCircleIcon className="mx-auto h-16 w-16 text-red-500" />
         </div>
-
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h1>
-
         <p className="text-gray-600 mb-6">
           We encountered an unexpected error. Please try refreshing the page or contact support if
           the problem persists.
         </p>
-
         <button
           onClick={resetErrorBoundary}
           className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
