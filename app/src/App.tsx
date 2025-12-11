@@ -15,10 +15,6 @@ function App() {
         // - Send to error reporting with 'auth' tag
         // - Track auth flow failures
       }}
-      onReset={() => {
-        console.log('Auth error boundary reset');
-        // Could clear auth state here if needed
-      }}
     >
       <AuthProvider>
         <Login />

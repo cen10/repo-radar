@@ -18,9 +18,6 @@ createRoot(document.getElementById('root')!).render(
         //   extra: errorInfo
         // });
       }}
-      onReset={() => {
-        console.log('Root error boundary reset');
-      }}
     >
       <App />
     </ErrorBoundary>
