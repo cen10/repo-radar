@@ -112,6 +112,9 @@ npm run build        # Build for production
 6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 7. **Auto-format code**: Run `npm run format` after creating/editing any files to ensure consistent formatting
 8. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
+9. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
+10. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
+11. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
