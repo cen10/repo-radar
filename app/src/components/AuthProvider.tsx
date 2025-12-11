@@ -4,6 +4,7 @@ import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
+import { logger } from '../utils/logger';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   return {
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Error connecting to Supabase:', error);
+        logger.error('Error connecting to Supabase:', error);
         setConnectionError(CONNECTION_FAILED);
         setLoading(false);
         return;
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLoading(false);
     } catch (err) {
-      console.error('Unexpected error getting session:', err);
+      logger.error('Unexpected error getting session:', err);
       setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
     }
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) {
-      console.error('Error signing in with GitHub:', error);
+      logger.error('Error signing in with GitHub:', error);
       throw error;
     }
   };
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
       throw error;
     }
   };

@@ -4,13 +4,14 @@ import { ErrorBoundary } from 'react-error-boundary';
 import './index.css';
 import App from './App.tsx';
 import { GenericErrorFallback } from './components/GenericErrorFallback';
+import { logger } from './utils/logger';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary
       FallbackComponent={GenericErrorFallback}
       onError={(error, errorInfo) => {
-        console.error('Root Error Boundary caught an error:', error, errorInfo);
+        logger.error('Root Error Boundary caught an error:', { error, errorInfo });
 
         // In production, you would send to an error reporting service:
         // errorReporting.captureException(error, {
