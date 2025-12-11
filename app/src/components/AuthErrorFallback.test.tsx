@@ -13,6 +13,7 @@ function ThrowError({ shouldThrow = false }: { shouldThrow?: boolean }) {
 }
 
 describe('AuthErrorFallback', () => {
+  // Suppress console.error for these tests since we expect errors
   const originalError = console.error;
   beforeEach(() => {
     console.error = vi.fn();
