@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GenericErrorFallback } from './GenericErrorFallback';
@@ -34,24 +34,35 @@ describe('GenericErrorFallback', () => {
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
-  it('should call resetErrorBoundary when Try Again is clicked', async () => {
+  it('should re-render the component when Try Again is clicked', async () => {
     const user = userEvent.setup();
-    const onReset = vi.fn();
+    let shouldThrow = true;
+
+    const TestComponent = () => {
+      if (shouldThrow) {
+        throw new Error('Test error');
+      }
+      return <div>Success on retry!</div>;
+    };
 
     render(
-      <ErrorBoundary FallbackComponent={GenericErrorFallback} onReset={onReset}>
-        <ThrowError shouldThrow={true} />
+      <ErrorBoundary FallbackComponent={GenericErrorFallback}>
+        <TestComponent />
       </ErrorBoundary>
     );
 
     // Error fallback should be shown
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 
-    // Click Try Again button
+    // Flip the flag before clicking retry
+    shouldThrow = false;
     await user.click(screen.getByRole('button', { name: /try again/i }));
 
-    // Should call onReset
-    expect(onReset).toHaveBeenCalled();
+    // Component successfully renders on retry
+    await waitFor(() => {
+      expect(screen.getByText('Success on retry!')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
   });
 
   it('should show error details in development', () => {
