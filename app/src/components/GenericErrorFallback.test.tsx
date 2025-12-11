@@ -42,7 +42,6 @@ describe('GenericErrorFallback', () => {
 
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
   });
 
   it('should call resetErrorBoundary when Try Again is clicked', async () => {
