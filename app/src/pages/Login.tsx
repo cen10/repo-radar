@@ -50,9 +50,7 @@ export default function Login() {
       await signInWithGitHub();
     } catch (error) {
       console.error('Login failed:', error);
-      setAuthActionError(
-        getErrorMessage(error, LOGIN_FAILED)
-      );
+      setAuthActionError(getErrorMessage(error, LOGIN_FAILED));
     } finally {
       setIsLoggingIn(false);
     }
@@ -65,14 +63,11 @@ export default function Login() {
       await signOut();
     } catch (error) {
       console.error('Sign out failed:', error);
-      setAuthActionError(
-        getErrorMessage(error, SIGNOUT_FAILED)
-      );
+      setAuthActionError(getErrorMessage(error, SIGNOUT_FAILED));
     } finally {
       setIsSigningOut(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -131,8 +126,10 @@ export default function Login() {
                   <LoadingSpinner className="w-5 h-5 mr-3" />
                   Signing out...
                 </>
+              ) : authActionError ? (
+                'Try Again'
               ) : (
-                authActionError ? 'Try Again' : 'Sign Out'
+                'Sign Out'
               )}
               <span className="sr-only"> of {user.login}'s account</span>
             </button>
@@ -170,7 +167,7 @@ export default function Login() {
               ) : (
                 <>
                   <GitHubIcon />
-                  {(connectionError || authActionError) ? 'Try Again' : 'Continue with GitHub'}
+                  {connectionError || authActionError ? 'Try Again' : 'Continue with GitHub'}
                 </>
               )}
             </button>
