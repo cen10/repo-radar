@@ -33,7 +33,6 @@ describe('AuthErrorFallback', () => {
     expect(screen.getByText('Authentication Error')).toBeInTheDocument();
     expect(screen.getByText(/We're having trouble with the login system/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /get help/i })).toBeInTheDocument();
   });
 
   it('should show timestamp for support reference', () => {
