@@ -111,6 +111,7 @@ npm run build        # Build for production
 5. Progressive enhancement approach
 6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 7. **Auto-format code**: Run `npm run format` after creating/editing any files to ensure consistent formatting
+8. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
 
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")

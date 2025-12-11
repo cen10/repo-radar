@@ -1,7 +1,7 @@
 import type { FallbackProps } from 'react-error-boundary';
 import { ExclamationCircleIcon, ArrowPathIcon } from './icons';
 
-export function AuthErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+export function AuthErrorFallback({ error: _error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full text-center p-8">
