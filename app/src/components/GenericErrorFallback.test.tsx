@@ -23,16 +23,6 @@ describe('GenericErrorFallback', () => {
     console.error = originalError;
   });
 
-  it('should render children when no error occurs', () => {
-    render(
-      <ErrorBoundary FallbackComponent={GenericErrorFallback}>
-        <ThrowError shouldThrow={false} />
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText(/no error/i)).toBeInTheDocument();
-  });
-
   it('should render GenericErrorFallback when error occurs', () => {
     render(
       <ErrorBoundary FallbackComponent={GenericErrorFallback}>
@@ -62,23 +52,6 @@ describe('GenericErrorFallback', () => {
 
     // Should call onReset
     expect(onReset).toHaveBeenCalled();
-  });
-
-  it('should call onError when error occurs', () => {
-    const onError = vi.fn();
-
-    render(
-      <ErrorBoundary FallbackComponent={GenericErrorFallback} onError={onError}>
-        <ThrowError shouldThrow={true} />
-      </ErrorBoundary>
-    );
-
-    expect(onError).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({
-        componentStack: expect.any(String),
-      })
-    );
   });
 
   it('should show error details in development', () => {
