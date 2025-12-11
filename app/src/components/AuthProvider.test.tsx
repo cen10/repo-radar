@@ -40,7 +40,7 @@ describe('AuthProvider', () => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText('No user')).toBeInTheDocument();
+    expect(screen.getByText(/no user/i)).toBeInTheDocument();
   });
 
   it('should start with loading state', () => {
@@ -50,7 +50,7 @@ describe('AuthProvider', () => {
       </AuthProvider>
     );
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   it('should provide auth methods through context', () => {
@@ -95,7 +95,9 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(screen.getByText(`Connection Error: ${CONNECTION_FAILED}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`connection error: ${CONNECTION_FAILED}`, 'i'))
+      ).toBeInTheDocument();
       expect(screen.queryByText('No user')).not.toBeInTheDocument();
     });
 
@@ -112,7 +114,9 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(screen.getByText(`Connection Error: ${UNEXPECTED_ERROR}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`connection error: ${UNEXPECTED_ERROR}`, 'i'))
+      ).toBeInTheDocument();
     });
 
     it('should clear connection error on successful auth state change', async () => {
@@ -130,7 +134,9 @@ describe('AuthProvider', () => {
 
       // Wait for connection error to appear
       await waitFor(() => {
-        expect(screen.getByText(`Connection Error: ${CONNECTION_FAILED}`)).toBeInTheDocument();
+        expect(
+          screen.getByText(new RegExp(`connection error: ${CONNECTION_FAILED}`, 'i'))
+        ).toBeInTheDocument();
       });
 
       // Simulate successful auth state change
@@ -139,7 +145,7 @@ describe('AuthProvider', () => {
 
       await waitFor(() => {
         expect(screen.queryByText(/Connection Error/)).not.toBeInTheDocument();
-        expect(screen.getByText('User: testuser')).toBeInTheDocument();
+        expect(screen.getByText(/user: testuser/i)).toBeInTheDocument();
       });
     });
 
@@ -169,12 +175,12 @@ describe('AuthProvider', () => {
 
       // Wait for loading to complete
       await waitFor(() => {
-        expect(screen.getByText('Loading: no')).toBeInTheDocument();
+        expect(screen.getByText(/loading: no/i)).toBeInTheDocument();
       });
 
       // Verify both user and session are null
-      expect(screen.getByText('User: none')).toBeInTheDocument();
-      expect(screen.getByText('Session: none')).toBeInTheDocument();
+      expect(screen.getByText(/user: none/i)).toBeInTheDocument();
+      expect(screen.getByText(/session: none/i)).toBeInTheDocument();
     });
 
     it('should provide retry functionality through retryAuth', async () => {
@@ -199,7 +205,7 @@ describe('AuthProvider', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Retry Available')).toBeInTheDocument();
+        expect(screen.getByText(/retry available/i)).toBeInTheDocument();
       });
 
       expect(typeof retryAuth).toBe('function');

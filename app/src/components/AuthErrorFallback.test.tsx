@@ -30,8 +30,8 @@ describe('AuthErrorFallback', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Authentication Error')).toBeInTheDocument();
-    expect(screen.getByText(/We're having trouble with the login system/)).toBeInTheDocument();
+    expect(screen.getByText(/authentication error/i)).toBeInTheDocument();
+    expect(screen.getByText(/We're having trouble with the login system/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 

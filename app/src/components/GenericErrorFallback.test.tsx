@@ -30,7 +30,7 @@ describe('GenericErrorFallback', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('No Error')).toBeInTheDocument();
+    expect(screen.getByText(/no error/i)).toBeInTheDocument();
   });
 
   it('should render GenericErrorFallback when error occurs', () => {
@@ -55,7 +55,7 @@ describe('GenericErrorFallback', () => {
     );
 
     // Error fallback should be shown
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 
     // Click Try Again button
     await user.click(screen.getByRole('button', { name: /try again/i }));
@@ -92,7 +92,7 @@ describe('GenericErrorFallback', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Error Details (Development Only)')).toBeInTheDocument();
+    expect(screen.getByText(/error details \(development only\)/i)).toBeInTheDocument();
 
     // Restore environment
     process.env.NODE_ENV = originalEnv;

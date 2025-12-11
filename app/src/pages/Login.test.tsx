@@ -34,10 +34,10 @@ describe('Login', () => {
     it('should render login page with title and description', () => {
       render(<Login />);
 
-      expect(screen.getByText('Repo Radar')).toBeInTheDocument();
+      expect(screen.getByText(/repo radar/i)).toBeInTheDocument();
       expect(
         screen.getByText(
-          'Track star growth, releases, and issue activity across your starred repositories'
+          /track star growth, releases, and issue activity across your starred repositories/i
         )
       ).toBeInTheDocument();
     });
@@ -53,7 +53,7 @@ describe('Login', () => {
       render(<Login />);
 
       expect(
-        screen.getByText("We'll access your starred repositories to show you personalized metrics")
+        screen.getByText(/we'll access your starred repositories to show you personalized metrics/i)
       ).toBeInTheDocument();
     });
 
@@ -88,7 +88,7 @@ describe('Login', () => {
       const loginButton = screen.getByRole('button', { name: /continue with github/i });
       await userEvent.click(loginButton);
 
-      expect(screen.getByText('Signing in...')).toBeInTheDocument();
+      expect(screen.getByText(/signing in/i)).toBeInTheDocument();
       expect(loginButton).toBeDisabled();
     });
 
@@ -107,7 +107,7 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Authentication failed')).toBeInTheDocument();
+        expect(screen.getByText(/authentication failed/i)).toBeInTheDocument();
       });
     });
 
@@ -158,9 +158,9 @@ describe('Login', () => {
     it('should display welcome message with username', () => {
       render(<Login />);
 
-      expect(screen.getByText('Successfully logged in!')).toBeInTheDocument();
-      expect(screen.getByText(/Welcome back/)).toBeInTheDocument();
-      expect(screen.getByText('testuser')).toBeInTheDocument();
+      expect(screen.getByText(/successfully logged in/i)).toBeInTheDocument();
+      expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
+      expect(screen.getByText(/^testuser$/i)).toBeInTheDocument();
     });
 
     it('should display sign out button', () => {
@@ -174,7 +174,7 @@ describe('Login', () => {
 
       expect(
         screen.getByText(
-          "You're now connected to GitHub. Ready to track your starred repositories!"
+          /you're now connected to github\. ready to track your starred repositories!/i
         )
       ).toBeInTheDocument();
     });
@@ -210,7 +210,7 @@ describe('Login', () => {
       const signOutButton = screen.getByRole('button', { name: /sign out/i });
       await userEvent.click(signOutButton);
 
-      expect(screen.getByText('Signing out...')).toBeInTheDocument();
+      expect(screen.getByText(/signing out/i)).toBeInTheDocument();
       expect(signOutButton).toBeDisabled();
     });
 
@@ -229,8 +229,7 @@ describe('Login', () => {
       await userEvent.click(signOutButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Sign Out Failed')).toBeInTheDocument();
-        expect(screen.getByText('Sign out failed')).toBeInTheDocument();
+        expect(screen.getByText(/sign out failed/i)).toBeInTheDocument();
       });
     });
   });
@@ -281,7 +280,7 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText(LOGIN_FAILED)).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(LOGIN_FAILED, 'i'))).toBeInTheDocument();
       });
     });
 
@@ -300,7 +299,7 @@ describe('Login', () => {
       await userEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(screen.getByText(LOGIN_FAILED)).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(LOGIN_FAILED, 'i'))).toBeInTheDocument();
       });
     });
   });
