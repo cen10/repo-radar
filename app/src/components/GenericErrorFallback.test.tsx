@@ -23,7 +23,7 @@ describe('GenericErrorFallback', () => {
     console.error = originalError;
   });
 
-  it('should render GenericErrorFallback when error occurs', () => {
+  it('should render the expected error message and action button', () => {
     render(
       <ErrorBoundary FallbackComponent={GenericErrorFallback}>
         <ThrowError shouldThrow={true} />
