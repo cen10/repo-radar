@@ -48,6 +48,25 @@ export default function Login() {
     </header>
   );
 
+  // Shared error alert component
+  const ErrorAlert = ({ title, message }: { title?: string; message: string }) => (
+    <div
+      className="bg-red-50 border border-red-200 rounded-md p-4"
+      role="alert"
+      aria-live="assertive"
+    >
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <ExclamationCircleIcon />
+        </div>
+        <div className="ml-3">
+          {title && <h3 className="text-sm font-medium text-red-800">{title}</h3>}
+          <p className={title ? 'mt-2 text-sm text-red-700' : 'text-sm text-red-700'}>{message}</p>
+        </div>
+      </div>
+    </div>
+  );
+
   const handleGitHubLogin = async () => {
     try {
       setAuthActionError(null);
@@ -119,23 +138,7 @@ export default function Login() {
               You're now connected to GitHub. Ready to track your starred repositories!
             </p>
 
-            {authActionError && (
-              <div
-                className="bg-red-50 border border-red-200 rounded-md p-4"
-                role="alert"
-                aria-live="assertive"
-              >
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <ExclamationCircleIcon />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Sign Out Failed</h3>
-                    <p className="mt-2 text-sm text-red-700">{authActionError}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {authActionError && <ErrorAlert title="Sign Out Failed" message={authActionError} />}
 
             <button
               ref={signOutButtonRef}
@@ -160,20 +163,7 @@ export default function Login() {
         ) : (
           <main className="mt-8 space-y-4">
             {(connectionError || authActionError) && (
-              <div
-                className="bg-red-50 border border-red-200 rounded-md p-4"
-                role="alert"
-                aria-live="assertive"
-              >
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <ExclamationCircleIcon />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{connectionError || authActionError}</p>
-                  </div>
-                </div>
-              </div>
+              <ErrorAlert message={connectionError || authActionError || ''} />
             )}
 
             <button
