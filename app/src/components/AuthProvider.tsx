@@ -7,9 +7,13 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 import { logger } from '../utils/logger';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
+  const login = supabaseUser.user_metadata?.user_name || supabaseUser.email?.split('@')?.[0] || '';
+  if (!login) {
+    logger.error('Failed to extract login from GitHub OAuth', { userId: supabaseUser.id });
+  }
   return {
     id: supabaseUser.id,
-    login: supabaseUser.user_metadata?.user_name || supabaseUser.email?.split('@')[0] || '',
+    login,
     name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
     avatar_url: supabaseUser.user_metadata?.avatar_url || '',
     email: supabaseUser.email || null,
