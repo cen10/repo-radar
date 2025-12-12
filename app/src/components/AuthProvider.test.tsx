@@ -7,6 +7,16 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
 
+// Mock the logger to silence test output
+vi.mock('../utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 const TestComponent = () => {
   const { user, loading, session, connectionError } = useAuth();
   return (

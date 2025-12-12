@@ -11,6 +11,16 @@ vi.mock('../hooks/use-auth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+// Mock the logger to silence test output
+vi.mock('../utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 const mockUser: User = {
   id: 'user-123',
   login: 'testuser',
