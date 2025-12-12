@@ -215,7 +215,7 @@ describe('Login', () => {
     });
 
     it('should display error message when sign out fails', async () => {
-      const signOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
+      const signOut = vi.fn().mockRejectedValue(new Error('Test Failure'));
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,

@@ -7,6 +7,7 @@ import {
   ExclamationCircleIcon,
 } from '../components/icons';
 import { LOGIN_FAILED, SIGNOUT_FAILED } from '../constants/errorMessages';
+import { logger } from '../utils/logger';
 
 export default function Login() {
   const { user, signInWithGitHub, signOut, loading, connectionError, retryAuth } = useAuth();
@@ -49,7 +50,7 @@ export default function Login() {
       // Only attempt sign in if connection is successful
       await signInWithGitHub();
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       setAuthActionError(getErrorMessage(error, LOGIN_FAILED));
     } finally {
       setIsLoggingIn(false);
@@ -62,7 +63,7 @@ export default function Login() {
       setIsSigningOut(true);
       await signOut();
     } catch (error) {
-      console.error('Sign out failed:', error);
+      logger.error('Sign out failed:', error);
       setAuthActionError(getErrorMessage(error, SIGNOUT_FAILED));
     } finally {
       setIsSigningOut(false);
