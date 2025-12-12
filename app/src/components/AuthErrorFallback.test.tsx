@@ -122,9 +122,12 @@ describe('AuthErrorFallback', () => {
       // Check that aria-busy was set to true during retry
       // Note: The component unmounts quickly after successful retry,
       // so we check for the "Retrying..." text which appears when aria-busy is true
-      await waitFor(() => {
-        expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
-      }, { timeout: 100 });
+      await waitFor(
+        () => {
+          expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
+        },
+        { timeout: 100 }
+      );
     });
 
     it('should show loading spinner when retrying', async () => {
@@ -150,9 +153,12 @@ describe('AuthErrorFallback', () => {
       await user.click(retryButton);
 
       // Check for loading state text
-      await waitFor(() => {
-        expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
-      }, { timeout: 100 });
+      await waitFor(
+        () => {
+          expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
+        },
+        { timeout: 100 }
+      );
     });
   });
 });
