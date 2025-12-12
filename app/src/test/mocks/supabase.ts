@@ -1,5 +1,22 @@
 import { vi } from 'vitest';
-import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js';
+import type {
+  Session,
+  User,
+  AuthChangeEvent,
+  SignInWithOAuthCredentials,
+  SignOutOptions,
+} from '@supabase/supabase-js';
+
+/**
+ * Type-safe Supabase mock
+ *
+ * Why comprehensive typing matters here:
+ * If Supabase updates their API (e.g., getSession adds a new required field),
+ * these mocks will break at compile time instead of tests mysteriously failing at runtime.
+ * You'll know exactly what needs updating, making maintenance much easier.
+ *
+ * This ensures our test mocks stay in sync with the actual Supabase client API.
+ */
 
 export const mockSession: Session = {
   access_token: 'mock-access-token',
@@ -21,16 +38,39 @@ export const mockSession: Session = {
   } as User,
 };
 
+type GetSessionResponse =
+  | { data: { session: Session | null }; error: null }
+  | { data: { session: null }; error: Error };
+type SignInWithOAuthResponse =
+  | { data: { provider?: string; url?: string }; error: null }
+  | { data: null; error: Error };
+type SignOutResponse = { error: null } | { error: Error };
+type OnAuthStateChangeResponse = {
+  data: {
+    subscription: {
+      unsubscribe: () => void;
+    };
+  };
+  error: null;
+};
+
 export const mockSupabaseClient = {
   auth: {
-    getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-    onAuthStateChange: vi.fn(
-      (_callback: (event: AuthChangeEvent, session: Session | null) => void) => {
-        const unsubscribe = vi.fn();
-        return { data: { subscription: { unsubscribe } }, error: null };
-      }
+    getSession: vi.fn<[], Promise<GetSessionResponse>>(() =>
+      Promise.resolve({ data: { session: null }, error: null })
     ),
-    signInWithOAuth: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-    signOut: vi.fn(() => Promise.resolve({ error: null })),
+    onAuthStateChange: vi.fn<
+      [(event: AuthChangeEvent, session: Session | null) => void],
+      OnAuthStateChangeResponse
+    >((_callback) => {
+      const unsubscribe = vi.fn();
+      return { data: { subscription: { unsubscribe } }, error: null };
+    }),
+    signInWithOAuth: vi.fn<[SignInWithOAuthCredentials], Promise<SignInWithOAuthResponse>>(() =>
+      Promise.resolve({ data: {}, error: null })
+    ),
+    signOut: vi.fn<[SignOutOptions?], Promise<SignOutResponse>>(() =>
+      Promise.resolve({ error: null })
+    ),
   },
 };

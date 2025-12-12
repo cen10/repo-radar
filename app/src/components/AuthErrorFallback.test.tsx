@@ -16,7 +16,7 @@ describe('AuthErrorFallback', () => {
   // Suppress console.error for these tests since we expect errors
   const originalError = console.error;
   beforeEach(() => {
-    console.error = vi.fn();
+    console.error = vi.fn<typeof console.error>();
   });
 
   afterEach(() => {

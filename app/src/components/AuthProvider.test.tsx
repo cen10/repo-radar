@@ -6,14 +6,15 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
+import type { logger } from '../utils/logger';
 
 // Mock the logger to silence test output
 vi.mock('../utils/logger', () => ({
   logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
+    error: vi.fn<typeof logger.error>(),
+    warn: vi.fn<typeof logger.warn>(),
+    info: vi.fn<typeof logger.info>(),
+    debug: vi.fn<typeof logger.debug>(),
   },
 }));
 
