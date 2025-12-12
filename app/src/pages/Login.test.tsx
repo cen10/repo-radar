@@ -303,4 +303,113 @@ describe('Login', () => {
       });
     });
   });
+
+  describe('accessibility features', () => {
+    it('should set aria-busy to true on login button when signing in', async () => {
+      const signInWithGitHub = vi.fn(() => new Promise(() => {})); // Never resolves to keep loading
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: false,
+        signInWithGitHub,
+        signOut: vi.fn(),
+      });
+
+      render(<Login />);
+
+      const loginButton = screen.getByRole('button', { name: /continue with github/i });
+
+      // Initially aria-busy should be false
+      expect(loginButton).toHaveAttribute('aria-busy', 'false');
+
+      // Click to start signing in
+      await userEvent.click(loginButton);
+
+      // Now aria-busy should be true
+      expect(loginButton).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('should set aria-busy to true on sign out button when signing out', async () => {
+      const signOut = vi.fn(() => new Promise(() => {})); // Never resolves to keep loading
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        loading: false,
+        signInWithGitHub: vi.fn(),
+        signOut,
+      });
+
+      render(<Login />);
+
+      const signOutButton = screen.getByRole('button', { name: /sign out/i });
+
+      // Initially aria-busy should be false
+      expect(signOutButton).toHaveAttribute('aria-busy', 'false');
+
+      // Click to start signing out
+      await userEvent.click(signOutButton);
+
+      // Now aria-busy should be true
+      expect(signOutButton).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('should focus login button after login error', async () => {
+      const signInWithGitHub = vi.fn().mockRejectedValue(new Error('Auth failed'));
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: false,
+        signInWithGitHub,
+        signOut: vi.fn(),
+      });
+
+      render(<Login />);
+
+      const loginButton = screen.getByRole('button', { name: /continue with github/i });
+      await userEvent.click(loginButton);
+
+      await waitFor(() => {
+        // After error, the button (now showing "Try Again") should have focus
+        expect(document.activeElement).toBe(loginButton);
+      });
+    });
+
+    it('should focus sign out button after sign out error', async () => {
+      const signOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        loading: false,
+        signInWithGitHub: vi.fn(),
+        signOut,
+      });
+
+      render(<Login />);
+
+      const signOutButton = screen.getByRole('button', { name: /sign out/i });
+      await userEvent.click(signOutButton);
+
+      await waitFor(() => {
+        // After error, the button (now showing "Try Again") should have focus
+        expect(document.activeElement).toBe(signOutButton);
+      });
+    });
+
+    it('should have role="alert" on error messages', async () => {
+      const signInWithGitHub = vi.fn().mockRejectedValue(new Error('Auth failed'));
+      mockUseAuth.mockReturnValue({
+        user: null,
+        loading: false,
+        signInWithGitHub,
+        signOut: vi.fn(),
+      });
+
+      render(<Login />);
+
+      const loginButton = screen.getByRole('button', { name: /continue with github/i });
+      await userEvent.click(loginButton);
+
+      await waitFor(() => {
+        const alert = screen.getByRole('alert');
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveAttribute('aria-live', 'assertive');
+      });
+    });
+  });
 });
