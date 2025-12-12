@@ -6,6 +6,11 @@ import App from './App.tsx';
 import { GenericErrorFallback } from './components/GenericErrorFallback';
 import { logger } from './utils/logger';
 
+// Temporary component to test error fallback UI
+function ThrowError(): never {
+  throw new Error('Test error to display GenericErrorFallback UI');
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary
@@ -20,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
         // });
       }}
     >
+      <ThrowError />
       <App />
     </ErrorBoundary>
   </StrictMode>

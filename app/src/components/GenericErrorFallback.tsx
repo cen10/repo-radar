@@ -13,10 +13,11 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
 
   const handleRetry = () => {
     setIsRetrying(true);
-    // Small delay to show loading state before reset
+    // Minimum display time for loading state to give users confidence
+    // that their action was registered and is being processed
     setTimeout(() => {
       resetErrorBoundary();
-    }, 100);
+    }, 600);
   };
 
   return (
@@ -34,7 +35,7 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
           ref={retryButtonRef}
           onClick={handleRetry}
           disabled={isRetrying}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           aria-busy={isRetrying}
         >
           {isRetrying ? (
