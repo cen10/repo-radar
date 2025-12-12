@@ -1,0 +1,39 @@
+{
+  "name": "repo-radar",
+  "version": "1.0.0",
+  "description": "A personalized GitHub repository momentum dashboard that tracks star growth, releases, and issue activity across your starred repositories.",
+  "main": "index.js",
+  "scripts": {
+    "test": "cd app && npm test",
+    "format": "cd app && npm run format",
+    "lint": "cd app && npm run lint",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "app/src/**/*.{ts,tsx}": [
+      "cd app && npx eslint --fix",
+      "cd app && npx prettier --write"
+    ],
+    "app/src/**/*.{js,jsx,json,css,md}": [
+      "cd app && npx prettier --write"
+    ],
+    "app/*.{js,ts,json}": [
+      "cd app && npx prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cen10/repo-radar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cen10/repo-radar/issues"
+  },
+  "homepage": "https://github.com/cen10/repo-radar#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  }
+}
