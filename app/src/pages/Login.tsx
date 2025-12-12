@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/use-auth';
 import {
   GitHubIcon,
@@ -15,6 +15,22 @@ export default function Login() {
   const [authActionError, setAuthActionError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Refs for focus management
+  const loginButtonRef = useRef<HTMLButtonElement>(null);
+  const signOutButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus management after errors
+  useEffect(() => {
+    if (authActionError && !isLoggingIn && !isSigningOut) {
+      // Focus the appropriate retry button after an error
+      if (user) {
+        signOutButtonRef.current?.focus();
+      } else {
+        loginButtonRef.current?.focus();
+      }
+    }
+  }, [authActionError, isLoggingIn, isSigningOut, user]);
 
   // Helper function to extract error message with fallback
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -121,7 +137,13 @@ export default function Login() {
               </div>
             )}
 
-            <button onClick={handleSignOut} disabled={isSigningOut} className="btn-outline">
+            <button
+              ref={signOutButtonRef}
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="btn-outline"
+              aria-busy={isSigningOut}
+            >
               {isSigningOut ? (
                 <>
                   <LoadingSpinner className="w-5 h-5 mr-3" />
@@ -155,10 +177,12 @@ export default function Login() {
             )}
 
             <button
+              ref={loginButtonRef}
               onClick={handleGitHubLogin}
               disabled={loading || isLoggingIn}
               className="btn-github"
               aria-describedby="github-login-description"
+              aria-busy={isLoggingIn}
             >
               {isLoggingIn ? (
                 <>

@@ -1,10 +1,27 @@
+import { useState, useEffect, useRef } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
-import { ExclamationCircleIcon, ArrowPathIcon } from './icons';
+import { ExclamationCircleIcon, ArrowPathIcon, LoadingSpinner } from './icons';
 
 export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus the retry button on mount
+  useEffect(() => {
+    retryButtonRef.current?.focus();
+  }, []);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    // Small delay to show loading state before reset
+    setTimeout(() => {
+      resetErrorBoundary();
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full text-center p-8">
+      <div className="max-w-md w-full text-center p-8" role="alert" aria-live="assertive">
         <div className="mb-6">
           <ExclamationCircleIcon className="mx-auto h-16 w-16 text-red-500" />
         </div>
@@ -14,11 +31,23 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
           the problem persists.
         </p>
         <button
-          onClick={resetErrorBoundary}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
+          ref={retryButtonRef}
+          onClick={handleRetry}
+          disabled={isRetrying}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={isRetrying}
         >
-          <ArrowPathIcon className="w-4 h-4 mr-2" />
-          Try Again
+          {isRetrying ? (
+            <>
+              <LoadingSpinner className="w-4 h-4 mr-2" />
+              Retrying...
+            </>
+          ) : (
+            <>
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
+              Try Again
+            </>
+          )}
         </button>
 
         {process.env.NODE_ENV === 'development' && (
