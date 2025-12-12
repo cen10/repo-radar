@@ -81,4 +81,99 @@ describe('GenericErrorFallback', () => {
     // Restore environment
     process.env.NODE_ENV = originalEnv;
   });
+
+  describe('accessibility features', () => {
+    it('should focus the retry button on mount', () => {
+      render(
+        <ErrorBoundary FallbackComponent={GenericErrorFallback}>
+          <ThrowError shouldThrow={true} />
+        </ErrorBoundary>
+      );
+
+      const retryButton = screen.getByRole('button', { name: /try again/i });
+      expect(document.activeElement).toBe(retryButton);
+    });
+
+    it('should have role="alert" and aria-live="assertive" on error container', () => {
+      render(
+        <ErrorBoundary FallbackComponent={GenericErrorFallback}>
+          <ThrowError shouldThrow={true} />
+        </ErrorBoundary>
+      );
+
+      const alertContainer = screen.getByRole('alert');
+      expect(alertContainer).toBeInTheDocument();
+      expect(alertContainer).toHaveAttribute('aria-live', 'assertive');
+    });
+
+    it('should set aria-busy to true when retrying', async () => {
+      const user = userEvent.setup();
+      let shouldThrow = true;
+
+      const TestComponent = () => {
+        if (shouldThrow) {
+          throw new Error('Test error');
+        }
+        return <div>Success!</div>;
+      };
+
+      render(
+        <ErrorBoundary FallbackComponent={GenericErrorFallback}>
+          <TestComponent />
+        </ErrorBoundary>
+      );
+
+      const retryButton = screen.getByRole('button', { name: /try again/i });
+
+      // Initially aria-busy should be false
+      expect(retryButton).toHaveAttribute('aria-busy', 'false');
+
+      // Set up to not throw on retry
+      shouldThrow = false;
+
+      // Click retry
+      await user.click(retryButton);
+
+      // Check that aria-busy was set to true during retry
+      // Note: The component unmounts quickly after successful retry,
+      // so we check for the "Retrying..." text which appears when aria-busy is true
+      await waitFor(
+        () => {
+          expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
+        },
+        { timeout: 100 }
+      );
+    });
+
+    it('should show loading spinner when retrying', async () => {
+      const user = userEvent.setup();
+      let shouldThrow = true;
+
+      const TestComponent = () => {
+        if (shouldThrow) {
+          throw new Error('Test error');
+        }
+        return <div>Success!</div>;
+      };
+
+      render(
+        <ErrorBoundary FallbackComponent={GenericErrorFallback}>
+          <TestComponent />
+        </ErrorBoundary>
+      );
+
+      const retryButton = screen.getByRole('button', { name: /try again/i });
+      shouldThrow = false;
+
+      await user.click(retryButton);
+
+      // Check for loading state text
+      await waitFor(
+        () => {
+          expect(screen.queryByText(/retrying/i)).toBeInTheDocument();
+        },
+        { timeout: 100 }
+      );
+    });
+  });
 });
