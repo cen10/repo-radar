@@ -155,9 +155,8 @@ export default function Login() {
           </div>
         ) : (
           <main className="mt-8 space-y-4">
-            {(connectionError || authActionError) && (
-              <ErrorAlert message={connectionError || authActionError || ''} />
-            )}
+            {connectionError && <ErrorAlert message={connectionError} />}
+            {authActionError && <ErrorAlert message={authActionError} />}
 
             <button
               ref={loginButtonRef}
