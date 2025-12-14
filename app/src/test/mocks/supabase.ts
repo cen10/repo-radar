@@ -4,7 +4,6 @@ import type {
   User,
   AuthChangeEvent,
   SignInWithOAuthCredentials,
-  SignOutOptions,
 } from '@supabase/supabase-js';
 
 /**
@@ -38,14 +37,14 @@ export const mockSession: Session = {
   } as User,
 };
 
-type GetSessionResponse =
+export type GetSessionResponse =
   | { data: { session: Session | null }; error: null }
   | { data: { session: null }; error: Error };
-type SignInWithOAuthResponse =
+export type SignInWithOAuthResponse =
   | { data: { provider?: string; url?: string }; error: null }
   | { data: null; error: Error };
-type SignOutResponse = { error: null } | { error: Error };
-type OnAuthStateChangeResponse = {
+export type SignOutResponse = { error: null } | { error: Error };
+export type OnAuthStateChangeResponse = {
   data: {
     subscription: {
       unsubscribe: () => void;
@@ -56,21 +55,22 @@ type OnAuthStateChangeResponse = {
 
 export const mockSupabaseClient = {
   auth: {
-    getSession: vi.fn<[], Promise<GetSessionResponse>>(() =>
+    getSession: vi.fn<() => Promise<GetSessionResponse>>(() =>
       Promise.resolve({ data: { session: null }, error: null })
     ),
     onAuthStateChange: vi.fn<
-      [(event: AuthChangeEvent, session: Session | null) => void],
-      OnAuthStateChangeResponse
+      (
+        callback: (event: AuthChangeEvent, session: Session | null) => void
+      ) => OnAuthStateChangeResponse
     >((_callback) => {
       const unsubscribe = vi.fn();
       return { data: { subscription: { unsubscribe } }, error: null };
     }),
-    signInWithOAuth: vi.fn<[SignInWithOAuthCredentials], Promise<SignInWithOAuthResponse>>(() =>
-      Promise.resolve({ data: {}, error: null })
-    ),
-    signOut: vi.fn<[SignOutOptions?], Promise<SignOutResponse>>(() =>
-      Promise.resolve({ error: null })
-    ),
+    signInWithOAuth: vi.fn<
+      (credentials: SignInWithOAuthCredentials) => Promise<SignInWithOAuthResponse>
+    >(() => Promise.resolve({ data: {}, error: null })),
+    signOut: vi.fn<
+      (options?: { scope?: 'global' | 'local' | 'others' }) => Promise<SignOutResponse>
+    >(() => Promise.resolve({ error: null })),
   },
 };
