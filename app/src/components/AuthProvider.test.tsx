@@ -6,14 +6,15 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
+import type { logger } from '../utils/logger';
 
 // Mock the logger to silence test output
 vi.mock('../utils/logger', () => ({
   logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
+    error: vi.fn<typeof logger.error>(),
+    warn: vi.fn<typeof logger.warn>(),
+    info: vi.fn<typeof logger.info>(),
+    debug: vi.fn<typeof logger.debug>(),
   },
 }));
 
@@ -89,11 +90,10 @@ describe('AuthProvider', () => {
 
   describe('Error Handling', () => {
     it('should handle connection errors from getSession API error', async () => {
-      // Use 'as any' to bypass strict Supabase types for test mocking - we only need basic error structure
       mockSupabaseClient.auth.getSession.mockResolvedValue({
         data: { session: null },
-        error: { message: 'Network error' }, // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+        error: new Error('Network error'),
+      });
 
       render(
         <AuthProvider>
@@ -133,8 +133,8 @@ describe('AuthProvider', () => {
       // Start with connection error
       mockSupabaseClient.auth.getSession.mockResolvedValue({
         data: { session: null },
-        error: { message: 'Network error' }, // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+        error: new Error('Network error'),
+      });
 
       render(
         <AuthProvider>
@@ -239,9 +239,9 @@ describe('AuthProvider', () => {
       };
 
       mockSupabaseClient.auth.signInWithOAuth.mockResolvedValue({
-        data: {},
-        error: { message: 'OAuth failed' }, // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+        data: null,
+        error: new Error('OAuth failed'),
+      });
 
       render(
         <AuthProvider>
@@ -266,8 +266,8 @@ describe('AuthProvider', () => {
       };
 
       mockSupabaseClient.auth.signOut.mockResolvedValue({
-        error: { message: 'Sign out failed' }, // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+        error: new Error('Sign out failed'),
+      });
 
       render(
         <AuthProvider>

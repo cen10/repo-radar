@@ -3,9 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from './Login';
 import type { User } from '../types';
+import type { AuthContextType } from '../contexts/auth-context';
 import { LOGIN_FAILED } from '../constants/errorMessages';
 
-const mockUseAuth = vi.fn();
+const mockUseAuth = vi.fn<[], Partial<AuthContextType>>();
 
 vi.mock('../hooks/use-auth', () => ({
   useAuth: () => mockUseAuth(),
@@ -35,8 +36,8 @@ describe('Login', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
-      signInWithGitHub: vi.fn(),
-      signOut: vi.fn(),
+      signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
+      signOut: vi.fn<AuthContextType['signOut']>(),
     });
   });
 
@@ -73,7 +74,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -90,7 +91,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -108,7 +109,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -127,7 +128,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -144,8 +145,8 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: true,
-        signInWithGitHub: vi.fn(),
-        signOut: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -160,8 +161,8 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
-        signOut: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
     });
 
@@ -194,7 +195,7 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut,
       });
 
@@ -211,7 +212,7 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut,
       });
 
@@ -229,7 +230,7 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut,
       });
 
@@ -254,7 +255,7 @@ describe('Login', () => {
         loading: false,
         connectionError: 'Connection failed',
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
         retryAuth,
       };
 
@@ -281,7 +282,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -300,7 +301,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -321,7 +322,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -343,7 +344,7 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut,
       });
 
@@ -367,7 +368,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
@@ -386,7 +387,7 @@ describe('Login', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signInWithGitHub: vi.fn(),
+        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut,
       });
 
@@ -407,7 +408,7 @@ describe('Login', () => {
         user: null,
         loading: false,
         signInWithGitHub,
-        signOut: vi.fn(),
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "cd app && npm test",
+    "typecheck": "cd app && npm run typecheck",
     "format": "cd app && npm run format",
     "lint": "cd app && npm run lint",
     "prepare": "husky"
