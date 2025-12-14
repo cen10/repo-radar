@@ -2,24 +2,66 @@
   "name": "repo-radar",
   "version": "1.0.0",
   "description": "A personalized GitHub repository momentum dashboard that tracks star growth, releases, and issue activity across your starred repositories.",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "cd app && npm test",
-    "typecheck": "cd app && npm run typecheck",
-    "format": "cd app && npm run format",
-    "lint": "cd app && npm run lint",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"*.{js,ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"*.{js,ts,json}\"",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepare": "husky"
   },
+  "dependencies": {
+    "@headlessui/react": "^2.2.8",
+    "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.89.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-error-boundary": "^6.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/ui": "^4.0.15",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.3.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.13",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.39.1",
+    "vite": "^7.1.2",
+    "vitest": "^4.0.15"
+  },
   "lint-staged": {
-    "app/src/**/*.{ts,tsx}": [
-      "cd app && npx eslint --fix",
-      "cd app && npx prettier --write"
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
     ],
-    "app/src/**/*.{js,jsx,json,css,md}": [
-      "cd app && npx prettier --write"
+    "src/**/*.{js,jsx,json,css,md}": [
+      "prettier --write"
     ],
-    "app/*.{js,ts,json}": [
-      "cd app && npx prettier --write"
+    "*.{js,ts,json}": [
+      "prettier --write"
     ]
   },
   "repository": {
@@ -32,9 +74,5 @@
   "bugs": {
     "url": "https://github.com/cen10/repo-radar/issues"
   },
-  "homepage": "https://github.com/cen10/repo-radar#readme",
-  "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^16.2.7"
-  }
+  "homepage": "https://github.com/cen10/repo-radar#readme"
 }
