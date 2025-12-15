@@ -319,7 +319,9 @@ describe('AuthProvider', () => {
   });
 
   describe('User mapping fallback scenarios', () => {
-    it('should use email prefix as login when user_name is missing', async () => {
+    it('should fall back to email when user_name is missing and log a warning', async () => {
+      const { logger } = await import('../utils/logger');
+
       const sessionWithoutUsername = {
         ...mockSession,
         user: {
@@ -348,28 +350,33 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      // Should use email prefix "johndoe" as login
-      expect(screen.getByText(/user: johndoe/i)).toBeInTheDocument();
+      // Should fall back to email as login
+      expect(screen.getByText(/user: johndoe@example.com/i)).toBeInTheDocument();
+
+      // Should log a warning with debugging context
+      expect(logger.warn).toHaveBeenCalledWith(
+        'GitHub OAuth response missing user_name, falling back to email',
+        expect.objectContaining({
+          userId: mockSession.user.id,
+          email: 'johndoe@example.com',
+          userMetadata: expect.any(Object),
+        })
+      );
     });
 
-    it('should use empty string as login when both user_name and email are missing', async () => {
-      const sessionWithoutLoginInfo = {
+    it('should fall back to email on auth state change when user_name is missing', async () => {
+      const { logger } = await import('../utils/logger');
+
+      const sessionWithoutUsername = {
         ...mockSession,
         user: {
           ...mockSession.user,
-          email: undefined,
+          email: 'janedoe@example.com',
           user_metadata: {
-            // No user_name field
-            full_name: 'John Doe',
-            avatar_url: 'https://example.com/avatar.jpg',
+            full_name: 'Jane Doe',
           },
         },
       };
-
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithoutLoginInfo },
-        error: null,
-      });
 
       render(
         <AuthProvider>
@@ -381,8 +388,21 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      // Should use empty string as login
-      expect(screen.getByText(/user:\s*$/i)).toBeInTheDocument();
+      // Simulate auth state change with missing user_name
+      const authStateChangeCallback = mockSupabaseClient.auth.onAuthStateChange.mock.calls[0][0];
+      authStateChangeCallback('SIGNED_IN', sessionWithoutUsername);
+
+      await waitFor(() => {
+        expect(screen.getByText(/user: janedoe@example.com/i)).toBeInTheDocument();
+      });
+
+      // Should log a warning
+      expect(logger.warn).toHaveBeenCalledWith(
+        'GitHub OAuth response missing user_name, falling back to email',
+        expect.objectContaining({
+          email: 'janedoe@example.com',
+        })
+      );
     });
 
     it('should use name field when full_name is missing', async () => {
@@ -508,13 +528,16 @@ describe('AuthProvider', () => {
       expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
     });
 
-    it('should handle all fallbacks simultaneously', async () => {
-      const minimalSession = {
+    it('should handle optional field fallbacks when user_name is present', async () => {
+      const sessionWithMinimalOptionalFields = {
         ...mockSession,
         user: {
           ...mockSession.user,
           email: undefined,
-          user_metadata: {}, // No metadata at all
+          user_metadata: {
+            user_name: 'testuser', // Required field is present
+            // No full_name, name, or avatar_url
+          },
         },
       };
 
@@ -525,7 +548,7 @@ describe('AuthProvider', () => {
             {loading && <span>Loading...</span>}
             {user && (
               <>
-                <span>Login: {user.login || 'empty'}</span>
+                <span>Login: {user.login}</span>
                 <span>Name: {user.name || 'none'}</span>
                 <span>Avatar: {user.avatar_url || 'empty'}</span>
                 <span>Email: {user.email || 'none'}</span>
@@ -536,7 +559,7 @@ describe('AuthProvider', () => {
       };
 
       mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: minimalSession },
+        data: { session: sessionWithMinimalOptionalFields },
         error: null,
       });
 
@@ -550,43 +573,11 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      // All fallbacks should be applied
-      expect(screen.getByText(/login: empty/i)).toBeInTheDocument();
+      // User should be created with fallbacks for optional fields
+      expect(screen.getByText(/login: testuser/i)).toBeInTheDocument();
       expect(screen.getByText(/name: none/i)).toBeInTheDocument();
       expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
       expect(screen.getByText(/email: none/i)).toBeInTheDocument();
-    });
-
-    it('should handle email without @ symbol gracefully', async () => {
-      const sessionWithMalformedEmail = {
-        ...mockSession,
-        user: {
-          ...mockSession.user,
-          email: 'notanemail',
-          user_metadata: {
-            // No user_name field
-            full_name: 'Test User',
-          },
-        },
-      };
-
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithMalformedEmail },
-        error: null,
-      });
-
-      render(
-        <AuthProvider>
-          <TestComponent />
-        </AuthProvider>
-      );
-
-      await waitFor(() => {
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-      });
-
-      // Should use the whole email as login since there's no @ to split on
-      expect(screen.getByText(/user: notanemail/i)).toBeInTheDocument();
     });
   });
 });
