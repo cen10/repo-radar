@@ -317,4 +317,276 @@ describe('AuthProvider', () => {
       });
     });
   });
+
+  describe('User mapping fallback scenarios', () => {
+    it('should use email prefix as login when user_name is missing', async () => {
+      const sessionWithoutUsername = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: 'johndoe@example.com',
+          user_metadata: {
+            // No user_name field
+            full_name: 'John Doe',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutUsername },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // Should use email prefix "johndoe" as login
+      expect(screen.getByText(/user: johndoe/i)).toBeInTheDocument();
+    });
+
+    it('should use empty string as login when both user_name and email are missing', async () => {
+      const sessionWithoutLoginInfo = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: undefined,
+          user_metadata: {
+            // No user_name field
+            full_name: 'John Doe',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutLoginInfo },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // Should use empty string as login
+      expect(screen.getByText(/user:\s*$/i)).toBeInTheDocument();
+    });
+
+    it('should use name field when full_name is missing', async () => {
+      const sessionWithNameOnly = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            name: 'Fallback Name', // Using 'name' instead of 'full_name'
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      const TestComponentWithName = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Name: {user.name || 'none'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithNameOnly },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithName />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/name: fallback name/i)).toBeInTheDocument();
+    });
+
+    it('should use null for name when both full_name and name are missing', async () => {
+      const sessionWithoutName = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            // No full_name or name field
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      const TestComponentWithName = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Name: {user.name || 'none'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutName },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithName />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/name: none/i)).toBeInTheDocument();
+    });
+
+    it('should use empty string for avatar_url when missing', async () => {
+      const sessionWithoutAvatar = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            full_name: 'Test User',
+            // No avatar_url field
+          },
+        },
+      };
+
+      const TestComponentWithAvatar = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Avatar: {user.avatar_url || 'empty'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutAvatar },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithAvatar />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
+    });
+
+    it('should handle all fallbacks simultaneously', async () => {
+      const minimalSession = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: undefined,
+          user_metadata: {}, // No metadata at all
+        },
+      };
+
+      const TestComponentFull = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && (
+              <>
+                <span>Login: {user.login || 'empty'}</span>
+                <span>Name: {user.name || 'none'}</span>
+                <span>Avatar: {user.avatar_url || 'empty'}</span>
+                <span>Email: {user.email || 'none'}</span>
+              </>
+            )}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: minimalSession },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentFull />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // All fallbacks should be applied
+      expect(screen.getByText(/login: empty/i)).toBeInTheDocument();
+      expect(screen.getByText(/name: none/i)).toBeInTheDocument();
+      expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
+      expect(screen.getByText(/email: none/i)).toBeInTheDocument();
+    });
+
+    it('should handle email without @ symbol gracefully', async () => {
+      const sessionWithMalformedEmail = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: 'notanemail',
+          user_metadata: {
+            // No user_name field
+            full_name: 'Test User',
+          },
+        },
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithMalformedEmail },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // Should use the whole email as login since there's no @ to split on
+      expect(screen.getByText(/user: notanemail/i)).toBeInTheDocument();
+    });
+  });
 });
