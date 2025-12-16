@@ -7,6 +7,7 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
 import type { logger } from '../utils/logger';
+import { logger as mockedLogger } from '../utils/logger';
 
 // Mock the logger to silence test output
 vi.mock('../utils/logger', () => ({
@@ -86,6 +87,49 @@ describe('AuthProvider', () => {
     expect(typeof signInWithGitHub).toBe('function');
     expect(typeof signOut).toBe('function');
     expect(typeof retryAuth).toBe('function');
+  });
+
+  describe('Auth state changes', () => {
+    it('should clear user and session on SIGNED_OUT event', async () => {
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: mockSession },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/user: testuser/i)).toBeInTheDocument();
+      });
+
+      const authStateChangeCallback = mockSupabaseClient.auth.onAuthStateChange.mock.calls[0][0];
+      authStateChangeCallback('SIGNED_OUT', null);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/user: testuser/i)).not.toBeInTheDocument();
+        expect(screen.getByText(/no user/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should unsubscribe from auth changes on unmount', () => {
+      const { unmount } = render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      const unsubscribe =
+        mockSupabaseClient.auth.onAuthStateChange.mock.results[0].value.data.subscription
+          .unsubscribe;
+
+      unmount();
+
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Error Handling', () => {
@@ -193,6 +237,26 @@ describe('AuthProvider', () => {
       expect(screen.getByText(/session: none/i)).toBeInTheDocument();
     });
 
+    it('should set user and session when initial session exists', async () => {
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: mockSession },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/user: testuser/i)).toBeInTheDocument();
+      expect(screen.getByText(/session exists/i)).toBeInTheDocument();
+    });
+
     it('should provide retry functionality through retryAuth', async () => {
       let retryAuth: (() => Promise<void>) | undefined;
 
@@ -225,6 +289,47 @@ describe('AuthProvider', () => {
       await retryAuth!();
 
       expect(mockSupabaseClient.auth.getSession).toHaveBeenCalledTimes(1);
+    });
+
+    it('should clear connection error when retryAuth succeeds after a failure', async () => {
+      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
+        data: { session: null },
+        error: new Error('Network error'),
+      });
+      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
+        data: { session: null },
+        error: null,
+      });
+
+      let retryAuth: (() => Promise<void>) | undefined;
+
+      const TestRetryComponent = () => {
+        const auth = useAuth();
+        retryAuth = auth.retryAuth;
+        return (
+          <div>
+            <div>Connection: {auth.connectionError ?? 'none'}</div>
+            <div>Loading: {auth.loading ? 'yes' : 'no'}</div>
+          </div>
+        );
+      };
+
+      render(
+        <AuthProvider>
+          <TestRetryComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(new RegExp(CONNECTION_FAILED, 'i'))).toBeInTheDocument();
+      });
+
+      await retryAuth!();
+
+      await waitFor(() => {
+        expect(screen.getByText(/connection: none/i)).toBeInTheDocument();
+        expect(screen.getByText(/loading: no/i)).toBeInTheDocument();
+      });
     });
   });
 
@@ -314,6 +419,72 @@ describe('AuthProvider', () => {
           scopes: 'read:user user:email',
           redirectTo: `${window.location.origin}/dashboard`,
         },
+      });
+    });
+  });
+
+  describe('User mapping', () => {
+    it('should prefer user_name over email prefix when mapping user', async () => {
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: {
+          session: {
+            ...mockSession,
+            user: {
+              ...mockSession.user,
+              email: 'emailuser@example.com',
+              user_metadata: { ...mockSession.user.user_metadata, user_name: 'priorityUser' },
+            },
+          },
+        },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/user: priorityuser/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should log an error when no login can be derived', async () => {
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: {
+          session: {
+            ...mockSession,
+            user: {
+              ...mockSession.user,
+              email: '',
+              user_metadata: {},
+            },
+          },
+        },
+        error: null,
+      });
+
+      let capturedUser: ReturnType<typeof useAuth>['user'];
+
+      const CaptureUserComponent = () => {
+        const auth = useAuth();
+        capturedUser = auth.user;
+        return null;
+      };
+
+      render(
+        <AuthProvider>
+          <CaptureUserComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(mockedLogger.error).toHaveBeenCalledWith(
+          'Failed to extract login from GitHub OAuth',
+          { userId: mockSession.user.id }
+        );
+        expect(capturedUser?.login).toBe('');
       });
     });
   });
