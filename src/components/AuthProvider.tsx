@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
@@ -35,6 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
+  const applySessionToState = (nextSession: Session | null) => {
+    const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
+    setSession(nextSession);
+    setUser(nextUser);
+  };
+
   const getSession = async () => {
     try {
       setLoading(true);
@@ -52,16 +58,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setSession(initialSession);
-      if (initialSession?.user) {
-        setUser(mapSupabaseUserToUser(initialSession.user));
-      } else {
-        setUser(null);
-      }
+      applySessionToState(initialSession);
       setLoading(false);
     } catch (err) {
       logger.error('Unexpected error getting session:', err);
       setConnectionError(UNEXPECTED_ERROR);
+      setLoading(false);
+    }
+  };
+
+  const handleAuthStateChange = async (_event: AuthChangeEvent, session: Session | null) => {
+    try {
+      applySessionToState(session);
+      setLoading(false);
+    } catch (err) {
+      logger.error('Unexpected error handling auth state change:', err);
+      // On error, clear auth state to prevent inconsistent state
+      setSession(null);
+      setUser(null);
       setLoading(false);
     }
   };
@@ -72,18 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-
-      if (session?.user) {
-        setUser(mapSupabaseUserToUser(session.user));
-      } else {
-        setUser(null);
-      }
-
-      // Set loading to false when auth state change completes
-      setLoading(false);
-    });
+    } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => subscription.unsubscribe();
   }, []);
