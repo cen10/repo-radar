@@ -248,7 +248,7 @@ describe('Login', () => {
   describe('error handling', () => {
     it('should not proceed with sign in when connection retry fails', async () => {
       const signInWithGitHub = vi.fn();
-      const retryAuth = vi.fn().mockResolvedValue(undefined); // retryAuth doesn't throw, just sets state
+      const retryAuth = vi.fn().mockResolvedValue(false);
 
       const authStateWithError = {
         user: null,
@@ -262,13 +262,10 @@ describe('Login', () => {
       // Mock that connectionError persists after retry
       mockUseAuth.mockReturnValue(authStateWithError);
 
-      const { rerender } = render(<Login />);
+      render(<Login />);
 
       const loginButton = screen.getByRole('button', { name: /try again/i });
       await userEvent.click(loginButton);
-
-      // Force re-render to simulate state update
-      rerender(<Login />);
 
       await waitFor(() => {
         expect(retryAuth).toHaveBeenCalled();

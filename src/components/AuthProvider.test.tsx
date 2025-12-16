@@ -67,7 +67,7 @@ describe('AuthProvider', () => {
   it('should provide auth methods through context', () => {
     let signInWithGitHub: (() => Promise<void>) | undefined;
     let signOut: (() => Promise<void>) | undefined;
-    let retryAuth: (() => Promise<void>) | undefined;
+    let retryAuth: (() => Promise<boolean>) | undefined;
 
     const TestMethodComponent = () => {
       const auth = useAuth();
@@ -194,7 +194,7 @@ describe('AuthProvider', () => {
     });
 
     it('should provide retry functionality through retryAuth', async () => {
-      let retryAuth: (() => Promise<void>) | undefined;
+      let retryAuth: (() => Promise<boolean>) | undefined;
 
       const TestRetryComponent = () => {
         const auth = useAuth();
@@ -222,7 +222,7 @@ describe('AuthProvider', () => {
 
       // Test that retryAuth calls getSession again
       mockSupabaseClient.auth.getSession.mockClear();
-      await retryAuth!();
+      await expect(retryAuth!()).resolves.toBe(true);
 
       expect(mockSupabaseClient.auth.getSession).toHaveBeenCalledTimes(1);
     });

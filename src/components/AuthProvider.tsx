@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(nextUser);
   };
 
-  const getSession = async () => {
+  const getSession = async (): Promise<boolean> => {
     try {
       setLoading(true);
       setConnectionError(null);
@@ -55,15 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logger.error('Error connecting to Supabase:', error);
         setConnectionError(CONNECTION_FAILED);
         setLoading(false);
-        return;
+        return false;
       }
 
       applySessionToState(initialSession);
       setLoading(false);
+      return true;
     } catch (err) {
       logger.error('Unexpected error getting session:', err);
       setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
+      return false;
     }
   };
 
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    getSession();
+    void getSession();
 
     // Listen for auth changes
     const {

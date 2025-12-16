@@ -9,7 +9,7 @@ interface AuthContextType {
   connectionError: string | null;
   signInWithGitHub: () => Promise<void>;
   signOut: () => Promise<void>;
-  retryAuth: () => Promise<void>;
+  retryAuth: () => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
