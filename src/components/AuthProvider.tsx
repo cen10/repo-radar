@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
@@ -35,13 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const applySessionToState = (nextSession: Session | null) => {
+  const applySessionToState = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
     setSession(nextSession);
     setUser(nextUser);
-  };
+  }, []);
 
-  const getSession = async (): Promise<boolean> => {
+  const getSession = useCallback(async (): Promise<boolean> => {
     try {
       setLoading(true);
       setConnectionError(null);
@@ -67,20 +67,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return false;
     }
-  };
+  }, [applySessionToState]);
 
-  const handleAuthStateChange = async (_event: AuthChangeEvent, session: Session | null) => {
-    try {
-      applySessionToState(session);
-      setLoading(false);
-    } catch (err) {
-      logger.error('Unexpected error handling auth state change:', err);
-      // On error, clear auth state to prevent inconsistent state
-      setSession(null);
-      setUser(null);
-      setLoading(false);
-    }
-  };
+  const handleAuthStateChange = useCallback(
+    async (_event: AuthChangeEvent, session: Session | null) => {
+      try {
+        applySessionToState(session);
+        setLoading(false);
+      } catch (err) {
+        logger.error('Unexpected error handling auth state change:', err);
+        // On error, clear auth state to prevent inconsistent state
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
+    },
+    [applySessionToState]
+  );
 
   useEffect(() => {
     void getSession();
@@ -91,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [getSession, handleAuthStateChange]);
 
   // Clear connection error on successful auth
   useEffect(() => {
