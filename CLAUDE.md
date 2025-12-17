@@ -117,6 +117,34 @@ npm run build        # Build for production
 11. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
 12. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
 
+## Data Validation Pattern
+
+When validating data before processing:
+1. **Validate at the call site, not inside the function.** If a function requires certain data to exist (like `user_name`), check for that data before calling the function. If it's missing, handle the error right there — don't call the function at all.
+2. **Keep mapping/transformation functions pure.** A function like `mapXToY` should only map data. It should not validate inputs, throw errors, or have side effects. It trusts that the caller has already ensured the data is valid.
+3. **Don't pass derived values as extra parameters.** If you can derive a value from an object you're already passing (e.g., `login` from `supabaseUser.user_metadata.user_name`), don't pass both the object and the derived value. Just pass the object and let the function extract what it needs.
+4. **Handle errors where you have context.** The call site knows what error message to show, what state to update, etc. Don't bury error handling inside utility functions that lack that context.
+
+Pattern to follow:
+```typescript
+// ✓ Good: Validate first, then call
+if (!data.requiredField) {
+  handleError();
+  return;
+}
+const result = mapData(data);
+
+// ✗ Bad: Let the function throw and catch it
+try {
+  const result = mapData(data); // throws if requiredField missing
+} catch (err) {
+  handleError();
+}
+
+// ✗ Bad: Pass derived values as extra params
+const result = mapData(data, data.requiredField);
+```
+
 ## Commit Message Rules
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
 - Body: wrap at 72 chars; explain the _why_

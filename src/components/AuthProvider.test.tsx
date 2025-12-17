@@ -7,7 +7,6 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
 import type { logger } from '../utils/logger';
-import { logger as mockedLogger } from '../utils/logger';
 
 // Mock the logger to silence test output
 vi.mock('../utils/logger', () => ({
@@ -68,7 +67,7 @@ describe('AuthProvider', () => {
   it('should provide auth methods through context', () => {
     let signInWithGitHub: (() => Promise<void>) | undefined;
     let signOut: (() => Promise<void>) | undefined;
-    let retryAuth: (() => Promise<void>) | undefined;
+    let retryAuth: (() => Promise<boolean>) | undefined;
 
     const TestMethodComponent = () => {
       const auth = useAuth();
@@ -258,7 +257,7 @@ describe('AuthProvider', () => {
     });
 
     it('should provide retry functionality through retryAuth', async () => {
-      let retryAuth: (() => Promise<void>) | undefined;
+      let retryAuth: (() => Promise<boolean>) | undefined;
 
       const TestRetryComponent = () => {
         const auth = useAuth();
@@ -286,7 +285,7 @@ describe('AuthProvider', () => {
 
       // Test that retryAuth calls getSession again
       mockSupabaseClient.auth.getSession.mockClear();
-      await retryAuth!();
+      await expect(retryAuth!()).resolves.toBe(true);
 
       expect(mockSupabaseClient.auth.getSession).toHaveBeenCalledTimes(1);
     });
@@ -301,7 +300,7 @@ describe('AuthProvider', () => {
         error: null,
       });
 
-      let retryAuth: (() => Promise<void>) | undefined;
+      let retryAuth: (() => Promise<boolean>) | undefined;
 
       const TestRetryComponent = () => {
         const auth = useAuth();
@@ -423,19 +422,25 @@ describe('AuthProvider', () => {
     });
   });
 
-  describe('User mapping', () => {
-    it('should prefer user_name over email prefix when mapping user', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            ...mockSession,
-            user: {
-              ...mockSession.user,
-              email: 'emailuser@example.com',
-              user_metadata: { ...mockSession.user.user_metadata, user_name: 'priorityUser' },
-            },
+  describe('User mapping fallback scenarios', () => {
+    it('should fall back to email when user_name is missing and log a warning', async () => {
+      const { logger } = await import('../utils/logger');
+
+      const sessionWithoutUsername = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: 'johndoe@example.com',
+          user_metadata: {
+            // No user_name field
+            full_name: 'John Doe',
+            avatar_url: 'https://example.com/avatar.jpg',
           },
         },
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutUsername },
         error: null,
       });
 
@@ -446,46 +451,237 @@ describe('AuthProvider', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/user: priorityuser/i)).toBeInTheDocument();
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
+
+      // Should fall back to email as login
+      expect(screen.getByText(/user: johndoe@example.com/i)).toBeInTheDocument();
+
+      // Should log a warning with debugging context
+      expect(logger.warn).toHaveBeenCalledWith(
+        'GitHub OAuth response missing user_name, falling back to email',
+        expect.objectContaining({
+          userId: mockSession.user.id,
+          email: 'johndoe@example.com',
+          userMetadata: expect.any(Object),
+        })
+      );
     });
 
-    it('should log an error when no login can be derived', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: {
-          session: {
-            ...mockSession,
-            user: {
-              ...mockSession.user,
-              email: '',
-              user_metadata: {},
-            },
+    it('should fall back to email on auth state change when user_name is missing', async () => {
+      const { logger } = await import('../utils/logger');
+
+      const sessionWithoutUsername = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: 'janedoe@example.com',
+          user_metadata: {
+            full_name: 'Jane Doe',
           },
         },
-        error: null,
-      });
-
-      let capturedUser: ReturnType<typeof useAuth>['user'];
-
-      const CaptureUserComponent = () => {
-        const auth = useAuth();
-        capturedUser = auth.user;
-        return null;
       };
 
       render(
         <AuthProvider>
-          <CaptureUserComponent />
+          <TestComponent />
         </AuthProvider>
       );
 
       await waitFor(() => {
-        expect(mockedLogger.error).toHaveBeenCalledWith(
-          'Failed to extract login from GitHub OAuth',
-          { userId: mockSession.user.id }
-        );
-        expect(capturedUser?.login).toBe('');
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
+
+      // Simulate auth state change with missing user_name
+      const authStateChangeCallback = mockSupabaseClient.auth.onAuthStateChange.mock.calls[0][0];
+      authStateChangeCallback('SIGNED_IN', sessionWithoutUsername);
+
+      await waitFor(() => {
+        expect(screen.getByText(/user: janedoe@example.com/i)).toBeInTheDocument();
+      });
+
+      // Should log a warning
+      expect(logger.warn).toHaveBeenCalledWith(
+        'GitHub OAuth response missing user_name, falling back to email',
+        expect.objectContaining({
+          email: 'janedoe@example.com',
+        })
+      );
+    });
+
+    it('should use name field when full_name is missing', async () => {
+      const sessionWithNameOnly = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            name: 'Fallback Name', // Using 'name' instead of 'full_name'
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      const TestComponentWithName = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Name: {user.name || 'none'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithNameOnly },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithName />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/name: fallback name/i)).toBeInTheDocument();
+    });
+
+    it('should use null for name when both full_name and name are missing', async () => {
+      const sessionWithoutName = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            // No full_name or name field
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+        },
+      };
+
+      const TestComponentWithName = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Name: {user.name || 'none'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutName },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithName />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/name: none/i)).toBeInTheDocument();
+    });
+
+    it('should use empty string for avatar_url when missing', async () => {
+      const sessionWithoutAvatar = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          user_metadata: {
+            user_name: 'testuser',
+            full_name: 'Test User',
+            // No avatar_url field
+          },
+        },
+      };
+
+      const TestComponentWithAvatar = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && <span>Avatar: {user.avatar_url || 'empty'}</span>}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithoutAvatar },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentWithAvatar />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
+    });
+
+    it('should handle optional field fallbacks when user_name is present', async () => {
+      const sessionWithMinimalOptionalFields = {
+        ...mockSession,
+        user: {
+          ...mockSession.user,
+          email: undefined,
+          user_metadata: {
+            user_name: 'testuser', // Required field is present
+            // No full_name, name, or avatar_url
+          },
+        },
+      };
+
+      const TestComponentFull = () => {
+        const { user, loading } = useAuth();
+        return (
+          <div>
+            {loading && <span>Loading...</span>}
+            {user && (
+              <>
+                <span>Login: {user.login}</span>
+                <span>Name: {user.name || 'none'}</span>
+                <span>Avatar: {user.avatar_url || 'empty'}</span>
+                <span>Email: {user.email || 'none'}</span>
+              </>
+            )}
+          </div>
+        );
+      };
+
+      mockSupabaseClient.auth.getSession.mockResolvedValue({
+        data: { session: sessionWithMinimalOptionalFields },
+        error: null,
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponentFull />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // User should be created with fallbacks for optional fields
+      expect(screen.getByText(/login: testuser/i)).toBeInTheDocument();
+      expect(screen.getByText(/name: none/i)).toBeInTheDocument();
+      expect(screen.getByText(/avatar: empty/i)).toBeInTheDocument();
+      expect(screen.getByText(/email: none/i)).toBeInTheDocument();
     });
   });
 });

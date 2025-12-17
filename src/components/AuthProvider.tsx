@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { useCallback, useEffect, useState } from 'react';
+import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
@@ -7,16 +7,25 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 import { logger } from '../utils/logger';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
-  const login = supabaseUser.user_metadata?.user_name || supabaseUser.email?.split('@')?.[0] || '';
-  if (!login) {
-    logger.error('Failed to extract login from GitHub OAuth', { userId: supabaseUser.id });
+  const { id, email, user_metadata = {} } = supabaseUser;
+  const { user_name, full_name, name, avatar_url } = user_metadata;
+
+  let login = user_name;
+  if (!user_name) {
+    login = email || '';
+    logger.warn('GitHub OAuth response missing user_name, falling back to email', {
+      userId: id,
+      email,
+      userMetadata: user_metadata,
+    });
   }
+
   return {
-    id: supabaseUser.id,
+    id,
     login,
-    name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
-    avatar_url: supabaseUser.user_metadata?.avatar_url || '',
-    email: supabaseUser.email || null,
+    name: full_name || name || null,
+    avatar_url: avatar_url || '',
+    email: email || null,
   };
 };
 
@@ -26,7 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const getSession = async () => {
+  const applySessionToState = useCallback((nextSession: Session | null) => {
+    const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
+    setSession(nextSession);
+    setUser(nextUser);
+  }, []);
+
+  const getSession = useCallback(async (): Promise<boolean> => {
     try {
       setLoading(true);
       setConnectionError(null);
@@ -40,44 +55,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logger.error('Error connecting to Supabase:', error);
         setConnectionError(CONNECTION_FAILED);
         setLoading(false);
-        return;
+        return false;
       }
 
-      setSession(initialSession);
-      if (initialSession?.user) {
-        setUser(mapSupabaseUserToUser(initialSession.user));
-      } else {
-        setUser(null);
-      }
+      applySessionToState(initialSession);
       setLoading(false);
+      return true;
     } catch (err) {
       logger.error('Unexpected error getting session:', err);
       setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
+      return false;
     }
-  };
+  }, [applySessionToState]);
+
+  const handleAuthStateChange = useCallback(
+    async (_event: AuthChangeEvent, session: Session | null) => {
+      try {
+        applySessionToState(session);
+        setLoading(false);
+      } catch (err) {
+        logger.error('Unexpected error handling auth state change:', err);
+        // On error, clear auth state to prevent inconsistent state
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
+    },
+    [applySessionToState]
+  );
 
   useEffect(() => {
-    getSession();
+    void getSession();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-
-      if (session?.user) {
-        setUser(mapSupabaseUserToUser(session.user));
-      } else {
-        setUser(null);
-      }
-
-      // Set loading to false when auth state change completes
-      setLoading(false);
-    });
+    } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [getSession, handleAuthStateChange]);
 
   // Clear connection error on successful auth
   useEffect(() => {

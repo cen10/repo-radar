@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Design tokens → creates bg-github-*, text-github-*, font-mono, animate-* */
 @theme {
@@ -12,7 +12,7 @@
   --color-github-warning: #d29922;
   --color-github-danger: #f85149;
 
-  --font-mono: "Fira Code", "SF Mono", monospace;
+  --font-mono: 'Fira Code', 'SF Mono', monospace;
 
   /* animations → gives you animate-pulse-slow / animate-shimmer */
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -21,9 +21,15 @@
 
 /* Keyframes should live outside @theme */
 @keyframes shimmer {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* (Optional but tidy) declare layer order if you later import split files
@@ -36,8 +42,12 @@
   }
 
   /* Custom scrollbar */
-  ::-webkit-scrollbar { @apply w-2 h-2; }
-  ::-webkit-scrollbar-track { @apply bg-github-bg-secondary; }
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-github-bg-secondary;
+  }
   ::-webkit-scrollbar-thumb {
     @apply bg-github-border rounded-full hover:bg-github-text-secondary;
   }
@@ -84,7 +94,9 @@
            focus:border-transparent transition-all duration-200;
   }
 
-  .link { @apply text-github-accent hover:underline cursor-pointer; }
+  .link {
+    @apply text-github-accent hover:underline cursor-pointer;
+  }
 
   /* Loading skeleton animation */
   .skeleton {
@@ -97,10 +109,17 @@
 
 @layer utilities {
   /* Custom utilities */
-  .text-balance { text-wrap: balance; }
+  .text-balance {
+    text-wrap: balance;
+  }
 
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
   /* Gradient text */
   .gradient-text {

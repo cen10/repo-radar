@@ -6,7 +6,7 @@ import type { User } from '../types';
 import type { AuthContextType } from '../contexts/auth-context';
 import { LOGIN_FAILED } from '../constants/errorMessages';
 
-const mockUseAuth = vi.fn<[], Partial<AuthContextType>>();
+const mockUseAuth = vi.fn<() => Partial<AuthContextType>>();
 
 vi.mock('../hooks/use-auth', () => ({
   useAuth: () => mockUseAuth(),
@@ -86,7 +86,7 @@ describe('Login', () => {
     });
 
     it('should show loading state when signing in', async () => {
-      const signInWithGitHub = vi.fn(() => new Promise(() => {}));
+      const signInWithGitHub = vi.fn<() => Promise<void>>(() => new Promise(() => {}));
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
@@ -208,7 +208,7 @@ describe('Login', () => {
     });
 
     it('should show loading state when signing out', async () => {
-      const signOut = vi.fn(() => new Promise(() => {}));
+      const signOut = vi.fn<() => Promise<void>>(() => new Promise(() => {}));
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
@@ -248,7 +248,7 @@ describe('Login', () => {
   describe('error handling', () => {
     it('should not proceed with sign in when connection retry fails', async () => {
       const signInWithGitHub = vi.fn();
-      const retryAuth = vi.fn().mockResolvedValue(undefined); // retryAuth doesn't throw, just sets state
+      const retryAuth = vi.fn().mockResolvedValue(false);
 
       const authStateWithError = {
         user: null,
@@ -262,13 +262,10 @@ describe('Login', () => {
       // Mock that connectionError persists after retry
       mockUseAuth.mockReturnValue(authStateWithError);
 
-      const { rerender } = render(<Login />);
+      render(<Login />);
 
       const loginButton = screen.getByRole('button', { name: /try again/i });
       await userEvent.click(loginButton);
-
-      // Force re-render to simulate state update
-      rerender(<Login />);
 
       await waitFor(() => {
         expect(retryAuth).toHaveBeenCalled();
@@ -317,7 +314,7 @@ describe('Login', () => {
 
   describe('accessibility features', () => {
     it('should set aria-busy to true on login button when signing in', async () => {
-      const signInWithGitHub = vi.fn(() => new Promise(() => {})); // Never resolves to keep loading
+      const signInWithGitHub = vi.fn<() => Promise<void>>(() => new Promise(() => {})); // Never resolves to keep loading
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
@@ -340,7 +337,7 @@ describe('Login', () => {
     });
 
     it('should set aria-busy to true on sign out button when signing out', async () => {
-      const signOut = vi.fn(() => new Promise(() => {})); // Never resolves to keep loading
+      const signOut = vi.fn<() => Promise<void>>(() => new Promise(() => {})); // Never resolves to keep loading
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
