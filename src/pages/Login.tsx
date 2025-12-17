@@ -66,10 +66,9 @@ export default function Login() {
 
       // If there's a connection error, try to retry connection first
       if (connectionError) {
-        await retryAuth();
-        // Check if the retry was successful
-        if (connectionError) {
-          // Still have connection error, don't proceed
+        const didRetrySucceed = await retryAuth();
+        if (!didRetrySucceed) {
+          // Still have a connection error, don't proceed
           return;
         }
       }
