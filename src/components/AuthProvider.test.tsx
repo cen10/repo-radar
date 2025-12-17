@@ -6,6 +6,7 @@ import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages'
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
+import type { GetSessionResponse } from '../test/mocks/supabase';
 import type { logger } from '../utils/logger';
 
 // Mock the logger to silence test output
@@ -31,13 +32,29 @@ const TestComponent = () => {
   );
 };
 
+// Stub getSession for all subsequent calls until changed.
+const mockGetSession = (session: typeof mockSession | null = null, error: Error | null = null) => {
+  const response: GetSessionResponse =
+    error === null ? { data: { session }, error: null } : { data: { session: null }, error };
+
+  mockSupabaseClient.auth.getSession.mockResolvedValue(response);
+};
+
+// Stub getSession for a single call (useful for sequential flows).
+const mockGetSessionOnce = (
+  session: typeof mockSession | null = null,
+  error: Error | null = null
+) => {
+  const response: GetSessionResponse =
+    error === null ? { data: { session }, error: null } : { data: { session: null }, error };
+
+  mockSupabaseClient.auth.getSession.mockResolvedValueOnce(response);
+};
+
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabaseClient.auth.getSession.mockResolvedValue({
-      data: { session: null },
-      error: null,
-    });
+    mockGetSession();
   });
 
   it('should provide auth context to children', async () => {
@@ -90,10 +107,7 @@ describe('AuthProvider', () => {
 
   describe('Auth state changes', () => {
     it('should clear user and session on SIGNED_OUT event', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      });
+      mockGetSession(mockSession);
 
       render(
         <AuthProvider>
@@ -133,10 +147,7 @@ describe('AuthProvider', () => {
 
   describe('Error Handling', () => {
     it('should handle connection errors from getSession API error', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: null },
-        error: new Error('Network error'),
-      });
+      mockGetSession(null, new Error('Network error'));
 
       render(
         <AuthProvider>
@@ -174,10 +185,7 @@ describe('AuthProvider', () => {
 
     it('should clear connection error on successful auth state change', async () => {
       // Start with connection error
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: null },
-        error: new Error('Network error'),
-      });
+      mockGetSession(null, new Error('Network error'));
 
       render(
         <AuthProvider>
@@ -204,10 +212,7 @@ describe('AuthProvider', () => {
 
     it('should clear user state when session is null on initial load', async () => {
       // Mock getSession to return no session (e.g., expired session)
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
+      mockGetSession();
 
       const TestComponent = () => {
         const auth = useAuth();
@@ -237,10 +242,7 @@ describe('AuthProvider', () => {
     });
 
     it('should set user and session when initial session exists', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      });
+      mockGetSession(mockSession);
 
       render(
         <AuthProvider>
@@ -266,10 +268,7 @@ describe('AuthProvider', () => {
       };
 
       // Start with successful getSession
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
+      mockGetSession();
 
       render(
         <AuthProvider>
@@ -291,14 +290,8 @@ describe('AuthProvider', () => {
     });
 
     it('should clear connection error when retryAuth succeeds after a failure', async () => {
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { session: null },
-        error: new Error('Network error'),
-      });
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { session: null },
-        error: null,
-      });
+      mockGetSessionOnce(null, new Error('Network error'));
+      mockGetSessionOnce();
 
       let retryAuth: (() => Promise<boolean>) | undefined;
 
