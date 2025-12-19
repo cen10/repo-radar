@@ -45,16 +45,16 @@ export function Header() {
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            {user.avatarUrl && (
+            {user.avatar_url && (
               <img
-                src={user.avatarUrl}
+                src={user.avatar_url}
                 alt={`${user.name || user.login}'s avatar`}
                 className="h-8 w-8 rounded-full"
               />
             )}
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-gray-900">{user.name || user.login}</p>
-              {user.email && <p className="text-xs text-gray-500">{user.email}</p>}
+              <p className="text-xs text-gray-500">@{user.login}</p>
             </div>
           </div>
 
