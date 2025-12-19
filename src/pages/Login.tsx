@@ -8,6 +8,7 @@ import {
 } from '../components/icons';
 import { LOGIN_FAILED, SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
+import { getErrorMessage } from '../utils/error';
 
 // Shared error alert component
 const ErrorAlert = ({ title, message }: { title?: string; message: string }) => (
@@ -50,14 +51,6 @@ export default function Login() {
       }
     }
   }, [authActionError, isLoggingIn, isSigningOut, user]);
-
-  // Helper function to extract error message with fallback
-  const getErrorMessage = (error: unknown, defaultMessage: string): string => {
-    if (error instanceof Error && error.message?.trim() !== '') {
-      return error.message;
-    }
-    return defaultMessage;
-  };
 
   const handleGitHubLogin = async () => {
     try {

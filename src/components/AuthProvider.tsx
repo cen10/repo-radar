@@ -5,6 +5,7 @@ import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
+import { getErrorMessage } from '../utils/error';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -52,7 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (error) {
-        logger.error('Error connecting to Supabase:', error);
+        const message = getErrorMessage(error, 'Unknown Supabase error');
+        logger.error(`Error connecting to Supabase: ${message}`, error);
         setConnectionError(CONNECTION_FAILED);
         setLoading(false);
         return false;
@@ -62,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return true;
     } catch (err) {
-      logger.error('Unexpected error getting session:', err);
+      const message = getErrorMessage(err, 'Unexpected error');
+      logger.error(`Unexpected error getting session: ${message}`, err);
       setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
       return false;
@@ -75,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         applySessionToState(session);
         setLoading(false);
       } catch (err) {
-        logger.error('Unexpected error handling auth state change:', err);
+        const message = getErrorMessage(err, 'Unexpected error');
+        logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
         setSession(null);
         setUser(null);

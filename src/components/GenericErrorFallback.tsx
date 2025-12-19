@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
 import { ExclamationCircleIcon, ArrowPathIcon, LoadingSpinner } from './icons';
+import { getErrorMessage } from '../utils/error';
 
 export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const [isRetrying, setIsRetrying] = useState(false);
@@ -60,7 +61,7 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
               className="mt-2 text-sm bg-gray-800 text-gray-100 p-4 rounded-md overflow-auto 
         max-h-100 whitespace-pre-wrap break-words hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
             >
-              {error.message}
+              {getErrorMessage(error, 'Unexpected error')}
               {'\n\n'}
               {error.stack}
             </pre>
