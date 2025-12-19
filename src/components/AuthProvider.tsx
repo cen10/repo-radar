@@ -53,8 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (error) {
-        const message = getErrorMessage(error, 'Error connecting to Supabase');
-        logger.error(message, error);
+        const message = getErrorMessage(error, 'Unknown Supabase error');
+        logger.error(`Error connecting to Supabase: ${message}`, error);
         setConnectionError(CONNECTION_FAILED);
         setLoading(false);
         return false;
@@ -64,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return true;
     } catch (err) {
-      const message = getErrorMessage(err, 'Unexpected error getting session');
-      logger.error(message, err);
+      const message = getErrorMessage(err, 'Unexpected error');
+      logger.error(`Unexpected error getting session: ${message}`, err);
       setConnectionError(UNEXPECTED_ERROR);
       setLoading(false);
       return false;
@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         applySessionToState(session);
         setLoading(false);
       } catch (err) {
-        const message = getErrorMessage(err, 'Unexpected error handling auth state change');
-        logger.error(message, err);
+        const message = getErrorMessage(err, 'Unexpected error');
+        logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
         setSession(null);
         setUser(null);
