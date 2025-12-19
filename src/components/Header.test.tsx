@@ -18,7 +18,7 @@ const mockUser = {
   email: 'test@example.com',
   login: 'testuser',
   name: 'Test User',
-  avatarUrl: 'https://example.com/avatar.jpg',
+  avatar_url: 'https://example.com/avatar.jpg',
 };
 
 describe('Header', () => {
@@ -52,7 +52,7 @@ describe('Header', () => {
 
     expect(screen.getByText('Repo Radar')).toBeInTheDocument();
     expect(screen.getByText('Test User')).toBeInTheDocument();
-    expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    expect(screen.getByText(/@testuser/)).toBeInTheDocument();
     expect(screen.getByAltText("Test User's avatar")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
   });
@@ -71,7 +71,7 @@ describe('Header', () => {
     expect(screen.getByText('testuser')).toBeInTheDocument();
   });
 
-  it('does not display email when user has no email', () => {
+  it('displays handle when user has no email', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { ...mockUser, email: undefined },
       session: {} as any,
@@ -82,7 +82,7 @@ describe('Header', () => {
 
     render(<Header />);
 
-    expect(screen.queryByText('test@example.com')).not.toBeInTheDocument();
+    expect(screen.getByText(/@testuser/)).toBeInTheDocument();
   });
 
   it('handles sign out successfully', async () => {
@@ -183,9 +183,9 @@ describe('Header', () => {
     });
   });
 
-  it('does not display avatar when user has no avatarUrl', () => {
+  it('does not display avatar when user has no avatar', () => {
     vi.mocked(useAuth).mockReturnValue({
-      user: { ...mockUser, avatarUrl: undefined },
+      user: { ...mockUser, avatar_url: undefined },
       session: {} as any,
       loading: false,
       connectionError: null,
