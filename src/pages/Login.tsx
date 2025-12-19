@@ -1,12 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/use-auth';
-import {
-  GitHubIcon,
-  LoadingSpinner,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from '../components/icons';
-import { LOGIN_FAILED, SIGNOUT_FAILED } from '../constants/errorMessages';
+import { GitHubIcon, LoadingSpinner, ExclamationCircleIcon } from '../components/icons';
+import { LOGIN_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
 
@@ -30,27 +25,20 @@ const ErrorAlert = ({ title, message }: { title?: string; message: string }) => 
 );
 
 export default function Login() {
-  const { user, signInWithGitHub, signOut, loading, connectionError, retryAuth } = useAuth();
-  // Local error state for user-initiated auth actions (sign in/sign out failures)
+  const { user, signInWithGitHub, loading, connectionError, retryAuth } = useAuth();
+  // Local error state for user-initiated auth actions (sign in failures)
   const [authActionError, setAuthActionError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // Refs for focus management
+  // Ref for focus management
   const loginButtonRef = useRef<HTMLButtonElement>(null);
-  const signOutButtonRef = useRef<HTMLButtonElement>(null);
 
   // Focus management after errors
   useEffect(() => {
-    if (authActionError && !isLoggingIn && !isSigningOut) {
-      // Focus the appropriate retry button after an error
-      if (user) {
-        signOutButtonRef.current?.focus();
-      } else {
-        loginButtonRef.current?.focus();
-      }
+    if (authActionError && !isLoggingIn) {
+      loginButtonRef.current?.focus();
     }
-  }, [authActionError, isLoggingIn, isSigningOut, user]);
+  }, [authActionError, isLoggingIn]);
 
   const handleGitHubLogin = async () => {
     try {
@@ -76,106 +64,62 @@ export default function Login() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      setAuthActionError(null);
-      setIsSigningOut(true);
-      await signOut();
-    } catch (error) {
-      logger.error('Sign out failed:', error);
-      setAuthActionError(getErrorMessage(error, SIGNOUT_FAILED));
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  // Redirect authenticated users - they shouldn't see the login page
+  if (user) {
+    // In a real app, this would redirect to the dashboard
+    // For now, just show a message
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 text-center">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Repo Radar</h1>
+            <p className="text-lg text-gray-600">Welcome back, {user.name || user.login}!</p>
+            <p className="text-sm text-gray-500 mt-2">You are already logged in.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className={`max-w-md w-full space-y-8 p-8 ${user ? 'text-center' : ''}`}>
+      <div className="max-w-md w-full space-y-8 p-8">
         <header className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Repo Radar</h1>
-          {user ? (
-            <div
-              className="bg-green-50 border border-green-200 rounded-md p-4 mb-6"
-              role="status"
-              aria-live="polite"
-            >
-              <div className="flex justify-center items-center">
-                <CheckCircleIcon />
-                <div>
-                  <h3 className="text-sm font-medium text-green-800">Successfully logged in!</h3>
-                  <p className="mt-1 text-sm text-green-700">
-                    Welcome back, <strong>{user.login}</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-lg text-gray-600">
-              Track star growth, releases, and issue activity across your starred repositories
-            </p>
-          )}
+          <p className="text-lg text-gray-600">
+            Track star growth, releases, and issue activity across your starred repositories
+          </p>
         </header>
 
-        {user ? (
-          <div className="space-y-4">
-            <p className="text-gray-600">
-              You're now connected to GitHub. Ready to track your starred repositories!
-            </p>
+        <main className="mt-8 space-y-4">
+          {connectionError && <ErrorAlert message={connectionError} />}
+          {authActionError && <ErrorAlert message={authActionError} />}
 
-            {authActionError && <ErrorAlert title="Sign Out Failed" message={authActionError} />}
+          <button
+            ref={loginButtonRef}
+            onClick={handleGitHubLogin}
+            disabled={loading || isLoggingIn}
+            className="btn-github"
+            aria-describedby="github-login-description"
+            aria-busy={isLoggingIn}
+          >
+            {isLoggingIn ? (
+              <>
+                <LoadingSpinner className="w-5 h-5 mr-3" />
+                Signing in...
+              </>
+            ) : (
+              <>
+                <GitHubIcon />
+                {connectionError || authActionError ? 'Try Again' : 'Continue with GitHub'}
+              </>
+            )}
+          </button>
 
-            <button
-              ref={signOutButtonRef}
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="btn-outline"
-              aria-busy={isSigningOut}
-            >
-              {isSigningOut ? (
-                <>
-                  <LoadingSpinner className="w-5 h-5 mr-3" />
-                  Signing out...
-                </>
-              ) : authActionError ? (
-                'Try Again'
-              ) : (
-                'Sign Out'
-              )}
-              <span className="sr-only"> of {user.login}'s account</span>
-            </button>
-          </div>
-        ) : (
-          <main className="mt-8 space-y-4">
-            {connectionError && <ErrorAlert message={connectionError} />}
-            {authActionError && <ErrorAlert message={authActionError} />}
-
-            <button
-              ref={loginButtonRef}
-              onClick={handleGitHubLogin}
-              disabled={loading || isLoggingIn}
-              className="btn-github"
-              aria-describedby="github-login-description"
-              aria-busy={isLoggingIn}
-            >
-              {isLoggingIn ? (
-                <>
-                  <LoadingSpinner className="w-5 h-5 mr-3" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <GitHubIcon />
-                  {connectionError || authActionError ? 'Try Again' : 'Continue with GitHub'}
-                </>
-              )}
-            </button>
-
-            <p id="github-login-description" className="text-sm text-gray-500 text-center">
-              We'll access your starred repositories to show you personalized metrics
-            </p>
-          </main>
-        )}
+          <p id="github-login-description" className="text-sm text-gray-500 text-center">
+            We'll access your starred repositories to show you personalized metrics
+          </p>
+        </main>
       </div>
     </div>
   );
