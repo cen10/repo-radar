@@ -166,82 +166,29 @@ describe('Login', () => {
       });
     });
 
-    it('should display welcome message with username', () => {
+    it('should display welcome message with user name', () => {
       render(<Login />);
 
-      expect(screen.getByText(/successfully logged in/i)).toBeInTheDocument();
-      expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
-      expect(screen.getByText(/^testuser$/i)).toBeInTheDocument();
+      expect(screen.getByText(/welcome back.*test user/i)).toBeInTheDocument();
     });
 
-    it('should display sign out button', () => {
+    it('should display already logged in message', () => {
       render(<Login />);
 
-      expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
+      expect(screen.getByText(/you are already logged in/i)).toBeInTheDocument();
     });
 
-    it('should display informational message', () => {
-      render(<Login />);
-
-      expect(
-        screen.getByText(
-          /you're now connected to github\. ready to track your starred repositories!/i
-        )
-      ).toBeInTheDocument();
-    });
-
-    it('should call signOut when sign out button is clicked', async () => {
-      const signOut = vi.fn();
+    it('should display user login when name is not available', () => {
       mockUseAuth.mockReturnValue({
-        user: mockUser,
+        user: { ...mockUser, name: undefined },
         loading: false,
         signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut,
+        signOut: vi.fn<AuthContextType['signOut']>(),
       });
 
       render(<Login />);
 
-      const signOutButton = screen.getByRole('button', { name: /sign out/i });
-      await userEvent.click(signOutButton);
-
-      expect(signOut).toHaveBeenCalled();
-    });
-
-    it('should show loading state when signing out', async () => {
-      const signOut = vi.fn<() => Promise<void>>(() => new Promise(() => {}));
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false,
-        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut,
-      });
-
-      render(<Login />);
-
-      const signOutButton = screen.getByRole('button', { name: /sign out/i });
-      await userEvent.click(signOutButton);
-
-      expect(screen.getByText(/signing out/i)).toBeInTheDocument();
-      expect(signOutButton).toBeDisabled();
-    });
-
-    it('should display error message when sign out fails', async () => {
-      const signOut = vi.fn().mockRejectedValue(new Error('Test Failure'));
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false,
-        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut,
-      });
-
-      render(<Login />);
-
-      const signOutButton = screen.getByRole('button', { name: /sign out/i });
-      await userEvent.click(signOutButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/sign out failed/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/welcome back.*testuser/i)).toBeInTheDocument();
     });
   });
 
@@ -336,29 +283,6 @@ describe('Login', () => {
       expect(loginButton).toHaveAttribute('aria-busy', 'true');
     });
 
-    it('should set aria-busy to true on sign out button when signing out', async () => {
-      const signOut = vi.fn<() => Promise<void>>(() => new Promise(() => {})); // Never resolves to keep loading
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false,
-        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut,
-      });
-
-      render(<Login />);
-
-      const signOutButton = screen.getByRole('button', { name: /sign out/i });
-
-      // Initially aria-busy should be false
-      expect(signOutButton).toHaveAttribute('aria-busy', 'false');
-
-      // Click to start signing out
-      await userEvent.click(signOutButton);
-
-      // Now aria-busy should be true
-      expect(signOutButton).toHaveAttribute('aria-busy', 'true');
-    });
-
     it('should focus login button after login error', async () => {
       const signInWithGitHub = vi.fn().mockRejectedValue(new Error('Auth failed'));
       mockUseAuth.mockReturnValue({
@@ -376,26 +300,6 @@ describe('Login', () => {
       await waitFor(() => {
         // After error, the button (now showing "Try Again") should have focus
         expect(document.activeElement).toBe(loginButton);
-      });
-    });
-
-    it('should focus sign out button after sign out error', async () => {
-      const signOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
-      mockUseAuth.mockReturnValue({
-        user: mockUser,
-        loading: false,
-        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut,
-      });
-
-      render(<Login />);
-
-      const signOutButton = screen.getByRole('button', { name: /sign out/i });
-      await userEvent.click(signOutButton);
-
-      await waitFor(() => {
-        // After error, the button (now showing "Try Again") should have focus
-        expect(document.activeElement).toBe(signOutButton);
       });
     });
 

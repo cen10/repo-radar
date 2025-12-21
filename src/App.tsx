@@ -1,5 +1,6 @@
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from './components/AuthProvider';
+import { Header } from './components/Header';
 import Login from './pages/Login';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
 import { logger } from './utils/logger';
@@ -18,6 +19,7 @@ function App() {
       }}
     >
       <AuthProvider>
+        <Header />
         <Login />
       </AuthProvider>
     </ErrorBoundary>
