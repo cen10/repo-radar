@@ -194,7 +194,3 @@ GITHUB_CLIENT_SECRET=
 - Initial project structure created
 - Supabase integration configured
 - GitHub OAuth flow designed
-
----
-
-_Auto-generated context for Claude Code. Last updated: 2025-09-15_
