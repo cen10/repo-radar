@@ -231,4 +231,23 @@ describe('Header', () => {
       expect(screen.getByText(/check your internet connection/i)).toBeInTheDocument();
     });
   });
+
+  it('returns focus to sign out button after error', async () => {
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({
+      error: new AuthError('Sign out failed'),
+    });
+
+    render(<Header />);
+
+    const signOutButton = screen.getByRole('button', { name: /sign out/i });
+    fireEvent.click(signOutButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/sign out failed/i)).toBeInTheDocument();
+    });
+
+    expect(signOutButton).toHaveFocus();
+  });
 });
