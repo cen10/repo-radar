@@ -145,33 +145,6 @@ npm run build        # Build for production
 
     - Avoid creating helper functions just to wrap constructors - keep tests simple.
 
-## Testing Patterns
-
-### Mock Objects with Real Types
-
-For objects that need to pass `instanceof` checks, use the real constructor:
-
-```typescript
-// ✗ Avoid: Using 'as any' for complex types
-const mockError = { message: 'test', code: 'error' } as any;
-
-// ✗ Also avoid: Partial types for instanceof checks
-const mockError = { message: 'test' } as Partial<AuthError>;
-
-// ✓ Preferred: Use real constructor when instanceof is used
-import { AuthError } from '@supabase/auth-js';
-vi.mocked(supabase.auth.signOut).mockResolvedValue({
-  error: new AuthError('Failed to sign out'),
-});
-```
-
-This approach:
-
-- Ensures `instanceof` checks work correctly in tests
-- Matches production data types exactly
-- Provides full type safety without helper functions
-- Simple and clear about what's being tested
-
 ## Data Validation Pattern
 
 When validating data before processing:
