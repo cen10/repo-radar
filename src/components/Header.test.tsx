@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
 import { supabase } from '../services/supabase';
+import { AuthError } from '@supabase/auth-js';
 import type { AuthContextType } from '../contexts/auth-context';
 import type { Session } from '@supabase/supabase-js';
 
@@ -33,6 +34,22 @@ const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthCo
   retryAuth: vi.fn(),
   ...overrides,
 });
+
+// Helper function to create properly typed AuthError mocks
+// Following project guideline: Avoid 'as any', use real constructors for better type safety
+function createMockAuthError(
+  overrides: Partial<Pick<AuthError, 'message' | 'code' | 'status'>> = {}
+): AuthError {
+  const defaults = {
+    message: 'Default error message',
+    status: undefined,
+    code: undefined,
+  };
+  const config = { ...defaults, ...overrides };
+
+  // Use the real AuthError constructor to ensure instanceof checks work in production
+  return new AuthError(config.message, config.status, config.code);
+}
 
 describe('Header', () => {
   beforeEach(() => {
@@ -139,7 +156,7 @@ describe('Header', () => {
 
     const errorMessage = 'Failed to sign out';
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: { message: errorMessage, name: 'AuthError' } as any,
+      error: createMockAuthError({ message: errorMessage }),
     });
 
     render(<Header />);
@@ -175,7 +192,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: { message: '', name: 'AuthError' } as any,
+      error: createMockAuthError({ message: '' }),
     });
 
     render(<Header />);
@@ -204,7 +221,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: { message: 'Test error', name: 'AuthError' } as any,
+      error: createMockAuthError({ message: 'Test error' }),
     });
 
     render(<Header />);

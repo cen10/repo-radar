@@ -116,6 +116,32 @@ npm run build        # Build for production
 10. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
 11. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
 12. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
+13. **Avoid `any` types in tests**: Instead of using `as any` for mock objects, prefer importing real types and using constructors or helper functions. This ensures tests match production runtime behavior and provides better type safety.
+
+## Testing Patterns
+
+### Mock Objects with Real Types
+Prefer creating mocks with actual constructors rather than `as any` casting:
+
+```typescript
+// ✗ Avoid: Using 'as any' for complex types
+const mockError = { message: 'test', code: 'error' } as any;
+
+// ✓ Preferred: Import real type and use constructor
+import { AuthError } from '@supabase/auth-js';
+const mockError = new AuthError('test', 400, 'error');
+
+// ✓ Alternative: Helper function with proper typing
+function createMockAuthError(overrides = {}) {
+  return new AuthError(overrides.message || 'Default', overrides.status, overrides.code);
+}
+```
+
+This approach:
+- Ensures `instanceof` checks work correctly in tests
+- Matches production data types exactly
+- Provides better IntelliSense and type safety
+- Catches breaking changes in external APIs
 
 ## Data Validation Pattern
 
