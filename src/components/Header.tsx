@@ -6,6 +6,28 @@ import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
 
+// Error banner component for displaying error messages with proper accessibility
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div
+      className="bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8"
+      role="alert"
+      aria-live="assertive"
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-800">{message}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Header() {
   const { user } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -82,24 +104,7 @@ export function Header() {
         </div>
       </header>
 
-      {signOutError && (
-        <div
-          className="bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div className="max-w-7xl mx-auto">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-800">{signOutError}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {signOutError && <ErrorBanner message={signOutError} />}
     </>
   );
 }
