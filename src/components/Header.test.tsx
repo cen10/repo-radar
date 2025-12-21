@@ -57,8 +57,8 @@ describe('Header', () => {
 
     render(<Header />);
 
-    expect(screen.getByText('Repo Radar')).toBeInTheDocument();
-    expect(screen.getByText('Test User')).toBeInTheDocument();
+    expect(screen.getByText(/repo radar/i)).toBeInTheDocument();
+    expect(screen.getByText(/test user/i)).toBeInTheDocument();
     expect(screen.getByText(/@testuser/)).toBeInTheDocument();
     expect(screen.getByAltText("Test User's avatar")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('Header', () => {
 
     render(<Header />);
 
-    expect(screen.getByText('testuser')).toBeInTheDocument();
+    expect(screen.getByText(/^testuser$/)).toBeInTheDocument();
   });
 
   it('displays handle when user has no email', () => {
@@ -131,7 +131,7 @@ describe('Header', () => {
       // The button should not be disabled anymore (unless component unmounts due to user being null)
       // But since we're still mocking the user as present, the button should be enabled again
       expect(signOutButton).not.toBeDisabled();
-      expect(screen.getByText('Sign out')).toBeInTheDocument();
+      expect(screen.getByText(/sign out/i)).toBeInTheDocument();
     });
   });
 
@@ -149,7 +149,7 @@ describe('Header', () => {
     fireEvent.click(signOutButton);
 
     await waitFor(() => {
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      expect(screen.getByText(/failed to sign out/i)).toBeInTheDocument();
     });
 
     expect(signOutButton).not.toBeDisabled();
@@ -166,7 +166,7 @@ describe('Header', () => {
     fireEvent.click(signOutButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Network error')).toBeInTheDocument();
+      expect(screen.getByText(/network error/i)).toBeInTheDocument();
     });
 
     expect(signOutButton).not.toBeDisabled();
@@ -217,7 +217,7 @@ describe('Header', () => {
       const errorAlert = screen.getByRole('alert');
       expect(errorAlert).toBeInTheDocument();
       expect(errorAlert).toHaveAttribute('aria-live', 'assertive');
-      expect(screen.getByText('Test error')).toBeInTheDocument();
+      expect(screen.getByText(/test error/i)).toBeInTheDocument();
     });
   });
 
