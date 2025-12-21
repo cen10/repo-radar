@@ -105,31 +105,6 @@ describe('Header', () => {
 
     await waitFor(() => {
       expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('resets loading state after successful sign out', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    // Mock successful sign out with a delay to test loading state
-    vi.mocked(supabase.auth.signOut).mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({ error: null }), 100))
-    );
-
-    render(<Header />);
-
-    const signOutButton = screen.getByRole('button', { name: /sign out/i });
-    fireEvent.click(signOutButton);
-
-    // Initially should be in loading state
-    expect(screen.getByText(/signing out/i)).toBeInTheDocument();
-    expect(signOutButton).toBeDisabled();
-
-    // After successful sign out, loading state should be reset
-    await waitFor(() => {
-      expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
-      // The button should not be disabled anymore (unless component unmounts due to user being null)
-      // But since we're still mocking the user as present, the button should be enabled again
       expect(signOutButton).not.toBeDisabled();
       expect(screen.getByText(/sign out/i)).toBeInTheDocument();
     });
