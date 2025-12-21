@@ -229,4 +229,30 @@ describe('Header', () => {
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
+
+  it('displays error with proper accessibility attributes', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: mockUser,
+      session: {} as any,
+      loading: false,
+      connectionError: null,
+      retryAuth: vi.fn(),
+    });
+
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({
+      error: new Error('Test error'),
+    });
+
+    render(<Header />);
+
+    const signOutButton = screen.getByRole('button', { name: /sign out/i });
+    fireEvent.click(signOutButton);
+
+    await waitFor(() => {
+      const errorAlert = screen.getByRole('alert');
+      expect(errorAlert).toBeInTheDocument();
+      expect(errorAlert).toHaveAttribute('aria-live', 'assertive');
+      expect(screen.getByText('Test error')).toBeInTheDocument();
+    });
+  });
 });
