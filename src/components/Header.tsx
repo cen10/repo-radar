@@ -21,13 +21,13 @@ export function Header() {
         const message = getErrorMessage(error, SIGNOUT_FAILED);
         logger.error('Sign out error:', error);
         setSignOutError(message);
-        setIsSigningOut(false);
         return;
       }
     } catch (err) {
       const message = getErrorMessage(err, SIGNOUT_FAILED);
       logger.error('Unexpected sign out error:', err);
       setSignOutError(message);
+    } finally {
       setIsSigningOut(false);
     }
   };
