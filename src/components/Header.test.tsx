@@ -35,22 +35,6 @@ const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthCo
   ...overrides,
 });
 
-// Helper function to create properly typed AuthError mocks
-// Following project guideline: Avoid 'as any', use real constructors for better type safety
-function createMockAuthError(
-  overrides: Partial<Pick<AuthError, 'message' | 'code' | 'status'>> = {}
-): AuthError {
-  const defaults = {
-    message: 'Default error message',
-    status: undefined,
-    code: undefined,
-  };
-  const config = { ...defaults, ...overrides };
-
-  // Use the real AuthError constructor to ensure instanceof checks work in production
-  return new AuthError(config.message, config.status, config.code);
-}
-
 describe('Header', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -156,7 +140,7 @@ describe('Header', () => {
 
     const errorMessage = 'Failed to sign out';
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: createMockAuthError({ message: errorMessage }),
+      error: new AuthError(errorMessage),
     });
 
     render(<Header />);
@@ -192,7 +176,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: createMockAuthError({ message: '' }),
+      error: new AuthError(''),
     });
 
     render(<Header />);
@@ -221,7 +205,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: createMockAuthError({ message: 'Test error' }),
+      error: new AuthError('Test error'),
     });
 
     render(<Header />);
