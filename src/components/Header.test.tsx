@@ -278,4 +278,31 @@ describe('Header', () => {
       expect(screen.getByText(/check your internet connection/i)).toBeInTheDocument();
     });
   });
+
+  it('displays user-friendly message for NetworkError name', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: mockUser,
+      session: {} as any,
+      loading: false,
+      connectionError: null,
+      retryAuth: vi.fn(),
+      signInWithGitHub: vi.fn(),
+      signOut: vi.fn(),
+    });
+
+    // Simulate network error with NetworkError name
+    const networkError = new Error('Some network issue');
+    networkError.name = 'NetworkError';
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(networkError);
+
+    render(<Header />);
+
+    const signOutButton = screen.getByRole('button', { name: /sign out/i });
+    fireEvent.click(signOutButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/unable to sign out due to connection issues/i)).toBeInTheDocument();
+      expect(screen.getByText(/check your internet connection/i)).toBeInTheDocument();
+    });
+  });
 });
