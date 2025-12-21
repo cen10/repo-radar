@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
 import { supabase } from '../services/supabase';
+import type { AuthContextType } from '../contexts/auth-context';
+import type { Session } from '@supabase/supabase-js';
 
 vi.mock('../hooks/use-auth');
 vi.mock('../services/supabase', () => ({
@@ -21,32 +23,36 @@ const mockUser = {
   avatar_url: 'https://example.com/avatar.jpg',
 };
 
+const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
+  user: mockUser,
+  session: {} as Session,
+  loading: false,
+  connectionError: null,
+  signInWithGitHub: vi.fn(),
+  signOut: vi.fn(),
+  retryAuth: vi.fn(),
+  ...overrides,
+});
+
 describe('Header', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('returns null when no user is authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      session: null,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({
+        user: null,
+        session: null,
+      })
+    );
 
     const { container } = render(<Header />);
     expect(container.firstChild).toBeNull();
   });
 
   it('displays user information when authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     render(<Header />);
 
@@ -58,13 +64,11 @@ describe('Header', () => {
   });
 
   it('displays login when user has no name', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { ...mockUser, name: undefined },
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({
+        user: { ...mockUser, name: null },
+      })
+    );
 
     render(<Header />);
 
@@ -72,13 +76,11 @@ describe('Header', () => {
   });
 
   it('displays handle when user has no email', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { ...mockUser, email: undefined },
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({
+        user: { ...mockUser, email: null },
+      })
+    );
 
     render(<Header />);
 
@@ -86,13 +88,7 @@ describe('Header', () => {
   });
 
   it('handles sign out successfully', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
       error: null,
@@ -112,13 +108,7 @@ describe('Header', () => {
   });
 
   it('resets loading state after successful sign out', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     // Mock successful sign out with a delay to test loading state
     vi.mocked(supabase.auth.signOut).mockImplementation(
@@ -145,17 +135,11 @@ describe('Header', () => {
   });
 
   it('displays error message when sign out fails', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     const errorMessage = 'Failed to sign out';
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new Error(errorMessage),
+      error: { message: errorMessage, name: 'AuthError' } as any,
     });
 
     render(<Header />);
@@ -171,13 +155,7 @@ describe('Header', () => {
   });
 
   it('handles sign out with unexpected error', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('Network error'));
 
@@ -194,16 +172,10 @@ describe('Header', () => {
   });
 
   it('handles sign out with error without message', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new Error(''),
+      error: { message: '', name: 'AuthError' } as any,
     });
 
     render(<Header />);
@@ -217,13 +189,11 @@ describe('Header', () => {
   });
 
   it('does not display avatar when user has no avatar', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { ...mockUser, avatar_url: undefined },
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({
+        user: { ...mockUser, avatar_url: '' },
+      })
+    );
 
     render(<Header />);
 
@@ -231,16 +201,10 @@ describe('Header', () => {
   });
 
   it('displays error with proper accessibility attributes', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new Error('Test error'),
+      error: { message: 'Test error', name: 'AuthError' } as any,
     });
 
     render(<Header />);
@@ -257,13 +221,7 @@ describe('Header', () => {
   });
 
   it('displays user-friendly message for network errors', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     // Simulate network error with "Failed to fetch" message
     vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('Failed to fetch'));
@@ -280,15 +238,7 @@ describe('Header', () => {
   });
 
   it('displays user-friendly message for NetworkError name', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: mockUser,
-      session: {} as any,
-      loading: false,
-      connectionError: null,
-      retryAuth: vi.fn(),
-      signInWithGitHub: vi.fn(),
-      signOut: vi.fn(),
-    });
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
     // Simulate network error with NetworkError name
     const networkError = new Error('Some network issue');
