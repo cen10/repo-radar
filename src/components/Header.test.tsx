@@ -255,4 +255,27 @@ describe('Header', () => {
       expect(screen.getByText('Test error')).toBeInTheDocument();
     });
   });
+
+  it('displays user-friendly message for network errors', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user: mockUser,
+      session: {} as any,
+      loading: false,
+      connectionError: null,
+      retryAuth: vi.fn(),
+    });
+
+    // Simulate network error with "Failed to fetch" message
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('Failed to fetch'));
+
+    render(<Header />);
+
+    const signOutButton = screen.getByRole('button', { name: /sign out/i });
+    fireEvent.click(signOutButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/unable to sign out due to connection issues/i)).toBeInTheDocument();
+      expect(screen.getByText(/check your internet connection/i)).toBeInTheDocument();
+    });
+  });
 });

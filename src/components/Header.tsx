@@ -4,7 +4,24 @@ import { supabase } from '../services/supabase';
 import { LoadingSpinner, ArrowRightOnRectangleIcon, ExclamationCircleIcon } from './icons';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
-import { getErrorMessage } from '../utils/error';
+
+// Helper function to provide user-friendly error messages for sign out
+function getSignOutErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    // Network/connectivity errors - provide user-friendly message
+    if (error.message === 'Failed to fetch' || error.name === 'NetworkError') {
+      return 'Unable to sign out due to connection issues. Please check your internet connection and try again.';
+    }
+
+    // Use the original error message for other specific errors
+    if (error.message?.trim() !== '') {
+      return error.message;
+    }
+  }
+
+  // Generic fallback
+  return SIGNOUT_FAILED;
+}
 
 // Error banner component for displaying error messages with proper accessibility
 function ErrorBanner({ message }: { message: string }) {
@@ -40,13 +57,13 @@ export function Header() {
 
       const { error } = await supabase.auth.signOut();
       if (error) {
-        const message = getErrorMessage(error, SIGNOUT_FAILED);
+        const message = getSignOutErrorMessage(error);
         logger.error('Sign out error:', error);
         setSignOutError(message);
         return;
       }
     } catch (err) {
-      const message = getErrorMessage(err, SIGNOUT_FAILED);
+      const message = getSignOutErrorMessage(err);
       logger.error('Unexpected sign out error:', err);
       setSignOutError(message);
     } finally {
