@@ -1,9 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { RepoCard } from './RepoCard';
 import { formatRelativeTime } from '../utils/relativeTime';
 import type { RepositoryWithMetrics } from '../types';
 import { logger } from '../utils/logger';
+
+// Mock the logger to silence test output
+vi.mock('../utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 // Mock window.open
 const mockWindowOpen = vi.fn();
@@ -417,8 +427,13 @@ describe('RepoCard', () => {
     const loggerWarnSpy = vi.spyOn(logger, 'warn');
 
     beforeEach(() => {
+      vi.useFakeTimers();
       vi.setSystemTime(baseTime);
       loggerWarnSpy.mockClear();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
     it('formats time less than 60 seconds as "just now"', () => {
