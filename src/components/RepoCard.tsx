@@ -65,7 +65,7 @@ function Tooltip({ content, children }: { content: string; children: React.React
   return (
     <div className="group relative">
       {children}
-      {/* Invisible bridge to connect trigger and tooltip */}
+      {/* Invisible bridge to connect trigger and tooltip so that tooltip does not disappear when cursor travels from trigger to tooltip */}
       <div className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-10" />
       <div
         className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg"
