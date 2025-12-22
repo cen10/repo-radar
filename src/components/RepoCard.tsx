@@ -78,11 +78,6 @@ function Tooltip({ content, children }: { content: string; children: React.React
   );
 }
 
-// Helper function to check if the target is a button element
-const isButtonTarget = (target: EventTarget | null): boolean => {
-  return target instanceof HTMLElement && target.tagName === 'BUTTON';
-};
-
 // Shared handler for metric elements to prevent navigation on activation
 const handleMetricKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === 'Enter' || e.key === ' ') {
@@ -124,8 +119,6 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-          // Don't navigate if user pressed Space/Enter on the follow button
-          if (isButtonTarget(e.target)) return;
           e.preventDefault();
           window.open(html_url, '_blank', 'noopener,noreferrer');
         }
