@@ -50,17 +50,26 @@ function StarIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-// Issue icon component
+// Issue icon component (GitHub-style open issue icon)
 function IssueIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.3 1.25-1.3a1.5 1.5 0 10-1.56-1.5z"
-        clipRule="evenodd"
-      />
-      <path d="M9 15a1 1 0 112 0 1 1 0 01-2 0z" />
+    <svg className={className} fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z" />
     </svg>
+  );
+}
+
+// Tooltip component
+function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
+  return (
+    <div className="group relative">
+      {children}
+      <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg">
+        {content}
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+      </div>
+    </div>
   );
 }
 
@@ -79,7 +88,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     stargazers_count,
     open_issues_count,
     language,
-    updated_at,
+    pushed_at,
     topics,
     metrics,
     is_following,
@@ -166,52 +175,61 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Stars */}
-          <div className="flex items-center text-gray-600">
-            <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
-            <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
-            {metrics?.stars_growth_rate && (
-              <span
-                className={`ml-1 text-xs ${
-                  metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {metrics.stars_growth_rate > 0 ? '+' : ''}
-                {metrics.stars_growth_rate.toFixed(1)}%
-              </span>
-            )}
-          </div>
+          <Tooltip
+            content={
+              metrics?.stars_growth_rate
+                ? `${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
+                : `no growth over the last 7 days`
+            }
+          >
+            <div className="flex items-center text-gray-600 cursor-help">
+              <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
+              <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
+              {metrics?.stars_growth_rate && (
+                <span
+                  className={`ml-1 text-xs ${
+                    metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {metrics.stars_growth_rate > 0 ? '+' : ''}
+                  {metrics.stars_growth_rate.toFixed(1)}%
+                </span>
+              )}
+            </div>
+          </Tooltip>
 
           {/* Issues */}
-          <div className="flex items-center text-gray-600">
-            <IssueIcon className="w-4 h-4 mr-1" />
-            <span className="text-sm">{open_issues_count}</span>
-          </div>
+          <Tooltip content="Open issue count">
+            <div className="flex items-center text-gray-600 cursor-help">
+              <IssueIcon className="w-4 h-4 mr-1" />
+              <span className="text-sm">{open_issues_count}</span>
+            </div>
+          </Tooltip>
 
           {/* Language */}
           {language && (
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLanguageColor(language)}`}
-            >
-              {language}
-            </span>
+            <Tooltip content={`Primary language`}>
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
+              >
+                {language}
+              </span>
+            </Tooltip>
           )}
         </div>
 
-        {/* Updated time */}
-        <div className="text-xs text-gray-500">Updated {formatRelativeTime(updated_at)}</div>
+        {/* Last commit time */}
+        <div className="text-xs text-gray-500">
+          {pushed_at ? `Last commit ${formatRelativeTime(pushed_at)}` : 'No commits yet'}
+        </div>
       </div>
 
       {/* Trending indicator */}
       {metrics?.is_trending && (
-        <div className="mt-3 flex items-center">
+        <div className="mt-3">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
             🔥 Trending
           </span>
-          {metrics.momentum_score && (
-            <span className="ml-2 text-xs text-gray-500">
-              Momentum: {metrics.momentum_score.toFixed(1)}
-            </span>
-          )}
         </div>
       )}
     </div>
