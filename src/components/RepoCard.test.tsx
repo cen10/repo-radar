@@ -142,11 +142,11 @@ describe('RepoCard', () => {
 
   it('displays relative time correctly', () => {
     const repo = createMockRepository({
-      updated_at: '2024-01-15T10:30:00Z', // 1 day ago from mocked current time
+      pushed_at: '2024-01-15T10:30:00Z', // 1 day ago from mocked current time
     });
     render(<RepoCard repository={repo} />);
 
-    expect(screen.getByText(/updated 1 day ago/i)).toBeInTheDocument();
+    expect(screen.getByText(/last commit 1 day ago/i)).toBeInTheDocument();
   });
 
   it('handles repository without description', () => {
@@ -311,12 +311,11 @@ describe('RepoCard', () => {
 
     it('displays trending indicator when repository is trending', () => {
       const repo = createMockRepository({
-        metrics: { is_trending: true, momentum_score: 8.7 },
+        metrics: { is_trending: true },
       });
       render(<RepoCard repository={repo} />);
 
       expect(screen.getByText('🔥 Trending')).toBeInTheDocument();
-      expect(screen.getByText('Momentum: 8.7')).toBeInTheDocument();
     });
 
     it('does not display trending indicator when repository is not trending', () => {
@@ -328,23 +327,12 @@ describe('RepoCard', () => {
       expect(screen.queryByText(/trending/i)).not.toBeInTheDocument();
     });
 
-    it('displays trending without momentum score', () => {
-      const repo = createMockRepository({
-        metrics: { is_trending: true },
-      });
-      render(<RepoCard repository={repo} />);
-
-      expect(screen.getByText('🔥 Trending')).toBeInTheDocument();
-      expect(screen.queryByText(/momentum/i)).not.toBeInTheDocument();
-    });
-
     it('handles repository without metrics', () => {
       const repo = createMockRepository({ metrics: undefined });
       render(<RepoCard repository={repo} />);
 
       expect(screen.queryByText(/%/)).not.toBeInTheDocument();
       expect(screen.queryByText(/trending/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/momentum/i)).not.toBeInTheDocument();
     });
   });
 
@@ -378,47 +366,47 @@ describe('RepoCard', () => {
   describe('Time formatting', () => {
     it('formats recent time as "just now"', () => {
       const repo = createMockRepository({
-        updated_at: '2024-01-16T10:29:30Z', // 30 seconds ago
+        pushed_at: '2024-01-16T10:29:30Z', // 30 seconds ago
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/updated just now/i)).toBeInTheDocument();
+      expect(screen.getByText(/last commit just now/i)).toBeInTheDocument();
     });
 
     it('formats minutes correctly', () => {
       const repo = createMockRepository({
-        updated_at: '2024-01-16T10:25:00Z', // 5 minutes ago
+        pushed_at: '2024-01-16T10:25:00Z', // 5 minutes ago
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/updated 5 minutes ago/i)).toBeInTheDocument();
+      expect(screen.getByText(/last commit 5 minutes ago/i)).toBeInTheDocument();
     });
 
     it('formats hours correctly', () => {
       const repo = createMockRepository({
-        updated_at: '2024-01-16T08:30:00Z', // 2 hours ago
+        pushed_at: '2024-01-16T08:30:00Z', // 2 hours ago
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/updated 2 hours ago/i)).toBeInTheDocument();
+      expect(screen.getByText(/last commit 2 hours ago/i)).toBeInTheDocument();
     });
 
     it('formats months correctly', () => {
       const repo = createMockRepository({
-        updated_at: '2023-12-16T10:30:00Z', // 1 month ago
+        pushed_at: '2023-12-16T10:30:00Z', // 1 month ago
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/updated 1 month ago/i)).toBeInTheDocument();
+      expect(screen.getByText(/last commit 1 month ago/i)).toBeInTheDocument();
     });
 
     it('formats years correctly', () => {
       const repo = createMockRepository({
-        updated_at: '2022-01-16T10:30:00Z', // 2 years ago
+        pushed_at: '2022-01-16T10:30:00Z', // 2 years ago
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/updated 2 years ago/i)).toBeInTheDocument();
+      expect(screen.getByText(/last commit 2 years ago/i)).toBeInTheDocument();
     });
   });
 
