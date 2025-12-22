@@ -109,7 +109,7 @@ Run through these scenarios to verify the setup:
 ### ✅ Trending Detection
 ```
 1. Look for repositories marked with a 🔥 icon
-2. These have grown >20% in 24 hours or gained 50+ stars in a week
+2. These have ≥100 stars AND grown ≥25% in 24 hours AND gained ≥50 stars in that period
 3. Verify they appear at the top when sorting by "Trending"
 ```
 

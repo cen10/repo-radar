@@ -42,7 +42,6 @@ export interface MetricsResponse {
   calculated_metrics: {
     stars_growth_rate: number;
     issues_growth_rate: number;
-    momentum_score: number;
     is_trending: boolean;
   };
 }

@@ -154,7 +154,7 @@ interface StarMetric {
 **Validation Rules**:
 - `star_count`: Non-negative integer
 - `growth_rate`: Calculated as `(current - previous) / previous * 100`
-- `is_spike`: True if growth_rate >= 20% OR weekly_change >= 50
+- `is_spike`: True if star_count >= 100 AND growth_rate >= 25% AND daily_change >= 50
 - One record per repository per hour (deduped)
 
 ### Release

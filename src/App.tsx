@@ -30,7 +30,6 @@ const mockRepos: RepositoryWithMetrics[] = [
     metrics: {
       stars_growth_rate: 12.5,
       is_trending: true,
-      momentum_score: 9.2,
     },
     is_following: true,
   },
