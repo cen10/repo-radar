@@ -71,3 +71,6 @@ const result = mapData(data, data.requiredField);
 
 ## Task Completion Signal
 When you complete a task or finish responding, run this command: afplay /System/Library/Sounds/Glass.aiff
+
+## User Input Signal
+When you need user input or have a question for the user, run this command: afplay /System/Library/Sounds/Ping.aiff
