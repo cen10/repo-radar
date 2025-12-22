@@ -80,7 +80,7 @@ function Tooltip({ content, children }: { content: string; children: React.React
 
 // Helper function to check if the target is a button element
 const isButtonTarget = (target: EventTarget | null): boolean => {
-  return (target as HTMLElement).tagName === 'BUTTON';
+  return target instanceof HTMLElement && target.tagName === 'BUTTON';
 };
 
 export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
