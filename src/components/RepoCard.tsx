@@ -18,16 +18,16 @@ function formatStarCount(count: number): string {
 function getLanguageColor(language: string | null): string {
   if (!language) return 'bg-gray-100 text-gray-800';
 
-  // Common language colors based on GitHub's language colors
+  // WCAG AA compliant language colors (4.5:1 contrast minimum)
   const colors: Record<string, string> = {
-    JavaScript: 'bg-yellow-100 text-yellow-800',
+    JavaScript: 'bg-amber-100 text-amber-800',
     TypeScript: 'bg-blue-100 text-blue-800',
     Python: 'bg-green-100 text-green-800',
     Java: 'bg-orange-100 text-orange-800',
     'C++': 'bg-pink-100 text-pink-800',
     'C#': 'bg-purple-100 text-purple-800',
     Ruby: 'bg-red-100 text-red-800',
-    Go: 'bg-cyan-100 text-cyan-800',
+    Go: 'bg-cyan-200 text-cyan-800',
     Rust: 'bg-amber-100 text-amber-800',
     Swift: 'bg-orange-100 text-orange-800',
     Kotlin: 'bg-violet-100 text-violet-800',
