@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RepoCard } from './RepoCard';
 import { formatRelativeTime } from '../utils/relativeTime';
 import type { RepositoryWithMetrics } from '../types';
@@ -91,7 +92,7 @@ describe('RepoCard', () => {
 
     const languageBadge = screen.getByText('JavaScript');
     expect(languageBadge).toBeInTheDocument();
-    expect(languageBadge).toHaveClass('bg-yellow-100', 'text-yellow-800');
+    expect(languageBadge).toHaveClass('bg-amber-100', 'text-amber-800');
   });
 
   it('handles repository without language', () => {
@@ -156,12 +157,13 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
-  it('opens repository in new tab when clicked', () => {
+  it('opens repository in new tab when clicked', async () => {
+    const user = userEvent.setup();
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
     const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    fireEvent.click(card);
+    await user.click(card);
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       'https://github.com/octocat/awesome-repo',
@@ -170,12 +172,14 @@ describe('RepoCard', () => {
     );
   });
 
-  it('opens repository when Enter key is pressed', () => {
+  it('opens repository when Enter key is pressed', async () => {
+    const user = userEvent.setup();
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
     const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    fireEvent.keyDown(card, { key: 'Enter', code: 'Enter' });
+    card.focus();
+    await user.keyboard('{Enter}');
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       'https://github.com/octocat/awesome-repo',
@@ -184,12 +188,14 @@ describe('RepoCard', () => {
     );
   });
 
-  it('opens repository when Space key is pressed', () => {
+  it('opens repository when Space key is pressed', async () => {
+    const user = userEvent.setup();
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
     const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    fireEvent.keyDown(card, { key: ' ', code: 'Space' });
+    card.focus();
+    await user.keyboard(' ');
 
     expect(mockWindowOpen).toHaveBeenCalledWith(
       'https://github.com/octocat/awesome-repo',
@@ -198,35 +204,79 @@ describe('RepoCard', () => {
     );
   });
 
-  it('does not open repository for other keys', () => {
+  it('does not open repository for other keys', async () => {
+    const user = userEvent.setup();
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
     const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    fireEvent.keyDown(card, { key: 'Escape', code: 'Escape' });
+    card.focus();
+    await user.keyboard('{Escape}');
 
     expect(mockWindowOpen).not.toHaveBeenCalled();
   });
 
   describe('Keyboard navigation', () => {
-    it('does not open repository when Enter is pressed on follow button', () => {
+    it('does not open repository when Enter is pressed on follow button', async () => {
+      const user = userEvent.setup();
       const repo = createMockRepository({ is_following: false });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
       const followButton = screen.getByRole('button', { name: /follow repository/i });
-      fireEvent.keyDown(followButton, { key: 'Enter', code: 'Enter' });
+      await user.click(followButton);
 
       expect(mockWindowOpen).not.toHaveBeenCalled();
+      expect(onToggleFollow).toHaveBeenCalledWith(repo);
     });
 
-    it('does not open repository when Space is pressed on follow button', () => {
+    it('does not open repository when Space is pressed on follow button', async () => {
+      const user = userEvent.setup();
       const repo = createMockRepository({ is_following: true });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
       const followButton = screen.getByRole('button', { name: /unfollow repository/i });
-      fireEvent.keyDown(followButton, { key: ' ', code: 'Space' });
+      await user.click(followButton);
+
+      expect(mockWindowOpen).not.toHaveBeenCalled();
+      expect(onToggleFollow).toHaveBeenCalledWith(repo);
+    });
+
+    it('does not open repository when Enter is pressed on growth rate metric', async () => {
+      const user = userEvent.setup();
+      const repo = createMockRepository({
+        metrics: { stars_growth_rate: 12.5 },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
+      growthElement.focus();
+      await user.keyboard('{Enter}');
+
+      expect(mockWindowOpen).not.toHaveBeenCalled();
+    });
+
+    it('does not open repository when Space is pressed on issue count metric', async () => {
+      const user = userEvent.setup();
+      const repo = createMockRepository();
+      render(<RepoCard repository={repo} />);
+
+      const issueElement = screen.getByLabelText('42 open issues');
+      issueElement.focus();
+      await user.keyboard(' ');
+
+      expect(mockWindowOpen).not.toHaveBeenCalled();
+    });
+
+    it('does not open repository when Enter is pressed on language badge', async () => {
+      const user = userEvent.setup();
+      const repo = createMockRepository({ language: 'TypeScript' });
+      render(<RepoCard repository={repo} />);
+
+      const languageElement = screen.getByLabelText('Primary language: TypeScript');
+      languageElement.focus();
+      await user.keyboard('{Enter}');
 
       expect(mockWindowOpen).not.toHaveBeenCalled();
     });
@@ -254,25 +304,27 @@ describe('RepoCard', () => {
       expect(followButton).toHaveClass('bg-blue-100', 'text-blue-800');
     });
 
-    it('calls onToggleFollow when follow button is clicked', () => {
+    it('calls onToggleFollow when follow button is clicked', async () => {
+      const user = userEvent.setup();
       const repo = createMockRepository({ is_following: false });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
       const followButton = screen.getByRole('button', { name: /follow repository/i });
-      fireEvent.click(followButton);
+      await user.click(followButton);
 
       expect(onToggleFollow).toHaveBeenCalledWith(repo);
       expect(onToggleFollow).toHaveBeenCalledTimes(1);
     });
 
-    it('does not open repository when follow button is clicked', () => {
+    it('does not open repository when follow button is clicked', async () => {
+      const user = userEvent.setup();
       const repo = createMockRepository({ is_following: false });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
       const followButton = screen.getByRole('button', { name: /follow repository/i });
-      fireEvent.click(followButton);
+      await user.click(followButton);
 
       expect(mockWindowOpen).not.toHaveBeenCalled();
     });

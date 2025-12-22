@@ -83,6 +83,14 @@ const isButtonTarget = (target: EventTarget | null): boolean => {
   return target instanceof HTMLElement && target.tagName === 'BUTTON';
 };
 
+// Shared handler for metric elements to prevent navigation on activation
+const handleMetricKeyDown = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+};
+
 export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
   const {
     name,
@@ -99,9 +107,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     is_following,
   } = repository;
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if user clicked the follow button
-    if (isButtonTarget(e.target)) return;
+  const handleCardClick = (_e: React.MouseEvent) => {
     window.open(html_url, '_blank', 'noopener,noreferrer');
   };
 
@@ -203,6 +209,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
                 }`}
                 tabIndex={0}
                 aria-label={`${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% star growth over 7 days`}
+                onKeyDown={handleMetricKeyDown}
               >
                 {metrics.stars_growth_rate > 0 ? '+' : ''}
                 {metrics.stars_growth_rate.toFixed(1)}%
@@ -216,6 +223,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
               className="flex items-center text-gray-600 cursor-help"
               tabIndex={0}
               aria-label={`${open_issues_count} open issues`}
+              onKeyDown={handleMetricKeyDown}
             >
               <IssueIcon className="w-4 h-4 mr-1" />
               <span className="text-sm">{open_issues_count}</span>
@@ -229,6 +237,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
                 aria-label={`Primary language: ${language}`}
                 tabIndex={0}
+                onKeyDown={handleMetricKeyDown}
               >
                 {language}
               </span>
