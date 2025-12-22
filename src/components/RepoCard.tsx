@@ -65,7 +65,12 @@ function Tooltip({ content, children }: { content: string; children: React.React
   return (
     <div className="group relative">
       {children}
-      <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg">
+      {/* Invisible bridge to connect trigger and tooltip */}
+      <div className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-10" />
+      <div
+        className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg"
+        aria-hidden="true"
+      >
         {content}
         <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
       </div>
@@ -175,32 +180,43 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Stars */}
-          <Tooltip
-            content={
-              metrics?.stars_growth_rate
-                ? `${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
-                : `no growth over the last 7 days`
-            }
+          <div
+            className="flex items-center text-gray-600"
+            aria-label={`${formatStarCount(stargazers_count)} stars`}
           >
-            <div className="flex items-center text-gray-600 cursor-help">
-              <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
-              <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
-              {metrics?.stars_growth_rate && (
-                <span
-                  className={`ml-1 text-xs ${
-                    metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {metrics.stars_growth_rate > 0 ? '+' : ''}
-                  {metrics.stars_growth_rate.toFixed(1)}%
-                </span>
-              )}
-            </div>
-          </Tooltip>
+            <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
+            <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
+          </div>
+
+          {/* Growth rate */}
+          {metrics?.stars_growth_rate && (
+            <Tooltip
+              content={
+                metrics.stars_growth_rate > 0
+                  ? `+${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
+                  : `${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
+              }
+            >
+              <span
+                className={`text-xs cursor-help ${
+                  metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
+                }`}
+                tabIndex={0}
+                aria-label={`${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% star growth over 7 days`}
+              >
+                {metrics.stars_growth_rate > 0 ? '+' : ''}
+                {metrics.stars_growth_rate.toFixed(1)}%
+              </span>
+            </Tooltip>
+          )}
 
           {/* Issues */}
           <Tooltip content="Open issue count">
-            <div className="flex items-center text-gray-600 cursor-help">
+            <div
+              className="flex items-center text-gray-600 cursor-help"
+              tabIndex={0}
+              aria-label={`${open_issues_count} open issues`}
+            >
               <IssueIcon className="w-4 h-4 mr-1" />
               <span className="text-sm">{open_issues_count}</span>
             </div>
@@ -208,9 +224,11 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
           {/* Language */}
           {language && (
-            <Tooltip content={`Primary language`}>
+            <Tooltip content="Primary language">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
+                aria-label={`Primary language: ${language}`}
+                tabIndex={0}
               >
                 {language}
               </span>

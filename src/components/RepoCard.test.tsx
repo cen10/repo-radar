@@ -361,6 +361,93 @@ describe('RepoCard', () => {
       const avatar = screen.getByAltText("octocat's avatar");
       expect(avatar).toBeInTheDocument();
     });
+
+    it('has aria-label for star count with context', () => {
+      const repo = createMockRepository({ stargazers_count: 1234 });
+      render(<RepoCard repository={repo} />);
+
+      const starElement = screen.getByLabelText('1.2k stars');
+      expect(starElement).toBeInTheDocument();
+    });
+
+    it('has aria-label for issue count with context', () => {
+      const repo = createMockRepository({ open_issues_count: 42 });
+      render(<RepoCard repository={repo} />);
+
+      const issueElement = screen.getByLabelText('42 open issues');
+      expect(issueElement).toBeInTheDocument();
+    });
+
+    it('has aria-label for language badge with context', () => {
+      const repo = createMockRepository({ language: 'TypeScript' });
+      render(<RepoCard repository={repo} />);
+
+      const languageElement = screen.getByLabelText('Primary language: TypeScript');
+      expect(languageElement).toBeInTheDocument();
+    });
+
+    it('has aria-label for growth rate with context when metrics exist', () => {
+      const repo = createMockRepository({
+        metrics: { stars_growth_rate: 12.5 },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
+      expect(growthElement).toBeInTheDocument();
+    });
+
+    it('has focusable growth rate element when metrics exist', () => {
+      const repo = createMockRepository({
+        metrics: { stars_growth_rate: 12.5 },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
+      expect(growthElement).toHaveAttribute('tabIndex', '0');
+    });
+
+    it('has focusable issue count element', () => {
+      const repo = createMockRepository();
+      render(<RepoCard repository={repo} />);
+
+      const issueElement = screen.getByLabelText('42 open issues');
+      expect(issueElement).toHaveAttribute('tabIndex', '0');
+    });
+
+    it('has focusable language badge element', () => {
+      const repo = createMockRepository({ language: 'TypeScript' });
+      render(<RepoCard repository={repo} />);
+
+      const languageElement = screen.getByLabelText('Primary language: TypeScript');
+      expect(languageElement).toHaveAttribute('tabIndex', '0');
+    });
+
+    it('star count is not focusable but has context for screen readers', () => {
+      const repo = createMockRepository({ stargazers_count: 1234 });
+      render(<RepoCard repository={repo} />);
+
+      const starElement = screen.getByLabelText('1.2k stars');
+      expect(starElement).not.toHaveAttribute('tabIndex');
+    });
+
+    it('tooltips are hidden from screen readers', () => {
+      const repo = createMockRepository({
+        open_issues_count: 42,
+        language: 'TypeScript',
+        metrics: { stars_growth_rate: 12.5 },
+      });
+      render(<RepoCard repository={repo} />);
+
+      // Check that tooltip content exists but is aria-hidden
+      const tooltips = screen.queryAllByText(
+        /open issue count|primary language|\+12\.5% growth over 7 days/i
+      );
+      tooltips.forEach((tooltip) => {
+        // The tooltip should be in a parent element that is aria-hidden
+        const tooltipElement = tooltip.closest('[aria-hidden="true"]');
+        expect(tooltipElement).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Time formatting', () => {
