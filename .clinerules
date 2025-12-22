@@ -68,3 +68,6 @@ const result = mapData(data, data.requiredField);
 - Use descriptive memory names like "testing-patterns-and-fixes" or "component-implementation-insights"
 - Focus on practical knowledge that helps with future similar problems
 - Include code examples and specific solutions, not just general advice
+
+## Task Completion Signal
+When you complete a task or finish responding, run this command: afplay /System/Library/Sounds/Glass.aiff
