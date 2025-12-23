@@ -128,14 +128,22 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       {/* Header with owner avatar and follow button */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <img
-            src={owner.avatar_url}
-            alt={`${owner.login}'s avatar`}
-            className="h-8 w-8 rounded-full"
-          />
+          {/* Avatar is decorative - owner name is provided in adjacent text */}
+          <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" />
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600">{name}</h3>
-            <p className="text-sm text-gray-500">by {owner.login}</p>
+            <h3
+              className="text-lg font-semibold text-gray-900 hover:text-blue-600"
+              aria-describedby={`owner-${full_name.replace('/', '-')}`}
+            >
+              {name}
+            </h3>
+            <p
+              id={`owner-${full_name.replace('/', '-')}`}
+              className="text-sm text-gray-500"
+              aria-hidden="true"
+            >
+              by {owner.login}
+            </p>
           </div>
         </div>
 
@@ -148,7 +156,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
                 ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
-            aria-label={is_following ? 'Unfollow repository' : 'Follow repository'}
+            aria-label={`${is_following ? 'Unfollow' : 'Follow'} ${name} repository`}
           >
             {is_following ? 'Following' : 'Follow'}
           </button>
