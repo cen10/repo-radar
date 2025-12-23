@@ -137,16 +137,21 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
         {/* Topics */}
         {topics && topics.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
+            <span className="sr-only">{`Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`}</span>
             {topics.slice(0, 3).map((topic) => (
               <span
                 key={topic}
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                aria-hidden="true"
               >
                 {topic}
               </span>
             ))}
             {topics.length > 3 && (
-              <span className="text-xs text-gray-500">+{topics.length - 3} more</span>
+              <span
+                className="text-xs text-gray-500"
+                aria-hidden="true"
+              >{`+${topics.length - 3} more`}</span>
             )}
           </div>
         )}
