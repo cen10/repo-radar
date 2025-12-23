@@ -1,0 +1,76 @@
+# Claude Assistant Workflow Preferences
+
+## CRITICAL: Task Workflow
+
+**⚠️ ALWAYS follow this sequence when starting ANY task:**
+
+1. **FIRST**: Check current branch (`git branch --show-current`)
+2. **IF NOT ON MAIN**:
+   - Check for changes (`git status`). Ask the user if they would like to commit or stash any changes that exist.
+   - Switch to main (`git checkout main`)
+   - Pull latest (`git pull origin main`)
+3. **CREATE TASK BRANCH**: `git checkout -b t{task-number}-{brief-description}`
+4. **THEN**: Begin implementing the task
+5. Mark the task as complete in `/specs/001-develop-a-personalized/tasks.md` when finished.
+
+**Never start work without creating a task branch first!**
+
+## Development Workflow
+- **Auto-format code**: Run `npm run format` after creating/editing any files to ensure consistent formatting
+- **Task completion**: Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
+
+## Data Validation Pattern
+
+When validating data before processing:
+
+1. **Validate at the call site, not inside the function.** If a function requires certain data to exist (like `user_name`), check for that data before calling the function. If it's missing, handle the error right there — don't call the function at all.
+2. **Keep mapping/transformation functions pure.** A function like `mapXToY` should only map data. It should not validate inputs, throw errors, or have side effects. It trusts that the caller has already ensured the data is valid.
+3. **Don't pass derived values as extra parameters.** If you can derive a value from an object you're already passing (e.g., `login` from `supabaseUser.user_metadata.user_name`), don't pass both the object and the derived value. Just pass the object and let the function extract what it needs.
+4. **Handle errors where you have context.** The call site knows what error message to show, what state to update, etc. Don't bury error handling inside utility functions that lack that context.
+
+Pattern to follow:
+
+```typescript
+// ✓ Good: Validate first, then call
+if (!data.requiredField) {
+  handleError();
+  return;
+}
+const result = mapData(data);
+
+// ✗ Bad: Let the function throw and catch it
+try {
+  const result = mapData(data); // throws if requiredField missing
+} catch (err) {
+  handleError();
+}
+
+// ✗ Bad: Pass derived values as extra params
+const result = mapData(data, data.requiredField);
+```
+
+## Knowledge Capture
+- Proactively suggest creating Serena memories when we encounter:
+  - Non-trivial debugging solutions
+  - New patterns or architectural decisions
+  - Testing strategies or fixes
+  - Implementation insights worth remembering
+- Ask "Should we create a memory for this?" when solving interesting problems
+- Distinguish between CLAUDE.md (team guidelines) vs Serena memories (development insights)
+
+## Memory Creation Triggers
+- After completing significant tasks
+- When solving bugs that took time to figure out
+- When establishing new coding patterns
+- When making architecture decisions
+
+## Memory Organization
+- Use descriptive memory names like "testing-patterns-and-fixes" or "component-implementation-insights"
+- Focus on practical knowledge that helps with future similar problems
+- Include code examples and specific solutions, not just general advice
+
+## Task Completion Signal
+When you complete a task or finish responding, run this command: afplay /System/Library/Sounds/Glass.aiff
+
+## User Input Signal
+When you need user input or have a question for the user, run this command: afplay /System/Library/Sounds/Ping.aiff

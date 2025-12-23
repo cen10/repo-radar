@@ -4,25 +4,6 @@
 
 GitHub Repository Momentum Dashboard - Track star growth, releases, and issue activity across starred repositories.
 
-## CRITICAL: Task Workflow
-
-**⚠️ ALWAYS follow this sequence when starting ANY
-task:**
-
-1. **FIRST**: Check current branch (`git branch
---show-current`)
-2. **IF NOT ON MAIN**:
-   - Check for changes (`git status`). Ask the user if they would like to commit or stash any changes that exist.
-   - Switch to main (`git checkout main`)
-   - Pull latest (`git pull origin main`)
-3. **CREATE TASK BRANCH**: `git checkout -b
-t{task-number}-{brief-description}`
-4. **THEN**: Begin implementing the task
-5. Mark the task as complete in tasks.md when finished.
-
-**Never start work without creating a task branch
-first!**
-
 ## Tech Stack
 
 ### Frontend
@@ -72,27 +53,6 @@ npm run lint         # Lint code
 npm run build        # Build for production
 ```
 
-## Current Implementation Status
-
-### ✅ Completed
-
-- Project setup and configuration
-- Data model design
-- API contract specification
-- Technical research and decisions
-
-### 🚧 In Progress
-
-- Setting up development environment
-- Implementing authentication flow
-
-### 📋 Upcoming
-
-- Repository list component
-- Metrics visualization
-- Follow/unfollow functionality
-- Data sync implementation
-
 ## Key Decisions
 
 - Using Supabase RLS for data isolation
@@ -122,14 +82,12 @@ npm run build        # Build for production
 3. Maintain >80% test coverage
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
-6. Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
-7. **Auto-format code**: Run `npm run format` after creating/editing any files to ensure consistent formatting
-8. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
-9. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
-10. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
-11. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
-12. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-13. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+6. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
+7. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
+8. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
+9. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
+10. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
+11. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
@@ -145,35 +103,27 @@ npm run build        # Build for production
 
     - Avoid creating helper functions just to wrap constructors - keep tests simple.
 
-## Data Validation Pattern
+## Testing Best Practices
 
-When validating data before processing:
+### Logger Mocking Pattern
 
-1. **Validate at the call site, not inside the function.** If a function requires certain data to exist (like `user_name`), check for that data before calling the function. If it's missing, handle the error right there — don't call the function at all.
-2. **Keep mapping/transformation functions pure.** A function like `mapXToY` should only map data. It should not validate inputs, throw errors, or have side effects. It trusts that the caller has already ensured the data is valid.
-3. **Don't pass derived values as extra parameters.** If you can derive a value from an object you're already passing (e.g., `login` from `supabaseUser.user_metadata.user_name`), don't pass both the object and the derived value. Just pass the object and let the function extract what it needs.
-4. **Handle errors where you have context.** The call site knows what error message to show, what state to update, etc. Don't bury error handling inside utility functions that lack that context.
-
-Pattern to follow:
+To prevent stderr noise in tests, always mock the logger module in test files:
 
 ```typescript
-// ✓ Good: Validate first, then call
-if (!data.requiredField) {
-  handleError();
-  return;
-}
-const result = mapData(data);
+import { logger } from '../utils/logger';
 
-// ✗ Bad: Let the function throw and catch it
-try {
-  const result = mapData(data); // throws if requiredField missing
-} catch (err) {
-  handleError();
-}
-
-// ✗ Bad: Pass derived values as extra params
-const result = mapData(data, data.requiredField);
+// Mock the logger to silence test output
+vi.mock('../utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 ```
+
+Apply this pattern in any test file that uses the logger or tests components that internally use the logger.
 
 ## Commit Message Rules
 
@@ -189,8 +139,3 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 ```
 
-## Recent Changes
-
-- Initial project structure created
-- Supabase integration configured
-- GitHub OAuth flow designed

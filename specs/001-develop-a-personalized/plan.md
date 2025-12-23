@@ -45,7 +45,7 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 **Value**: See what's happening now with your repos
 - Add current metrics: recent releases, open issues
 - Calculate simple growth indicators (comparing to yesterday)
-- Visual indicators for "hot" repos (>20% growth)
+- Visual indicators for "hot" repos (≥100 stars + ≥25% growth in 24h + ≥50 stars gained)
 - Manual refresh button
 - Last updated timestamp
 

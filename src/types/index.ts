@@ -32,7 +32,6 @@ export interface RepositoryMetrics {
   releases_count?: number;
   last_release_date?: string | null;
   is_trending?: boolean;
-  momentum_score?: number;
 }
 
 export interface RepositoryWithMetrics extends Repository {
