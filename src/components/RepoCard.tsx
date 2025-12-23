@@ -6,7 +6,6 @@ interface RepoCardProps {
   onToggleFollow?: (repo: RepositoryWithMetrics) => void;
 }
 
-// Format star count for display (e.g., 1234 -> 1.2k)
 function formatStarCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -14,11 +13,9 @@ function formatStarCount(count: number): string {
   return count.toString();
 }
 
-// Get language color for badge
 function getLanguageColor(language: string | null): string {
   if (!language) return 'bg-gray-100 text-gray-800';
 
-  // WCAG AA compliant language colors (4.5:1 contrast minimum)
   const colors: Record<string, string> = {
     JavaScript: 'bg-amber-100 text-amber-800',
     TypeScript: 'bg-blue-100 text-blue-800',
@@ -37,7 +34,6 @@ function getLanguageColor(language: string | null): string {
   return colors[language] || 'bg-gray-100 text-gray-800';
 }
 
-// Star icon component
 function StarIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -50,7 +46,6 @@ function StarIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-// Issue icon component (GitHub-style open issue icon)
 function IssueIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
@@ -60,12 +55,10 @@ function IssueIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-// Tooltip component
 function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
   return (
     <div className="group relative">
       {children}
-      {/* Invisible bridge to connect trigger and tooltip so that tooltip does not disappear when cursor travels from trigger to tooltip */}
       <div className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-10" />
       <div
         className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg"
@@ -78,7 +71,6 @@ function Tooltip({ content, children }: { content: string; children: React.React
   );
 }
 
-// Shared handler for metric elements to prevent navigation on activation
 const handleMetricKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === 'Enter' || e.key === ' ') {
     e.stopPropagation();
@@ -102,163 +94,156 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     is_following,
   } = repository;
 
-  const handleCardClick = (_e: React.MouseEvent) => {
-    window.open(html_url, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleFollowToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+  const handleFollowToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     onToggleFollow?.(repository);
   };
 
   return (
-    <div
-      className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={handleCardClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          window.open(html_url, '_blank', 'noopener,noreferrer');
-        }
-      }}
-      aria-label={`View repository ${full_name} on GitHub`}
-    >
-      {/* Header with owner avatar and follow button */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          {/* Avatar is decorative - owner name is provided in adjacent text */}
-          <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" />
-          <div>
-            <h3
-              className="text-lg font-semibold text-gray-900 hover:text-blue-600"
-              aria-describedby={`owner-${full_name.replace('/', '-')}`}
-            >
-              {name}
-            </h3>
-            <p
-              id={`owner-${full_name.replace('/', '-')}`}
-              className="text-sm text-gray-500"
-              aria-hidden="true"
-            >
-              by {owner.login}
-            </p>
-          </div>
-        </div>
-
-        {/* Follow button */}
-        {onToggleFollow && (
-          <button
-            onClick={handleFollowToggle}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              is_following
-                ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-            aria-label={`${is_following ? 'Unfollow' : 'Follow'} ${name} repository`}
-          >
-            {is_following ? 'Following' : 'Follow'}
-          </button>
-        )}
-      </div>
-
-      {/* Description */}
-      {description && <p className="text-gray-700 text-sm mb-4 line-clamp-2">{description}</p>}
-
-      {/* Topics */}
-      {topics && topics.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {topics.slice(0, 3).map((topic) => (
-            <span
-              key={topic}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              {topic}
-            </span>
-          ))}
-          {topics.length > 3 && (
-            <span className="text-xs text-gray-500">+{topics.length - 3} more</span>
-          )}
-        </div>
-      )}
-
-      {/* Metrics row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {/* Stars */}
-          <div
-            className="flex items-center text-gray-600"
-            aria-label={`${formatStarCount(stargazers_count)} stars`}
-          >
-            <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
-            <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
-          </div>
-
-          {/* Growth rate */}
-          {metrics?.stars_growth_rate && (
-            <Tooltip
-              content={
-                metrics.stars_growth_rate > 0
-                  ? `+${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
-                  : `${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
-              }
-            >
-              <span
-                className={`text-xs cursor-help ${
-                  metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-                tabIndex={0}
-                aria-label={`${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% star growth over 7 days`}
-                onKeyDown={handleMetricKeyDown}
+    <div className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
+      {/* Link covers the card content for navigation */}
+      <a
+        href={html_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block p-6 no-underline"
+      >
+        {/* Header with owner avatar */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" />
+            <div>
+              <h3
+                className="text-lg font-semibold text-gray-900"
+                aria-describedby={`owner-${full_name.replace('/', '-')}`}
               >
-                {metrics.stars_growth_rate > 0 ? '+' : ''}
-                {metrics.stars_growth_rate.toFixed(1)}%
-              </span>
-            </Tooltip>
-          )}
-
-          {/* Issues */}
-          <Tooltip content="Open issue count">
-            <div
-              className="flex items-center text-gray-600 cursor-help"
-              tabIndex={0}
-              aria-label={`${open_issues_count} open issues`}
-              onKeyDown={handleMetricKeyDown}
-            >
-              <IssueIcon className="w-4 h-4 mr-1" />
-              <span className="text-sm">{open_issues_count}</span>
+                {name}
+              </h3>
+              <p
+                id={`owner-${full_name.replace('/', '-')}`}
+                className="text-sm text-gray-500"
+                aria-hidden="true"
+              >
+                by {owner.login}
+              </p>
             </div>
-          </Tooltip>
+          </div>
+        </div>
 
-          {/* Language */}
-          {language && (
-            <Tooltip content="Primary language">
+        {/* Description */}
+        {description && <p className="text-gray-700 text-sm mb-4 line-clamp-2">{description}</p>}
+
+        {/* Topics */}
+        {topics && topics.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {topics.slice(0, 3).map((topic) => (
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
-                aria-label={`Primary language: ${language}`}
+                key={topic}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {topic}
+              </span>
+            ))}
+            {topics.length > 3 && (
+              <span className="text-xs text-gray-500">+{topics.length - 3} more</span>
+            )}
+          </div>
+        )}
+
+        {/* Metrics row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div
+              className="flex items-center text-gray-600"
+              aria-label={`${formatStarCount(stargazers_count)} stars`}
+            >
+              <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
+              <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
+            </div>
+
+            {metrics?.stars_growth_rate && (
+              <Tooltip
+                content={
+                  metrics.stars_growth_rate > 0
+                    ? `+${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
+                    : `${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
+                }
+              >
+                <span
+                  className={`text-xs cursor-help ${
+                    metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                  tabIndex={0}
+                  aria-label={`${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% star growth over 7 days`}
+                  onKeyDown={handleMetricKeyDown}
+                >
+                  {metrics.stars_growth_rate > 0 ? '+' : ''}
+                  {metrics.stars_growth_rate.toFixed(1)}%
+                </span>
+              </Tooltip>
+            )}
+
+            <Tooltip content="Open issue count">
+              <div
+                className="flex items-center text-gray-600 cursor-help"
                 tabIndex={0}
+                aria-label={`${open_issues_count} open issues`}
                 onKeyDown={handleMetricKeyDown}
               >
-                {language}
-              </span>
+                <IssueIcon className="w-4 h-4 mr-1" />
+                <span className="text-sm">{open_issues_count}</span>
+              </div>
             </Tooltip>
-          )}
+
+            {language && (
+              <Tooltip content="Primary language">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
+                  aria-label={`Primary language: ${language}`}
+                  tabIndex={0}
+                  onKeyDown={handleMetricKeyDown}
+                >
+                  {language}
+                </span>
+              </Tooltip>
+            )}
+          </div>
+
+          <div className="text-xs text-gray-500">
+            {pushed_at ? `Last commit ${formatRelativeTime(pushed_at)}` : 'No commits yet'}
+          </div>
         </div>
 
-        {/* Last commit time */}
-        <div className="text-xs text-gray-500">
-          {pushed_at ? `Last commit ${formatRelativeTime(pushed_at)}` : 'No commits yet'}
-        </div>
-      </div>
+        {/* Trending indicator */}
+        {metrics?.is_trending && (
+          <div className="mt-3">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+              🔥 Trending
+            </span>
+          </div>
+        )}
+      </a>
 
-      {/* Trending indicator */}
-      {metrics?.is_trending && (
-        <div className="mt-3">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-            🔥 Trending
-          </span>
-        </div>
+      {/* Follow button - OUTSIDE the link, positioned top-right, sibling to <a> */}
+      {onToggleFollow && (
+        <button
+          type="button"
+          onClick={handleFollowToggle}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleFollowToggle(e);
+            }
+          }}
+          className={`absolute top-6 right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
+            is_following
+              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+          aria-label={`${is_following ? 'Unfollow' : 'Follow'} ${name} repository`}
+        >
+          {is_following ? 'Following' : 'Follow'}
+        </button>
       )}
     </div>
   );
