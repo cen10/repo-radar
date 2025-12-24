@@ -71,9 +71,9 @@ function Tooltip({ content, children }: { content: string; children: React.React
     <span className="group/tooltip relative">
       {children}
       {/* Invisible bridge to maintain hover between element and tooltip */}
-      <span className="invisible group-hover/tooltip:visible [.group/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-20" />
+      <span className="invisible group-hover/tooltip:visible [.group\/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-20" />
       <span
-        className="invisible group-hover/tooltip:visible [.group/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-20 shadow-lg"
+        className="invisible group-hover/tooltip:visible [.group\/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-20 shadow-lg"
         role="tooltip"
         aria-hidden="true"
       >
