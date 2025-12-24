@@ -6,6 +6,7 @@ interface RepoCardProps {
   onToggleFollow?: (repo: RepositoryWithMetrics) => void;
 }
 
+// Format star count for display (e.g., 1234 -> 1.2k)
 function formatStarCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -24,6 +25,7 @@ function formatStarCountLong(count: number): string {
 function getLanguageColor(language: string | null): string {
   if (!language) return 'bg-gray-100 text-gray-800';
 
+  // WCAG AA compliant language colors (4.5:1 contrast minimum)
   const colors: Record<string, string> = {
     JavaScript: 'bg-amber-100 text-amber-800',
     TypeScript: 'bg-blue-100 text-blue-800',
@@ -42,6 +44,7 @@ function getLanguageColor(language: string | null): string {
   return colors[language] || 'bg-gray-100 text-gray-800';
 }
 
+// Star icon component
 function StarIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -54,6 +57,7 @@ function StarIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
+// Issue icon component (GitHub-style open issue icon)
 function IssueIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
