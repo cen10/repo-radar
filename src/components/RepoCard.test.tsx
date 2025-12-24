@@ -225,7 +225,8 @@ describe('RepoCard', () => {
       const followButton = screen.getByRole('button', {
         name: /unfollow awesome-repo repository/i,
       });
-      await user.click(followButton);
+      followButton.focus();
+      await user.keyboard(' ');
 
       expect(onToggleFollow).toHaveBeenCalledWith(repo);
     });

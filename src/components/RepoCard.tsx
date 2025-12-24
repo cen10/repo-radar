@@ -232,11 +232,6 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
         <button
           type="button"
           onClick={handleFollowToggle}
-          onKeyDown={(e) => {
-            if (e.key === ' ') {
-              e.preventDefault(); // Prevent page scroll on Space
-            }
-          }}
           className={`absolute top-6 right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
             is_following
               ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
