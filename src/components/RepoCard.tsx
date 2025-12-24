@@ -162,8 +162,8 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       )}
 
       {/* Metrics row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
           {/* Stars with optional growth */}
           <Tooltip content={starsLabel}>
             <span
@@ -217,7 +217,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
           )}
         </div>
 
-        {/* Last commit - right aligned */}
+        {/* Last commit - below metrics on mobile, right aligned on desktop */}
         <span className="text-xs text-gray-500">
           {pushed_at ? `Last commit ${formatRelativeTime(pushed_at)}` : 'No commits yet'}
         </span>
