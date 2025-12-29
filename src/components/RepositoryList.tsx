@@ -179,7 +179,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
               <option value="all">All Repositories</option>
               <option value="trending">Trending</option>
               <option value="active">Recently Active</option>
-              <option value="stale">Stale</option>
             </select>
 
             {/* Sort */}
