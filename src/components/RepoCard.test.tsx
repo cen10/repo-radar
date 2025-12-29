@@ -62,7 +62,12 @@ describe('RepoCard', () => {
     expect(
       screen.getByText('This is an awesome repository for testing purposes')
     ).toBeInTheDocument();
-    expect(screen.getByAltText("octocat's avatar")).toBeInTheDocument();
+    // Avatar has empty alt text since it's decorative and owner name is adjacent
+    const avatar = document.querySelector(
+      'img[src="https://github.com/images/error/octocat_happy.gif"]'
+    );
+    expect(avatar).toBeInTheDocument();
+    expect(avatar).toHaveAttribute('alt', '');
   });
 
   it('displays star count with proper formatting', () => {
@@ -90,9 +95,11 @@ describe('RepoCard', () => {
     const repo = createMockRepository({ language: 'JavaScript' });
     render(<RepoCard repository={repo} />);
 
-    const languageBadge = screen.getByText('JavaScript');
+    const languageBadge = screen.getByLabelText('Primary language: JavaScript');
     expect(languageBadge).toBeInTheDocument();
-    expect(languageBadge).toHaveClass('bg-amber-100', 'text-amber-800');
+    // Language badge has multiple classes including the color classes
+    expect(languageBadge.className).toMatch(/bg-amber-100/);
+    expect(languageBadge.className).toMatch(/text-amber-800/);
   });
 
   it('handles repository without language', () => {
@@ -157,104 +164,83 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
-  it('opens repository in new tab when clicked', async () => {
-    const user = userEvent.setup();
+  it('opens repository in new tab when link is clicked', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
-    const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    await user.click(card);
-
-    expect(mockWindowOpen).toHaveBeenCalledWith(
-      'https://github.com/octocat/awesome-repo',
-      '_blank',
-      'noopener,noreferrer'
-    );
+    const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
+    expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('opens repository when Enter key is pressed', async () => {
-    const user = userEvent.setup();
+  it('link can be accessed via keyboard navigation', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
-    const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    card.focus();
-    await user.keyboard('{Enter}');
+    const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
+    link.focus();
 
-    expect(mockWindowOpen).toHaveBeenCalledWith(
-      'https://github.com/octocat/awesome-repo',
-      '_blank',
-      'noopener,noreferrer'
-    );
+    // Link should be focusable and have correct attributes
+    expect(document.activeElement).toBe(link);
+    expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
   });
 
-  it('opens repository when Space key is pressed', async () => {
-    const user = userEvent.setup();
+  it('renders as an article element for semantic structure', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
-    const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    card.focus();
-    await user.keyboard(' ');
-
-    expect(mockWindowOpen).toHaveBeenCalledWith(
-      'https://github.com/octocat/awesome-repo',
-      '_blank',
-      'noopener,noreferrer'
-    );
+    const article = screen.getByRole('article');
+    expect(article).toBeInTheDocument();
+    expect(article).toHaveClass('bg-white', 'border', 'border-gray-200', 'rounded-lg');
   });
 
-  it('does not open repository for other keys', async () => {
-    const user = userEvent.setup();
-    const repo = createMockRepository();
+  it('handles repository with no pushed_at date', () => {
+    const repo = createMockRepository({ pushed_at: null });
     render(<RepoCard repository={repo} />);
 
-    const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-    card.focus();
-    await user.keyboard('{Escape}');
-
-    expect(mockWindowOpen).not.toHaveBeenCalled();
+    expect(screen.getByText('No commits yet')).toBeInTheDocument();
   });
 
   describe('Keyboard navigation', () => {
-    it('does not open repository when Enter is pressed on follow button', async () => {
+    it('follow button responds to Enter key press', async () => {
       const user = userEvent.setup();
       const repo = createMockRepository({ is_following: false });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow repository/i });
-      await user.click(followButton);
+      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
+      followButton.focus();
+      await user.keyboard('{Enter}');
 
-      expect(mockWindowOpen).not.toHaveBeenCalled();
       expect(onToggleFollow).toHaveBeenCalledWith(repo);
     });
 
-    it('does not open repository when Space is pressed on follow button', async () => {
+    it('follow button responds to Space key press', async () => {
       const user = userEvent.setup();
       const repo = createMockRepository({ is_following: true });
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /unfollow repository/i });
-      await user.click(followButton);
+      const followButton = screen.getByRole('button', {
+        name: /unfollow awesome-repo repository/i,
+      });
+      followButton.focus();
+      await user.keyboard(' ');
 
-      expect(mockWindowOpen).not.toHaveBeenCalled();
       expect(onToggleFollow).toHaveBeenCalledWith(repo);
     });
 
-    it('does not open repository when Enter is pressed on growth rate metric', async () => {
-      const user = userEvent.setup();
+    it('metrics are focusable for keyboard navigation', () => {
       const repo = createMockRepository({
+        stargazers_count: 1234,
         metrics: { stars_growth_rate: 12.5 },
       });
       render(<RepoCard repository={repo} />);
 
-      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
-      growthElement.focus();
-      await user.keyboard('{Enter}');
-
-      expect(mockWindowOpen).not.toHaveBeenCalled();
+      // Star count with growth rate should be focusable
+      const starElement = screen.getByLabelText('1.2 thousand stars with +12.5% growth');
+      expect(starElement).toHaveAttribute('tabIndex', '0');
     });
 
     it('does not open repository when Space is pressed on issue count metric', async () => {
@@ -288,7 +274,7 @@ describe('RepoCard', () => {
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow repository/i });
+      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
       expect(followButton).toBeInTheDocument();
       expect(followButton).toHaveTextContent('Follow');
     });
@@ -298,7 +284,9 @@ describe('RepoCard', () => {
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /unfollow repository/i });
+      const followButton = screen.getByRole('button', {
+        name: /unfollow awesome-repo repository/i,
+      });
       expect(followButton).toBeInTheDocument();
       expect(followButton).toHaveTextContent('Following');
       expect(followButton).toHaveClass('bg-blue-100', 'text-blue-800');
@@ -310,7 +298,7 @@ describe('RepoCard', () => {
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow repository/i });
+      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
       await user.click(followButton);
 
       expect(onToggleFollow).toHaveBeenCalledWith(repo);
@@ -323,7 +311,7 @@ describe('RepoCard', () => {
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow repository/i });
+      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
       await user.click(followButton);
 
       expect(mockWindowOpen).not.toHaveBeenCalled();
@@ -361,14 +349,7 @@ describe('RepoCard', () => {
       expect(growthElement).toHaveClass('text-red-600');
     });
 
-    it('displays trending indicator when repository is trending', () => {
-      const repo = createMockRepository({
-        metrics: { is_trending: true },
-      });
-      render(<RepoCard repository={repo} />);
-
-      expect(screen.getByText('🔥 Trending')).toBeInTheDocument();
-    });
+    // Trending feature has been removed
 
     it('does not display trending indicator when repository is not trending', () => {
       const repo = createMockRepository({
@@ -389,12 +370,15 @@ describe('RepoCard', () => {
   });
 
   describe('Accessibility', () => {
-    it('has proper accessibility attributes for card interaction', () => {
+    it('has proper accessibility structure with article and link', () => {
       const repo = createMockRepository();
       render(<RepoCard repository={repo} />);
 
-      const card = screen.getByRole('button', { name: /view repository octocat\/awesome-repo/i });
-      expect(card).toHaveAttribute('tabIndex', '0');
+      const article = screen.getByRole('article');
+      expect(article).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
+      expect(link).toBeInTheDocument();
     });
 
     it('has proper accessibility attributes for follow button', () => {
@@ -402,23 +386,26 @@ describe('RepoCard', () => {
       const onToggleFollow = vi.fn();
       render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow repository/i });
+      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
       expect(followButton).toBeInTheDocument();
     });
 
-    it('has proper alt text for owner avatar', () => {
+    it('has empty alt text for decorative avatar', () => {
       const repo = createMockRepository();
       render(<RepoCard repository={repo} />);
 
-      const avatar = screen.getByAltText("octocat's avatar");
+      const avatar = document.querySelector(
+        'img[src="https://github.com/images/error/octocat_happy.gif"]'
+      );
       expect(avatar).toBeInTheDocument();
+      expect(avatar).toHaveAttribute('alt', '');
     });
 
-    it('has aria-label for star count with context', () => {
+    it('has aria-label for star count with proper formatting', () => {
       const repo = createMockRepository({ stargazers_count: 1234 });
       render(<RepoCard repository={repo} />);
 
-      const starElement = screen.getByLabelText('1.2k stars');
+      const starElement = screen.getByLabelText('1.2 thousand stars');
       expect(starElement).toBeInTheDocument();
     });
 
@@ -438,24 +425,26 @@ describe('RepoCard', () => {
       expect(languageElement).toBeInTheDocument();
     });
 
-    it('has aria-label for growth rate with context when metrics exist', () => {
+    it('has aria-label for star count with growth rate when metrics exist', () => {
       const repo = createMockRepository({
+        stargazers_count: 1234,
         metrics: { stars_growth_rate: 12.5 },
       });
       render(<RepoCard repository={repo} />);
 
-      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
-      expect(growthElement).toBeInTheDocument();
+      const starElement = screen.getByLabelText('1.2 thousand stars with +12.5% growth');
+      expect(starElement).toBeInTheDocument();
     });
 
-    it('has focusable growth rate element when metrics exist', () => {
+    it('star count with growth rate is focusable', () => {
       const repo = createMockRepository({
+        stargazers_count: 1234,
         metrics: { stars_growth_rate: 12.5 },
       });
       render(<RepoCard repository={repo} />);
 
-      const growthElement = screen.getByLabelText('+12.5% star growth over 7 days');
-      expect(growthElement).toHaveAttribute('tabIndex', '0');
+      const starElement = screen.getByLabelText('1.2 thousand stars with +12.5% growth');
+      expect(starElement).toHaveAttribute('tabIndex', '0');
     });
 
     it('has focusable issue count element', () => {
@@ -474,12 +463,12 @@ describe('RepoCard', () => {
       expect(languageElement).toHaveAttribute('tabIndex', '0');
     });
 
-    it('star count is not focusable but has context for screen readers', () => {
+    it('star count without growth rate is focusable', () => {
       const repo = createMockRepository({ stargazers_count: 1234 });
       render(<RepoCard repository={repo} />);
 
-      const starElement = screen.getByLabelText('1.2k stars');
-      expect(starElement).not.toHaveAttribute('tabIndex');
+      const starElement = screen.getByLabelText('1.2 thousand stars');
+      expect(starElement).toHaveAttribute('tabIndex', '0');
     });
 
     it('tooltips are hidden from screen readers', () => {

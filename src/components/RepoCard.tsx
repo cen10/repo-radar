@@ -14,7 +14,14 @@ function formatStarCount(count: number): string {
   return count.toString();
 }
 
-// Get language color for badge
+function formatStarCountLong(count: number): string {
+  if (count >= 1000) {
+    const thousands = count / 1000;
+    return `${thousands.toFixed(1)} thousand`;
+  }
+  return count.toString();
+}
+
 function getLanguageColor(language: string | null): string {
   if (!language) return 'bg-gray-100 text-gray-800';
 
@@ -59,37 +66,27 @@ function IssueIcon({ className = 'w-4 h-4' }: { className?: string }) {
     </svg>
   );
 }
-
-// Tooltip component
 function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
   return (
-    <div className="group relative">
+    <span className="group/tooltip relative">
       {children}
-      {/* Invisible bridge to connect trigger and tooltip so that tooltip does not disappear when cursor travels from trigger to tooltip */}
-      <div className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-10" />
-      <div
-        className="invisible group-hover:visible group-focus-within:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-10 shadow-lg"
+      {/* Invisible bridge to maintain hover between element and tooltip */}
+      <span className="invisible group-hover/tooltip:visible [.group\/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 w-full h-2 z-20" />
+      <span
+        className="invisible group-hover/tooltip:visible [.group\/tooltip:has(:focus-visible)_&]:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap z-20 shadow-lg"
+        role="tooltip"
         aria-hidden="true"
       >
         {content}
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-      </div>
-    </div>
+        <span className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+      </span>
+    </span>
   );
 }
-
-// Shared handler for metric elements to prevent navigation on activation
-const handleMetricKeyDown = (e: React.KeyboardEvent) => {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-};
 
 export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
   const {
     name,
-    full_name,
     owner,
     description,
     html_url,
@@ -102,57 +99,52 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     is_following,
   } = repository;
 
-  const handleCardClick = (_e: React.MouseEvent) => {
-    window.open(html_url, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleFollowToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+  const handleFollowToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     onToggleFollow?.(repository);
   };
 
+  // Build natural language strings for screen readers
+  const starsLabel = metrics?.stars_growth_rate
+    ? `${formatStarCountLong(stargazers_count)} stars with ${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% growth`
+    : `${formatStarCountLong(stargazers_count)} stars`;
+
+  const issuesLabel = `${open_issues_count} open issues`;
+
+  const languageLabel = language ? `Primary language: ${language}` : null;
+
+  const topicsLabel =
+    topics && topics.length > 0
+      ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
+      : null;
+
+  // Tooltip labels (simpler than screen reader labels)
+  const starsTooltip = 'Star count and growth rate over 7 days';
+  const issuesTooltip = 'Open issues';
+  const languageTooltip = 'Primary language';
+
   return (
-    <div
-      className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={handleCardClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          window.open(html_url, '_blank', 'noopener,noreferrer');
-        }
-      }}
-      aria-label={`View repository ${full_name} on GitHub`}
-    >
-      {/* Header with owner avatar and follow button */}
+    <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
+      {/* Header with owner avatar and stretched link */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <img
-            src={owner.avatar_url}
-            alt={`${owner.login}'s avatar`}
-            className="h-8 w-8 rounded-full"
-          />
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600">{name}</h3>
-            <p className="text-sm text-gray-500">by {owner.login}</p>
-          </div>
+          <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" />
+          <h3 className="text-lg font-semibold text-gray-900">
+            <a
+              href={html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
+              aria-label={`${name} by ${owner.login}`}
+            >
+              <span aria-hidden="true">{name}</span>
+            </a>
+            <span className="block text-sm text-gray-500 font-normal" aria-hidden="true">
+              by {owner.login}
+            </span>
+          </h3>
         </div>
-
-        {/* Follow button */}
-        {onToggleFollow && (
-          <button
-            onClick={handleFollowToggle}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              is_following
-                ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-            aria-label={is_following ? 'Unfollow repository' : 'Follow repository'}
-          >
-            {is_following ? 'Following' : 'Follow'}
-          </button>
-        )}
       </div>
 
       {/* Description */}
@@ -160,98 +152,105 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
       {/* Topics */}
       {topics && topics.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div
+          className="flex flex-wrap gap-2 mb-4"
+          role="group"
+          aria-label={topicsLabel ?? undefined}
+        >
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              aria-hidden="true"
             >
               {topic}
             </span>
           ))}
           {topics.length > 3 && (
-            <span className="text-xs text-gray-500">+{topics.length - 3} more</span>
+            <span className="text-xs text-gray-500" aria-hidden="true">
+              {`+${topics.length - 3} more`}
+            </span>
           )}
         </div>
       )}
 
       {/* Metrics row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {/* Stars */}
-          <div
-            className="flex items-center text-gray-600"
-            aria-label={`${formatStarCount(stargazers_count)} stars`}
-          >
-            <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
-            <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
-          </div>
-
-          {/* Growth rate */}
-          {metrics?.stars_growth_rate && (
-            <Tooltip
-              content={
-                metrics.stars_growth_rate > 0
-                  ? `+${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
-                  : `${metrics.stars_growth_rate.toFixed(1)}% growth over 7 days`
-              }
-            >
-              <span
-                className={`text-xs cursor-help ${
-                  metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-                tabIndex={0}
-                aria-label={`${metrics.stars_growth_rate > 0 ? '+' : ''}${metrics.stars_growth_rate.toFixed(1)}% star growth over 7 days`}
-                onKeyDown={handleMetricKeyDown}
-              >
-                {metrics.stars_growth_rate > 0 ? '+' : ''}
-                {metrics.stars_growth_rate.toFixed(1)}%
-              </span>
-            </Tooltip>
-          )}
-
-          {/* Issues */}
-          <Tooltip content="Open issue count">
-            <div
-              className="flex items-center text-gray-600 cursor-help"
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex items-center flex-wrap gap-x-4 gap-y-2 py-0.5">
+          {/* Stars with optional growth */}
+          <Tooltip content={starsTooltip}>
+            <span
               tabIndex={0}
-              aria-label={`${open_issues_count} open issues`}
-              onKeyDown={handleMetricKeyDown}
+              aria-label={starsLabel}
+              className="relative z-[2] flex items-center space-x-2 rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <IssueIcon className="w-4 h-4 mr-1" />
-              <span className="text-sm">{open_issues_count}</span>
-            </div>
+              <span className="flex items-center text-gray-600" aria-hidden="true">
+                <StarIcon className="w-4 h-4 mr-1 text-yellow-500" />
+                <span className="text-sm font-medium">{formatStarCount(stargazers_count)}</span>
+              </span>
+              {metrics?.stars_growth_rate && (
+                <span
+                  className={`text-sm ${
+                    metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {metrics.stars_growth_rate > 0 ? '+' : ''}
+                  {metrics.stars_growth_rate.toFixed(1)}%
+                </span>
+              )}
+            </span>
+          </Tooltip>
+
+          {/* Open issues */}
+          <Tooltip content={issuesTooltip}>
+            <span
+              tabIndex={0}
+              aria-label={issuesLabel}
+              className="relative z-[2] flex items-center text-gray-600 rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <span aria-hidden="true" className="flex items-center">
+                <IssueIcon className="w-4 h-4 mr-1" />
+                <span className="text-sm">{open_issues_count}</span>
+              </span>
+            </span>
           </Tooltip>
 
           {/* Language */}
           {language && (
-            <Tooltip content="Primary language">
+            <Tooltip content={languageTooltip}>
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help ${getLanguageColor(language)}`}
-                aria-label={`Primary language: ${language}`}
                 tabIndex={0}
-                onKeyDown={handleMetricKeyDown}
+                aria-label={languageLabel!}
+                className={`relative z-[2] inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${getLanguageColor(language)}`}
               >
-                {language}
+                <span aria-hidden="true">{language}</span>
               </span>
             </Tooltip>
           )}
         </div>
 
-        {/* Last commit time */}
-        <div className="text-xs text-gray-500">
+        {/* Last commit - below metrics on mobile, right aligned on desktop */}
+        <span className="text-xs text-gray-500">
           {pushed_at ? `Last commit ${formatRelativeTime(pushed_at)}` : 'No commits yet'}
-        </div>
+        </span>
       </div>
 
-      {/* Trending indicator */}
-      {metrics?.is_trending && (
-        <div className="mt-3">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-            🔥 Trending
-          </span>
-        </div>
+      {/* Follow button - positioned above stretched link */}
+      {onToggleFollow && (
+        <button
+          type="button"
+          onClick={handleFollowToggle}
+          className={`absolute top-6 right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
+            is_following
+              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+          aria-label={`${is_following ? 'Unfollow' : 'Follow'} ${name} repository`}
+        >
+          {is_following ? 'Following' : 'Follow'}
+        </button>
       )}
-    </div>
+    </article>
   );
 }
