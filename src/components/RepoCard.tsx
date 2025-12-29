@@ -119,6 +119,11 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
       : null;
 
+  // Tooltip labels (simpler than screen reader labels)
+  const starsTooltip = 'Star count and growth rate over 7 days';
+  const issuesTooltip = 'Open issues';
+  const languageTooltip = 'Primary language';
+
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
       {/* Header with owner avatar and stretched link */}
@@ -173,7 +178,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
           {/* Stars with optional growth */}
-          <Tooltip content={starsLabel}>
+          <Tooltip content={starsTooltip}>
             <span
               tabIndex={0}
               aria-label={starsLabel}
@@ -198,7 +203,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
           </Tooltip>
 
           {/* Open issues */}
-          <Tooltip content={issuesLabel}>
+          <Tooltip content={issuesTooltip}>
             <span
               tabIndex={0}
               aria-label={issuesLabel}
@@ -213,7 +218,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
           {/* Language */}
           {language && (
-            <Tooltip content={languageLabel!}>
+            <Tooltip content={languageTooltip}>
               <span
                 tabIndex={0}
                 aria-label={languageLabel!}
