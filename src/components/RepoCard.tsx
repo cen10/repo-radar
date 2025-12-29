@@ -176,7 +176,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
       {/* Metrics row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="flex items-center flex-wrap gap-x-4 gap-y-2">
+        <div className="flex items-center flex-wrap gap-x-4 gap-y-2 py-0.5">
           {/* Stars with optional growth */}
           <Tooltip content={starsTooltip}>
             <span
@@ -190,7 +190,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
               </span>
               {metrics?.stars_growth_rate && (
                 <span
-                  className={`text-xs ${
+                  className={`text-sm ${
                     metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'
                   }`}
                   aria-hidden="true"
