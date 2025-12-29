@@ -147,7 +147,11 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
       {/* Topics */}
       {topics && topics.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4" aria-label={topicsLabel ?? undefined}>
+        <div
+          className="flex flex-wrap gap-2 mb-4"
+          role="group"
+          aria-label={topicsLabel ?? undefined}
+        >
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
