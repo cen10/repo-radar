@@ -108,11 +108,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const currentRepos = sortedRepos.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filterBy, sortBy]);
-
   // Loading state
   if (isLoading) {
     return (
@@ -138,7 +133,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     );
   }
 
-  // Empty state
+  // Empty state - no repositories at all
   if (repositories.length === 0) {
     return (
       <div className="text-center py-12">
@@ -150,58 +145,79 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     );
   }
 
+  // Controls - rendered once above conditional branches
+  const controls = (
+    <div className="bg-white shadow rounded-lg p-4">
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Search */}
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search repositories..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+            aria-label="Search repositories"
+          />
+        </div>
+
+        {/* Filter */}
+        <select
+          value={filterBy}
+          onChange={(e) => {
+            setFilterBy(e.target.value as FilterOption);
+            setCurrentPage(1);
+          }}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          aria-label="Filter repositories"
+        >
+          <option value="all">All Repositories</option>
+          <option value="trending">Trending</option>
+          <option value="active">Recently Active</option>
+        </select>
+
+        {/* Sort */}
+        <select
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value as SortOption);
+            setCurrentPage(1);
+          }}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          aria-label="Sort repositories"
+        >
+          <option value="activity">Recent Activity</option>
+          <option value="stars">Stars</option>
+          <option value="name">Name</option>
+          <option value="issues">Open Issues</option>
+        </select>
+      </div>
+
+      {/* Results count - only show when there are results */}
+      {sortedRepos.length > 0 && (
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {startIndex + 1}-{Math.min(endIndex, sortedRepos.length)} of {sortedRepos.length}{' '}
+          repositories
+        </div>
+      )}
+    </div>
+  );
+
   // No results after filtering
   if (sortedRepos.length === 0) {
     return (
       <div className="space-y-6">
-        {/* Controls */}
-        <div className="bg-white shadow rounded-lg p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search repositories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                aria-label="Search repositories"
-              />
-            </div>
-
-            {/* Filter */}
-            <select
-              value={filterBy}
-              onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-              aria-label="Filter repositories"
-            >
-              <option value="all">All Repositories</option>
-              <option value="trending">Trending</option>
-              <option value="active">Recently Active</option>
-            </select>
-
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-              aria-label="Sort repositories"
-            >
-              <option value="activity">Recent Activity</option>
-              <option value="stars">Stars</option>
-              <option value="name">Name</option>
-              <option value="issues">Open Issues</option>
-            </select>
-          </div>
-        </div>
-
+        {controls}
         <div className="text-center py-12">
           <p className="text-gray-500">No repositories match your filters</p>
           <button
             onClick={() => {
               setSearchQuery('');
               setFilterBy('all');
+              setCurrentPage(1);
             }}
             className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
           >
@@ -214,53 +230,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Controls */}
-      <div className="bg-white shadow rounded-lg p-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search repositories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-              aria-label="Search repositories"
-            />
-          </div>
-
-          {/* Filter */}
-          <select
-            value={filterBy}
-            onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-            aria-label="Filter repositories"
-          >
-            <option value="all">All Repositories</option>
-            <option value="trending">Trending</option>
-            <option value="active">Recently Active</option>
-          </select>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-            aria-label="Sort repositories"
-          >
-            <option value="activity">Recent Activity</option>
-            <option value="stars">Stars</option>
-            <option value="name">Name</option>
-            <option value="issues">Open Issues</option>
-          </select>
-        </div>
-
-        {/* Results count */}
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {startIndex + 1}-{Math.min(endIndex, sortedRepos.length)} of {sortedRepos.length}{' '}
-          repositories
-        </div>
-      </div>
+      {controls}
 
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
