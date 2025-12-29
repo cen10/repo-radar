@@ -4,7 +4,7 @@ import { RepoCard } from './RepoCard';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export type SortOption = 'stars' | 'activity' | 'name' | 'issues';
-export type FilterOption = 'all' | 'trending' | 'active' | 'stale';
+export type FilterOption = 'all' | 'trending' | 'active';
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -55,7 +55,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     // Apply category filter
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     switch (filterBy) {
       case 'trending':
@@ -67,13 +66,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         filtered = filtered.filter((repo) => {
           if (!repo.pushed_at) return false;
           return new Date(repo.pushed_at) > oneWeekAgo;
-        });
-        break;
-      case 'stale':
-        // Not updated recently
-        filtered = filtered.filter((repo) => {
-          const lastUpdate = repo.pushed_at || repo.updated_at;
-          return new Date(lastUpdate) < oneMonthAgo;
         });
         break;
       default:
@@ -248,7 +240,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             <option value="all">All Repositories</option>
             <option value="trending">Trending</option>
             <option value="active">Recently Active</option>
-            <option value="stale">Stale</option>
           </select>
 
           {/* Sort */}

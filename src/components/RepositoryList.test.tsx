@@ -286,25 +286,6 @@ describe('RepositoryList', () => {
       expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
     });
 
-    it('filters by stale repositories', () => {
-      const now = new Date();
-      const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      const oldDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
-
-      const repos = [
-        createMockRepository({ id: 1, pushed_at: recentDate, updated_at: recentDate }),
-        createMockRepository({ id: 2, pushed_at: oldDate, updated_at: oldDate }),
-      ];
-
-      render(<RepositoryList repositories={repos} />);
-
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'stale' } });
-
-      expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
-      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
-    });
-
     it('shows all repositories when filter is set to all', () => {
       const repos = [createMockRepository({ id: 1 }), createMockRepository({ id: 2 })];
 
