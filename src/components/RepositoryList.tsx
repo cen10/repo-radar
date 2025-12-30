@@ -151,7 +151,11 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <div className="flex-1">
+          <label htmlFor="repo-search" className="sr-only">
+            Search repositories
+          </label>
           <input
+            id="repo-search"
             type="text"
             placeholder="Search repositories..."
             value={searchQuery}
@@ -160,7 +164,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
               setCurrentPage(1);
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-            aria-label="Search repositories"
           />
         </div>
 
