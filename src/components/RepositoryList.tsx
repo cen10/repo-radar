@@ -206,10 +206,32 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       {/* Results count - only show when there are results */}
       {sortedRepos.length > 0 && (
         <div className="mt-4 text-sm text-gray-600">
-          Showing {startIndex + 1}-{Math.min(endIndex, sortedRepos.length)} of {sortedRepos.length}{' '}
-          repositories
+          {sortedRepos.length === 1 ? (
+            <>Showing 1 repository</>
+          ) : (
+            <>
+              Showing {startIndex + 1} to {Math.min(endIndex, sortedRepos.length)} of{' '}
+              {sortedRepos.length} repositories
+            </>
+          )}
         </div>
       )}
+
+      {/* Hidden aria-live region for screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {sortedRepos.length > 0 ? (
+          sortedRepos.length === 1 ? (
+            <>Showing 1 repository</>
+          ) : (
+            <>
+              Showing {startIndex + 1} to {Math.min(endIndex, sortedRepos.length)} of{' '}
+              {sortedRepos.length} repositories
+            </>
+          )
+        ) : searchQuery || filterBy !== 'all' ? (
+          <>No repositories match your filters</>
+        ) : null}
+      </div>
     </div>
   );
 

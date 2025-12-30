@@ -231,7 +231,9 @@ describe('RepositoryList', () => {
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
 
-      expect(screen.getByText(/no repositories match your filters/i)).toBeInTheDocument();
+      // Use getAllByText since we have both visible and sr-only versions
+      const noResultsTexts = screen.getAllByText(/no repositories match your filters/i);
+      expect(noResultsTexts.length).toBeGreaterThan(0);
       expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
     });
 
@@ -542,19 +544,23 @@ describe('RepositoryList', () => {
 
       render(<RepositoryList repositories={repos} itemsPerPage={10} />);
 
-      expect(screen.getByText(/showing 1-10 of 23 repositories/i)).toBeInTheDocument();
+      // Use getAllByText since we have both visible and sr-only versions
+      let countsTexts = screen.getAllByText(/showing 1 to 10 of 23 repositories/i);
+      expect(countsTexts.length).toBeGreaterThan(0);
 
       // Go to page 2
       const page2Button = screen.getByRole('button', { name: '2' });
       fireEvent.click(page2Button);
 
-      expect(screen.getByText(/showing 11-20 of 23 repositories/i)).toBeInTheDocument();
+      countsTexts = screen.getAllByText(/showing 11 to 20 of 23 repositories/i);
+      expect(countsTexts.length).toBeGreaterThan(0);
 
       // Go to page 3
       const page3Button = screen.getByRole('button', { name: '3' });
       fireEvent.click(page3Button);
 
-      expect(screen.getByText(/showing 21-23 of 23 repositories/i)).toBeInTheDocument();
+      countsTexts = screen.getAllByText(/showing 21 to 23 of 23 repositories/i);
+      expect(countsTexts.length).toBeGreaterThan(0);
     });
   });
 
