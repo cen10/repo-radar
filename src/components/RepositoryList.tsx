@@ -35,6 +35,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // filters local data only, so debouncing would hurt UX. Consider implementing
   // two search modes: 'local' (instant) and 'github' (debounced API search).
 
+  // TODO: Replace native select elements with Headless UI Listbox components for better
+  // control over styling and positioning of dropdown arrows. Native selects have
+  // browser-controlled arrow positioning that can appear too close to the edge.
+
   // Filter repositories
   const filteredRepos = useMemo(() => {
     let filtered = [...repositories];
@@ -174,7 +178,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             setFilterBy(e.target.value as FilterOption);
             setCurrentPage(1);
           }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
           aria-label="Filter repositories"
         >
           <option value="all">All Repositories</option>
@@ -189,7 +193,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             setSortBy(e.target.value as SortOption);
             setCurrentPage(1);
           }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
           aria-label="Sort repositories"
         >
           <option value="activity">Recent Activity</option>
