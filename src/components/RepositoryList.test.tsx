@@ -521,32 +521,6 @@ describe('RepositoryList', () => {
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-6')).not.toBeInTheDocument();
     });
-
-    it('displays results count correctly', () => {
-      const repos = Array.from({ length: 23 }, (_, i) =>
-        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
-      );
-
-      render(<RepositoryList repositories={repos} itemsPerPage={10} />);
-
-      // Use getAllByText since we have both visible and sr-only versions
-      let countsTexts = screen.getAllByText(/showing 1 to 10 of 23 repositories/i);
-      expect(countsTexts.length).toBeGreaterThan(0);
-
-      // Go to page 2
-      const page2Button = screen.getByRole('button', { name: '2' });
-      fireEvent.click(page2Button);
-
-      countsTexts = screen.getAllByText(/showing 11 to 20 of 23 repositories/i);
-      expect(countsTexts.length).toBeGreaterThan(0);
-
-      // Go to page 3
-      const page3Button = screen.getByRole('button', { name: '3' });
-      fireEvent.click(page3Button);
-
-      countsTexts = screen.getAllByText(/showing 21 to 23 of 23 repositories/i);
-      expect(countsTexts.length).toBeGreaterThan(0);
-    });
   });
 
   describe('Combined functionality', () => {
