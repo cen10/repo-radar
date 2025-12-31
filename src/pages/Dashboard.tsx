@@ -45,6 +45,12 @@ const Dashboard = () => {
             pushed_at: '2024-01-15T10:30:00Z',
             created_at: '2013-05-24T16:15:54Z',
             starred_at: '2024-01-01T12:00:00Z',
+            metrics: {
+              stars_growth_rate: 12.5,
+              issues_growth_rate: -3.2,
+              is_trending: true,
+            },
+            is_following: true,
           },
           {
             id: 2,
@@ -65,6 +71,12 @@ const Dashboard = () => {
             pushed_at: '2024-01-14T08:45:00Z',
             created_at: '2014-06-17T15:28:39Z',
             starred_at: '2024-01-02T14:30:00Z',
+            metrics: {
+              stars_growth_rate: 8.1,
+              issues_growth_rate: 2.4,
+              is_trending: false,
+            },
+            is_following: false,
           },
           {
             id: 3,
@@ -83,6 +95,12 @@ const Dashboard = () => {
             updated_at: '2024-01-16T15:20:00Z',
             pushed_at: '2024-01-16T15:20:00Z',
             created_at: '2015-09-03T20:23:00Z',
+            metrics: {
+              stars_growth_rate: -1.2,
+              issues_growth_rate: 15.7,
+              is_trending: false,
+            },
+            is_following: false,
           },
         ];
 

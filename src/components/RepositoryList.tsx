@@ -4,7 +4,7 @@ import { RepoCard } from './RepoCard';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export type SortOption = 'stars' | 'activity' | 'name' | 'issues';
-export type FilterOption = 'all' | 'trending' | 'active';
+export type FilterOption = 'all' | 'active';
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -61,10 +61,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     switch (filterBy) {
-      case 'trending':
-        // Repos with significant star growth (placeholder logic)
-        filtered = filtered.filter((repo) => repo.stargazers_count > 100);
-        break;
       case 'active':
         // Recently pushed to
         filtered = filtered.filter((repo) => {
@@ -182,7 +178,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           aria-label="Filter repositories"
         >
           <option value="all">All Repositories</option>
-          <option value="trending">Trending</option>
           <option value="active">Recently Active</option>
         </select>
 
@@ -347,7 +342,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                       onClick={() => setCurrentPage(pageNum)}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                         currentPage === pageNum
-                          ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                          ? 'z-10 bg-indigo-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
                           : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                       }`}
                     >

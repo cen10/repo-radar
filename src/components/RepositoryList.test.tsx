@@ -254,21 +254,6 @@ describe('RepositoryList', () => {
   });
 
   describe('Filter functionality', () => {
-    it('filters by trending repositories', () => {
-      const repos = [
-        createMockRepository({ id: 1, stargazers_count: 150 }),
-        createMockRepository({ id: 2, stargazers_count: 50 }),
-      ];
-
-      render(<RepositoryList repositories={repos} />);
-
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'trending' } });
-
-      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-    });
-
     it('filters by active repositories', () => {
       const now = new Date();
       const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
@@ -566,24 +551,30 @@ describe('RepositoryList', () => {
 
   describe('Combined functionality', () => {
     it('applies search and filter together', () => {
+      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      const oldDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
       const repos = [
         createMockRepository({
           id: 1,
           name: 'react-app',
           stargazers_count: 150,
           topics: [],
+          pushed_at: recentDate, // Recently active
         }),
         createMockRepository({
           id: 2,
           name: 'react-lib',
           stargazers_count: 50,
           topics: [],
+          pushed_at: oldDate, // Not recently active
         }),
         createMockRepository({
           id: 3,
           name: 'vue-app',
           stargazers_count: 200,
           topics: [],
+          pushed_at: recentDate, // Recently active but doesn't match search
         }),
       ];
 
@@ -595,9 +586,9 @@ describe('RepositoryList', () => {
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'trending' } });
+      fireEvent.change(filterSelect, { target: { value: 'active' } });
 
-      // Only react-app should be visible (matches search "react" and has >100 stars for trending)
+      // Only react-app should be visible (matches search "react" and is recently active)
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();

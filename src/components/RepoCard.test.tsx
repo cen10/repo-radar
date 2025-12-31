@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RepoCard } from './RepoCard';
 import { formatRelativeTime } from '../utils/relativeTime';
-import type { RepositoryWithMetrics } from '../types';
+import type { Repository } from '../types';
 import { logger } from '../utils/logger';
 
 // Mock the logger to silence test output
@@ -23,9 +23,7 @@ Object.defineProperty(window, 'open', {
   writable: true,
 });
 
-const createMockRepository = (
-  overrides: Partial<RepositoryWithMetrics> = {}
-): RepositoryWithMetrics => ({
+const createMockRepository = (overrides: Partial<Repository> = {}): Repository => ({
   id: 123,
   name: 'awesome-repo',
   full_name: 'octocat/awesome-repo',

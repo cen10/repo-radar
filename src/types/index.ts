@@ -24,6 +24,8 @@ export interface Repository {
   pushed_at: string | null;
   created_at: string;
   starred_at?: string;
+  metrics?: RepositoryMetrics;
+  is_following?: boolean;
 }
 
 export interface RepositoryMetrics {
@@ -32,9 +34,4 @@ export interface RepositoryMetrics {
   releases_count?: number;
   last_release_date?: string | null;
   is_trending?: boolean;
-}
-
-export interface RepositoryWithMetrics extends Repository {
-  metrics?: RepositoryMetrics;
-  is_following?: boolean;
 }

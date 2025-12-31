@@ -1,9 +1,9 @@
-import type { RepositoryWithMetrics } from '../types/index';
+import type { Repository } from '../types/index';
 import { formatRelativeTime } from '../utils/relativeTime';
 
 interface RepoCardProps {
-  repository: RepositoryWithMetrics;
-  onToggleFollow?: (repo: RepositoryWithMetrics) => void;
+  repository: Repository;
+  onToggleFollow?: (repo: Repository) => void;
 }
 
 // Format star count for display (e.g., 1234 -> 1.2k)
@@ -181,6 +181,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
           <Tooltip content={starsTooltip}>
             <span
               tabIndex={0}
+              role="group"
               aria-label={starsLabel}
               className="relative z-[2] flex items-center space-x-2 rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -206,6 +207,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
           <Tooltip content={issuesTooltip}>
             <span
               tabIndex={0}
+              role="group"
               aria-label={issuesLabel}
               className="relative z-[2] flex items-center text-gray-600 rounded px-1 -mx-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -221,6 +223,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
             <Tooltip content={languageTooltip}>
               <span
                 tabIndex={0}
+                role="group"
                 aria-label={languageLabel!}
                 className={`relative z-[2] inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 ${getLanguageColor(language)}`}
               >
