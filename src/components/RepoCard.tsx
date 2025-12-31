@@ -53,7 +53,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
       {/* Header with owner avatar and stretched link */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" />
+          <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
           <h3 className="text-lg font-semibold text-gray-900">
             <a
               href={html_url}
