@@ -151,7 +151,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <div className="flex-1">
-          <label htmlFor="repo-search" className="sr-only">
+          <label htmlFor="repo-search" className="sr-only" aria-hidden="true">
             Search repositories
           </label>
           <input
