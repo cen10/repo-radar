@@ -39,6 +39,48 @@ describe('RepoCard', () => {
     vi.setSystemTime(new Date('2024-01-16T10:30:00Z'));
   });
 
+  it('displays starred indicator when repository is starred', () => {
+    const repo = createMockRepository({
+      starred_at: '2024-01-01T12:00:00Z',
+    });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.getByText('⭐ Starred')).toBeInTheDocument();
+  });
+
+  it('does not display starred indicator when repository is not starred', () => {
+    const repo = createMockRepository({
+      starred_at: undefined,
+    });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.queryByText('⭐ Starred')).not.toBeInTheDocument();
+  });
+
+  it('positions follow button lower when starred indicator is present', () => {
+    const repo = createMockRepository({
+      starred_at: '2024-01-01T12:00:00Z',
+      is_following: false,
+    });
+    const onToggleFollow = vi.fn();
+    render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+
+    const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
+    expect(followButton).toHaveClass('top-10');
+  });
+
+  it('positions follow button normally when no starred indicator', () => {
+    const repo = createMockRepository({
+      starred_at: undefined,
+      is_following: false,
+    });
+    const onToggleFollow = vi.fn();
+    render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+
+    const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
+    expect(followButton).toHaveClass('top-6');
+  });
+
   it('renders repository basic information correctly', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);

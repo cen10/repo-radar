@@ -14,6 +14,9 @@ interface RepositoryListProps {
   onUnfollow?: (repoId: number) => void;
   followedRepos?: Set<number>;
   itemsPerPage?: number;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  isSearching?: boolean;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -24,16 +27,20 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onUnfollow,
   followedRepos = new Set(),
   itemsPerPage = 12,
+  searchQuery: externalSearchQuery,
+  onSearchChange: externalOnSearchChange,
+  isSearching = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('activity');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
 
-  // TODO: When this component moves to its own page and integrates with GitHub API search,
-  // add debouncing (300-500ms) to prevent excessive API calls. Current implementation
-  // filters local data only, so debouncing would hurt UX. Consider implementing
-  // two search modes: 'local' (instant) and 'github' (debounced API search).
+  // Use external search if provided, otherwise use local
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
+  const onSearchChange = externalOnSearchChange || setLocalSearchQuery;
+
+  // Search is now handled by parent component with debouncing for API calls
 
   // TODO: Replace native select elements with Headless UI Listbox components for better
   // control over styling and positioning of dropdown arrows. Native selects have
@@ -108,8 +115,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const currentRepos = sortedRepos.slice(startIndex, endIndex);
 
-  // Loading state
-  if (isLoading) {
+  // Loading state (only show spinner for initial load, not search)
+  if (isLoading && !isSearching) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div
@@ -157,10 +164,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <input
             id="repo-search"
             type="text"
-            placeholder="Search repositories..."
+            placeholder='Search repositories... (use "quotes" for exact name match)'
             value={searchQuery}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+              onSearchChange(e.target.value);
               setCurrentPage(1);
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
@@ -216,7 +223,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <p className="text-gray-500">No repositories match your filters</p>
           <button
             onClick={() => {
-              setSearchQuery('');
+              onSearchChange('');
               setFilterBy('all');
               setCurrentPage(1);
             }}
@@ -235,29 +242,35 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentRepos.map((repo) => {
-          const repoWithFollowState = {
-            ...repo,
-            is_following: followedRepos.has(repo.id),
-          };
-          return (
-            <RepoCard
-              key={repo.id}
-              repository={repoWithFollowState}
-              onToggleFollow={
-                onFollow && onUnfollow
-                  ? () => {
-                      if (followedRepos.has(repo.id)) {
-                        onUnfollow(repo.id);
-                      } else {
-                        onFollow(repo.id);
+        {isSearching && (
+          <div className="col-span-full text-center py-4">
+            <span className="text-gray-500">Searching GitHub...</span>
+          </div>
+        )}
+        {!isSearching &&
+          currentRepos.map((repo) => {
+            const repoWithFollowState = {
+              ...repo,
+              is_following: followedRepos.has(repo.id),
+            };
+            return (
+              <RepoCard
+                key={repo.id}
+                repository={repoWithFollowState}
+                onToggleFollow={
+                  onFollow && onUnfollow
+                    ? () => {
+                        if (followedRepos.has(repo.id)) {
+                          onUnfollow(repo.id);
+                        } else {
+                          onFollow(repo.id);
+                        }
                       }
-                    }
-                  : undefined
-              }
-            />
-          );
-        })}
+                    : undefined
+                }
+              />
+            );
+          })}
       </div>
 
       {/* Pagination */}

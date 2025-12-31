@@ -161,6 +161,48 @@ describe('RepositoryList', () => {
   });
 
   describe('Search functionality', () => {
+    it('uses external search when provided', () => {
+      const mockOnSearchChange = vi.fn();
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(
+        <RepositoryList
+          repositories={repos}
+          searchQuery="test"
+          onSearchChange={mockOnSearchChange}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      fireEvent.change(searchInput, { target: { value: 'new search' } });
+
+      expect(mockOnSearchChange).toHaveBeenCalledWith('new search');
+    });
+
+    it('shows searching indicator when isSearching is true', () => {
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(
+        <RepositoryList
+          repositories={repos}
+          searchQuery="test"
+          onSearchChange={vi.fn()}
+          isSearching={true}
+        />
+      );
+
+      expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
+    });
+
+    it('shows search placeholder with quotes hint', () => {
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(<RepositoryList repositories={repos} />);
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      expect(searchInput).toHaveAttribute(
+        'placeholder',
+        'Search repositories... (use "quotes" for exact name match)'
+      );
+    });
+
     it('filters repositories based on search query', () => {
       const repos = [
         createMockRepository({ id: 1, name: 'react-app', topics: [] }),

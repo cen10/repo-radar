@@ -180,7 +180,7 @@ describe('Login', () => {
 
     it('should display user login when name is not available', () => {
       mockUseAuth.mockReturnValue({
-        user: { ...mockUser, name: undefined },
+        user: { ...mockUser, name: null },
         loading: false,
         signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
         signOut: vi.fn<AuthContextType['signOut']>(),

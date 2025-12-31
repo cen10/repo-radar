@@ -25,6 +25,7 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     topics,
     metrics,
     is_following,
+    starred_at,
   } = repository;
 
   const handleFollowToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -40,6 +41,15 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
+      {/* Starred indicator */}
+      {starred_at && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            ⭐ Starred
+          </span>
+        </div>
+      )}
+
       {/* Header with owner avatar and stretched link */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
@@ -109,12 +119,12 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
         {language && <p>Primary language: {language}</p>}
       </div>
 
-      {/* Follow button - positioned above stretched link */}
+      {/* Follow button - positioned below starred badge if present */}
       {onToggleFollow && (
         <button
           type="button"
           onClick={handleFollowToggle}
-          className={`absolute top-6 right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
+          className={`absolute ${starred_at ? 'top-10' : 'top-6'} right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
             is_following
               ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

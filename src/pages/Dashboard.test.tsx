@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
-import type { User } from '../types';
+import * as githubService from '../services/github';
+import type { User, Repository } from '../types';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();
@@ -11,9 +13,16 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-// Mock RepositoryList component
+// Mock the GitHub service
+vi.mock('../services/github', () => ({
+  fetchStarredRepositories: vi.fn(),
+  searchRepositories: vi.fn(),
+  fetchRateLimit: vi.fn(),
+}));
+
+// Mock RepositoryList component with search functionality
 vi.mock('../components/RepositoryList', () => ({
-  default: vi.fn(({ repositories, isLoading, error }) => {
+  default: vi.fn(({ repositories, isLoading, error, searchQuery, onSearchChange, isSearching }) => {
     if (isLoading) {
       return <div>Loading repositories...</div>;
     }
@@ -22,8 +31,20 @@ vi.mock('../components/RepositoryList', () => ({
     }
     return (
       <div data-testid="repository-list">
+        {onSearchChange && (
+          <input
+            data-testid="search-input"
+            value={searchQuery || ''}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search repositories..."
+          />
+        )}
+        {isSearching && <div>Searching GitHub...</div>}
+        <div data-testid="repo-count">{repositories.length} repositories</div>
         {repositories.map((repo: { id: number; name: string }) => (
-          <div key={repo.id}>{repo.name}</div>
+          <div key={repo.id} data-testid={`repo-${repo.id}`}>
+            {repo.name}
+          </div>
         ))}
       </div>
     );
@@ -49,8 +70,85 @@ describe('Dashboard', () => {
     email: 'test@example.com',
   };
 
+  const mockSession = {
+    provider_token: 'test-github-token',
+    access_token: 'test-access-token',
+    token_type: 'bearer' as const,
+    expires_in: 3600,
+    expires_at: Date.now() + 3600000,
+    refresh_token: 'test-refresh-token',
+    user: {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      user_metadata: {},
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: '2024-01-01T00:00:00Z',
+    },
+  };
+
+  const mockRepositories: Repository[] = [
+    {
+      id: 1,
+      name: 'react',
+      full_name: 'facebook/react',
+      owner: {
+        login: 'facebook',
+        avatar_url: 'https://avatars.githubusercontent.com/u/69631?v=4',
+      },
+      description: 'The library for web and native user interfaces',
+      html_url: 'https://github.com/facebook/react',
+      stargazers_count: 234567,
+      open_issues_count: 892,
+      language: 'JavaScript',
+      topics: ['javascript', 'react', 'frontend'],
+      updated_at: '2024-01-15T10:30:00Z',
+      pushed_at: '2024-01-15T10:30:00Z',
+      created_at: '2013-05-24T16:15:54Z',
+      starred_at: '2024-01-01T12:00:00Z',
+      metrics: {
+        stars_growth_rate: 12.5,
+        issues_growth_rate: -3.2,
+        is_trending: true,
+      },
+      is_following: false,
+    },
+    {
+      id: 2,
+      name: 'typescript',
+      full_name: 'microsoft/typescript',
+      owner: {
+        login: 'microsoft',
+        avatar_url: 'https://avatars.githubusercontent.com/u/6154722?v=4',
+      },
+      description: 'TypeScript is a superset of JavaScript',
+      html_url: 'https://github.com/microsoft/typescript',
+      stargazers_count: 98765,
+      open_issues_count: 456,
+      language: 'TypeScript',
+      topics: ['typescript', 'javascript'],
+      updated_at: '2024-01-14T08:45:00Z',
+      pushed_at: '2024-01-14T08:45:00Z',
+      created_at: '2014-06-17T15:28:39Z',
+      starred_at: '2024-01-02T14:30:00Z',
+      metrics: {
+        stars_growth_rate: 8.1,
+        issues_growth_rate: 2.4,
+        is_trending: false,
+      },
+      is_following: false,
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    vi.mocked(githubService.fetchStarredRepositories).mockResolvedValue(mockRepositories);
+    vi.mocked(githubService.searchRepositories).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders loading state while checking authentication', () => {
@@ -90,6 +188,7 @@ describe('Dashboard', () => {
   it('renders dashboard when user is authenticated', async () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
+      session: mockSession,
       loading: false,
     });
 
@@ -110,12 +209,12 @@ describe('Dashboard', () => {
     // Check that mock repositories are displayed
     expect(screen.getByText('react')).toBeInTheDocument();
     expect(screen.getByText('typescript')).toBeInTheDocument();
-    expect(screen.getByText('vscode')).toBeInTheDocument();
   });
 
   it('shows loading state while fetching repositories', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
+      session: mockSession,
       loading: false,
     });
 
@@ -129,14 +228,120 @@ describe('Dashboard', () => {
     expect(screen.getByText('Loading repositories...')).toBeInTheDocument();
   });
 
+  describe('Search Functionality', () => {
+    it('performs search with debouncing', async () => {
+      vi.useFakeTimers();
+      userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Wait for the repositories to be displayed
+      await vi.waitFor(() => {
+        expect(screen.getByText(/react/i)).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+
+      // Note: We're not testing typing UX, so we switched to fireEvent. user.type()
+      // was experiencing timeouts.
+      fireEvent.change(searchInput, { target: { value: 'vue' } });
+
+      // Search should not be called immediately
+      expect(vi.mocked(githubService.searchRepositories)).not.toHaveBeenCalled();
+
+      // Fast-forward 300ms (debounce time)
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
+        mockSession,
+        'vue',
+        1,
+        30
+      );
+    });
+
+    it('filters starred repositories locally', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      await userEvent.type(searchInput, 'type');
+
+      // Local filtering should happen immediately
+      await waitFor(() => {
+        // Only TypeScript repo should match locally
+        expect(screen.getByText(/typeScript/i)).toBeInTheDocument();
+        expect(screen.queryByText('React')).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows search status in subtitle', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      await userEvent.type(searchInput, 'test');
+
+      // Should show search status
+      await waitFor(() => {
+        expect(screen.getByText(/Searching for "test"/)).toBeInTheDocument();
+      });
+    });
+  });
+
   it('handles repository loading errors', async () => {
     // Mock console.error to avoid noise in tests
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     mockUseAuth.mockReturnValue({
       user: mockUser,
+      session: mockSession,
       loading: false,
     });
+
+    vi.mocked(githubService.fetchStarredRepositories).mockRejectedValue(
+      new Error('Failed to load')
+    );
 
     render(
       <BrowserRouter>
@@ -144,9 +349,9 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    // Dashboard will show loading state initially
-    // The mock RepositoryList component handles the loading state
-    expect(screen.getByText('Loading repositories...')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Error: Failed to load')).toBeInTheDocument();
+    });
 
     consoleError.mockRestore();
   });
