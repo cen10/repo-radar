@@ -206,39 +206,40 @@ describe('RepositoryList', () => {
       );
     });
 
-    it('filters repositories based on search query', () => {
+    it('calls onSearchChange when search input changes', () => {
+      const mockOnSearchChange = vi.fn();
       const repos = [
         createMockRepository({ id: 1, name: 'react-app', topics: [] }),
         createMockRepository({ id: 2, name: 'vue-app', topics: [] }),
         createMockRepository({ id: 3, name: 'angular-app', topics: [] }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onSearchChange={mockOnSearchChange} />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'react' } });
 
+      expect(mockOnSearchChange).toHaveBeenCalledWith('react');
+      // All repositories should still be visible since filtering is done by Dashboard
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-3')).toBeInTheDocument();
     });
 
-    it('searches in description', () => {
-      const repos = [
-        createMockRepository({ id: 1, name: 'repo-1', description: 'React framework' }),
+    it('displays pre-filtered repositories without client-side filtering', () => {
+      // Simulate Dashboard passing already filtered repositories
+      const filteredRepos = [
         createMockRepository({ id: 2, name: 'repo-2', description: 'Vue framework' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={filteredRepos} searchQuery="vue" />);
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'vue' } });
-
+      // Only the pre-filtered repository should be displayed
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('searches in language', () => {
+    it('displays all repositories when no external search is provided', () => {
       const repos = [
         createMockRepository({ id: 1, language: 'Python' }),
         createMockRepository({ id: 2, language: 'JavaScript' }),
@@ -249,69 +250,80 @@ describe('RepositoryList', () => {
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'python' } });
 
+      // Both repositories should be visible since no filtering is done locally
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('searches in topics', () => {
+    it('uses external search value when provided', () => {
       const repos = [
         createMockRepository({ id: 1, topics: ['react', 'frontend'] }),
         createMockRepository({ id: 2, topics: ['backend', 'api'] }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} searchQuery="backend" />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'backend' } });
+      expect(searchInput).toHaveValue('backend');
 
-      expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
+      // Both repositories should be visible since filtering is done externally
+      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('shows no results message when search returns nothing', () => {
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+    it('shows no results message when no repositories are provided', () => {
+      // Dashboard would pass empty array when no results found
+      const repos: Repository[] = [];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} searchQuery="nonexistent" />);
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
-
-      // Use getAllByText since we have both visible and sr-only versions
-      const noResultsTexts = screen.getAllByText(/no repositories match your filters/i);
-      expect(noResultsTexts.length).toBeGreaterThan(0);
-      expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+      // When no repositories at all, shows basic empty state
+      expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
     });
 
-    it('clears filters when clear button is clicked', () => {
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+    it('displays repositories when provided even with search query', () => {
+      const mockOnSearchChange = vi.fn();
+      const mockOnFilterChange = vi.fn();
+      // In the new architecture, repositories are pre-filtered by Dashboard
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          searchQuery="test"
+          filterBy="starred"
+          onSearchChange={mockOnSearchChange}
+          onFilterChange={mockOnFilterChange}
+        />
+      );
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
-
-      const clearButton = screen.getByRole('button', { name: /clear filters/i });
-      fireEvent.click(clearButton);
-
-      expect(searchInput).toHaveValue('');
+      // Since filtering is done by Dashboard, repositories should always be displayed
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('test')).toBeInTheDocument();
+
+      // Check that the filter shows the correct value
+      const filterSelect = screen.getByLabelText(/filter repositories/i);
+      expect(filterSelect).toHaveValue('starred');
     });
   });
 
   describe('Filter functionality', () => {
-    it('filters by starred repositories', () => {
+    it('calls onFilterChange when filter is changed', () => {
+      const mockOnFilterChange = vi.fn();
       const repos = [
         createMockRepository({ id: 1, is_starred: true }),
         createMockRepository({ id: 2, is_starred: false }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFilterChange={mockOnFilterChange} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
+      expect(mockOnFilterChange).toHaveBeenCalledWith('starred');
+      // Both repositories should still be visible since filtering is done by Dashboard
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
     it('shows all repositories when filter is set to all', () => {
@@ -565,42 +577,41 @@ describe('RepositoryList', () => {
   });
 
   describe('Combined functionality', () => {
-    it('applies search and filter together', () => {
-      const repos = [
+    it('calls appropriate handlers when both search and filter are changed', () => {
+      const mockOnSearchChange = vi.fn();
+      const mockOnFilterChange = vi.fn();
+      // Simulate Dashboard passing pre-filtered repositories (only starred react repos)
+      const filteredRepos = [
         createMockRepository({
           id: 1,
           name: 'react-app',
           is_starred: true,
           topics: ['react', 'frontend'],
         }),
-        createMockRepository({
-          id: 2,
-          name: 'react-lib',
-          is_starred: false,
-          topics: ['react', 'library'],
-        }),
-        createMockRepository({
-          id: 3,
-          name: 'vue-app',
-          is_starred: true,
-          topics: ['vue', 'frontend'],
-        }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          repositories={filteredRepos}
+          searchQuery="react"
+          filterBy="starred"
+          onSearchChange={mockOnSearchChange}
+          onFilterChange={mockOnFilterChange}
+        />
+      );
 
       // Apply search
       const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'react' } });
+      fireEvent.change(searchInput, { target: { value: 'vue' } });
+      expect(mockOnSearchChange).toHaveBeenCalledWith('vue');
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'starred' } });
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      expect(mockOnFilterChange).toHaveBeenCalledWith('all');
 
-      // Only react-app should be visible (matches search "react" and is starred)
+      // Should show the pre-filtered repository
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();
     });
 
     it('maintains sort order after filtering', () => {

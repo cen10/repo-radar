@@ -338,7 +338,7 @@ export async function searchStarredRepositories(
       is_starred: true, // All results are starred by definition
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
-        is_trending: detectTrending(repo),
+        is_trending: isTrending(repo),
       },
     }));
 
