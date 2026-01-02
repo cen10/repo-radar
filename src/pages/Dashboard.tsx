@@ -353,16 +353,6 @@ const Dashboard = () => {
               ? `Searching for "${searchQuery}"${isSearching ? '...' : ''}`
               : 'Track and manage your starred GitHub repositories'}
           </p>
-          {searchQuery && searchResults.length > 0 && (
-            <p className="mt-1 text-sm text-gray-500">
-              Showing {repositories.length} repositories
-              {repositories.length !== starredRepositories.length &&
-                ` (${
-                  starredRepositories.filter((r) => repositories.some((repo) => repo.id === r.id))
-                    .length
-                } from your stars)`}
-            </p>
-          )}
         </div>
 
         <RepositoryList
