@@ -112,6 +112,7 @@ describe('Dashboard', () => {
         is_trending: true,
       },
       is_following: false,
+      is_starred: true,
     },
     {
       id: 2,
@@ -137,6 +138,7 @@ describe('Dashboard', () => {
         is_trending: false,
       },
       is_following: false,
+      is_starred: true,
     },
   ];
 

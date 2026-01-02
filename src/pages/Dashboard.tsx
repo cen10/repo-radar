@@ -9,6 +9,11 @@ import {
   unstarRepository,
 } from '../services/github';
 import type { Repository } from '../types';
+import {
+  filterOutLocallyUnstarred,
+  addToLocallyUnstarred,
+  removeFromLocallyUnstarred,
+} from '../utils/repository-filter';
 
 const Dashboard = () => {
   const { user, session, loading: authLoading, signOut } = useAuth();
@@ -36,6 +41,34 @@ const Dashboard = () => {
     }
   }, [user, session, authLoading, navigate, signOut]);
 
+  // Handle localStorage cleanup and cross-tab synchronization
+  useEffect(() => {
+    // Clean up expired entries from localStorage on startup
+    const stored = localStorage.getItem('locallyUnstarredRepos');
+    if (stored) {
+      const entries = JSON.parse(stored);
+      const now = Date.now();
+      const validEntries = entries.filter(
+        (entry: { timestamp: number }) => now - entry.timestamp < 60000 // 1 minute
+      );
+
+      if (validEntries.length !== entries.length) {
+        localStorage.setItem('locallyUnstarredRepos', JSON.stringify(validEntries));
+      }
+    }
+
+    // Listen for localStorage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'locallyUnstarredRepos') {
+        // Refresh current repository list
+        setRepositories((prev) => filterOutLocallyUnstarred(prev));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Load starred repositories on mount
   useEffect(() => {
     const loadStarredRepositories = async () => {
@@ -46,8 +79,9 @@ const Dashboard = () => {
         // Fetch real data from GitHub API
         // This will throw an error if session or provider_token is missing
         const repos = await fetchStarredRepositories(session, 1, 100);
+        const filteredRepos = filterOutLocallyUnstarred(repos);
         setStarredRepositories(repos);
-        setRepositories(repos); // Initially show starred repos
+        setRepositories(filteredRepos); // Initially show starred repos with filtering applied
 
         // Load followed repos from localStorage
         const savedFollows = localStorage.getItem('followedRepos');
@@ -80,9 +114,9 @@ const Dashboard = () => {
   const performSearch = useCallback(
     async (query: string) => {
       if (!query.trim()) {
-        // If query is empty, show starred repositories
+        // If query is empty, show starred repositories with filtering applied
         setSearchResults([]);
-        setRepositories(starredRepositories);
+        setRepositories(filterOutLocallyUnstarred(starredRepositories));
         return;
       }
 
@@ -115,11 +149,11 @@ const Dashboard = () => {
           const combined = [...localMatches, ...uniqueSearchResults];
 
           setSearchResults(results);
-          setRepositories(combined);
+          setRepositories(filterOutLocallyUnstarred(combined));
         } catch (err) {
           console.error('Search failed:', err);
-          // On error, just show local matches
-          setRepositories(localMatches);
+          // On error, just show local matches with filtering applied
+          setRepositories(filterOutLocallyUnstarred(localMatches));
           if (localMatches.length === 0) {
             setError(err instanceof Error ? err : new Error('Search failed'));
           }
@@ -127,8 +161,8 @@ const Dashboard = () => {
           setIsSearching(false);
         }
       } else {
-        // No token, just show local matches
-        setRepositories(localMatches);
+        // No token, just show local matches with filtering applied
+        setRepositories(filterOutLocallyUnstarred(localMatches));
         setIsSearching(false);
       }
     },
@@ -164,6 +198,9 @@ const Dashboard = () => {
 
   const handleStar = async (repoId: number) => {
     try {
+      // Remove from locally unstarred list immediately
+      removeFromLocallyUnstarred(repoId);
+
       // Find the repository to get owner and name
       const repo =
         repositories.find((r) => r.id === repoId) ||
@@ -218,6 +255,9 @@ const Dashboard = () => {
       // Unstar the repository on GitHub
       await unstarRepository(session, repo.owner.login, repo.name);
 
+      // Add to locally unstarred list to hide until GitHub API syncs
+      addToLocallyUnstarred(repoId);
+
       // Update local state to reflect the change immediately
       setFollowedRepos((prev) => {
         const newSet = new Set(prev);
@@ -236,14 +276,14 @@ const Dashboard = () => {
 
       // If we're not in a search (showing starred repos), remove the repo from view
       if (!searchQuery) {
-        setRepositories(removeFromStarred);
+        setRepositories(filterOutLocallyUnstarred(removeFromStarred(repositories)));
       } else {
-        // In search mode, just update the star status
-        setRepositories(updateSearchResults);
+        // In search mode, just update the star status and apply filtering
+        setRepositories(filterOutLocallyUnstarred(updateSearchResults(repositories)));
       }
 
-      setSearchResults(updateSearchResults);
-      setStarredRepositories(removeFromStarred);
+      setSearchResults(updateSearchResults(searchResults));
+      setStarredRepositories(removeFromStarred(starredRepositories));
     } catch (err) {
       console.error('Failed to unstar repository:', err);
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);

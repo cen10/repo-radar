@@ -67,7 +67,7 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
           <button
             type="button"
             onClick={handleStarToggle}
-            className={`relative z-10 px-3 py-1 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+            className={`relative z-10 px-3 py-1 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 cursor-pointer ${
               isStarred
                 ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
