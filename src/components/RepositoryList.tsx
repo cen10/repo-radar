@@ -17,6 +17,8 @@ interface RepositoryListProps {
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   isSearching?: boolean;
+  filterBy?: FilterOption;
+  onFilterChange?: (filter: FilterOption) => void;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -30,15 +32,19 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   searchQuery: externalSearchQuery,
   onSearchChange: externalOnSearchChange,
   isSearching = false,
+  filterBy: externalFilterBy,
+  onFilterChange: externalOnFilterChange,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('activity');
-  const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [localFilterBy, setLocalFilterBy] = useState<FilterOption>('all');
 
   // Use external search if provided, otherwise use local
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
   const onSearchChange = externalOnSearchChange || setLocalSearchQuery;
+  const filterBy = externalFilterBy !== undefined ? externalFilterBy : localFilterBy;
+  const onFilterChange = externalOnFilterChange || setLocalFilterBy;
 
   // Search is now handled by parent component with debouncing for API calls
 
@@ -46,36 +52,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // control over styling and positioning of dropdown arrows. Native selects have
   // browser-controlled arrow positioning that can appear too close to the edge.
 
-  // Filter repositories
-  const filteredRepos = useMemo(() => {
-    let filtered = [...repositories];
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (repo) =>
-          repo.name.toLowerCase().includes(query) ||
-          repo.full_name.toLowerCase().includes(query) ||
-          repo.description?.toLowerCase().includes(query) ||
-          repo.language?.toLowerCase().includes(query) ||
-          repo.topics.some((topic) => topic.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply category filter
-    switch (filterBy) {
-      case 'starred':
-        // Only show starred repositories
-        filtered = filtered.filter((repo) => repo.is_starred);
-        break;
-      default:
-        // 'all' - no additional filtering
-        break;
-    }
-
-    return filtered;
-  }, [repositories, searchQuery, filterBy]);
+  // No client-side filtering - repositories are pre-filtered by Dashboard
+  const filteredRepos = repositories;
 
   // Sort repositories
   const sortedRepos = useMemo(() => {
@@ -103,7 +81,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     return sorted;
   }, [filteredRepos, sortBy]);
 
-  // Pagination
+  // Pagination - ensure we don't exceed itemsPerPage even with combined results
   const totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -181,7 +159,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         <select
           value={filterBy}
           onChange={(e) => {
-            setFilterBy(e.target.value as FilterOption);
+            onFilterChange(e.target.value as FilterOption);
             setCurrentPage(1);
           }}
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
@@ -227,7 +205,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <button
             onClick={() => {
               onSearchChange('');
-              setFilterBy('all');
+              onFilterChange('all');
               setCurrentPage(1);
             }}
             className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"

@@ -251,6 +251,105 @@ export async function searchRepositories(
 }
 
 /**
+ * Search within the user's starred repositories
+ * @param session - The Supabase session containing the GitHub access token
+ * @param query - The search query string
+ * @param page - Page number for pagination (1-indexed)
+ * @param perPage - Number of items per page (max 100)
+ * @returns Array of starred repositories matching the query
+ */
+export async function searchStarredRepositories(
+  session: Session | null,
+  query: string,
+  page = 1,
+  perPage = 30
+): Promise<Repository[]> {
+  if (!session?.provider_token) {
+    throw new Error('No GitHub access token available');
+  }
+
+  // Use GitHub's starred endpoint with search parameter
+  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
+  url.searchParams.append('page', page.toString());
+  url.searchParams.append('per_page', perPage.toString());
+  url.searchParams.append('sort', 'updated');
+  url.searchParams.append('direction', 'desc');
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${session.provider_token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('GitHub authentication failed. Please sign in again.');
+      }
+      if (response.status === 403) {
+        const remaining = response.headers.get('x-ratelimit-remaining');
+        if (remaining === '0') {
+          const resetTime = response.headers.get('x-ratelimit-reset');
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
+          throw new Error(
+            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
+          );
+        }
+        throw new Error('GitHub API access forbidden. Please check your permissions.');
+      }
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: GitHubStarredRepo[] = await response.json();
+
+    // Filter the results on the client side since GitHub doesn't support search within starred repos
+    const queryLower = query.toLowerCase();
+    const filteredData = data.filter((repo) => {
+      const searchIn = [
+        repo.name,
+        repo.full_name,
+        repo.description || '',
+        repo.language || '',
+        ...(repo.topics || []),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return searchIn.includes(queryLower);
+    });
+
+    // Transform to our Repository format
+    const repositories: Repository[] = filteredData.map((repo) => ({
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      owner: repo.owner,
+      description: repo.description,
+      html_url: repo.html_url,
+      stargazers_count: repo.stargazers_count,
+      open_issues_count: repo.open_issues_count,
+      language: repo.language,
+      topics: repo.topics || [],
+      updated_at: repo.updated_at,
+      pushed_at: repo.pushed_at,
+      created_at: repo.created_at,
+      starred_at: repo.starred_at,
+      is_starred: true, // All results are starred by definition
+      metrics: {
+        stars_growth_rate: calculateGrowthRate(repo),
+        is_trending: detectTrending(repo),
+      },
+    }));
+
+    return repositories;
+  } catch (error) {
+    logger.error('Failed to search starred repositories:', error);
+    throw error;
+  }
+}
+
+/**
  * Fetch IDs of all user's starred repositories (for checking if searched repos are starred)
  * This is a lightweight call that only gets IDs
  */

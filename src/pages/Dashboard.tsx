@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import {
   fetchStarredRepositories,
   searchRepositories,
+  searchStarredRepositories,
   starRepository,
   unstarRepository,
 } from '../services/github';
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState<'all' | 'starred'>('all');
   const [error, setError] = useState<Error | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -128,9 +130,9 @@ const Dashboard = () => {
     }
   }, [user, session, authLoading]);
 
-  // Search GitHub repositories with debouncing
+  // Search repositories with appropriate API based on filter
   const performSearch = useCallback(
-    async (query: string) => {
+    async (query: string, filter: 'all' | 'starred') => {
       if (!query.trim()) {
         // If query is empty, show starred repositories with filtering applied
         setSearchResults([]);
@@ -141,45 +143,42 @@ const Dashboard = () => {
       // Set searching state immediately
       setIsSearching(true);
 
-      // Filter starred repositories locally
-      const localQuery = query.toLowerCase();
-      const localMatches = starredRepositories.filter((repo) => {
-        const searchIn = [
-          repo.name,
-          repo.full_name,
-          repo.description || '',
-          repo.language || '',
-          ...(repo.topics || []),
-        ]
-          .join(' ')
-          .toLowerCase();
-        return searchIn.includes(localQuery);
-      });
-
-      // Search GitHub for more results if we have a token
       if (session?.provider_token) {
         try {
-          const results = await searchRepositories(session, query, 1, 30);
+          let results: Repository[];
 
-          // Combine local matches with search results, removing duplicates
-          const combinedIds = new Set(localMatches.map((r) => r.id));
-          const uniqueSearchResults = results.filter((r) => !combinedIds.has(r.id));
-          const combined = [...localMatches, ...uniqueSearchResults];
+          if (filter === 'starred') {
+            // Search within starred repositories only
+            results = await searchStarredRepositories(session, query, 1, 30);
+          } else {
+            // Search all GitHub repositories
+            results = await searchRepositories(session, query, 1, 30);
+          }
 
           setSearchResults(results);
-          setRepositories(filterOutLocallyUnstarred(combined));
+          setRepositories(filterOutLocallyUnstarred(results));
         } catch (err) {
           console.error('Search failed:', err);
-          // On error, just show local matches with filtering applied
-          setRepositories(filterOutLocallyUnstarred(localMatches));
-          if (localMatches.length === 0) {
-            setError(err instanceof Error ? err : new Error('Search failed'));
-          }
+          setError(err instanceof Error ? err : new Error('Search failed'));
         } finally {
           setIsSearching(false);
         }
       } else {
-        // No token, just show local matches with filtering applied
+        // No token, search locally in starred repos only
+        const localQuery = query.toLowerCase();
+        const localMatches = starredRepositories.filter((repo) => {
+          const searchIn = [
+            repo.name,
+            repo.full_name,
+            repo.description || '',
+            repo.language || '',
+            ...(repo.topics || []),
+          ]
+            .join(' ')
+            .toLowerCase();
+          return searchIn.includes(localQuery);
+        });
+
         setRepositories(filterOutLocallyUnstarred(localMatches));
         setIsSearching(false);
       }
@@ -199,10 +198,30 @@ const Dashboard = () => {
 
       // Set new timeout for debounced search
       searchTimeoutRef.current = setTimeout(() => {
-        void performSearch(query);
+        void performSearch(query, filterBy);
       }, 300); // 300ms debounce
     },
-    [performSearch]
+    [performSearch, filterBy]
+  );
+
+  // Handle filter changes (immediate, no debouncing)
+  const handleFilterChange = useCallback(
+    (filter: 'all' | 'starred') => {
+      setFilterBy(filter);
+
+      // If there's a search query, re-run search with new filter
+      if (searchQuery.trim()) {
+        void performSearch(searchQuery, filter);
+      } else {
+        // No search query, show appropriate default view
+        if (filter === 'starred') {
+          setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        } else {
+          setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        }
+      }
+    },
+    [performSearch, searchQuery, starredRepositories]
   );
 
   // Cleanup timeout on unmount
@@ -356,6 +375,8 @@ const Dashboard = () => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           isSearching={isSearching}
+          filterBy={filterBy}
+          onFilterChange={handleFilterChange}
           itemsPerPage={30}
         />
       </div>
