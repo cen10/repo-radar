@@ -263,7 +263,7 @@ describe('GitHub API Service', () => {
 
       const result = await searchRepositories(mockSession, 'test');
 
-      expect(result[0].starred_at).toBeDefined();
+      expect(result[0].is_starred).toBe(true);
     });
 
     it('should handle invalid search query', async () => {

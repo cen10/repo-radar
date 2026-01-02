@@ -23,9 +23,10 @@ export interface Repository {
   updated_at: string;
   pushed_at: string | null;
   created_at: string;
-  starred_at?: string;
+  starred_at?: string; // Actual timestamp from GitHub when available
+  is_starred: boolean; // Simple boolean to indicate star status
   metrics?: RepositoryMetrics;
-  is_following?: boolean;
+  is_following?: boolean; // Deprecated - to be removed
 }
 
 export interface RepositoryMetrics {

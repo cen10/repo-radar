@@ -29,6 +29,7 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
   pushed_at: '2024-01-15T10:30:00Z',
   created_at: '2023-01-01T00:00:00Z',
   starred_at: '2024-01-01T12:00:00Z',
+  is_starred: false, // Default to not starred
   ...overrides,
 });
 
@@ -39,46 +40,58 @@ describe('RepoCard', () => {
     vi.setSystemTime(new Date('2024-01-16T10:30:00Z'));
   });
 
-  it('displays starred indicator when repository is starred', () => {
+  it('displays star button in starred state when repository is starred', () => {
     const repo = createMockRepository({
       starred_at: '2024-01-01T12:00:00Z',
+      is_starred: true,
     });
-    render(<RepoCard repository={repo} />);
+    const onToggleStar = vi.fn();
+    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-    expect(screen.getByText('⭐ Starred')).toBeInTheDocument();
+    const starButton = screen.getByRole('button', { name: /unstar awesome-repo repository/i });
+    expect(starButton).toBeInTheDocument();
+    expect(starButton).toHaveTextContent('Starred');
+    expect(starButton).toHaveClass('bg-yellow-100', 'text-yellow-800');
   });
 
-  it('does not display starred indicator when repository is not starred', () => {
+  it('displays star button in unstarred state when repository is not starred', () => {
     const repo = createMockRepository({
       starred_at: undefined,
+      is_starred: false,
     });
-    render(<RepoCard repository={repo} />);
+    const onToggleStar = vi.fn();
+    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-    expect(screen.queryByText('⭐ Starred')).not.toBeInTheDocument();
+    const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+    expect(starButton).toBeInTheDocument();
+    expect(starButton).toHaveTextContent('Star');
+    expect(starButton).toHaveClass('bg-gray-100', 'text-gray-700');
   });
 
-  it('positions follow button lower when starred indicator is present', () => {
+  it('displays star button with filled star icon when starred', () => {
     const repo = createMockRepository({
       starred_at: '2024-01-01T12:00:00Z',
-      is_following: false,
+      is_starred: true,
     });
-    const onToggleFollow = vi.fn();
-    render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+    const onToggleStar = vi.fn();
+    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-    const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-    expect(followButton).toHaveClass('top-10');
+    const starButton = screen.getByRole('button', { name: /unstar awesome-repo repository/i });
+    expect(starButton).toHaveTextContent('⭐');
+    expect(starButton).toHaveTextContent('Starred');
   });
 
-  it('positions follow button normally when no starred indicator', () => {
+  it('displays star button with empty star icon when not starred', () => {
     const repo = createMockRepository({
       starred_at: undefined,
-      is_following: false,
+      is_starred: false,
     });
-    const onToggleFollow = vi.fn();
-    render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+    const onToggleStar = vi.fn();
+    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-    const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-    expect(followButton).toHaveClass('top-6');
+    const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+    expect(starButton).toHaveTextContent('☆');
+    expect(starButton).toHaveTextContent('Star');
   });
 
   it('renders repository basic information correctly', () => {
@@ -215,32 +228,32 @@ describe('RepoCard', () => {
   // Last commit display has been removed from simplified UI
 
   describe('Keyboard navigation', () => {
-    it('follow button responds to Enter key press', async () => {
+    it('star button responds to Enter key press', async () => {
       const user = userEvent.setup();
-      const repo = createMockRepository({ is_following: false });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+      const repo = createMockRepository({ starred_at: undefined, is_starred: false });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-      followButton.focus();
+      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+      starButton.focus();
       await user.keyboard('{Enter}');
 
-      expect(onToggleFollow).toHaveBeenCalledWith(repo);
+      expect(onToggleStar).toHaveBeenCalledWith(repo);
     });
 
-    it('follow button responds to Space key press', async () => {
+    it('star button responds to Space key press', async () => {
       const user = userEvent.setup();
-      const repo = createMockRepository({ is_following: true });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+      const repo = createMockRepository({ starred_at: '2024-01-01T12:00:00Z', is_starred: true });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', {
-        name: /unfollow awesome-repo repository/i,
+      const starButton = screen.getByRole('button', {
+        name: /unstar awesome-repo repository/i,
       });
-      followButton.focus();
+      starButton.focus();
       await user.keyboard(' ');
 
-      expect(onToggleFollow).toHaveBeenCalledWith(repo);
+      expect(onToggleStar).toHaveBeenCalledWith(repo);
     });
 
     // Metrics are no longer focusable in simplified UI
@@ -248,63 +261,61 @@ describe('RepoCard', () => {
     // Metrics are no longer focusable in simplified UI
   });
 
-  describe('Follow functionality', () => {
-    it('displays follow button when onToggleFollow is provided', () => {
-      const repo = createMockRepository({ is_following: false });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+  describe('Star functionality', () => {
+    it('displays star button when onToggleStar is provided', () => {
+      const repo = createMockRepository({ starred_at: undefined, is_starred: false });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-      expect(followButton).toBeInTheDocument();
-      expect(followButton).toHaveTextContent('Follow');
+      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+      expect(starButton).toBeInTheDocument();
+      expect(starButton).toHaveTextContent('Star');
     });
 
-    it('displays following state when repository is followed', () => {
-      const repo = createMockRepository({ is_following: true });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+    it('displays starred state when repository is starred', () => {
+      const repo = createMockRepository({ starred_at: '2024-01-01T12:00:00Z', is_starred: true });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', {
-        name: /unfollow awesome-repo repository/i,
+      const starButton = screen.getByRole('button', {
+        name: /unstar awesome-repo repository/i,
       });
-      expect(followButton).toBeInTheDocument();
-      expect(followButton).toHaveTextContent('Following');
-      expect(followButton).toHaveClass('bg-blue-100', 'text-blue-800');
+      expect(starButton).toBeInTheDocument();
+      expect(starButton).toHaveTextContent('Starred');
+      expect(starButton).toHaveClass('bg-yellow-100', 'text-yellow-800');
     });
 
-    it('calls onToggleFollow when follow button is clicked', async () => {
+    it('calls onToggleStar when star button is clicked', async () => {
       const user = userEvent.setup();
-      const repo = createMockRepository({ is_following: false });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+      const repo = createMockRepository({ starred_at: undefined, is_starred: false });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-      await user.click(followButton);
+      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+      await user.click(starButton);
 
-      expect(onToggleFollow).toHaveBeenCalledWith(repo);
-      expect(onToggleFollow).toHaveBeenCalledTimes(1);
+      expect(onToggleStar).toHaveBeenCalledWith(repo);
+      expect(onToggleStar).toHaveBeenCalledTimes(1);
     });
 
-    it('does not open repository when follow button is clicked', async () => {
+    it('does not open repository when star button is clicked', async () => {
       const user = userEvent.setup();
-      const repo = createMockRepository({ is_following: false });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+      const repo = createMockRepository({ starred_at: undefined, is_starred: false });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-      await user.click(followButton);
+      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+      await user.click(starButton);
 
       expect(mockWindowOpen).not.toHaveBeenCalled();
     });
 
-    it('does not display follow button when onToggleFollow is not provided', () => {
+    it('does not display star button when onToggleStar is not provided', () => {
       const repo = createMockRepository();
       render(<RepoCard repository={repo} />);
 
-      expect(screen.queryByRole('button', { name: /follow repository/i })).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: /unfollow repository/i })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /star repository/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /unstar repository/i })).not.toBeInTheDocument();
     });
   });
 
@@ -363,13 +374,13 @@ describe('RepoCard', () => {
       expect(link).toBeInTheDocument();
     });
 
-    it('has proper accessibility attributes for follow button', () => {
-      const repo = createMockRepository({ is_following: false });
-      const onToggleFollow = vi.fn();
-      render(<RepoCard repository={repo} onToggleFollow={onToggleFollow} />);
+    it('has proper accessibility attributes for star button', () => {
+      const repo = createMockRepository({ starred_at: undefined, is_starred: false });
+      const onToggleStar = vi.fn();
+      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
-      const followButton = screen.getByRole('button', { name: /follow awesome-repo repository/i });
-      expect(followButton).toBeInTheDocument();
+      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
+      expect(starButton).toBeInTheDocument();
     });
 
     it('has empty alt text for decorative avatar', () => {

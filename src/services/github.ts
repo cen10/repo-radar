@@ -102,7 +102,8 @@ export async function fetchStarredRepositories(
       updated_at: repo.updated_at,
       pushed_at: repo.pushed_at,
       created_at: repo.created_at,
-      starred_at: repo.starred_at,
+      starred_at: repo.starred_at, // Keep the actual timestamp from GitHub
+      is_starred: true, // These are all starred repos by definition
       // Calculate basic metrics (in production, these would come from a backend service)
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
@@ -234,13 +235,14 @@ export async function searchRepositories(
       updated_at: repo.updated_at,
       pushed_at: repo.pushed_at,
       created_at: repo.created_at,
-      starred_at: starredIds.has(repo.id) ? new Date().toISOString() : undefined,
+      starred_at: undefined, // We don't have timestamps from search API
+      is_starred: starredIds.has(repo.id), // Simple boolean check
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
         issues_growth_rate: 0,
         is_trending: isTrending(repo),
       },
-      is_following: false,
+      is_following: false, // Deprecated - keeping for backwards compatibility
     }));
   } catch (error) {
     logger.error('Failed to search repositories:', error);
@@ -273,10 +275,104 @@ async function fetchUserStarredIds(session: Session | null): Promise<Set<number>
       return new Set();
     }
 
-    const repos: Array<{ id: number }> = await response.json();
-    return new Set(repos.map((repo) => repo.id));
+    const repos: Array<{ id: number; name?: string }> = await response.json();
+    const starredIds = new Set(repos.map((repo) => repo.id));
+
+    return starredIds;
   } catch {
     return new Set();
+  }
+}
+
+/**
+ * Star a repository on GitHub
+ */
+export async function starRepository(
+  session: Session | null,
+  owner: string,
+  repo: string
+): Promise<void> {
+  if (!session?.provider_token) {
+    throw new Error('No GitHub access token available');
+  }
+
+  const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${session.provider_token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+
+  if (!response.ok && response.status !== 204) {
+    if (response.status === 404) {
+      throw new Error('Repository not found');
+    }
+    if (response.status === 403) {
+      throw new Error('Permission denied to star this repository');
+    }
+    throw new Error(`Failed to star repository: ${response.status} ${response.statusText}`);
+  }
+}
+
+/**
+ * Unstar a repository on GitHub
+ */
+export async function unstarRepository(
+  session: Session | null,
+  owner: string,
+  repo: string
+): Promise<void> {
+  if (!session?.provider_token) {
+    throw new Error('No GitHub access token available');
+  }
+
+  const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${session.provider_token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+
+  if (!response.ok && response.status !== 204) {
+    if (response.status === 404) {
+      throw new Error('Repository not found or not starred');
+    }
+    if (response.status === 403) {
+      throw new Error('Permission denied to unstar this repository');
+    }
+    throw new Error(`Failed to unstar repository: ${response.status} ${response.statusText}`);
+  }
+}
+
+/**
+ * Check if a repository is starred by the authenticated user
+ */
+export async function isRepositoryStarred(
+  session: Session | null,
+  owner: string,
+  repo: string
+): Promise<boolean> {
+  if (!session?.provider_token) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${session.provider_token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    return response.status === 204;
+  } catch {
+    return false;
   }
 }
 

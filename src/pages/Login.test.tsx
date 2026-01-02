@@ -166,29 +166,17 @@ describe('Login', () => {
       });
     });
 
-    it('should display welcome message with user name', () => {
-      render(<Login />);
-
-      expect(screen.getByText(/welcome back.*test user/i)).toBeInTheDocument();
-    });
-
-    it('should display already logged in message', () => {
-      render(<Login />);
-
-      expect(screen.getByText(/you are already logged in/i)).toBeInTheDocument();
-    });
-
-    it('should display user login when name is not available', () => {
-      mockUseAuth.mockReturnValue({
-        user: { ...mockUser, name: null },
-        loading: false,
-        signInWithGitHub: vi.fn<AuthContextType['signInWithGitHub']>(),
-        signOut: vi.fn<AuthContextType['signOut']>(),
-      });
+    it('should redirect to dashboard', () => {
+      const originalLocation = window.location;
+      delete (window as Partial<Window>).location;
+      window.location = { href: '' } as Partial<Location> & Pick<Location, 'href'>;
 
       render(<Login />);
 
-      expect(screen.getByText(/welcome back.*testuser/i)).toBeInTheDocument();
+      expect(window.location.href).toBe('/dashboard');
+      expect(screen.getByText(/redirecting to dashboard/i)).toBeInTheDocument();
+
+      window.location = originalLocation;
     });
   });
 

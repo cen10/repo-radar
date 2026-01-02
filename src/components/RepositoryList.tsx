@@ -4,7 +4,7 @@ import { RepoCard } from './RepoCard';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export type SortOption = 'stars' | 'activity' | 'name' | 'issues';
-export type FilterOption = 'all' | 'active';
+export type FilterOption = 'all' | 'starred';
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -64,16 +64,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     }
 
     // Apply category filter
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
     switch (filterBy) {
-      case 'active':
-        // Recently pushed to
-        filtered = filtered.filter((repo) => {
-          if (!repo.pushed_at) return false;
-          return new Date(repo.pushed_at) > oneWeekAgo;
-        });
+      case 'starred':
+        // Only show starred repositories
+        filtered = filtered.filter((repo) => repo.is_starred);
         break;
       default:
         // 'all' - no additional filtering
@@ -132,10 +126,19 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   // Error state
   if (error) {
+    const isGitHubAuthError = error.message.includes('GitHub connection required');
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">Error loading repositories</p>
-        <p className="text-sm text-gray-600">{error.message}</p>
+        <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+        {isGitHubAuthError && (
+          <a
+            href="/login"
+            className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            Sign Out and Reconnect
+          </a>
+        )}
       </div>
     );
   }
@@ -185,7 +188,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           aria-label="Filter repositories"
         >
           <option value="all">All Repositories</option>
-          <option value="active">Recently Active</option>
+          <option value="starred">Starred Only</option>
         </select>
 
         {/* Sort */}
@@ -249,18 +252,19 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         )}
         {!isSearching &&
           currentRepos.map((repo) => {
-            const repoWithFollowState = {
+            const repoWithStarState = {
               ...repo,
-              is_following: followedRepos.has(repo.id),
+              // Set is_starred based on local tracking or existing value
+              is_starred: repo.is_starred || followedRepos.has(repo.id),
             };
             return (
               <RepoCard
                 key={repo.id}
-                repository={repoWithFollowState}
-                onToggleFollow={
+                repository={repoWithStarState}
+                onToggleStar={
                   onFollow && onUnfollow
                     ? () => {
-                        if (followedRepos.has(repo.id)) {
+                        if (repoWithStarState.is_starred) {
                           onUnfollow(repo.id);
                         } else {
                           onFollow(repo.id);

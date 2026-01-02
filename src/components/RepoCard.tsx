@@ -2,7 +2,7 @@ import type { Repository } from '../types/index';
 
 interface RepoCardProps {
   repository: Repository;
-  onToggleFollow?: (repo: Repository) => void;
+  onToggleStar?: (repo: Repository) => void;
 }
 
 // Format star count for display (e.g., 1234 -> 1.2k)
@@ -13,7 +13,7 @@ function formatStarCount(count: number): string {
   return count.toString();
 }
 
-export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
+export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
   const {
     name,
     owner,
@@ -24,14 +24,16 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
     language,
     topics,
     metrics,
-    is_following,
-    starred_at,
+    is_starred,
   } = repository;
 
-  const handleFollowToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
+  // Use the explicit is_starred boolean
+  const isStarred = is_starred;
+
+  const handleStarToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    onToggleFollow?.(repository);
+    onToggleStar?.(repository);
   };
 
   const topicsLabel =
@@ -41,15 +43,6 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
 
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
-      {/* Starred indicator */}
-      {starred_at && (
-        <div className="absolute top-2 right-2 z-10">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            ⭐ Starred
-          </span>
-        </div>
-      )}
-
       {/* Header with owner avatar and stretched link */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
@@ -69,6 +62,22 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
             </span>
           </h3>
         </div>
+        {/* Star button */}
+        {onToggleStar && (
+          <button
+            type="button"
+            onClick={handleStarToggle}
+            className={`relative z-10 px-3 py-1 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+              isStarred
+                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            aria-label={`${isStarred ? 'Unstar' : 'Star'} ${name} repository`}
+          >
+            <span aria-hidden="true">{isStarred ? '⭐' : '☆'}</span>
+            {isStarred ? 'Starred' : 'Star'}
+          </button>
+        )}
       </div>
 
       {/* Description */}
@@ -118,22 +127,6 @@ export function RepoCard({ repository, onToggleFollow }: RepoCardProps) {
         {/* Row 3: Primary language */}
         {language && <p>Primary language: {language}</p>}
       </div>
-
-      {/* Follow button - positioned below starred badge if present */}
-      {onToggleFollow && (
-        <button
-          type="button"
-          onClick={handleFollowToggle}
-          className={`absolute ${starred_at ? 'top-10' : 'top-6'} right-6 px-3 py-1 rounded-full text-sm font-medium transition-colors z-10 ${
-            is_following
-              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          aria-label={`${is_following ? 'Unfollow' : 'Follow'} ${name} repository`}
-        >
-          {is_following ? 'Following' : 'Follow'}
-        </button>
-      )}
     </article>
   );
 }

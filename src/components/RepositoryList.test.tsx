@@ -16,20 +16,20 @@ vi.mock('../utils/logger', () => ({
 
 interface MockRepoCardProps {
   repository: Repository & { is_following?: boolean };
-  onToggleFollow?: () => void;
+  onToggleStar?: () => void;
 }
 
 // Mock RepoCard component
 vi.mock('./RepoCard', () => ({
-  RepoCard: ({ repository, onToggleFollow }: MockRepoCardProps) => (
+  RepoCard: ({ repository, onToggleStar }: MockRepoCardProps) => (
     <div data-testid={`repo-card-${repository.id}`}>
       <h3>{repository.name}</h3>
       <p>{repository.description}</p>
       <span>{repository.stargazers_count} stars</span>
       <span>{repository.open_issues_count} issues</span>
-      <span>{repository.is_following ? 'Following' : 'Not following'}</span>
-      {onToggleFollow && (
-        <button onClick={onToggleFollow}>{repository.is_following ? 'Unfollow' : 'Follow'}</button>
+      <span>{repository.is_starred ? 'Starred' : 'Not starred'}</span>
+      {onToggleStar && (
+        <button onClick={onToggleStar}>{repository.is_starred ? 'Unstar' : 'Star'}</button>
       )}
     </div>
   ),
@@ -52,6 +52,7 @@ const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
   updated_at: '2024-01-15T10:00:00Z',
   pushed_at: '2024-01-15T10:00:00Z',
   created_at: '2023-01-01T00:00:00Z',
+  is_starred: false,
   ...overrides,
 });
 
@@ -121,27 +122,29 @@ describe('RepositoryList', () => {
       const card1 = screen.getByTestId('repo-card-1');
       const card2 = screen.getByTestId('repo-card-2');
 
-      expect(card1).toHaveTextContent('Following');
-      expect(card2).toHaveTextContent('Not following');
+      expect(card1).toHaveTextContent('Starred');
+      expect(card2).toHaveTextContent('Not starred');
     });
 
-    it('calls onFollow when follow button is clicked', () => {
+    it('calls onFollow when star button is clicked', () => {
       const onFollow = vi.fn();
       const onUnfollow = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
 
       render(<RepositoryList repositories={repos} onFollow={onFollow} onUnfollow={onUnfollow} />);
 
-      const followButton = screen.getByRole('button', { name: /follow/i });
-      fireEvent.click(followButton);
+      const starButton = screen.getByRole('button', { name: /star/i });
+      fireEvent.click(starButton);
 
       expect(onFollow).toHaveBeenCalledWith(1);
     });
 
-    it('calls onUnfollow when unfollow button is clicked', () => {
+    it('calls onUnfollow when unstar button is clicked', () => {
       const onFollow = vi.fn();
       const onUnfollow = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+      const repos = [
+        createMockRepository({ id: 1, name: 'repo-1', starred_at: '2024-01-01T12:00:00Z' }),
+      ];
       const followedRepos = new Set([1]);
 
       render(
@@ -153,8 +156,8 @@ describe('RepositoryList', () => {
         />
       );
 
-      const unfollowButton = screen.getByRole('button', { name: /unfollow/i });
-      fireEvent.click(unfollowButton);
+      const unstarButton = screen.getByRole('button', { name: /unstar/i });
+      fireEvent.click(unstarButton);
 
       expect(onUnfollow).toHaveBeenCalledWith(1);
     });
@@ -296,20 +299,16 @@ describe('RepositoryList', () => {
   });
 
   describe('Filter functionality', () => {
-    it('filters by active repositories', () => {
-      const now = new Date();
-      const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      const oldDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
+    it('filters by starred repositories', () => {
       const repos = [
-        createMockRepository({ id: 1, pushed_at: recentDate }),
-        createMockRepository({ id: 2, pushed_at: oldDate }),
+        createMockRepository({ id: 1, is_starred: true }),
+        createMockRepository({ id: 2, is_starred: false }),
       ];
 
       render(<RepositoryList repositories={repos} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'active' } });
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
@@ -567,30 +566,24 @@ describe('RepositoryList', () => {
 
   describe('Combined functionality', () => {
     it('applies search and filter together', () => {
-      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      const oldDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
       const repos = [
         createMockRepository({
           id: 1,
           name: 'react-app',
-          stargazers_count: 150,
-          topics: [],
-          pushed_at: recentDate, // Recently active
+          is_starred: true,
+          topics: ['react', 'frontend'],
         }),
         createMockRepository({
           id: 2,
           name: 'react-lib',
-          stargazers_count: 50,
-          topics: [],
-          pushed_at: oldDate, // Not recently active
+          is_starred: false,
+          topics: ['react', 'library'],
         }),
         createMockRepository({
           id: 3,
           name: 'vue-app',
-          stargazers_count: 200,
-          topics: [],
-          pushed_at: recentDate, // Recently active but doesn't match search
+          is_starred: true,
+          topics: ['vue', 'frontend'],
         }),
       ];
 
@@ -602,33 +595,30 @@ describe('RepositoryList', () => {
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'active' } });
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
-      // Only react-app should be visible (matches search "react" and is recently active)
+      // Only react-app should be visible (matches search "react" and is starred)
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();
     });
 
     it('maintains sort order after filtering', () => {
-      const now = new Date();
-      const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-
       const repos = [
         createMockRepository({
           id: 1,
           stargazers_count: 50,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
         createMockRepository({
           id: 2,
           stargazers_count: 200,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
         createMockRepository({
           id: 3,
           stargazers_count: 100,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
       ];
 
@@ -640,7 +630,7 @@ describe('RepositoryList', () => {
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'active' } });
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
       // All should be visible in star order
       const cards = screen.getAllByTestId(/repo-card-/);
