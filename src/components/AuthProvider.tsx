@@ -37,18 +37,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
-    console.log('[AuthProvider] Applying session to state', {
-      hasSession: !!nextSession,
-      hasUser: !!nextSession?.user,
-      hasProviderToken: !!nextSession?.provider_token,
-      sessionExpiresAt: nextSession?.expires_at,
-      sessionExpiresIn: nextSession?.expires_in,
-      currentTime: Math.floor(Date.now() / 1000),
-      timeUntilExpiry: nextSession?.expires_at
-        ? nextSession.expires_at - Math.floor(Date.now() / 1000)
-        : null,
-    });
-
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
     setSession(nextSession);
     setUser(nextUser);
@@ -86,22 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthStateChange = useCallback(
     async (event: AuthChangeEvent, session: Session | null) => {
-      console.log('[AuthProvider] Auth state change event', {
-        event,
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        hasProviderToken: !!session?.provider_token,
-        sessionExpiresAt: session?.expires_at,
-        currentTime: Math.floor(Date.now() / 1000),
-      });
-
       try {
         applySessionToState(session);
         setLoading(false);
       } catch (err) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
-        console.log('[AuthProvider] Error in handleAuthStateChange, clearing auth state');
         // On error, clear auth state to prevent inconsistent state
         setSession(null);
         setUser(null);
@@ -119,19 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    // Monitor localStorage changes for debugging
-    const monitorStorage = () => {
-      const supabaseKeys = Object.keys(localStorage).filter((key) => key.startsWith('sb-'));
-      console.log('[AuthProvider] LocalStorage Supabase keys:', supabaseKeys);
-    };
-
-    // Check storage every 10 seconds
-    const storageInterval = setInterval(monitorStorage, 10000);
-    monitorStorage(); // Check immediately
-
     return () => {
       subscription.unsubscribe();
-      clearInterval(storageInterval);
     };
   }, [getSession, handleAuthStateChange]);
 

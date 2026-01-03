@@ -179,7 +179,6 @@ const Dashboard = () => {
           setRepositories(filterOutLocallyUnstarred(results));
           setSearchPage(page);
         } catch (err) {
-          console.error('Search failed:', err);
           setError(err instanceof Error ? err : new Error('Search failed'));
         } finally {
           setIsSearching(false);
@@ -295,7 +294,6 @@ const Dashboard = () => {
       setSearchResults(updateRepoList);
       setStarredRepositories(updateRepoList);
     } catch (err) {
-      console.error('Failed to star repository:', err);
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
@@ -351,7 +349,6 @@ const Dashboard = () => {
       setSearchResults(updateSearchResults(searchResults));
       setStarredRepositories(removeFromStarred(starredRepositories));
     } catch (err) {
-      console.error('Failed to unstar repository:', err);
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
