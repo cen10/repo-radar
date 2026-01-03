@@ -97,9 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [getSession, handleAuthStateChange]);
 
   // Clear connection error on successful auth
