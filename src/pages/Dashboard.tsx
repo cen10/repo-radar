@@ -17,7 +17,7 @@ import {
 } from '../utils/repository-filter';
 
 const Dashboard = () => {
-  const { user, session, loading: authLoading, signOut } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
@@ -31,35 +31,10 @@ const Dashboard = () => {
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    console.log('[Dashboard Auth Debug]', {
-      authLoading,
-      hasUser: !!user,
-      hasSession: !!session,
-      hasProviderToken: !!session?.provider_token,
-      sessionExpiresAt: session?.expires_at,
-      currentTime: Math.floor(Date.now() / 1000),
-      timeUntilExpiry: session?.expires_at
-        ? session.expires_at - Math.floor(Date.now() / 1000)
-        : null,
-    });
-
     if (!authLoading && !user) {
-      console.log('[Dashboard Auth] No user, redirecting to login');
       void navigate('/login');
     }
-
-    // Auto sign-out if user has Supabase session but no GitHub token
-    if (!authLoading && user && session && !session.provider_token) {
-      console.log('[Dashboard Auth] Session exists but no GitHub token - auto signing out', {
-        sessionKeys: Object.keys(session),
-        sessionExpiresAt: session.expires_at,
-        sessionExpiresIn: session.expires_in,
-      });
-      void signOut().then(() => {
-        void navigate('/login');
-      });
-    }
-  }, [user, session, authLoading, navigate, signOut]);
+  }, [user, authLoading, navigate]);
 
   // Handle localStorage cleanup and cross-tab synchronization
   useEffect(() => {

@@ -169,14 +169,14 @@ describe('Login', () => {
     it('should redirect to dashboard', () => {
       const originalLocation = window.location;
       delete (window as Partial<Window>).location;
-      (window as any).location = { href: '' };
+      (window as Partial<Window>).location = { href: '' } as Location;
 
       render(<Login />);
 
       expect(window.location.href).toBe('/dashboard');
       expect(screen.getByText(/redirecting to dashboard/i)).toBeInTheDocument();
 
-      (window as any).location = originalLocation;
+      (window as Partial<Window>).location = originalLocation;
     });
   });
 

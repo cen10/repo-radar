@@ -187,30 +187,6 @@ describe('Dashboard', () => {
     });
   });
 
-  it('auto signs out and redirects when GitHub token is missing', async () => {
-    const mockSignOut = vi.fn().mockResolvedValue(undefined);
-    mockUseAuth.mockReturnValue({
-      user: mockUser,
-      session: { ...mockSession, provider_token: null }, // Session without GitHub token
-      loading: false,
-      signOut: mockSignOut,
-    });
-
-    render(
-      <BrowserRouter>
-        <Dashboard />
-      </BrowserRouter>
-    );
-
-    await waitFor(() => {
-      expect(mockSignOut).toHaveBeenCalled();
-    });
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
-    });
-  });
-
   it('renders dashboard when user is authenticated', async () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
