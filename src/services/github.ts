@@ -26,12 +26,139 @@ interface GitHubStarredRepo {
 }
 
 /**
- * Fetches the user's starred repositories from GitHub API
+ * Gets the total number of starred repositories for the authenticated user.
+ *
+ * GitHub's starred repos endpoint doesn't return a total count in the response body,
+ * so we infer it from the Link header. By requesting per_page=1, the last page number
+ * in the Link header equals the total count (e.g., page=513 means 513 starred repos).
+ *
+ * This is a lightweight call—we don't use the response body, just the headers.
  * @param session - The Supabase session containing the GitHub access token
- * @param page - Page number for pagination (1-indexed)
- * @param perPage - Number of items per page (max 100)
- * @returns Array of repositories with metrics
+ * @returns Total number of starred repositories
  */
+async function fetchStarredRepoCount(session: Session): Promise<number> {
+  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
+  url.searchParams.append('per_page', '1');
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${session.provider_token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('GitHub authentication failed. Please sign in again.');
+    }
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+  }
+
+  const linkHeader = response.headers.get('Link');
+
+  if (!linkHeader) {
+    // No Link header means everything fits on one page
+    const data = await response.json();
+    return data.length;
+  }
+
+  const lastMatch = linkHeader.match(/<[^>]+[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+
+  if (!lastMatch) {
+    // Has Link header but no "last" rel—we're on the only/last page
+    const data = await response.json();
+    return data.length;
+  }
+
+  return parseInt(lastMatch[1], 10);
+}
+
+/**
+ * Fetches ALL starred repositories using parallel requests for optimal performance
+ * @param session - The Supabase session containing the GitHub access token
+ * @param maxRepos - Maximum number of repositories to fetch (default: 500)
+ * @returns Object containing repositories array and metadata about limits
+ */
+export async function fetchAllStarredRepositories(
+  session: Session | null,
+  maxRepos = 500
+): Promise<{
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+  isLimited: boolean;
+  hasMore: boolean;
+}> {
+  if (!session?.provider_token) {
+    throw new Error('No GitHub access token available');
+  }
+
+  // Step 1: Get total starred count with a single minimal request
+  const totalStarred = await fetchStarredRepoCount(session);
+
+  if (totalStarred === 0) {
+    return {
+      repositories: [],
+      totalFetched: 0,
+      totalStarred: 0,
+      isLimited: false,
+      hasMore: false,
+    };
+  }
+
+  // Step 2: Calculate how many pages we actually need
+  const perPage = 100;
+  const pagesForAllStars = Math.ceil(totalStarred / perPage);
+  const pagesForMaxRepos = Math.ceil(maxRepos / perPage);
+  const pagesToFetch = Math.min(pagesForAllStars, pagesForMaxRepos);
+  const pages = Array.from({ length: pagesToFetch }, (_, i) => i + 1);
+
+  // Step 3: Fetch all needed pages in parallel
+  const results = await Promise.allSettled(
+    pages.map((page) => fetchStarredRepositories(session, page, perPage))
+  );
+
+  // Step 4: Process results
+  const allRepos: Repository[] = [];
+  const failedPages: number[] = [];
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      allRepos.push(...result.value);
+    } else {
+      failedPages.push(pages[index]);
+      logger.error('Failed to fetch starred repositories page', {
+        page: pages[index],
+        error: result.reason,
+      });
+    }
+  });
+
+  if (failedPages.length === pages.length) {
+    throw new Error('Failed to fetch any starred repositories');
+  }
+
+  // Step 5: Sort by star count (most popular first) and then trim to maxRepos if needed
+  const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
+  const trimmedRepos = sortedRepos.slice(0, maxRepos);
+  const hasMore = totalStarred > maxRepos;
+
+  logger.info(
+    `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
+      hasMore ? ` (limited to ${maxRepos})` : ''
+    }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
+  );
+
+  return {
+    repositories: trimmedRepos,
+    totalFetched: trimmedRepos.length,
+    totalStarred,
+    isLimited: hasMore,
+    hasMore,
+  };
+}
+
 export async function fetchStarredRepositories(
   session: Session | null,
   page = 1,
@@ -44,7 +171,7 @@ export async function fetchStarredRepositories(
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('page', page.toString());
   url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'updated');
+  url.searchParams.append('sort', 'created');
   url.searchParams.append('direction', 'desc');
 
   try {
@@ -153,14 +280,19 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param query - Search query (can include quotes for exact match)
  * @param page - Page number for pagination
  * @param perPage - Number of items per page
- * @returns Array of repositories matching the search
+ * @returns Object containing repositories and pagination info
  */
 export async function searchRepositories(
   session: Session | null,
   query: string,
   page = 1,
   perPage = 30
-): Promise<Repository[]> {
+): Promise<{
+  repositories: Repository[];
+  totalCount: number;
+  effectiveTotal: number;
+  isLimited: boolean;
+}> {
   if (!session?.provider_token) {
     throw new Error('No GitHub access token available');
   }
@@ -213,12 +345,18 @@ export async function searchRepositories(
 
     const data = await response.json();
     const repos: GitHubStarredRepo[] = data.items || [];
+    const totalCount = data.total_count || 0;
+
+    // Apply GitHub API limitation (max 1000 results accessible)
+    const GITHUB_SEARCH_LIMIT = 1000;
+    const effectiveTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
+    const isLimited = totalCount > GITHUB_SEARCH_LIMIT;
 
     // Check if these repos are in user's starred list
     const starredIds = await fetchUserStarredIds(session);
 
     // Transform GitHub API response to our Repository type
-    return repos.map((repo) => ({
+    const repositories = repos.map((repo) => ({
       id: repo.id,
       name: repo.name,
       full_name: repo.full_name,
@@ -244,6 +382,13 @@ export async function searchRepositories(
       },
       is_following: false, // Deprecated - keeping for backwards compatibility
     }));
+
+    return {
+      repositories,
+      totalCount,
+      effectiveTotal,
+      isLimited,
+    };
   } catch (error) {
     logger.error('Failed to search repositories:', error);
     throw error;
@@ -251,62 +396,39 @@ export async function searchRepositories(
 }
 
 /**
- * Search within the user's starred repositories
+ * Search within the user's starred repositories (client-side filtering and pagination)
  * @param session - The Supabase session containing the GitHub access token
  * @param query - The search query string
  * @param page - Page number for pagination (1-indexed)
- * @param perPage - Number of items per page (max 100)
- * @returns Array of starred repositories matching the query
+ * @param perPage - Number of items per page
+ * @param allStarredRepos - Pre-fetched starred repositories (optional, will fetch if not provided)
+ * @returns Object containing repositories and pagination info
  */
 export async function searchStarredRepositories(
   session: Session | null,
   query: string,
   page = 1,
-  perPage = 30
-): Promise<Repository[]> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
-  // Use GitHub's starred endpoint with search parameter
-  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-  url.searchParams.append('page', page.toString());
-  url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'updated');
-  url.searchParams.append('direction', 'desc');
-
+  perPage = 30,
+  allStarredRepos?: Repository[]
+): Promise<{
+  repositories: Repository[];
+  totalCount: number;
+  effectiveTotal: number;
+  isLimited: boolean;
+}> {
   try {
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${session.provider_token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('GitHub authentication failed. Please sign in again.');
-      }
-      if (response.status === 403) {
-        const remaining = response.headers.get('x-ratelimit-remaining');
-        if (remaining === '0') {
-          const resetTime = response.headers.get('x-ratelimit-reset');
-          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
-          throw new Error(
-            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
-          );
-        }
-        throw new Error('GitHub API access forbidden. Please check your permissions.');
-      }
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    // Get all starred repos (either provided or fetch them)
+    let starredRepos: Repository[];
+    if (allStarredRepos) {
+      starredRepos = allStarredRepos;
+    } else {
+      // Fetch all starred repos - this is expensive but necessary for accurate client-side search
+      starredRepos = await fetchStarredRepositories(session, 1, 100); // Get up to 100 for now
     }
 
-    const data: GitHubStarredRepo[] = await response.json();
-
-    // Filter the results on the client side since GitHub doesn't support search within starred repos
+    // Filter repos based on search query
     const queryLower = query.toLowerCase();
-    const filteredData = data.filter((repo) => {
+    const filteredRepos = starredRepos.filter((repo) => {
       const searchIn = [
         repo.name,
         repo.full_name,
@@ -319,30 +441,18 @@ export async function searchStarredRepositories(
       return searchIn.includes(queryLower);
     });
 
-    // Transform to our Repository format
-    const repositories: Repository[] = filteredData.map((repo) => ({
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
-      owner: repo.owner,
-      description: repo.description,
-      html_url: repo.html_url,
-      stargazers_count: repo.stargazers_count,
-      open_issues_count: repo.open_issues_count,
-      language: repo.language,
-      topics: repo.topics || [],
-      updated_at: repo.updated_at,
-      pushed_at: repo.pushed_at,
-      created_at: repo.created_at,
-      starred_at: repo.starred_at,
-      is_starred: true, // All results are starred by definition
-      metrics: {
-        stars_growth_rate: calculateGrowthRate(repo),
-        is_trending: isTrending(repo),
-      },
-    }));
+    // Client-side pagination
+    const totalCount = filteredRepos.length;
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+    const paginatedRepos = filteredRepos.slice(startIndex, endIndex);
 
-    return repositories;
+    return {
+      repositories: paginatedRepos,
+      totalCount,
+      effectiveTotal: totalCount, // No API limit for client-side filtering
+      isLimited: false, // Client-side filtering has no API limitations
+    };
   } catch (error) {
     logger.error('Failed to search starred repositories:', error);
     throw error;

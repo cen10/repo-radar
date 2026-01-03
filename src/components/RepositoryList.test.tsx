@@ -350,7 +350,7 @@ describe('RepositoryList', () => {
       render(<RepositoryList repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'stars' } });
+      fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -368,7 +368,7 @@ describe('RepositoryList', () => {
       render(<RepositoryList repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'name' } });
+      fireEvent.change(sortSelect, { target: { value: 'name-asc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -386,7 +386,7 @@ describe('RepositoryList', () => {
       render(<RepositoryList repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'issues' } });
+      fireEvent.change(sortSelect, { target: { value: 'issues-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -416,7 +416,7 @@ describe('RepositoryList', () => {
       render(<RepositoryList repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'activity' } });
+      fireEvent.change(sortSelect, { target: { value: 'activity-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -457,15 +457,18 @@ describe('RepositoryList', () => {
 
       render(<RepositoryList repositories={repos} itemsPerPage={5} />);
 
-      const nextButton = screen
-        .getAllByRole('button')
-        .find((btn) => btn.textContent === 'Next' || btn.querySelector('[aria-hidden="true"]'));
+      // Should show repo-1 to repo-5 on page 1
+      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-5')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-card-6')).not.toBeInTheDocument();
 
-      if (nextButton) {
-        fireEvent.click(nextButton);
-      }
+      // Find and click the Next button (use the page number approach instead)
+      const page2Button = screen.getByRole('button', { name: '2' });
+      fireEvent.click(page2Button);
 
+      // Should now show repo-6 to repo-10 on page 2
       expect(screen.getByTestId('repo-card-6')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-10')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
     });
 
@@ -637,7 +640,7 @@ describe('RepositoryList', () => {
 
       // Apply sort
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'stars' } });
+      fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);

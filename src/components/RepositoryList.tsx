@@ -1,9 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
+// Pagination utilities available in '../utils/pagination' if needed
 
-export type SortOption = 'stars' | 'activity' | 'name' | 'issues';
+export type SortOption =
+  | 'stars-desc'
+  | 'stars-asc'
+  | 'activity-desc'
+  | 'activity-asc'
+  | 'name-asc'
+  | 'name-desc'
+  | 'issues-desc'
+  | 'issues-asc';
 export type FilterOption = 'all' | 'starred';
 
 interface RepositoryListProps {
@@ -16,9 +29,19 @@ interface RepositoryListProps {
   itemsPerPage?: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  onSearchSubmit?: (query: string) => void;
   isSearching?: boolean;
   filterBy?: FilterOption;
   onFilterChange?: (filter: FilterOption) => void;
+  // Search pagination props
+  searchPage?: number;
+  totalSearchPages?: number;
+  hasMoreResults?: boolean;
+  onSearchPageChange?: (page: number) => void;
+  // Additional pagination info for enhanced display
+  totalCount?: number;
+  effectiveTotal?: number;
+  isLimited?: boolean;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -31,18 +54,34 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   itemsPerPage = 12,
   searchQuery: externalSearchQuery,
   onSearchChange: externalOnSearchChange,
+  onSearchSubmit: externalOnSearchSubmit,
   isSearching = false,
   filterBy: externalFilterBy,
   onFilterChange: externalOnFilterChange,
+  // Search pagination props
+  searchPage = 1,
+  totalSearchPages = 0,
+  hasMoreResults = false,
+  onSearchPageChange,
+  // Additional pagination info for enhanced display
+  totalCount: _totalCount,
+  effectiveTotal,
+  isLimited: _isLimited = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState<SortOption>('activity');
+  const [sortBy, setSortBy] = useState<SortOption>('stars-desc');
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [localFilterBy, setLocalFilterBy] = useState<FilterOption>('all');
 
   // Use external search if provided, otherwise use local
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
   const onSearchChange = externalOnSearchChange || setLocalSearchQuery;
+  const onSearchSubmit =
+    externalOnSearchSubmit ||
+    ((query: string) => {
+      // For local search, trigger search immediately when no external handler
+      setLocalSearchQuery(query);
+    });
   const filterBy = externalFilterBy !== undefined ? externalFilterBy : localFilterBy;
   const onFilterChange = externalOnFilterChange || setLocalFilterBy;
 
@@ -60,32 +99,72 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     const sorted = [...filteredRepos];
 
     switch (sortBy) {
-      case 'stars':
+      case 'stars-desc':
         sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
         break;
-      case 'activity':
+      case 'stars-asc':
+        sorted.sort((a, b) => a.stargazers_count - b.stargazers_count);
+        break;
+      case 'activity-desc':
         sorted.sort((a, b) => {
           const aDate = new Date(a.pushed_at || a.updated_at);
           const bDate = new Date(b.pushed_at || b.updated_at);
           return bDate.getTime() - aDate.getTime();
         });
         break;
-      case 'name':
+      case 'activity-asc':
+        sorted.sort((a, b) => {
+          const aDate = new Date(a.pushed_at || a.updated_at);
+          const bDate = new Date(b.pushed_at || b.updated_at);
+          return aDate.getTime() - bDate.getTime();
+        });
+        break;
+      case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'issues':
+      case 'name-desc':
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'issues-desc':
         sorted.sort((a, b) => b.open_issues_count - a.open_issues_count);
+        break;
+      case 'issues-asc':
+        sorted.sort((a, b) => a.open_issues_count - b.open_issues_count);
         break;
     }
 
     return sorted;
   }, [filteredRepos, sortBy]);
 
-  // Pagination - ensure we don't exceed itemsPerPage even with combined results
-  const totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRepos = sortedRepos.slice(startIndex, endIndex);
+  // Determine if we're in search mode (external search pagination) or local mode (client-side pagination)
+  const isSearchMode = !!(searchQuery && onSearchPageChange);
+
+  // Pagination logic differs for search vs local browsing
+  let totalPages: number;
+  let currentRepos: Repository[];
+  let activePage: number;
+
+  if (isSearchMode) {
+    // Search mode: use server-side pagination
+    if (totalSearchPages > 0) {
+      totalPages = totalSearchPages;
+    } else if (effectiveTotal !== undefined && itemsPerPage) {
+      // Calculate from API data if available
+      totalPages = Math.ceil(effectiveTotal / itemsPerPage);
+    } else {
+      // Fallback to legacy logic
+      totalPages = hasMoreResults ? searchPage + 1 : searchPage;
+    }
+    currentRepos = sortedRepos; // All results from current search page
+    activePage = searchPage;
+  } else {
+    // Local mode: use client-side pagination
+    totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    currentRepos = sortedRepos.slice(startIndex, endIndex);
+    activePage = currentPage;
+  }
 
   // Loading state (only show spinner for initial load, not search)
   if (isLoading && !isSearching) {
@@ -138,22 +217,41 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     <div className="bg-white shadow rounded-lg p-4">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
-        <div className="flex-1">
-          <label htmlFor="repo-search" className="sr-only">
-            Search repositories
-          </label>
-          <input
-            id="repo-search"
-            type="text"
-            placeholder='Search repositories... (use "quotes" for exact name match)'
-            value={searchQuery}
-            onChange={(e) => {
-              onSearchChange(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-          />
-        </div>
+        <form
+          className="flex-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const query = formData.get('search') as string;
+            onSearchSubmit(query);
+            setCurrentPage(1);
+          }}
+        >
+          <div className="flex">
+            <label htmlFor="repo-search" className="sr-only">
+              Search repositories
+            </label>
+            <input
+              id="repo-search"
+              name="search"
+              type="text"
+              placeholder='Search repositories... (use "quotes" for exact name match)'
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Search</span>
+            </button>
+          </div>
+        </form>
 
         {/* Filter */}
         <select
@@ -179,10 +277,14 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
           aria-label="Sort repositories"
         >
-          <option value="activity">Recent Activity</option>
-          <option value="stars">Stars</option>
-          <option value="name">Name</option>
-          <option value="issues">Open Issues</option>
+          <option value="stars-desc">Stars (DESC)</option>
+          <option value="stars-asc">Stars (ASC)</option>
+          <option value="activity-desc">Recent Activity (DESC)</option>
+          <option value="activity-asc">Recent Activity (ASC)</option>
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+          <option value="issues-desc">Open Issues (Most)</option>
+          <option value="issues-asc">Open Issues (Least)</option>
         </select>
       </div>
 
@@ -255,77 +357,156 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           })}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
+      {/* Pagination - Hide when 0 results or 1-10 results in single page */}
+      {totalPages > 1 && sortedRepos.length > 0 && (
         <div className="flex items-center justify-between bg-white px-4 py-3 sm:px-6 rounded-lg shadow">
           <div className="flex flex-1 justify-between sm:hidden">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (isSearchMode && onSearchPageChange) {
+                  onSearchPageChange(Math.max(1, activePage - 1));
+                } else {
+                  setCurrentPage((prev) => Math.max(1, prev - 1));
+                }
+              }}
+              disabled={activePage === 1}
               className="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (isSearchMode && onSearchPageChange) {
+                  const nextPage = activePage + 1;
+                  if (hasMoreResults || nextPage <= totalPages) {
+                    onSearchPageChange(nextPage);
+                  }
+                } else {
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                }
+              }}
+              disabled={
+                isSearchMode
+                  ? !hasMoreResults && activePage >= totalPages
+                  : activePage === totalPages
+              }
               className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
           </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Page <span className="font-medium">{currentPage}</span> of{' '}
-                <span className="font-medium">{totalPages}</span>
-              </p>
-            </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-center">
             <div>
               <nav
                 className="isolate inline-flex -space-x-px rounded-md shadow-sm"
                 aria-label="Pagination"
               >
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => {
+                    if (isSearchMode && onSearchPageChange) {
+                      onSearchPageChange(Math.max(1, activePage - 1));
+                    } else {
+                      setCurrentPage((prev) => Math.max(1, prev - 1));
+                    }
+                  }}
+                  disabled={activePage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Previous</span>
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
 
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
+                {/* Page numbers with ellipsis */}
+                {totalPages > 1 &&
+                  (() => {
+                    const pages = [];
+                    const maxVisiblePages = 7;
 
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                        currentPage === pageNum
-                          ? 'z-10 bg-indigo-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                    if (totalPages <= maxVisiblePages) {
+                      // Show all pages if we have 7 or fewer
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Always show first page
+                      pages.push(1);
+
+                      // Logic for middle pages and ellipsis
+                      if (activePage <= 4) {
+                        // Near the beginning: 1, 2, 3, 4, 5, ..., last
+                        for (let i = 2; i <= 5; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      } else if (activePage >= totalPages - 3) {
+                        // Near the end: 1, ..., last-4, last-3, last-2, last-1, last
+                        pages.push('ellipsis');
+                        for (let i = totalPages - 4; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        // In the middle: 1, ..., current-1, current, current+1, ..., last
+                        pages.push('ellipsis');
+                        for (let i = activePage - 1; i <= activePage + 1; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      }
+                    }
+
+                    return pages.map((page, index) => {
+                      if (page === 'ellipsis') {
+                        return (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      const pageNum = page as number;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            if (isSearchMode && onSearchPageChange) {
+                              onSearchPageChange(pageNum);
+                            } else {
+                              setCurrentPage(pageNum);
+                            }
+                          }}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            activePage === pageNum
+                              ? 'z-10 bg-indigo-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    });
+                  })()}
 
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    if (isSearchMode && onSearchPageChange) {
+                      const nextPage = activePage + 1;
+                      if (hasMoreResults || nextPage <= totalPages) {
+                        onSearchPageChange(nextPage);
+                      }
+                    } else {
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                    }
+                  }}
+                  disabled={
+                    isSearchMode
+                      ? !hasMoreResults && activePage >= totalPages
+                      : activePage === totalPages
+                  }
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Next</span>

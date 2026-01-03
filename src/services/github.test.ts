@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
-import { fetchStarredRepositories, searchRepositories, fetchRateLimit } from './github';
+import {
+  fetchAllStarredRepositories,
+  fetchStarredRepositories,
+  searchRepositories,
+  fetchRateLimit,
+} from './github';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -155,6 +160,238 @@ describe('GitHub API Service', () => {
     });
   });
 
+  describe('fetchAllStarredRepositories', () => {
+    it('should fetch all starred repositories across multiple pages', async () => {
+      const mockRepo1 = {
+        repo: {
+          id: 1,
+          name: 'repo-1',
+          full_name: 'user/repo-1',
+          owner: {
+            login: 'user',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+          description: 'First repository',
+          html_url: 'https://github.com/user/repo-1',
+          stargazers_count: 100,
+          open_issues_count: 5,
+          language: 'TypeScript',
+          topics: ['testing'],
+          updated_at: '2024-01-01T00:00:00Z',
+          pushed_at: '2024-01-01T00:00:00Z',
+          created_at: '2023-01-01T00:00:00Z',
+        },
+        starred_at: '2024-01-01T00:00:00Z',
+      };
+
+      const mockRepo2 = {
+        repo: {
+          id: 2,
+          name: 'repo-2',
+          full_name: 'user/repo-2',
+          owner: {
+            login: 'user',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+          description: 'Second repository',
+          html_url: 'https://github.com/user/repo-2',
+          stargazers_count: 200,
+          open_issues_count: 10,
+          language: 'JavaScript',
+          topics: ['backend'],
+          updated_at: '2024-01-02T00:00:00Z',
+          pushed_at: '2024-01-02T00:00:00Z',
+          created_at: '2023-01-02T00:00:00Z',
+        },
+        starred_at: '2024-01-02T00:00:00Z',
+      };
+
+      // Mock fetchStarredRepoCount call (first call with per_page=1)
+      // Mock with Link header indicating 150 total repos (last page is 150 with per_page=1)
+      const linkHeader = '<https://api.github.com/user/starred?page=150&per_page=1>; rel="last"';
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo1], // Single item for count calculation
+          headers: new Headers({ Link: linkHeader }),
+        })
+        // Mock parallel calls for page 1 and page 2
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => Array(100).fill(mockRepo1), // Page 1: 100 repos
+          headers: new Headers(),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo2], // Page 2: 1 repo
+          headers: new Headers(),
+        });
+
+      const result = await fetchAllStarredRepositories(mockSession);
+
+      // Should have made three API calls: 1 for count + 2 for parallel fetching
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+
+      // First call should be for counting (per_page=1)
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('per_page=1'),
+        expect.any(Object)
+      );
+
+      // Subsequent calls should be for parallel fetching (can be in any order)
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('page=1&per_page=100'),
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('page=2&per_page=100'),
+        expect.any(Object)
+      );
+
+      // Should return all repositories (100 + 1 = 101)
+      expect(result.repositories).toHaveLength(101);
+      expect(result.totalFetched).toBe(101);
+      expect(result.totalStarred).toBe(150); // Based on Link header: 150 total repos
+      expect(result.isLimited).toBe(false);
+      expect(result.hasMore).toBe(false);
+      // Results should be sorted by star count (repo-2 has 200 stars, repo-1 has 100)
+      // repo-2 (1 item) should be first, followed by repo-1 items (100 items)
+      expect(result.repositories[0]).toMatchObject({
+        id: 2,
+        name: 'repo-2',
+      });
+      expect(result.repositories[1]).toMatchObject({
+        id: 1,
+        name: 'repo-1',
+      });
+    });
+
+    it('should handle single page of starred repositories', async () => {
+      const mockRepo = {
+        repo: {
+          id: 1,
+          name: 'single-repo',
+          full_name: 'user/single-repo',
+          owner: {
+            login: 'user',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+          description: 'Only repository',
+          html_url: 'https://github.com/user/single-repo',
+          stargazers_count: 50,
+          open_issues_count: 2,
+          language: 'Python',
+          topics: ['ai'],
+          updated_at: '2024-01-01T00:00:00Z',
+          pushed_at: '2024-01-01T00:00:00Z',
+          created_at: '2023-01-01T00:00:00Z',
+        },
+        starred_at: '2024-01-01T00:00:00Z',
+      };
+
+      // Mock fetchStarredRepoCount call (first call with per_page=1) - single page scenario
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo], // Single item, no Link header means single page
+          headers: new Headers(),
+        })
+        // Mock single page fetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo],
+          headers: new Headers(),
+        });
+
+      const result = await fetchAllStarredRepositories(mockSession);
+
+      // Should have made two API calls: 1 for count + 1 for single page fetch
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result.repositories).toHaveLength(1);
+      expect(result.totalFetched).toBe(1);
+      expect(result.totalStarred).toBe(1);
+      expect(result.isLimited).toBe(false);
+      expect(result.hasMore).toBe(false);
+      expect(result.repositories[0]).toMatchObject({
+        id: 1,
+        name: 'single-repo',
+      });
+    });
+
+    it('should respect repository limit and indicate when limit is reached', async () => {
+      const mockRepo = {
+        repo: {
+          id: 1,
+          name: 'test-repo',
+          full_name: 'user/test-repo',
+          owner: {
+            login: 'user',
+            avatar_url: 'https://example.com/avatar.jpg',
+          },
+          description: 'Test repository',
+          html_url: 'https://github.com/user/test-repo',
+          stargazers_count: 100,
+          open_issues_count: 5,
+          language: 'TypeScript',
+          topics: ['testing'],
+          updated_at: '2024-01-01T00:00:00Z',
+          pushed_at: '2024-01-01T00:00:00Z',
+          created_at: '2023-01-01T00:00:00Z',
+        },
+        starred_at: '2024-01-01T00:00:00Z',
+      };
+
+      // Mock the initial count request (fetchStarredRepoCount which is called by fetchAllStarredRepositories):
+      // return a Link header showing last page=300 at per_page=1 => 300 total repos.
+      // The next two mocks simulate pages 1 and 2 with 100 repos each; page 3 isn't fetched
+      // because the test caps maxRepos at 150.
+      const linkHeader = '<https://api.github.com/user/starred?page=300&per_page=1>; rel="last"';
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo], // Single item for count calculation
+          headers: new Headers({ Link: linkHeader }),
+        })
+        // Mock parallel calls for page 1 and page 2 (only fetching 2 pages for 150 limit)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => Array(100).fill(mockRepo), // Page 1: 100 repos
+          headers: new Headers(),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => Array(100).fill(mockRepo), // Page 2: 100 repos
+          headers: new Headers(),
+        });
+
+      const result = await fetchAllStarredRepositories(mockSession, 150); // Custom limit
+
+      // Should have made three API calls: 1 for count + 2 for parallel fetching (limited)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+
+      // Should return exactly the limit amount (trimmed from 200 fetched to 150 limit)
+      expect(result.repositories).toHaveLength(150);
+      expect(result.totalFetched).toBe(150);
+      expect(result.totalStarred).toBe(300); // Based on Link header: 3 pages * 100 per page
+      expect(result.isLimited).toBe(true);
+      expect(result.hasMore).toBe(true);
+    });
+
+    it('should throw error when authentication fails', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: new Headers(),
+      });
+
+      await expect(fetchAllStarredRepositories(mockSession)).rejects.toThrow(
+        'GitHub authentication failed. Please sign in again.'
+      );
+    });
+  });
+
   describe('searchRepositories', () => {
     it('should search repositories with fuzzy match', async () => {
       const mockSearchResults = {
@@ -178,6 +415,7 @@ describe('GitHub API Service', () => {
             created_at: '2014-01-01T00:00:00Z',
           },
         ],
+        total_count: 50000,
       };
 
       // Mock for search
@@ -201,14 +439,17 @@ describe('GitHub API Service', () => {
       expect(url.searchParams.get('q')).toBe('typescript');
       expect(url.searchParams.get('sort')).toBe('stars');
 
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('typescript');
+      expect(result.repositories).toHaveLength(1);
+      expect(result.repositories[0].name).toBe('typescript');
+      expect(result.totalCount).toBe(50000);
+      expect(result.effectiveTotal).toBe(1000); // GitHub API cap
+      expect(result.isLimited).toBe(true);
     });
 
     it('should search repositories with exact match using quotes', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ items: [] }),
+        json: async () => ({ items: [], total_count: 0 }),
         headers: new Headers(),
       });
 
@@ -243,6 +484,7 @@ describe('GitHub API Service', () => {
             created_at: '2023-01-01T00:00:00Z',
           },
         ],
+        total_count: 1,
       };
 
       const mockStarredRepos = [{ id: 123, name: 'test-repo', full_name: 'user/test-repo' }];
@@ -263,7 +505,7 @@ describe('GitHub API Service', () => {
 
       const result = await searchRepositories(mockSession, 'test');
 
-      expect(result[0].is_starred).toBe(true);
+      expect(result.repositories[0].is_starred).toBe(true);
     });
 
     it('should handle invalid search query', async () => {

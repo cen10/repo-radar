@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import RepositoryList from '../components/RepositoryList';
 import { useAuth } from '../hooks/useAuth';
 import {
-  fetchStarredRepositories,
+  fetchAllStarredRepositories,
   searchRepositories,
   searchStarredRepositories,
   starRepository,
@@ -26,8 +26,17 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState<'all' | 'starred'>('all');
+  const [filterBy, setFilterBy] = useState<'all' | 'starred'>('starred');
   const [error, setError] = useState<Error | null>(null);
+  const [searchPage, setSearchPage] = useState(1);
+  const [totalSearchPages, setTotalSearchPages] = useState(0);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [totalCount, setTotalCount] = useState<number | undefined>();
+  const [effectiveTotal, setEffectiveTotal] = useState<number | undefined>();
+  const [isLimited, setIsLimited] = useState(false);
+  const [repoLimitReached, setRepoLimitReached] = useState(false);
+  const [totalReposFetched, setTotalReposFetched] = useState(0);
+  const [totalStarredRepos, setTotalStarredRepos] = useState(0);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
@@ -73,10 +82,15 @@ const Dashboard = () => {
 
         // Fetch real data from GitHub API
         // This will throw an error if session or provider_token is missing
-        const repos = await fetchStarredRepositories(session, 1, 100);
-        const filteredRepos = filterOutLocallyUnstarred(repos);
-        setStarredRepositories(repos);
+        const result = await fetchAllStarredRepositories(session);
+        const filteredRepos = filterOutLocallyUnstarred(result.repositories);
+        setStarredRepositories(result.repositories);
         setRepositories(filteredRepos); // Initially show starred repos with filtering applied
+
+        // Track if we hit the repository limit
+        setRepoLimitReached(result.isLimited);
+        setTotalReposFetched(result.totalFetched);
+        setTotalStarredRepos(result.totalStarred);
 
         // Load followed repos from localStorage
         const savedFollows = localStorage.getItem('followedRepos');
@@ -107,11 +121,17 @@ const Dashboard = () => {
 
   // Search repositories with appropriate API based on filter
   const performSearch = useCallback(
-    async (query: string, filter: 'all' | 'starred') => {
+    async (query: string, filter: 'all' | 'starred', page = 1) => {
       if (!query.trim()) {
         // If query is empty, show starred repositories with filtering applied
         setSearchResults([]);
         setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        setSearchPage(1);
+        setTotalSearchPages(0);
+        setHasMoreResults(false);
+        setTotalCount(undefined);
+        setEffectiveTotal(undefined);
+        setIsLimited(false);
         return;
       }
 
@@ -121,17 +141,43 @@ const Dashboard = () => {
       if (session?.provider_token) {
         try {
           let results: Repository[];
+          const perPage = 30;
 
           if (filter === 'starred') {
             // Search within starred repositories only
-            results = await searchStarredRepositories(session, query, 1, 30);
+            const starredResponse = await searchStarredRepositories(
+              session,
+              query,
+              page,
+              perPage,
+              starredRepositories
+            );
+            results = starredResponse.repositories;
+
+            // Set pagination info for client-side filtered starred repos
+            const totalPages = Math.ceil(starredResponse.totalCount / perPage);
+            setTotalSearchPages(totalPages);
+            setHasMoreResults(page < totalPages);
+            setTotalCount(starredResponse.totalCount);
+            setEffectiveTotal(starredResponse.effectiveTotal);
+            setIsLimited(starredResponse.isLimited);
           } else {
             // Search all GitHub repositories
-            results = await searchRepositories(session, query, 1, 30);
+            const searchResponse = await searchRepositories(session, query, page, perPage);
+            results = searchResponse.repositories;
+
+            // Set pagination info based on GitHub API response
+            const totalPages = Math.ceil(searchResponse.effectiveTotal / perPage);
+            setTotalSearchPages(totalPages);
+            setHasMoreResults(page < totalPages);
+            setTotalCount(searchResponse.totalCount);
+            setEffectiveTotal(searchResponse.effectiveTotal);
+            setIsLimited(searchResponse.isLimited);
           }
 
           setSearchResults(results);
           setRepositories(filterOutLocallyUnstarred(results));
+          setSearchPage(page);
         } catch (err) {
           console.error('Search failed:', err);
           setError(err instanceof Error ? err : new Error('Search failed'));
@@ -155,26 +201,33 @@ const Dashboard = () => {
         });
 
         setRepositories(filterOutLocallyUnstarred(localMatches));
+        setSearchPage(1);
+        setTotalSearchPages(0);
+        setHasMoreResults(false);
         setIsSearching(false);
       }
     },
     [session, starredRepositories]
   );
 
-  // Handle search input with debouncing
-  const handleSearchChange = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
+  // Handle search input changes (just updates the input value, no search)
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
-      // Clear previous timeout
+  // Handle search submission (when user clicks search button or hits enter)
+  const handleSearchSubmit = useCallback(
+    (query: string) => {
+      // Clear any existing timeout
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
 
-      // Set new timeout for debounced search
-      searchTimeoutRef.current = setTimeout(() => {
-        void performSearch(query, filterBy);
-      }, 300); // 300ms debounce
+      // Reset to page 1 for new searches
+      setSearchPage(1);
+
+      // Perform search immediately
+      void performSearch(query, filterBy, 1);
     },
     [performSearch, filterBy]
   );
@@ -183,17 +236,17 @@ const Dashboard = () => {
   const handleFilterChange = useCallback(
     (filter: 'all' | 'starred') => {
       setFilterBy(filter);
+      setSearchPage(1); // Reset to page 1 when changing filters
 
       // If there's a search query, re-run search with new filter
       if (searchQuery.trim()) {
-        void performSearch(searchQuery, filter);
+        void performSearch(searchQuery, filter, 1);
       } else {
         // No search query, show appropriate default view
-        if (filter === 'starred') {
-          setRepositories(filterOutLocallyUnstarred(starredRepositories));
-        } else {
-          setRepositories(filterOutLocallyUnstarred(starredRepositories));
-        }
+        setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        setSearchPage(1);
+        setTotalSearchPages(0);
+        setHasMoreResults(false);
       }
     },
     [performSearch, searchQuery, starredRepositories]
@@ -201,9 +254,10 @@ const Dashboard = () => {
 
   // Cleanup timeout on unmount
   useEffect(() => {
+    const timeoutRef = searchTimeoutRef.current;
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
+      if (timeoutRef) {
+        clearTimeout(timeoutRef);
       }
     };
   }, []);
@@ -302,6 +356,16 @@ const Dashboard = () => {
     }
   };
 
+  // Handle search page changes
+  const handleSearchPageChange = useCallback(
+    (page: number) => {
+      if (searchQuery.trim()) {
+        void performSearch(searchQuery, filterBy, page);
+      }
+    },
+    [searchQuery, filterBy, performSearch]
+  );
+
   // Keep the old handlers as aliases for compatibility
   const handleFollow = handleStar;
   const handleUnfollow = handleUnstar;
@@ -328,6 +392,40 @@ const Dashboard = () => {
               ? `Searching for "${searchQuery}"${isSearching ? '...' : ''}`
               : 'Track and manage your starred GitHub repositories'}
           </p>
+
+          {/* Repository limit warning */}
+          {repoLimitReached && !searchQuery && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-amber-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-amber-800">
+                    Showing first {totalReposFetched} of {totalStarredRepos} starred repositories
+                  </h3>
+                  <div className="mt-2 text-sm text-amber-700">
+                    <p>
+                      {totalStarredRepos - totalReposFetched} repositories aren't displayed for
+                      performance reasons. Use search in Repo Radar to find specific repositories,
+                      or view all starred repositories on GitHub.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <RepositoryList
@@ -339,10 +437,18 @@ const Dashboard = () => {
           followedRepos={followedRepos}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
+          onSearchSubmit={handleSearchSubmit}
           isSearching={isSearching}
           filterBy={filterBy}
           onFilterChange={handleFilterChange}
           itemsPerPage={30}
+          searchPage={searchPage}
+          totalSearchPages={totalSearchPages}
+          hasMoreResults={hasMoreResults}
+          onSearchPageChange={handleSearchPageChange}
+          totalCount={totalCount}
+          effectiveTotal={effectiveTotal}
+          isLimited={isLimited}
         />
       </div>
     </div>

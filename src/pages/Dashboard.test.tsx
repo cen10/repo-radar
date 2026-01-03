@@ -15,40 +15,64 @@ vi.mock('../hooks/useAuth', () => ({
 
 // Mock the GitHub service
 vi.mock('../services/github', () => ({
-  fetchStarredRepositories: vi.fn(),
+  fetchAllStarredRepositories: vi.fn(),
   searchRepositories: vi.fn(),
+  searchStarredRepositories: vi.fn(),
   fetchRateLimit: vi.fn(),
 }));
 
 // Mock RepositoryList component with search functionality
 vi.mock('../components/RepositoryList', () => ({
-  default: vi.fn(({ repositories, isLoading, error, searchQuery, onSearchChange, isSearching }) => {
-    if (isLoading) {
-      return <div>Loading repositories...</div>;
+  default: vi.fn(
+    ({
+      repositories,
+      isLoading,
+      error,
+      searchQuery,
+      onSearchChange,
+      onSearchSubmit,
+      isSearching,
+    }) => {
+      if (isLoading) {
+        return <div>Loading repositories...</div>;
+      }
+      if (error) {
+        return <div>Error: {error.message}</div>;
+      }
+      return (
+        <div data-testid="repository-list">
+          {onSearchChange && onSearchSubmit && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const query = formData.get('search') as string;
+                onSearchSubmit(query);
+              }}
+            >
+              <input
+                name="search"
+                data-testid="search-input"
+                value={searchQuery || ''}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search repositories..."
+              />
+              <button type="submit" data-testid="search-button">
+                Search
+              </button>
+            </form>
+          )}
+          {isSearching && <div>Searching GitHub...</div>}
+          <div data-testid="repo-count">{repositories.length} repositories</div>
+          {repositories.map((repo: { id: number; name: string }) => (
+            <div key={repo.id} data-testid={`repo-${repo.id}`}>
+              {repo.name}
+            </div>
+          ))}
+        </div>
+      );
     }
-    if (error) {
-      return <div>Error: {error.message}</div>;
-    }
-    return (
-      <div data-testid="repository-list">
-        {onSearchChange && (
-          <input
-            data-testid="search-input"
-            value={searchQuery || ''}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search repositories..."
-          />
-        )}
-        {isSearching && <div>Searching GitHub...</div>}
-        <div data-testid="repo-count">{repositories.length} repositories</div>
-        {repositories.map((repo: { id: number; name: string }) => (
-          <div key={repo.id} data-testid={`repo-${repo.id}`}>
-            {repo.name}
-          </div>
-        ))}
-      </div>
-    );
-  }),
+  ),
 }));
 
 // Mock useNavigate
@@ -145,8 +169,25 @@ describe('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    vi.mocked(githubService.fetchStarredRepositories).mockResolvedValue(mockRepositories);
-    vi.mocked(githubService.searchRepositories).mockResolvedValue([]);
+    vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
+      repositories: mockRepositories,
+      totalFetched: mockRepositories.length,
+      totalStarred: mockRepositories.length,
+      isLimited: false,
+      hasMore: false,
+    });
+    vi.mocked(githubService.searchRepositories).mockResolvedValue({
+      repositories: [],
+      totalCount: 0,
+      effectiveTotal: 0,
+      isLimited: false,
+    });
+    vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
+      repositories: [],
+      totalCount: 0,
+      effectiveTotal: 0,
+      isLimited: false,
+    });
   });
 
   afterEach(() => {
@@ -233,10 +274,7 @@ describe('Dashboard', () => {
   });
 
   describe('Search Functionality', () => {
-    it('performs search with debouncing', async () => {
-      vi.useFakeTimers();
-      userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
+    it('performs search on form submission', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         session: mockSession,
@@ -251,7 +289,7 @@ describe('Dashboard', () => {
       );
 
       await vi.waitFor(() => {
-        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
       });
 
       // Wait for the repositories to be displayed
@@ -260,22 +298,23 @@ describe('Dashboard', () => {
       });
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
 
-      // Note: We're not testing typing UX, so we switched to fireEvent. user.type()
-      // was experiencing timeouts.
+      // Type in search input
       fireEvent.change(searchInput, { target: { value: 'vue' } });
 
-      // Search should not be called immediately
+      // Search should not be called immediately after typing
       expect(vi.mocked(githubService.searchRepositories)).not.toHaveBeenCalled();
 
-      // Fast-forward 300ms (debounce time)
-      await vi.advanceTimersByTimeAsync(300);
+      // Submit the form by clicking search button
+      fireEvent.click(searchButton);
 
-      expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
+      expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
         mockSession,
         'vue',
         1,
-        30
+        30,
+        mockRepositories
       );
     });
 
@@ -294,7 +333,7 @@ describe('Dashboard', () => {
       );
 
       await waitFor(() => {
-        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
       });
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
@@ -323,7 +362,7 @@ describe('Dashboard', () => {
       );
 
       await waitFor(() => {
-        expect(vi.mocked(githubService.fetchStarredRepositories)).toHaveBeenCalled();
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
       });
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
@@ -347,7 +386,7 @@ describe('Dashboard', () => {
       signOut: vi.fn(),
     });
 
-    vi.mocked(githubService.fetchStarredRepositories).mockRejectedValue(
+    vi.mocked(githubService.fetchAllStarredRepositories).mockRejectedValue(
       new Error('Failed to load')
     );
 
