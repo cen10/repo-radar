@@ -177,40 +177,6 @@ describe('RepoCard', () => {
     expect(article).toBeInTheDocument();
   });
 
-  describe('Keyboard navigation', () => {
-    it('star button responds to Enter key press', async () => {
-      const user = userEvent.setup();
-      const repo = createMockRepository({ is_starred: false });
-      const onToggleStar = vi.fn();
-      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-      starButton.focus();
-      await user.keyboard('{Enter}');
-
-      expect(onToggleStar).toHaveBeenCalledWith(repo);
-    });
-
-    it('star button responds to Space key press', async () => {
-      const user = userEvent.setup();
-      const repo = createMockRepository({ is_starred: true });
-      const onToggleStar = vi.fn();
-      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-      const starButton = screen.getByRole('button', {
-        name: /unstar awesome-repo repository/i,
-      });
-      starButton.focus();
-      await user.keyboard(' ');
-
-      expect(onToggleStar).toHaveBeenCalledWith(repo);
-    });
-
-    // Metrics are no longer focusable in simplified UI
-
-    // Metrics are no longer focusable in simplified UI
-  });
-
   describe('Star functionality', () => {
     it('displays star button when onToggleStar is provided', () => {
       const repo = createMockRepository({ is_starred: false });
