@@ -400,4 +400,62 @@ describe('RepoCard', () => {
   // Time formatting tests removed - last commit display has been removed from simplified UI
 
   // formatRelativeTime function tests removed - last commit display has been removed from simplified UI
+
+  describe('Star count with growth rate display', () => {
+    it('should not display extra zero when growth rate is zero', () => {
+      const repository = createMockRepository({
+        stargazers_count: 148018, // Use the exact number that was problematic
+        metrics: {
+          stars_growth_rate: 0, // Exactly zero growth rate
+          issues_growth_rate: 0,
+          is_trending: false,
+        },
+      });
+
+      render(<RepoCard repository={repository} />);
+
+      // Should show clean star count without extra zero
+      expect(screen.getByText(/Stars: 148\.0k$/)).toBeInTheDocument();
+
+      // Should NOT contain the malformed version with extra zero
+      expect(screen.queryByText(/148\.0k0/)).not.toBeInTheDocument();
+
+      // Should not show growth rate for zero growth
+      expect(screen.queryByText(/0\.0% this month/)).not.toBeInTheDocument();
+    });
+
+    it('should display growth rate when non-zero', () => {
+      const repository = createMockRepository({
+        stargazers_count: 148018,
+        metrics: {
+          stars_growth_rate: 6.5, // Positive growth
+          issues_growth_rate: 0,
+          is_trending: false,
+        },
+      });
+
+      render(<RepoCard repository={repository} />);
+
+      // Should show star count with growth rate
+      expect(screen.getByText(/Stars: 148\.0k/)).toBeInTheDocument();
+      expect(screen.getByText(/\+6\.5% this month/)).toBeInTheDocument();
+    });
+
+    it('should handle negative growth rate', () => {
+      const repository = createMockRepository({
+        stargazers_count: 148018,
+        metrics: {
+          stars_growth_rate: -2.1, // Negative growth
+          issues_growth_rate: 0,
+          is_trending: false,
+        },
+      });
+
+      render(<RepoCard repository={repository} />);
+
+      // Should show star count with negative growth rate
+      expect(screen.getByText(/Stars: 148\.0k/)).toBeInTheDocument();
+      expect(screen.getByText(/-2\.1% this month/)).toBeInTheDocument();
+    });
+  });
 });
