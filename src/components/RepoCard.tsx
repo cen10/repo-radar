@@ -116,7 +116,7 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
           {metrics?.stars_growth_rate ? (
             <span className={metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'}>
               {' '}
-              ({metrics.stars_growth_rate > 0 ? '+' : ''}
+              ({metrics.stars_growth_rate > 0 && '+'}
               {metrics.stars_growth_rate.toFixed(1)}% this month)
             </span>
           ) : null}
