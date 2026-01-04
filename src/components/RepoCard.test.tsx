@@ -158,16 +158,15 @@ describe('RepoCard', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('link can be accessed via keyboard navigation', () => {
+  it('link is reachable via keyboard navigation', async () => {
+    const user = userEvent.setup();
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
-    const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
-    link.focus();
+    await user.tab();
 
-    // Link should be focusable and have correct attributes
-    expect(document.activeElement).toBe(link);
-    expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
+    const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
+    expect(link).toHaveFocus();
   });
 
   it('renders as an article element for semantic structure', () => {
