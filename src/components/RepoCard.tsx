@@ -36,7 +36,7 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
   };
 
   const topicsLabel =
-    topics && topics.length > 0
+    topics?.length > 0
       ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
       : null;
 
@@ -85,7 +85,7 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
       {description && <p className="text-gray-700 text-sm mb-4 line-clamp-2">{description}</p>}
 
       {/* Topics */}
-      {topics && topics.length > 0 && (
+      {topics?.length > 0 && (
         <div
           className="flex flex-wrap gap-2 mb-4"
           role="group"
