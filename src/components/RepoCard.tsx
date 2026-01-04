@@ -26,11 +26,8 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
     language,
     topics,
     metrics,
-    is_starred,
+    is_starred: isStarred,
   } = repository;
-
-  // Use the explicit is_starred boolean
-  const isStarred = is_starred;
 
   const handleStarToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
