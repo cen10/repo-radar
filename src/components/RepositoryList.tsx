@@ -6,7 +6,6 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-// Pagination utilities available in '../utils/pagination' if needed
 
 export type SortOption =
   | 'stars-desc'
