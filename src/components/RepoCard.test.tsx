@@ -177,8 +177,6 @@ describe('RepoCard', () => {
     expect(article).toBeInTheDocument();
   });
 
-  // Last commit display has been removed from simplified UI
-
   describe('Keyboard navigation', () => {
     it('star button responds to Enter key press', async () => {
       const user = userEvent.setup();
