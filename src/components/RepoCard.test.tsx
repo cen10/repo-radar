@@ -141,8 +141,6 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
   });
 
-  // Last commit display has been removed from simplified UI
-
   it('handles repository without description', () => {
     const repo = createMockRepository({ description: null });
     render(<RepoCard repository={repo} />);
