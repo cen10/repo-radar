@@ -112,13 +112,13 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
         {/* Row 1: Stars with growth */}
         <p>
           Stars: {formatStarCount(stargazers_count)}
-          {metrics?.stars_growth_rate && (
+          {metrics?.stars_growth_rate ? (
             <span className={metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'}>
               {' '}
               ({metrics.stars_growth_rate > 0 ? '+' : ''}
               {metrics.stars_growth_rate.toFixed(1)}% this month)
             </span>
-          )}
+          ) : null}
         </p>
 
         {/* Row 2: Open issues */}
