@@ -148,7 +148,7 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
-  it('opens repository in new tab when link is clicked', () => {
+  it('configures repository link to open in new tab securely', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
 
