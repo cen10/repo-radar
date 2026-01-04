@@ -1,4 +1,6 @@
 import type { Repository } from '../types/index';
+import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
 interface RepoCardProps {
   repository: Repository;
@@ -74,7 +76,11 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
             }`}
             aria-label={`${isStarred ? 'Unstar' : 'Star'} ${name} repository`}
           >
-            <span aria-hidden="true">{isStarred ? '⭐' : '☆'}</span>
+            {isStarred ? (
+              <StarIconSolid className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <StarIconOutline className="h-4 w-4" aria-hidden="true" />
+            )}
             {isStarred ? 'Starred' : 'Star'}
           </button>
         )}

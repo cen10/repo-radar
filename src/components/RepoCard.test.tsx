@@ -72,8 +72,9 @@ describe('RepoCard', () => {
     render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
     const starButton = screen.getByRole('button', { name: /unstar awesome-repo repository/i });
-    expect(starButton).toHaveTextContent('⭐');
     expect(starButton).toHaveTextContent('Starred');
+    // Check that it contains an SVG (StarIconSolid)
+    expect(starButton.querySelector('svg')).toBeInTheDocument();
   });
 
   it('displays star button with empty star icon when not starred', () => {
@@ -85,8 +86,9 @@ describe('RepoCard', () => {
     render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
     const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-    expect(starButton).toHaveTextContent('☆');
     expect(starButton).toHaveTextContent('Star');
+    // Check that it contains an SVG (StarIconOutline)
+    expect(starButton.querySelector('svg')).toBeInTheDocument();
   });
 
   it('renders repository basic information correctly', () => {
