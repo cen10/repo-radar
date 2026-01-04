@@ -124,17 +124,22 @@ const Dashboard = () => {
   const performSearch = useCallback(
     async (query: string, filter: 'all' | 'starred', page = 1) => {
       if (!query.trim()) {
-        // If query is empty, show starred repositories with filtering applied
-        setSearchResults([]);
-        setRepositories(filterOutLocallyUnstarred(starredRepositories));
-        setIsShowingSearchResults(false);
-        setSearchPage(1);
-        setTotalSearchPages(0);
-        setHasMoreResults(false);
-        setTotalCount(undefined);
-        setEffectiveTotal(undefined);
-        setIsLimited(false);
-        return;
+        if (filter === 'starred') {
+          // Show starred repositories with filtering applied
+          setSearchResults([]);
+          setRepositories(filterOutLocallyUnstarred(starredRepositories));
+          setIsShowingSearchResults(false);
+          setSearchPage(1);
+          setTotalSearchPages(0);
+          setHasMoreResults(false);
+          setTotalCount(undefined);
+          setEffectiveTotal(undefined);
+          setIsLimited(false);
+          return;
+        } else {
+          // For 'all' filter with empty query, search for most starred repositories
+          query = 'stars:>1'; // Get repositories with at least 1 star, sorted by stars desc
+        }
       }
 
       // Set searching state immediately
@@ -245,15 +250,11 @@ const Dashboard = () => {
       if (searchQuery.trim()) {
         void performSearch(searchQuery, filter, 1);
       } else {
-        // No search query, show appropriate default view
-        setRepositories(filterOutLocallyUnstarred(starredRepositories));
-        setIsShowingSearchResults(false);
-        setSearchPage(1);
-        setTotalSearchPages(0);
-        setHasMoreResults(false);
+        // No search query, use performSearch to handle appropriate default view based on filter
+        void performSearch('', filter, 1);
       }
     },
-    [performSearch, searchQuery, starredRepositories]
+    [performSearch, searchQuery]
   );
 
   // Cleanup timeout on unmount

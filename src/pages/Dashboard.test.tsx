@@ -21,7 +21,7 @@ vi.mock('../services/github', () => ({
   fetchRateLimit: vi.fn(),
 }));
 
-// Mock RepositoryList component with search functionality
+// Mock RepositoryList component with search and filter functionality
 vi.mock('../components/RepositoryList', () => ({
   default: vi.fn(
     ({
@@ -32,6 +32,8 @@ vi.mock('../components/RepositoryList', () => ({
       onSearchChange,
       onSearchSubmit,
       isSearching,
+      filterBy,
+      onFilterChange,
     }) => {
       if (isLoading) {
         return <div>Loading repositories...</div>;
@@ -61,6 +63,20 @@ vi.mock('../components/RepositoryList', () => ({
                 Search
               </button>
             </form>
+          )}
+          {onFilterChange && (
+            <div>
+              <label htmlFor="filter-select">Filter:</label>
+              <select
+                id="filter-select"
+                data-testid="filter-select"
+                value={filterBy || 'starred'}
+                onChange={(e) => onFilterChange(e.target.value as 'all' | 'starred')}
+              >
+                <option value="starred">Starred</option>
+                <option value="all">All Repositories</option>
+              </select>
+            </div>
           )}
           {isSearching && <div>Searching GitHub...</div>}
           <div data-testid="repo-count">{repositories.length} repositories</div>
@@ -414,5 +430,151 @@ describe('Dashboard', () => {
     );
 
     expect(screen.queryByText('Repository Dashboard')).not.toBeInTheDocument();
+  });
+
+  describe('Filter behavior with empty search', () => {
+    const mockHighStarredRepos: Repository[] = [
+      {
+        id: 3,
+        name: 'kubernetes',
+        full_name: 'kubernetes/kubernetes',
+        owner: {
+          login: 'kubernetes',
+          avatar_url: 'https://avatars.githubusercontent.com/u/13629408?v=4',
+        },
+        description: 'Production-Grade Container Scheduling and Management',
+        html_url: 'https://github.com/kubernetes/kubernetes',
+        stargazers_count: 150000,
+        open_issues_count: 2000,
+        language: 'Go',
+        topics: ['kubernetes', 'containers'],
+        updated_at: '2024-01-15T10:30:00Z',
+        pushed_at: '2024-01-15T10:30:00Z',
+        created_at: '2014-06-06T22:56:04Z',
+        metrics: {
+          stars_growth_rate: 15.2,
+          issues_growth_rate: -1.5,
+          is_trending: true,
+        },
+        is_following: false,
+        is_starred: false,
+      },
+    ];
+
+    it('shows starred repos when filter is "starred" and search is empty', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Should show starred repositories by default
+      expect(screen.getByText('2 repositories')).toBeInTheDocument();
+      expect(screen.getByText('react')).toBeInTheDocument();
+      expect(screen.getByText('typescript')).toBeInTheDocument();
+    });
+
+    it('searches for high starred repos when filter is "all" and search is empty', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockHighStarredRepos,
+        totalCount: 1000000,
+        effectiveTotal: 1000,
+        isLimited: true,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Change filter to "all"
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Should search for most starred repositories
+      await waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
+          mockSession,
+          'stars:>1',
+          1,
+          30
+        );
+      });
+
+      // Should show high starred repositories
+      expect(screen.getByText('1 repositories')).toBeInTheDocument();
+      expect(screen.getByText('kubernetes')).toBeInTheDocument();
+    });
+
+    it('switches between filter modes correctly with empty search', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockHighStarredRepos,
+        totalCount: 1000000,
+        effectiveTotal: 1000,
+        isLimited: true,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const filterSelect = screen.getByTestId('filter-select');
+
+      // Switch to "all" - should search for high starred repos
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
+          mockSession,
+          'stars:>1',
+          1,
+          30
+        );
+      });
+
+      // Switch back to "starred" - should show user's starred repos
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
+
+      await waitFor(() => {
+        expect(screen.getByText('2 repositories')).toBeInTheDocument();
+        expect(screen.getByText('react')).toBeInTheDocument();
+      });
+    });
   });
 });
