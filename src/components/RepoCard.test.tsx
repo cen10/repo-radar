@@ -202,7 +202,6 @@ describe('RepoCard', () => {
   describe('Metrics display', () => {
     it('displays growth rate for stars', () => {
       const repo = createMockRepository({
-        stargazers_count: 1234,
         metrics: { stars_growth_rate: 15.5 },
       });
       render(<RepoCard repository={repo} />);
@@ -212,7 +211,6 @@ describe('RepoCard', () => {
 
     it('displays negative growth rate for stars', () => {
       const repo = createMockRepository({
-        stargazers_count: 1234,
         metrics: { stars_growth_rate: -5.2 },
       });
       render(<RepoCard repository={repo} />);
