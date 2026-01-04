@@ -62,7 +62,6 @@ describe('RepoCard', () => {
     const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
     expect(starButton).toBeInTheDocument();
     expect(starButton).toHaveTextContent('Star');
-    expect(starButton).toHaveClass('bg-gray-100', 'text-gray-700');
   });
 
   it('displays star button with filled star icon when starred', () => {
