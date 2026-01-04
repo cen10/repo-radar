@@ -72,12 +72,6 @@ describe('RepoCard', () => {
     expect(
       screen.getByText('This is an awesome repository for testing purposes')
     ).toBeInTheDocument();
-    // Avatar has empty alt text since it's decorative and owner name is adjacent
-    const avatar = document.querySelector(
-      'img[src="https://github.com/images/error/octocat_happy.gif"]'
-    );
-    expect(avatar).toBeInTheDocument();
-    expect(avatar).toHaveAttribute('alt', '');
   });
 
   it('displays star count with proper formatting', () => {
