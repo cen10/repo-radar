@@ -64,12 +64,7 @@ describe('RepositoryList', () => {
   describe('Loading state', () => {
     it('displays loading spinner when isLoading is true', () => {
       render(
-        <RepositoryList
-          repositories={[]}
-          isLoading={true}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={[]} isLoading={true} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
       const spinner = screen.getByRole('status', { hidden: true });
       expect(spinner).toHaveClass('animate-spin');
@@ -80,7 +75,7 @@ describe('RepositoryList', () => {
     it('displays error message when error is provided', () => {
       const error = new Error('Failed to fetch repositories');
       render(
-        <RepositoryList repositories={[]} error={error} onFollow={vi.fn()} onUnfollow={vi.fn()} />
+        <RepositoryList repositories={[]} error={error} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       expect(screen.getByText(/error loading repositories/i)).toBeInTheDocument();
@@ -90,7 +85,7 @@ describe('RepositoryList', () => {
 
   describe('Empty state', () => {
     it('displays empty state when no repositories are provided', () => {
-      render(<RepositoryList repositories={[]} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={[]} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
@@ -105,7 +100,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3' }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
@@ -117,14 +112,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 1, name: 'repo-1' }),
         createMockRepository({ id: 2, name: 'repo-2' }),
       ];
-      const followedRepos = new Set([1]);
+      const starredRepos = new Set([1]);
 
       render(
         <RepositoryList
           repositories={repos}
-          followedRepos={followedRepos}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          starredRepos={starredRepos}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -135,38 +130,38 @@ describe('RepositoryList', () => {
       expect(card2).toHaveTextContent('Not starred');
     });
 
-    it('calls onFollow when star button is clicked', () => {
-      const onFollow = vi.fn();
-      const onUnfollow = vi.fn();
+    it('calls onStar when star button is clicked', () => {
+      const onStar = vi.fn();
+      const onUnstar = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
 
-      render(<RepositoryList repositories={repos} onFollow={onFollow} onUnfollow={onUnfollow} />);
+      render(<RepositoryList repositories={repos} onStar={onStar} onUnstar={onUnstar} />);
 
       const starButton = screen.getByRole('button', { name: /star/i });
       fireEvent.click(starButton);
 
-      expect(onFollow).toHaveBeenCalledWith(1);
+      expect(onStar).toHaveBeenCalledWith(1);
     });
 
-    it('calls onUnfollow when unstar button is clicked', () => {
-      const onFollow = vi.fn();
-      const onUnfollow = vi.fn();
+    it('calls onUnstar when unstar button is clicked', () => {
+      const onStar = vi.fn();
+      const onUnstar = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-      const followedRepos = new Set([1]);
+      const starredRepos = new Set([1]);
 
       render(
         <RepositoryList
           repositories={repos}
-          followedRepos={followedRepos}
-          onFollow={onFollow}
-          onUnfollow={onUnfollow}
+          starredRepos={starredRepos}
+          onStar={onStar}
+          onUnstar={onUnstar}
         />
       );
 
       const unstarButton = screen.getByRole('button', { name: /unstar/i });
       fireEvent.click(unstarButton);
 
-      expect(onUnfollow).toHaveBeenCalledWith(1);
+      expect(onUnstar).toHaveBeenCalledWith(1);
     });
   });
 
@@ -179,8 +174,8 @@ describe('RepositoryList', () => {
           repositories={repos}
           searchQuery="test"
           onSearchChange={mockOnSearchChange}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -198,8 +193,8 @@ describe('RepositoryList', () => {
           searchQuery="test"
           onSearchChange={vi.fn()}
           isSearching={true}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -208,7 +203,7 @@ describe('RepositoryList', () => {
 
     it('shows search placeholder with quotes hint', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       expect(searchInput).toHaveAttribute(
@@ -229,8 +224,8 @@ describe('RepositoryList', () => {
         <RepositoryList
           repositories={repos}
           onSearchChange={mockOnSearchChange}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -254,8 +249,8 @@ describe('RepositoryList', () => {
         <RepositoryList
           repositories={filteredRepos}
           searchQuery="vue"
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -270,7 +265,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, language: 'JavaScript' }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'python' } });
@@ -290,8 +285,8 @@ describe('RepositoryList', () => {
         <RepositoryList
           repositories={repos}
           searchQuery="backend"
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -311,8 +306,8 @@ describe('RepositoryList', () => {
         <RepositoryList
           repositories={repos}
           searchQuery="nonexistent"
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -358,8 +353,8 @@ describe('RepositoryList', () => {
         <RepositoryList
           repositories={repos}
           onFilterChange={mockOnFilterChange}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
+          onStar={vi.fn()}
+          onUnstar={vi.fn()}
         />
       );
 
@@ -375,7 +370,7 @@ describe('RepositoryList', () => {
     it('shows all repositories when filter is set to all', () => {
       const repos = [createMockRepository({ id: 1 }), createMockRepository({ id: 2 })];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'all' } });
@@ -393,7 +388,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3', stargazers_count: 100 }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
@@ -411,7 +406,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'banana' }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'name-asc' } });
@@ -429,7 +424,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, open_issues_count: 10 }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'issues-desc' } });
@@ -459,7 +454,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'activity-desc' } });
@@ -478,12 +473,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       const cards = screen.getAllByTestId(/repo-card-/);
@@ -496,12 +486,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       // Check for page number buttons instead of text
@@ -516,12 +501,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       // Should show repo-1 to repo-5 on page 1
@@ -545,12 +525,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       // Go to page 2 first
@@ -585,12 +560,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       const page3Button = screen.getByRole('button', { name: '3' });
@@ -606,12 +576,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       const prevButtons = screen
@@ -633,12 +598,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       // Go to last page
@@ -659,12 +619,7 @@ describe('RepositoryList', () => {
       );
 
       render(
-        <RepositoryList
-          repositories={repos}
-          itemsPerPage={5}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
+        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
       );
 
       // Go to page 2
@@ -738,7 +693,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
+      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
 
       // Apply sort
       const sortSelect = screen.getByLabelText(/sort repositories/i);

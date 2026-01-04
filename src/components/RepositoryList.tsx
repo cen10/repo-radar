@@ -22,9 +22,9 @@ interface RepositoryListProps {
   repositories: Repository[];
   isLoading?: boolean;
   error?: Error | null;
-  onFollow: (repoId: number) => void;
-  onUnfollow: (repoId: number) => void;
-  followedRepos?: Set<number>;
+  onStar: (repoId: number) => void;
+  onUnstar: (repoId: number) => void;
+  starredRepos?: Set<number>;
   itemsPerPage?: number;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
@@ -48,9 +48,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   repositories,
   isLoading = false,
   error = null,
-  onFollow,
-  onUnfollow,
-  followedRepos = new Set(),
+  onStar,
+  onUnstar,
+  starredRepos = new Set(),
   itemsPerPage = 12,
   searchQuery: externalSearchQuery,
   onSearchChange: externalOnSearchChange,
@@ -336,7 +336,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             const repoWithStarState = {
               ...repo,
               // Set is_starred based on local tracking or existing value
-              is_starred: repo.is_starred || followedRepos.has(repo.id),
+              is_starred: repo.is_starred || starredRepos.has(repo.id),
             };
             return (
               <RepoCard
@@ -344,9 +344,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                 repository={repoWithStarState}
                 onToggleStar={() => {
                   if (repoWithStarState.is_starred) {
-                    onUnfollow(repo.id);
+                    onUnstar(repo.id);
                   } else {
-                    onFollow(repo.id);
+                    onStar(repo.id);
                   }
                 }}
               />

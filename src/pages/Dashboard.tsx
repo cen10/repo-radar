@@ -22,7 +22,7 @@ const Dashboard = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
   const [searchResults, setSearchResults] = useState<Repository[]>([]);
-  const [followedRepos, setFollowedRepos] = useState<Set<number>>(new Set());
+  const [starredRepos, setStarredRepos] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,11 +93,11 @@ const Dashboard = () => {
         setTotalReposFetched(result.totalFetched);
         setTotalStarredRepos(result.totalStarred);
 
-        // Load followed repos from localStorage
-        const savedFollows = localStorage.getItem('followedRepos');
-        if (savedFollows) {
-          const followedIds = JSON.parse(savedFollows) as number[];
-          setFollowedRepos(new Set(followedIds));
+        // Load starred repos from localStorage
+        const savedStars = localStorage.getItem('followedRepos');
+        if (savedStars) {
+          const starredIds = JSON.parse(savedStars) as number[];
+          setStarredRepos(new Set(starredIds));
         }
       } catch (err) {
         // Check if it's a GitHub auth error and provide a more user-friendly message
@@ -286,7 +286,7 @@ const Dashboard = () => {
       await starRepository(session, repo.owner.login, repo.name);
 
       // Update local state to reflect the change immediately
-      setFollowedRepos((prev) => {
+      setStarredRepos((prev) => {
         const newSet = new Set(prev);
         newSet.add(repoId);
         return newSet;
@@ -329,7 +329,7 @@ const Dashboard = () => {
       addToLocallyUnstarred(repoId);
 
       // Update local state to reflect the change immediately
-      setFollowedRepos((prev) => {
+      setStarredRepos((prev) => {
         const newSet = new Set(prev);
         newSet.delete(repoId);
         return newSet;
@@ -366,10 +366,6 @@ const Dashboard = () => {
     },
     [searchQuery, filterBy, performSearch]
   );
-
-  // Keep the old handlers as aliases for compatibility
-  const handleFollow = handleStar;
-  const handleUnfollow = handleUnstar;
 
   if (authLoading) {
     return (
@@ -433,9 +429,9 @@ const Dashboard = () => {
           repositories={repositories}
           isLoading={isLoading}
           error={error}
-          onFollow={handleFollow}
-          onUnfollow={handleUnfollow}
-          followedRepos={followedRepos}
+          onStar={handleStar}
+          onUnstar={handleUnstar}
+          starredRepos={starredRepos}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
