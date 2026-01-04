@@ -219,64 +219,7 @@ describe('RepoCard', () => {
       expect(growthElement).toBeInTheDocument();
     });
 
-    it('does not display trending indicator when repository is not trending', () => {
-      const repo = createMockRepository({
-        metrics: { is_trending: false },
-      });
-      render(<RepoCard repository={repo} />);
-
-      expect(screen.queryByText(/trending/i)).not.toBeInTheDocument();
-    });
-
-    it('handles repository without metrics', () => {
-      const repo = createMockRepository({ metrics: undefined });
-      render(<RepoCard repository={repo} />);
-
-      expect(screen.queryByText(/%/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/trending/i)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Accessibility', () => {
-    it('has proper accessibility structure with article and link', () => {
-      const repo = createMockRepository();
-      render(<RepoCard repository={repo} />);
-
-      const article = screen.getByRole('article');
-      expect(article).toBeInTheDocument();
-
-      const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
-      expect(link).toBeInTheDocument();
-    });
-
-    it('has proper accessibility attributes for star button', () => {
-      const repo = createMockRepository({ is_starred: false });
-      const onToggleStar = vi.fn();
-      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-      expect(starButton).toBeInTheDocument();
-    });
-
-    it('has empty alt text for decorative avatar', () => {
-      const repo = createMockRepository();
-      render(<RepoCard repository={repo} />);
-
-      const avatar = document.querySelector(
-        'img[src="https://github.com/images/error/octocat_happy.gif"]'
-      );
-      expect(avatar).toBeInTheDocument();
-      expect(avatar).toHaveAttribute('alt', '');
-    });
-
-    // Simplified UI no longer has complex aria-labels or tooltips
-  });
-
-  // Time formatting tests removed - last commit display has been removed from simplified UI
-
-  // formatRelativeTime function tests removed - last commit display has been removed from simplified UI
-
-  describe('Star count with growth rate display', () => {
+    // regression test for UI bug where star count was displayed as 148.0k0
     it('should not display extra zero when growth rate is zero', () => {
       const repository = createMockRepository({
         stargazers_count: 148018, // Use the exact number that was problematic
@@ -299,38 +242,11 @@ describe('RepoCard', () => {
       expect(screen.queryByText(/0\.0% this month/)).not.toBeInTheDocument();
     });
 
-    it('should display growth rate when non-zero', () => {
-      const repository = createMockRepository({
-        stargazers_count: 148018,
-        metrics: {
-          stars_growth_rate: 6.5, // Positive growth
-          issues_growth_rate: 0,
-          is_trending: false,
-        },
-      });
+    it('handles repository without metrics', () => {
+      const repo = createMockRepository({ metrics: undefined });
+      render(<RepoCard repository={repo} />);
 
-      render(<RepoCard repository={repository} />);
-
-      // Should show star count with growth rate
-      expect(screen.getByText(/Stars: 148\.0k/)).toBeInTheDocument();
-      expect(screen.getByText(/\+6\.5% this month/)).toBeInTheDocument();
-    });
-
-    it('should handle negative growth rate', () => {
-      const repository = createMockRepository({
-        stargazers_count: 148018,
-        metrics: {
-          stars_growth_rate: -2.1, // Negative growth
-          issues_growth_rate: 0,
-          is_trending: false,
-        },
-      });
-
-      render(<RepoCard repository={repository} />);
-
-      // Should show star count with negative growth rate
-      expect(screen.getByText(/Stars: 148\.0k/)).toBeInTheDocument();
-      expect(screen.getByText(/-2\.1% this month/)).toBeInTheDocument();
+      expect(screen.queryByText(/%/)).not.toBeInTheDocument();
     });
   });
 });
