@@ -142,9 +142,7 @@ describe('RepositoryList', () => {
     it('calls onUnfollow when unstar button is clicked', () => {
       const onFollow = vi.fn();
       const onUnfollow = vi.fn();
-      const repos = [
-        createMockRepository({ id: 1, name: 'repo-1', starred_at: '2024-01-01T12:00:00Z' }),
-      ];
+      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
       const followedRepos = new Set([1]);
 
       render(
