@@ -95,24 +95,18 @@ describe('RepoCard', () => {
     expect(screen.getByText(/Open issues: 42/)).toBeInTheDocument();
   });
 
-  it('displays language correctly', () => {
+  it('displays primary language when present', () => {
     const repo = createMockRepository({ language: 'JavaScript' });
     render(<RepoCard repository={repo} />);
 
-    expect(screen.getByText(/Primary language: JavaScript/)).toBeInTheDocument();
+    expect(screen.getByText(/primary language: javascript/i)).toBeInTheDocument();
   });
 
-  it('handles repository without language', () => {
-    const repo = createMockRepository({
-      language: null,
-      topics: ['testing', 'automation'], // Use topics that don't match language keywords
-    });
+  it('omits language row when repository has no language', () => {
+    const repo = createMockRepository({ language: null });
     render(<RepoCard repository={repo} />);
 
-    // Check that no language badge is displayed (look for language-specific styling)
-    expect(screen.queryByText('JavaScript')).not.toBeInTheDocument();
-    expect(screen.queryByText('TypeScript')).not.toBeInTheDocument();
-    expect(screen.queryByText('Python')).not.toBeInTheDocument();
+    expect(screen.queryByText(/primary language/i)).not.toBeInTheDocument();
   });
 
   it('displays topics correctly', () => {
