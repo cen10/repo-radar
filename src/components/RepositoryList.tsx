@@ -31,6 +31,7 @@ interface RepositoryListProps {
   onSearchChange?: (query: string) => void;
   onSearchSubmit?: (query: string) => void;
   isSearching?: boolean;
+  isShowingSearchResults?: boolean;
   filterBy?: FilterOption;
   onFilterChange?: (filter: FilterOption) => void;
   // Search pagination props
@@ -56,6 +57,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onSearchChange: externalOnSearchChange,
   onSearchSubmit: externalOnSearchSubmit,
   isSearching = false,
+  isShowingSearchResults = false,
   filterBy: externalFilterBy,
   onFilterChange: externalOnFilterChange,
   // Search pagination props
@@ -137,7 +139,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   }, [filteredRepos, sortBy]);
 
   // Determine if we're in search mode (external search pagination) or local mode (client-side pagination)
-  const isSearchMode = !!(searchQuery && onSearchPageChange);
+  const isSearchMode = !!(isShowingSearchResults && onSearchPageChange);
 
   // Pagination logic differs for search vs local browsing
   let totalPages: number;

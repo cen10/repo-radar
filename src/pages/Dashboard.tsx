@@ -26,6 +26,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
   const [filterBy, setFilterBy] = useState<'all' | 'starred'>('starred');
   const [error, setError] = useState<Error | null>(null);
   const [searchPage, setSearchPage] = useState(1);
@@ -126,6 +127,7 @@ const Dashboard = () => {
         // If query is empty, show starred repositories with filtering applied
         setSearchResults([]);
         setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        setIsShowingSearchResults(false);
         setSearchPage(1);
         setTotalSearchPages(0);
         setHasMoreResults(false);
@@ -177,6 +179,7 @@ const Dashboard = () => {
 
           setSearchResults(results);
           setRepositories(filterOutLocallyUnstarred(results));
+          setIsShowingSearchResults(true);
           setSearchPage(page);
         } catch (err) {
           setError(err instanceof Error ? err : new Error('Search failed'));
@@ -200,6 +203,7 @@ const Dashboard = () => {
         });
 
         setRepositories(filterOutLocallyUnstarred(localMatches));
+        setIsShowingSearchResults(true);
         setSearchPage(1);
         setTotalSearchPages(0);
         setHasMoreResults(false);
@@ -243,6 +247,7 @@ const Dashboard = () => {
       } else {
         // No search query, show appropriate default view
         setRepositories(filterOutLocallyUnstarred(starredRepositories));
+        setIsShowingSearchResults(false);
         setSearchPage(1);
         setTotalSearchPages(0);
         setHasMoreResults(false);
@@ -434,6 +439,7 @@ const Dashboard = () => {
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           isSearching={isSearching}
+          isShowingSearchResults={isShowingSearchResults}
           filterBy={filterBy}
           onFilterChange={handleFilterChange}
           itemsPerPage={30}
