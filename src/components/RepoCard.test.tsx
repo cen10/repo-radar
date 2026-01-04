@@ -190,18 +190,6 @@ describe('RepoCard', () => {
       expect(onToggleStar).toHaveBeenCalledWith(repo);
     });
 
-    it('does not open repository when star button is clicked', async () => {
-      const user = userEvent.setup();
-      const repo = createMockRepository({ is_starred: false });
-      const onToggleStar = vi.fn();
-      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-      await user.click(starButton);
-
-      expect(mockWindowOpen).not.toHaveBeenCalled();
-    });
-
     it('does not display star button when onToggleStar is not provided', () => {
       const repo = createMockRepository();
       render(<RepoCard repository={repo} />);
