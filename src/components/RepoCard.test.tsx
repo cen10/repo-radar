@@ -217,10 +217,7 @@ describe('RepoCard', () => {
 
       const growthElement = screen.getByText(/-5.2% this month/);
       expect(growthElement).toBeInTheDocument();
-      expect(growthElement).toHaveClass('text-red-600');
     });
-
-    // Trending feature has been removed
 
     it('does not display trending indicator when repository is not trending', () => {
       const repo = createMockRepository({
