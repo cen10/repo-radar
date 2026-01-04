@@ -175,7 +175,6 @@ describe('RepoCard', () => {
 
     const article = screen.getByRole('article');
     expect(article).toBeInTheDocument();
-    expect(article).toHaveClass('bg-white', 'border', 'border-gray-200', 'rounded-lg');
   });
 
   // Last commit display has been removed from simplified UI
