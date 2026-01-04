@@ -109,15 +109,14 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/primary language/i)).not.toBeInTheDocument();
   });
 
-  it('displays topics correctly', () => {
+  it('displays all topics when 3 or fewer', () => {
     const repo = createMockRepository({
-      topics: ['testing', 'javascript', 'react'],
+      topics: ['testing', 'react'],
     });
     render(<RepoCard repository={repo} />);
 
-    expect(screen.getByText('testing')).toBeInTheDocument();
-    expect(screen.getByText('javascript')).toBeInTheDocument();
-    expect(screen.getByText('react')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /labels: testing, react/i })).toBeInTheDocument();
+    expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
   });
 
   it('limits topics display to 3 and shows count for additional topics', () => {
