@@ -53,7 +53,6 @@ describe('RepoCard', () => {
 
   it('displays star button in unstarred state when repository is not starred', () => {
     const repo = createMockRepository({
-      starred_at: undefined,
       is_starred: false,
     });
     const onToggleStar = vi.fn();
@@ -79,7 +78,6 @@ describe('RepoCard', () => {
 
   it('displays star button with empty star icon when not starred', () => {
     const repo = createMockRepository({
-      starred_at: undefined,
       is_starred: false,
     });
     const onToggleStar = vi.fn();
@@ -240,7 +238,7 @@ describe('RepoCard', () => {
 
     it('star button responds to Space key press', async () => {
       const user = userEvent.setup();
-      const repo = createMockRepository({ starred_at: '2024-01-01T12:00:00Z', is_starred: true });
+      const repo = createMockRepository({ is_starred: true });
       const onToggleStar = vi.fn();
       render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
@@ -270,7 +268,7 @@ describe('RepoCard', () => {
     });
 
     it('displays starred state when repository is starred', () => {
-      const repo = createMockRepository({ starred_at: '2024-01-01T12:00:00Z', is_starred: true });
+      const repo = createMockRepository({ is_starred: true });
       const onToggleStar = vi.fn();
       render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
 
