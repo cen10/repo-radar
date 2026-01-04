@@ -189,14 +189,6 @@ describe('RepoCard', () => {
 
       expect(onToggleStar).toHaveBeenCalledWith(repo);
     });
-
-    it('does not display star button when onToggleStar is not provided', () => {
-      const repo = createMockRepository();
-      render(<RepoCard repository={repo} />);
-
-      // Checking for 'star' covers both "starred" and "star" buttons
-      expect(screen.queryByRole('button', { name: /star/i })).not.toBeInTheDocument();
-    });
   });
 
   describe('Metrics display', () => {
@@ -204,7 +196,7 @@ describe('RepoCard', () => {
       const repo = createMockRepository({
         metrics: { stars_growth_rate: 15.5 },
       });
-      render(<RepoCard repository={repo} />);
+      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
       expect(screen.getByText(/\+15.5% this month/)).toBeInTheDocument();
     });
@@ -213,7 +205,7 @@ describe('RepoCard', () => {
       const repo = createMockRepository({
         metrics: { stars_growth_rate: -5.2 },
       });
-      render(<RepoCard repository={repo} />);
+      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
       const growthElement = screen.getByText(/-5.2% this month/);
       expect(growthElement).toBeInTheDocument();
@@ -230,7 +222,7 @@ describe('RepoCard', () => {
         },
       });
 
-      render(<RepoCard repository={repository} />);
+      render(<RepoCard repository={repository} onToggleStar={vi.fn()} />);
 
       // Should show clean star count without extra zero
       expect(screen.getByText(/Stars: 148\.0k$/)).toBeInTheDocument();
@@ -244,7 +236,7 @@ describe('RepoCard', () => {
 
     it('handles repository without metrics', () => {
       const repo = createMockRepository({ metrics: undefined });
-      render(<RepoCard repository={repo} />);
+      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
       expect(screen.queryByText(/%/)).not.toBeInTheDocument();
     });

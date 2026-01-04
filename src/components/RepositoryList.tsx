@@ -23,8 +23,8 @@ interface RepositoryListProps {
   repositories: Repository[];
   isLoading?: boolean;
   error?: Error | null;
-  onFollow?: (repoId: number) => void;
-  onUnfollow?: (repoId: number) => void;
+  onFollow: (repoId: number) => void;
+  onUnfollow: (repoId: number) => void;
   followedRepos?: Set<number>;
   itemsPerPage?: number;
   searchQuery?: string;
@@ -343,17 +343,13 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
               <RepoCard
                 key={repo.id}
                 repository={repoWithStarState}
-                onToggleStar={
-                  onFollow && onUnfollow
-                    ? () => {
-                        if (repoWithStarState.is_starred) {
-                          onUnfollow(repo.id);
-                        } else {
-                          onFollow(repo.id);
-                        }
-                      }
-                    : undefined
-                }
+                onToggleStar={() => {
+                  if (repoWithStarState.is_starred) {
+                    onUnfollow(repo.id);
+                  } else {
+                    onFollow(repo.id);
+                  }
+                }}
               />
             );
           })}

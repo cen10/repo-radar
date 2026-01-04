@@ -16,7 +16,7 @@ vi.mock('../utils/logger', () => ({
 
 interface MockRepoCardProps {
   repository: Repository & { is_following?: boolean };
-  onToggleStar?: () => void;
+  onToggleStar: () => void;
 }
 
 // Mock RepoCard component
@@ -63,7 +63,14 @@ describe('RepositoryList', () => {
 
   describe('Loading state', () => {
     it('displays loading spinner when isLoading is true', () => {
-      render(<RepositoryList repositories={[]} isLoading={true} />);
+      render(
+        <RepositoryList
+          repositories={[]}
+          isLoading={true}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
       const spinner = screen.getByRole('status', { hidden: true });
       expect(spinner).toHaveClass('animate-spin');
     });
@@ -72,7 +79,9 @@ describe('RepositoryList', () => {
   describe('Error state', () => {
     it('displays error message when error is provided', () => {
       const error = new Error('Failed to fetch repositories');
-      render(<RepositoryList repositories={[]} error={error} />);
+      render(
+        <RepositoryList repositories={[]} error={error} onFollow={vi.fn()} onUnfollow={vi.fn()} />
+      );
 
       expect(screen.getByText(/error loading repositories/i)).toBeInTheDocument();
       expect(screen.getByText(error.message)).toBeInTheDocument();
@@ -81,7 +90,7 @@ describe('RepositoryList', () => {
 
   describe('Empty state', () => {
     it('displays empty state when no repositories are provided', () => {
-      render(<RepositoryList repositories={[]} />);
+      render(<RepositoryList repositories={[]} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
@@ -96,7 +105,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
@@ -170,6 +179,8 @@ describe('RepositoryList', () => {
           repositories={repos}
           searchQuery="test"
           onSearchChange={mockOnSearchChange}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
         />
       );
 
@@ -187,6 +198,8 @@ describe('RepositoryList', () => {
           searchQuery="test"
           onSearchChange={vi.fn()}
           isSearching={true}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
         />
       );
 
@@ -195,7 +208,7 @@ describe('RepositoryList', () => {
 
     it('shows search placeholder with quotes hint', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       expect(searchInput).toHaveAttribute(
@@ -212,7 +225,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'angular-app', topics: [] }),
       ];
 
-      render(<RepositoryList repositories={repos} onSearchChange={mockOnSearchChange} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          onSearchChange={mockOnSearchChange}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'react' } });
@@ -230,7 +250,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, name: 'repo-2', description: 'Vue framework' }),
       ];
 
-      render(<RepositoryList repositories={filteredRepos} searchQuery="vue" />);
+      render(
+        <RepositoryList
+          repositories={filteredRepos}
+          searchQuery="vue"
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Only the pre-filtered repository should be displayed
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
@@ -243,7 +270,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, language: 'JavaScript' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'python' } });
@@ -259,7 +286,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, topics: ['backend', 'api'] }),
       ];
 
-      render(<RepositoryList repositories={repos} searchQuery="backend" />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          searchQuery="backend"
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       expect(searchInput).toHaveValue('backend');
@@ -273,7 +307,14 @@ describe('RepositoryList', () => {
       // Dashboard would pass empty array when no results found
       const repos: Repository[] = [];
 
-      render(<RepositoryList repositories={repos} searchQuery="nonexistent" />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          searchQuery="nonexistent"
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // When no repositories at all, shows basic empty state
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
@@ -313,7 +354,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, is_starred: false }),
       ];
 
-      render(<RepositoryList repositories={repos} onFilterChange={mockOnFilterChange} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          onFilterChange={mockOnFilterChange}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'starred' } });
@@ -327,7 +375,7 @@ describe('RepositoryList', () => {
     it('shows all repositories when filter is set to all', () => {
       const repos = [createMockRepository({ id: 1 }), createMockRepository({ id: 2 })];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'all' } });
@@ -345,7 +393,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3', stargazers_count: 100 }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
@@ -363,7 +411,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'banana' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'name-asc' } });
@@ -381,7 +429,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, open_issues_count: 10 }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'issues-desc' } });
@@ -411,7 +459,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'activity-desc' } });
@@ -429,7 +477,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards).toHaveLength(5);
@@ -440,7 +495,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Check for page number buttons instead of text
       expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
@@ -453,7 +515,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Should show repo-1 to repo-5 on page 1
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
@@ -475,7 +544,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Go to page 2 first
       const nextButton = screen
@@ -508,7 +584,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const page3Button = screen.getByRole('button', { name: '3' });
       fireEvent.click(page3Button);
@@ -522,7 +605,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       const prevButtons = screen
         .getAllByRole('button')
@@ -542,7 +632,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Go to last page
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -561,7 +658,14 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(
+        <RepositoryList
+          repositories={repos}
+          itemsPerPage={5}
+          onFollow={vi.fn()}
+          onUnfollow={vi.fn()}
+        />
+      );
 
       // Go to page 2
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -634,7 +738,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList repositories={repos} onFollow={vi.fn()} onUnfollow={vi.fn()} />);
 
       // Apply sort
       const sortSelect = screen.getByLabelText(/sort repositories/i);

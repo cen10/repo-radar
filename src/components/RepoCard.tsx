@@ -4,7 +4,7 @@ import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
 interface RepoCardProps {
   repository: Repository;
-  onToggleStar?: (repo: Repository) => void;
+  onToggleStar: (repo: Repository) => void;
 }
 
 // Format star count for display (e.g., 1234 -> 1.2k)
@@ -30,9 +30,9 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
   } = repository;
 
   const handleStarToggle = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Stop event from reaching the stretched link that covers the card
     e.preventDefault();
-    onToggleStar?.(repository);
+    onToggleStar(repository);
   };
 
   const topicsLabel =
@@ -62,25 +62,23 @@ export function RepoCard({ repository, onToggleStar }: RepoCardProps) {
           </h3>
         </div>
         {/* Star button */}
-        {onToggleStar && (
-          <button
-            type="button"
-            onClick={handleStarToggle}
-            className={`relative z-10 px-3 py-1 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 cursor-pointer ${
-              isStarred
-                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-            aria-label={`${isStarred ? 'Unstar' : 'Star'} ${name} repository`}
-          >
-            {isStarred ? (
-              <StarIconSolid className="h-4 w-4" aria-hidden="true" />
-            ) : (
-              <StarIconOutline className="h-4 w-4" aria-hidden="true" />
-            )}
-            {isStarred ? 'Starred' : 'Star'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleStarToggle}
+          className={`relative z-10 px-3 py-1 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 cursor-pointer ${
+            isStarred
+              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+          aria-label={`${isStarred ? 'Unstar' : 'Star'} ${name} repository`}
+        >
+          {isStarred ? (
+            <StarIconSolid className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <StarIconOutline className="h-4 w-4" aria-hidden="true" />
+          )}
+          {isStarred ? 'Starred' : 'Star'}
+        </button>
       </div>
 
       {/* Description */}
