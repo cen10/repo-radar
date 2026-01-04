@@ -394,7 +394,7 @@ const Dashboard = () => {
           </p>
 
           {/* Repository limit warning */}
-          {repoLimitReached && !searchQuery && (
+          {repoLimitReached && !searchQuery && filterBy === 'starred' && (
             <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
