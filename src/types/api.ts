@@ -2,7 +2,6 @@ import type { Repository } from './index';
 
 // GitHub API response types
 export interface GitHubStarredResponse {
-  starred_at: string;
   repo: Repository;
 }
 

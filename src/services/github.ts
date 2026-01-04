@@ -21,8 +21,6 @@ interface GitHubStarredRepo {
   updated_at: string;
   pushed_at: string | null;
   created_at: string;
-  // Additional fields when using starred endpoint with timestamps
-  starred_at?: string;
 }
 
 /**
@@ -178,7 +176,7 @@ export async function fetchStarredRepositories(
     const response = await fetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${session.provider_token}`,
-        Accept: 'application/vnd.github.v3.star+json', // Gets starred_at timestamp
+        Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
     });
@@ -203,13 +201,8 @@ export async function fetchStarredRepositories(
 
     const data = await response.json();
 
-    // When using the star+json accept header, each item has { starred_at, repo }
-    const repos: GitHubStarredRepo[] = data.map(
-      (item: { starred_at: string; repo: Omit<GitHubStarredRepo, 'starred_at'> }) => ({
-        ...item.repo,
-        starred_at: item.starred_at,
-      })
-    );
+    // Standard GitHub API response format
+    const repos: GitHubStarredRepo[] = data;
 
     // Transform GitHub API response to our Repository type
     return repos.map((repo) => ({
@@ -229,7 +222,6 @@ export async function fetchStarredRepositories(
       updated_at: repo.updated_at,
       pushed_at: repo.pushed_at,
       created_at: repo.created_at,
-      starred_at: repo.starred_at, // Keep the actual timestamp from GitHub
       is_starred: true, // These are all starred repos by definition
       // Calculate basic metrics (in production, these would come from a backend service)
       metrics: {
@@ -373,7 +365,6 @@ export async function searchRepositories(
       updated_at: repo.updated_at,
       pushed_at: repo.pushed_at,
       created_at: repo.created_at,
-      starred_at: undefined, // We don't have timestamps from search API
       is_starred: starredIds.has(repo.id), // Simple boolean check
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),

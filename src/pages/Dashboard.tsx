@@ -331,9 +331,7 @@ const Dashboard = () => {
 
       // For search results, update the star status
       const updateSearchResults = (repos: Repository[]) =>
-        repos.map((r) =>
-          r.id === repoId ? { ...r, is_starred: false, starred_at: undefined } : r
-        );
+        repos.map((r) => (r.id === repoId ? { ...r, is_starred: false } : r));
 
       // For starred repositories list, REMOVE the unstarred repo entirely
       const removeFromStarred = (repos: Repository[]) => repos.filter((r) => r.id !== repoId);
