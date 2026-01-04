@@ -26,13 +26,13 @@ interface RepositoryListProps {
   onUnstar: (repoId: number) => void;
   starredRepos?: Set<number>;
   itemsPerPage?: number;
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-  onSearchSubmit?: (query: string) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onSearchSubmit: (query: string) => void;
   isSearching?: boolean;
   isShowingSearchResults?: boolean;
-  filterBy?: FilterOption;
-  onFilterChange?: (filter: FilterOption) => void;
+  filterBy: FilterOption;
+  onFilterChange: (filter: FilterOption) => void;
   // Search pagination props
   searchPage?: number;
   totalSearchPages?: number;
@@ -52,13 +52,13 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onUnstar,
   starredRepos = new Set(),
   itemsPerPage = 12,
-  searchQuery: externalSearchQuery,
-  onSearchChange: externalOnSearchChange,
-  onSearchSubmit: externalOnSearchSubmit,
+  searchQuery,
+  onSearchChange,
+  onSearchSubmit,
   isSearching = false,
   isShowingSearchResults = false,
-  filterBy: externalFilterBy,
-  onFilterChange: externalOnFilterChange,
+  filterBy,
+  onFilterChange,
   // Search pagination props
   searchPage = 1,
   totalSearchPages = 0,
@@ -71,20 +71,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('stars-desc');
-  const [localSearchQuery, setLocalSearchQuery] = useState('');
-  const [localFilterBy, setLocalFilterBy] = useState<FilterOption>('all');
-
-  // Use external search if provided, otherwise use local
-  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
-  const onSearchChange = externalOnSearchChange || setLocalSearchQuery;
-  const onSearchSubmit =
-    externalOnSearchSubmit ||
-    ((query: string) => {
-      // For local search, trigger search immediately when no external handler
-      setLocalSearchQuery(query);
-    });
-  const filterBy = externalFilterBy !== undefined ? externalFilterBy : localFilterBy;
-  const onFilterChange = externalOnFilterChange || setLocalFilterBy;
 
   // Search is now handled by parent component with debouncing for API calls
 

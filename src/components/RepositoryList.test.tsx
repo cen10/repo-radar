@@ -56,6 +56,17 @@ const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
   ...overrides,
 });
 
+const defaultProps = {
+  repositories: [],
+  onStar: vi.fn(),
+  onUnstar: vi.fn(),
+  searchQuery: '',
+  onSearchChange: vi.fn(),
+  onSearchSubmit: vi.fn(),
+  filterBy: 'all' as const,
+  onFilterChange: vi.fn(),
+};
+
 describe('RepositoryList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -63,9 +74,7 @@ describe('RepositoryList', () => {
 
   describe('Loading state', () => {
     it('displays loading spinner when isLoading is true', () => {
-      render(
-        <RepositoryList repositories={[]} isLoading={true} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} isLoading={true} />);
       const spinner = screen.getByRole('status', { hidden: true });
       expect(spinner).toHaveClass('animate-spin');
     });
@@ -74,9 +83,7 @@ describe('RepositoryList', () => {
   describe('Error state', () => {
     it('displays error message when error is provided', () => {
       const error = new Error('Failed to fetch repositories');
-      render(
-        <RepositoryList repositories={[]} error={error} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} error={error} />);
 
       expect(screen.getByText(/error loading repositories/i)).toBeInTheDocument();
       expect(screen.getByText(error.message)).toBeInTheDocument();
@@ -85,7 +92,7 @@ describe('RepositoryList', () => {
 
   describe('Empty state', () => {
     it('displays empty state when no repositories are provided', () => {
-      render(<RepositoryList repositories={[]} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} />);
 
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
@@ -100,7 +107,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3' }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
@@ -114,14 +121,7 @@ describe('RepositoryList', () => {
       ];
       const starredRepos = new Set([1]);
 
-      render(
-        <RepositoryList
-          repositories={repos}
-          starredRepos={starredRepos}
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
-        />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} starredRepos={starredRepos} />);
 
       const card1 = screen.getByTestId('repo-card-1');
       const card2 = screen.getByTestId('repo-card-2');
@@ -135,7 +135,14 @@ describe('RepositoryList', () => {
       const onUnstar = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
 
-      render(<RepositoryList repositories={repos} onStar={onStar} onUnstar={onUnstar} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          onStar={onStar}
+          onUnstar={onUnstar}
+        />
+      );
 
       const starButton = screen.getByRole('button', { name: /star/i });
       fireEvent.click(starButton);
@@ -151,6 +158,7 @@ describe('RepositoryList', () => {
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           starredRepos={starredRepos}
           onStar={onStar}
@@ -171,11 +179,10 @@ describe('RepositoryList', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           searchQuery="test"
           onSearchChange={mockOnSearchChange}
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
         />
       );
 
@@ -189,12 +196,11 @@ describe('RepositoryList', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           searchQuery="test"
           onSearchChange={vi.fn()}
           isSearching={true}
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
         />
       );
 
@@ -203,7 +209,7 @@ describe('RepositoryList', () => {
 
     it('shows search placeholder with quotes hint', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       expect(searchInput).toHaveAttribute(
@@ -222,10 +228,9 @@ describe('RepositoryList', () => {
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           onSearchChange={mockOnSearchChange}
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
         />
       );
 
@@ -245,14 +250,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, name: 'repo-2', description: 'Vue framework' }),
       ];
 
-      render(
-        <RepositoryList
-          repositories={filteredRepos}
-          searchQuery="vue"
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
-        />
-      );
+      render(<RepositoryList {...defaultProps} repositories={filteredRepos} searchQuery="vue" />);
 
       // Only the pre-filtered repository should be displayed
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
@@ -265,7 +263,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, language: 'JavaScript' }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'python' } });
@@ -281,14 +279,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 2, topics: ['backend', 'api'] }),
       ];
 
-      render(
-        <RepositoryList
-          repositories={repos}
-          searchQuery="backend"
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
-        />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="backend" />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       expect(searchInput).toHaveValue('backend');
@@ -302,14 +293,7 @@ describe('RepositoryList', () => {
       // Dashboard would pass empty array when no results found
       const repos: Repository[] = [];
 
-      render(
-        <RepositoryList
-          repositories={repos}
-          searchQuery="nonexistent"
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
-        />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="nonexistent" />);
 
       // When no repositories at all, shows basic empty state
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
@@ -323,6 +307,7 @@ describe('RepositoryList', () => {
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           searchQuery="test"
           filterBy="starred"
@@ -351,10 +336,9 @@ describe('RepositoryList', () => {
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
           onFilterChange={mockOnFilterChange}
-          onStar={vi.fn()}
-          onUnstar={vi.fn()}
         />
       );
 
@@ -370,7 +354,7 @@ describe('RepositoryList', () => {
     it('shows all repositories when filter is set to all', () => {
       const repos = [createMockRepository({ id: 1 }), createMockRepository({ id: 2 })];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'all' } });
@@ -388,7 +372,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3', stargazers_count: 100 }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
@@ -406,7 +390,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'banana' }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'name-asc' } });
@@ -424,7 +408,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, open_issues_count: 10 }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'issues-desc' } });
@@ -454,7 +438,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       fireEvent.change(sortSelect, { target: { value: 'activity-desc' } });
@@ -472,9 +456,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards).toHaveLength(5);
@@ -485,9 +467,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Check for page number buttons instead of text
       expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
@@ -500,9 +480,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Should show repo-1 to repo-5 on page 1
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
@@ -524,9 +502,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to page 2 first
       const nextButton = screen
@@ -559,9 +535,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const page3Button = screen.getByRole('button', { name: '3' });
       fireEvent.click(page3Button);
@@ -575,9 +549,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const prevButtons = screen
         .getAllByRole('button')
@@ -597,9 +569,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to last page
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -618,9 +588,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(
-        <RepositoryList repositories={repos} itemsPerPage={5} onStar={vi.fn()} onUnstar={vi.fn()} />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to page 2
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -652,6 +620,7 @@ describe('RepositoryList', () => {
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={filteredRepos}
           searchQuery="react"
           filterBy="starred"
@@ -693,7 +662,7 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} onStar={vi.fn()} onUnstar={vi.fn()} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       // Apply sort
       const sortSelect = screen.getByLabelText(/sort repositories/i);
