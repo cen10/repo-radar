@@ -194,8 +194,8 @@ describe('RepoCard', () => {
       const repo = createMockRepository();
       render(<RepoCard repository={repo} />);
 
-      expect(screen.queryByRole('button', { name: /star repository/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /unstar repository/i })).not.toBeInTheDocument();
+      // Checking for 'star' covers both "starred" and "star" buttons
+      expect(screen.queryByRole('button', { name: /star/i })).not.toBeInTheDocument();
     });
   });
 
