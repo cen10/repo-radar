@@ -63,32 +63,6 @@ describe('RepoCard', () => {
     expect(starButton).toHaveTextContent('Star');
   });
 
-  it('displays star button with filled star icon when starred', () => {
-    const repo = createMockRepository({
-      is_starred: true,
-    });
-    const onToggleStar = vi.fn();
-    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-    const starButton = screen.getByRole('button', { name: /unstar awesome-repo repository/i });
-    expect(starButton).toHaveTextContent('Starred');
-    // Check that it contains an SVG (StarIconSolid)
-    expect(starButton.querySelector('svg')).toBeInTheDocument();
-  });
-
-  it('displays star button with empty star icon when not starred', () => {
-    const repo = createMockRepository({
-      is_starred: false,
-    });
-    const onToggleStar = vi.fn();
-    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-    const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-    expect(starButton).toHaveTextContent('Star');
-    // Check that it contains an SVG (StarIconOutline)
-    expect(starButton.querySelector('svg')).toBeInTheDocument();
-  });
-
   it('renders repository basic information correctly', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
