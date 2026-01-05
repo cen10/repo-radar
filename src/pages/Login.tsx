@@ -64,18 +64,15 @@ export default function Login() {
     }
   };
 
-  // Redirect authenticated users - they shouldn't see the login page
+  // Redirect authenticated users to dashboard
+  // Dashboard will handle checking for GitHub token and sign out if missing
   if (user) {
-    // In a real app, this would redirect to the dashboard
-    // For now, just show a message
+    window.location.href = '/dashboard';
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full space-y-8 p-8 text-center">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Repo Radar</h1>
-            <p className="text-lg text-gray-600">Welcome back, {user.name || user.login}!</p>
-            <p className="text-sm text-gray-500 mt-2">You are already logged in.</p>
-          </div>
+          <LoadingSpinner />
+          <p className="text-gray-600">Redirecting to dashboard...</p>
         </div>
       </div>
     );

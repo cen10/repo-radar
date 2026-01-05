@@ -408,7 +408,7 @@ describe('AuthProvider', () => {
       expect(mockSupabaseClient.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'github',
         options: {
-          scopes: 'read:user user:email',
+          scopes: 'read:user user:email public_repo',
           redirectTo: `${window.location.origin}/dashboard`,
         },
       });

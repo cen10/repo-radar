@@ -16,20 +16,20 @@ vi.mock('../utils/logger', () => ({
 
 interface MockRepoCardProps {
   repository: Repository & { is_following?: boolean };
-  onToggleFollow?: () => void;
+  onToggleStar: () => void;
 }
 
 // Mock RepoCard component
 vi.mock('./RepoCard', () => ({
-  RepoCard: ({ repository, onToggleFollow }: MockRepoCardProps) => (
+  RepoCard: ({ repository, onToggleStar }: MockRepoCardProps) => (
     <div data-testid={`repo-card-${repository.id}`}>
       <h3>{repository.name}</h3>
       <p>{repository.description}</p>
       <span>{repository.stargazers_count} stars</span>
       <span>{repository.open_issues_count} issues</span>
-      <span>{repository.is_following ? 'Following' : 'Not following'}</span>
-      {onToggleFollow && (
-        <button onClick={onToggleFollow}>{repository.is_following ? 'Unfollow' : 'Follow'}</button>
+      <span>{repository.is_starred ? 'Starred' : 'Not starred'}</span>
+      {onToggleStar && (
+        <button onClick={onToggleStar}>{repository.is_starred ? 'Unstar' : 'Star'}</button>
       )}
     </div>
   ),
@@ -52,8 +52,22 @@ const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
   updated_at: '2024-01-15T10:00:00Z',
   pushed_at: '2024-01-15T10:00:00Z',
   created_at: '2023-01-01T00:00:00Z',
+  is_starred: false,
   ...overrides,
 });
+
+const defaultProps = {
+  repositories: [],
+  onStar: vi.fn(),
+  onUnstar: vi.fn(),
+  searchQuery: '',
+  onSearchChange: vi.fn(),
+  onSearchSubmit: vi.fn(),
+  filterBy: 'all' as const,
+  onFilterChange: vi.fn(),
+  onPrepaginatedPageChange: vi.fn(),
+  dataIsPrepaginated: false,
+};
 
 describe('RepositoryList', () => {
   beforeEach(() => {
@@ -62,7 +76,7 @@ describe('RepositoryList', () => {
 
   describe('Loading state', () => {
     it('displays loading spinner when isLoading is true', () => {
-      render(<RepositoryList repositories={[]} isLoading={true} />);
+      render(<RepositoryList {...defaultProps} isLoading={true} />);
       const spinner = screen.getByRole('status', { hidden: true });
       expect(spinner).toHaveClass('animate-spin');
     });
@@ -71,7 +85,7 @@ describe('RepositoryList', () => {
   describe('Error state', () => {
     it('displays error message when error is provided', () => {
       const error = new Error('Failed to fetch repositories');
-      render(<RepositoryList repositories={[]} error={error} />);
+      render(<RepositoryList {...defaultProps} error={error} />);
 
       expect(screen.getByText(/error loading repositories/i)).toBeInTheDocument();
       expect(screen.getByText(error.message)).toBeInTheDocument();
@@ -80,7 +94,7 @@ describe('RepositoryList', () => {
 
   describe('Empty state', () => {
     it('displays empty state when no repositories are provided', () => {
-      render(<RepositoryList repositories={[]} />);
+      render(<RepositoryList {...defaultProps} />);
 
       expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
@@ -95,7 +109,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
@@ -107,189 +121,242 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 1, name: 'repo-1' }),
         createMockRepository({ id: 2, name: 'repo-2' }),
       ];
-      const followedRepos = new Set([1]);
+      const starredRepos = new Set([1]);
 
-      render(
-        <RepositoryList
-          repositories={repos}
-          followedRepos={followedRepos}
-          onFollow={vi.fn()}
-          onUnfollow={vi.fn()}
-        />
-      );
+      render(<RepositoryList {...defaultProps} repositories={repos} starredRepos={starredRepos} />);
 
       const card1 = screen.getByTestId('repo-card-1');
       const card2 = screen.getByTestId('repo-card-2');
 
-      expect(card1).toHaveTextContent('Following');
-      expect(card2).toHaveTextContent('Not following');
+      expect(card1).toHaveTextContent('Starred');
+      expect(card2).toHaveTextContent('Not starred');
     });
 
-    it('calls onFollow when follow button is clicked', () => {
-      const onFollow = vi.fn();
-      const onUnfollow = vi.fn();
+    it('calls onStar when star button is clicked', () => {
+      const onStar = vi.fn();
+      const onUnstar = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-
-      render(<RepositoryList repositories={repos} onFollow={onFollow} onUnfollow={onUnfollow} />);
-
-      const followButton = screen.getByRole('button', { name: /follow/i });
-      fireEvent.click(followButton);
-
-      expect(onFollow).toHaveBeenCalledWith(1);
-    });
-
-    it('calls onUnfollow when unfollow button is clicked', () => {
-      const onFollow = vi.fn();
-      const onUnfollow = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-      const followedRepos = new Set([1]);
 
       render(
         <RepositoryList
+          {...defaultProps}
           repositories={repos}
-          followedRepos={followedRepos}
-          onFollow={onFollow}
-          onUnfollow={onUnfollow}
+          onStar={onStar}
+          onUnstar={onUnstar}
         />
       );
 
-      const unfollowButton = screen.getByRole('button', { name: /unfollow/i });
-      fireEvent.click(unfollowButton);
+      const starButton = screen.getByRole('button', { name: /star/i });
+      fireEvent.click(starButton);
 
-      expect(onUnfollow).toHaveBeenCalledWith(1);
+      expect(onStar).toHaveBeenCalledWith(1);
+    });
+
+    it('calls onUnstar when unstar button is clicked', () => {
+      const onStar = vi.fn();
+      const onUnstar = vi.fn();
+      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+      const starredRepos = new Set([1]);
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          starredRepos={starredRepos}
+          onStar={onStar}
+          onUnstar={onUnstar}
+        />
+      );
+
+      const unstarButton = screen.getByRole('button', { name: /unstar/i });
+      fireEvent.click(unstarButton);
+
+      expect(onUnstar).toHaveBeenCalledWith(1);
     });
   });
 
   describe('Search functionality', () => {
-    it('filters repositories based on search query', () => {
+    it('uses external search when provided', () => {
+      const mockOnSearchChange = vi.fn();
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          searchQuery="test"
+          onSearchChange={mockOnSearchChange}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      fireEvent.change(searchInput, { target: { value: 'new search' } });
+
+      expect(mockOnSearchChange).toHaveBeenCalledWith('new search');
+    });
+
+    it('shows searching indicator when isSearching is true', () => {
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          searchQuery="test"
+          onSearchChange={vi.fn()}
+          isSearching={true}
+        />
+      );
+
+      expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
+    });
+
+    it('shows search placeholder with quotes hint', () => {
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      expect(searchInput).toHaveAttribute(
+        'placeholder',
+        'Search repositories... (use "quotes" for exact name match)'
+      );
+    });
+
+    it('calls onSearchChange when search input changes', () => {
+      const mockOnSearchChange = vi.fn();
       const repos = [
         createMockRepository({ id: 1, name: 'react-app', topics: [] }),
         createMockRepository({ id: 2, name: 'vue-app', topics: [] }),
         createMockRepository({ id: 3, name: 'angular-app', topics: [] }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          onSearchChange={mockOnSearchChange}
+        />
+      );
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'react' } });
 
+      expect(mockOnSearchChange).toHaveBeenCalledWith('react');
+      // All repositories should still be visible since filtering is done by Dashboard
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-3')).toBeInTheDocument();
     });
 
-    it('searches in description', () => {
-      const repos = [
-        createMockRepository({ id: 1, name: 'repo-1', description: 'React framework' }),
+    it('displays pre-filtered repositories without client-side filtering', () => {
+      // Simulate Dashboard passing already filtered repositories
+      const filteredRepos = [
         createMockRepository({ id: 2, name: 'repo-2', description: 'Vue framework' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={filteredRepos} searchQuery="vue" />);
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'vue' } });
-
+      // Only the pre-filtered repository should be displayed
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('searches in language', () => {
+    it('displays all repositories when no external search is provided', () => {
       const repos = [
         createMockRepository({ id: 1, language: 'Python' }),
         createMockRepository({ id: 2, language: 'JavaScript' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
       fireEvent.change(searchInput, { target: { value: 'python' } });
 
+      // Both repositories should be visible since no filtering is done locally
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('searches in topics', () => {
+    it('uses external search value when provided', () => {
       const repos = [
         createMockRepository({ id: 1, topics: ['react', 'frontend'] }),
         createMockRepository({ id: 2, topics: ['backend', 'api'] }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="backend" />);
 
       const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'backend' } });
+      expect(searchInput).toHaveValue('backend');
 
-      expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
+      // Both repositories should be visible since filtering is done externally
+      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
-    it('shows no results message when search returns nothing', () => {
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+    it('shows no results message when no repositories are provided', () => {
+      // Dashboard would pass empty array when no results found
+      const repos: Repository[] = [];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="nonexistent" />);
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
-
-      expect(screen.getByText(/no repositories match your filters/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+      // When no repositories at all, shows basic empty state
+      expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
     });
 
-    it('clears filters when clear button is clicked', () => {
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
+    it('displays repositories when provided even with search query', () => {
+      const mockOnSearchChange = vi.fn();
+      const mockOnFilterChange = vi.fn();
+      // In the new architecture, repositories are pre-filtered by Dashboard
+      const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          searchQuery="test"
+          filterBy="starred"
+          onSearchChange={mockOnSearchChange}
+          onFilterChange={mockOnFilterChange}
+        />
+      );
 
-      const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
-
-      const clearButton = screen.getByRole('button', { name: /clear filters/i });
-      fireEvent.click(clearButton);
-
-      expect(searchInput).toHaveValue('');
+      // Since filtering is done by Dashboard, repositories should always be displayed
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('test')).toBeInTheDocument();
+
+      // Check that the filter shows the correct value
+      const filterSelect = screen.getByLabelText(/filter repositories/i);
+      expect(filterSelect).toHaveValue('starred');
     });
   });
 
   describe('Filter functionality', () => {
-    it('filters by trending repositories', () => {
+    it('calls onFilterChange when filter is changed', () => {
+      const mockOnFilterChange = vi.fn();
       const repos = [
-        createMockRepository({ id: 1, stargazers_count: 150 }),
-        createMockRepository({ id: 2, stargazers_count: 50 }),
+        createMockRepository({ id: 1, is_starred: true }),
+        createMockRepository({ id: 2, is_starred: false }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          onFilterChange={mockOnFilterChange}
+        />
+      );
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'trending' } });
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
+      expect(mockOnFilterChange).toHaveBeenCalledWith('starred');
+      // Both repositories should still be visible since filtering is done by Dashboard
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-    });
-
-    it('filters by active repositories', () => {
-      const now = new Date();
-      const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      const oldDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const repos = [
-        createMockRepository({ id: 1, pushed_at: recentDate }),
-        createMockRepository({ id: 2, pushed_at: oldDate }),
-      ];
-
-      render(<RepositoryList repositories={repos} />);
-
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'active' } });
-
-      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
     });
 
     it('shows all repositories when filter is set to all', () => {
       const repos = [createMockRepository({ id: 1 }), createMockRepository({ id: 2 })];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const filterSelect = screen.getByLabelText(/filter repositories/i);
       fireEvent.change(filterSelect, { target: { value: 'all' } });
@@ -307,10 +374,10 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'repo-3', stargazers_count: 100 }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'stars' } });
+      fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -325,10 +392,10 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, name: 'banana' }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'name' } });
+      fireEvent.change(sortSelect, { target: { value: 'name-asc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -343,10 +410,10 @@ describe('RepositoryList', () => {
         createMockRepository({ id: 3, open_issues_count: 10 }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'issues' } });
+      fireEvent.change(sortSelect, { target: { value: 'issues-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -373,10 +440,10 @@ describe('RepositoryList', () => {
         }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'activity' } });
+      fireEvent.change(sortSelect, { target: { value: 'activity-desc' } });
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards[0]).toHaveAttribute('data-testid', 'repo-card-2');
@@ -385,13 +452,13 @@ describe('RepositoryList', () => {
     });
   });
 
-  describe('Pagination', () => {
+  describe('Pagination (RepositoryList slices repositories array internally)', () => {
     it('displays correct number of items per page', () => {
       const repos = Array.from({ length: 15 }, (_, i) =>
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const cards = screen.getAllByTestId(/repo-card-/);
       expect(cards).toHaveLength(5);
@@ -402,7 +469,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Check for page number buttons instead of text
       expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
@@ -415,17 +482,20 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
-      const nextButton = screen
-        .getAllByRole('button')
-        .find((btn) => btn.textContent === 'Next' || btn.querySelector('[aria-hidden="true"]'));
+      // Should show repo-1 to repo-5 on page 1
+      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-5')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-card-6')).not.toBeInTheDocument();
 
-      if (nextButton) {
-        fireEvent.click(nextButton);
-      }
+      // Find and click the Next button (use the page number approach instead)
+      const page2Button = screen.getByRole('button', { name: '2' });
+      fireEvent.click(page2Button);
 
+      // Should now show repo-6 to repo-10 on page 2
       expect(screen.getByTestId('repo-card-6')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-card-10')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-1')).not.toBeInTheDocument();
     });
 
@@ -434,7 +504,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to page 2 first
       const nextButton = screen
@@ -467,7 +537,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const page3Button = screen.getByRole('button', { name: '3' });
       fireEvent.click(page3Button);
@@ -481,7 +551,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       const prevButtons = screen
         .getAllByRole('button')
@@ -501,7 +571,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to last page
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -520,7 +590,7 @@ describe('RepositoryList', () => {
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={5} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} itemsPerPage={5} />);
 
       // Go to page 2
       const page2Button = screen.getByRole('button', { name: '2' });
@@ -534,100 +604,287 @@ describe('RepositoryList', () => {
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-6')).not.toBeInTheDocument();
     });
+  });
 
-    it('displays results count correctly', () => {
-      const repos = Array.from({ length: 23 }, (_, i) =>
+  describe('Pagination (Dashboard provides pre-paginated data)', () => {
+    it('uses totalSearchPages for pagination instead of calculating from array length', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
       );
 
-      render(<RepositoryList repositories={repos} itemsPerPage={10} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={10}
+          currentPage={1}
+        />
+      );
 
-      expect(screen.getByText(/showing 1-10 of 23 repositories/i)).toBeInTheDocument();
+      // Should show page 10 button (from totalPages), not just 1 page
+      expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+    });
 
-      // Go to page 2
+    it('calls onPrepaginatedPageChange when navigating to a specific page', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={1}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
       const page2Button = screen.getByRole('button', { name: '2' });
       fireEvent.click(page2Button);
 
-      expect(screen.getByText(/showing 11-20 of 23 repositories/i)).toBeInTheDocument();
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(2);
+    });
 
-      // Go to page 3
+    it('calls onPrepaginatedPageChange when clicking next button', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={1}
+          hasMoreResults={true}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
+      // Find the desktop next button (the one with sr-only "Next" text)
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+      fireEvent.click(nextButtons[0]);
+
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(2);
+    });
+
+    it('calls onPrepaginatedPageChange when clicking previous button', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={2}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
+      // Find the desktop previous button
+      const prevButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Previous';
+      });
+      fireEvent.click(prevButtons[0]);
+
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(1);
+    });
+
+    it('displays all provided repositories without slicing', () => {
+      // With dataIsPrepaginated, all repos should display (Dashboard already sliced)
+      const repos = Array.from({ length: 30 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={5}
+          currentPage={1}
+          itemsPerPage={10}
+        />
+      );
+
+      // All 30 should be visible, not just 10
+      expect(screen.getAllByTestId(/repo-card-/)).toHaveLength(30);
+    });
+
+    it('highlights current page from currentPage prop', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={5}
+          currentPage={3}
+        />
+      );
+
       const page3Button = screen.getByRole('button', { name: '3' });
-      fireEvent.click(page3Button);
+      expect(page3Button).toHaveClass('bg-indigo-600');
+    });
 
-      expect(screen.getByText(/showing 21-23 of 23 repositories/i)).toBeInTheDocument();
+    it('disables next button when hasMoreResults is false and on last page', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={3}
+          hasMoreResults={false}
+        />
+      );
+
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+
+      nextButtons.forEach((btn) => {
+        expect(btn).toBeDisabled();
+      });
+    });
+
+    it('enables next button when hasMoreResults is true even on calculated last page', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={3}
+          hasMoreResults={true}
+        />
+      );
+
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+
+      nextButtons.forEach((btn) => {
+        expect(btn).not.toBeDisabled();
+      });
+    });
+
+    it('calculates totalPages from apiSearchResultTotal when totalPages is 0', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={0}
+          apiSearchResultTotal={50}
+          itemsPerPage={10}
+          currentPage={1}
+        />
+      );
+
+      // Should calculate 5 pages from 50 results / 10 per page
+      expect(screen.getByRole('button', { name: '5' })).toBeInTheDocument();
     });
   });
 
   describe('Combined functionality', () => {
-    it('applies search and filter together', () => {
-      const repos = [
+    it('calls appropriate handlers when both search and filter are changed', () => {
+      const mockOnSearchChange = vi.fn();
+      const mockOnFilterChange = vi.fn();
+      // Simulate Dashboard passing pre-filtered repositories (only starred react repos)
+      const filteredRepos = [
         createMockRepository({
           id: 1,
           name: 'react-app',
-          stargazers_count: 150,
-          topics: [],
-        }),
-        createMockRepository({
-          id: 2,
-          name: 'react-lib',
-          stargazers_count: 50,
-          topics: [],
-        }),
-        createMockRepository({
-          id: 3,
-          name: 'vue-app',
-          stargazers_count: 200,
-          topics: [],
+          is_starred: true,
+          topics: ['react', 'frontend'],
         }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={filteredRepos}
+          searchQuery="react"
+          filterBy="starred"
+          onSearchChange={mockOnSearchChange}
+          onFilterChange={mockOnFilterChange}
+        />
+      );
 
       // Apply search
       const searchInput = screen.getByLabelText(/search repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'react' } });
+      fireEvent.change(searchInput, { target: { value: 'vue' } });
+      expect(mockOnSearchChange).toHaveBeenCalledWith('vue');
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'trending' } });
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      expect(mockOnFilterChange).toHaveBeenCalledWith('all');
 
-      // Only react-app should be visible (matches search "react" and has >100 stars for trending)
+      // Should show the pre-filtered repository
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-2')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('repo-card-3')).not.toBeInTheDocument();
     });
 
     it('maintains sort order after filtering', () => {
-      const now = new Date();
-      const recentDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-
       const repos = [
         createMockRepository({
           id: 1,
           stargazers_count: 50,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
         createMockRepository({
           id: 2,
           stargazers_count: 200,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
         createMockRepository({
           id: 3,
           stargazers_count: 100,
-          pushed_at: recentDate,
+          is_starred: true,
         }),
       ];
 
-      render(<RepositoryList repositories={repos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       // Apply sort
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'stars' } });
+      fireEvent.change(sortSelect, { target: { value: 'stars-desc' } });
 
       // Apply filter
       const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'active' } });
+      fireEvent.change(filterSelect, { target: { value: 'starred' } });
 
       // All should be visible in star order
       const cards = screen.getAllByTestId(/repo-card-/);

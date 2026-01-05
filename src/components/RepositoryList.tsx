@@ -1,115 +1,142 @@
 import React, { useState, useMemo } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 
-export type SortOption = 'stars' | 'activity' | 'name' | 'issues';
-export type FilterOption = 'all' | 'trending' | 'active';
+export type SortOption =
+  | 'stars-desc'
+  | 'stars-asc'
+  | 'activity-desc'
+  | 'activity-asc'
+  | 'name-asc'
+  | 'name-desc'
+  | 'issues-desc'
+  | 'issues-asc';
+export type FilterOption = 'all' | 'starred';
 
 interface RepositoryListProps {
   repositories: Repository[];
   isLoading?: boolean;
   error?: Error | null;
-  onFollow?: (repoId: number) => void;
-  onUnfollow?: (repoId: number) => void;
-  followedRepos?: Set<number>;
+  onStar: (repoId: number) => void;
+  onUnstar: (repoId: number) => void;
+  starredRepos?: Set<number>;
   itemsPerPage?: number;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onSearchSubmit: (query: string) => void;
+  isSearching?: boolean;
+  filterBy: FilterOption;
+  onFilterChange: (filter: FilterOption) => void;
+  // Props for prepaginated data that Dashboard provides when the Github search api is used
+  currentPage?: number;
+  totalPages?: number;
+  hasMoreResults?: boolean;
+  onPrepaginatedPageChange: (page: number) => void;
+  apiSearchResultTotal?: number;
+  // When true, caller provides pre-paginated data. When false, RepositoryList paginates internally.
+  dataIsPrepaginated: boolean;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
   repositories,
   isLoading = false,
   error = null,
-  onFollow,
-  onUnfollow,
-  followedRepos = new Set(),
+  onStar,
+  onUnstar,
+  starredRepos = new Set(),
   itemsPerPage = 12,
+  searchQuery,
+  onSearchChange,
+  onSearchSubmit,
+  isSearching = false,
+  dataIsPrepaginated,
+  filterBy,
+  onFilterChange,
+  // Search pagination props
+  currentPage: propCurrentPage = 1,
+  totalPages: propTotalPages = 0,
+  hasMoreResults = false,
+  onPrepaginatedPageChange,
+  // Additional pagination info for enhanced display
+  apiSearchResultTotal,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortBy, setSortBy] = useState<SortOption>('activity');
-  const [filterBy, setFilterBy] = useState<FilterOption>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('stars-desc');
 
-  // TODO: When this component moves to its own page and integrates with GitHub API search,
-  // add debouncing (300-500ms) to prevent excessive API calls. Current implementation
-  // filters local data only, so debouncing would hurt UX. Consider implementing
-  // two search modes: 'local' (instant) and 'github' (debounced API search).
+  // TODO: Replace native select elements with Headless UI Listbox components for better
+  // control over styling and positioning of dropdown arrows. Native selects have
+  // browser-controlled arrow positioning that can appear too close to the edge.
 
-  // Filter repositories
-  const filteredRepos = useMemo(() => {
-    let filtered = [...repositories];
+  const getActivityDate = (repo: Repository): number =>
+    new Date(repo.pushed_at || repo.updated_at).getTime();
 
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (repo) =>
-          repo.name.toLowerCase().includes(query) ||
-          repo.full_name.toLowerCase().includes(query) ||
-          repo.description?.toLowerCase().includes(query) ||
-          repo.language?.toLowerCase().includes(query) ||
-          repo.topics.some((topic) => topic.toLowerCase().includes(query))
-      );
-    }
-
-    // Apply category filter
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    switch (filterBy) {
-      case 'trending':
-        // Repos with significant star growth (placeholder logic)
-        filtered = filtered.filter((repo) => repo.stargazers_count > 100);
-        break;
-      case 'active':
-        // Recently pushed to
-        filtered = filtered.filter((repo) => {
-          if (!repo.pushed_at) return false;
-          return new Date(repo.pushed_at) > oneWeekAgo;
-        });
-        break;
-      default:
-        // 'all' - no additional filtering
-        break;
-    }
-
-    return filtered;
-  }, [repositories, searchQuery, filterBy]);
-
-  // Sort repositories
   const sortedRepos = useMemo(() => {
-    const sorted = [...filteredRepos];
+    const sorted = [...repositories];
 
     switch (sortBy) {
-      case 'stars':
+      case 'stars-desc':
         sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
         break;
-      case 'activity':
-        sorted.sort((a, b) => {
-          const aDate = new Date(a.pushed_at || a.updated_at);
-          const bDate = new Date(b.pushed_at || b.updated_at);
-          return bDate.getTime() - aDate.getTime();
-        });
+      case 'stars-asc':
+        sorted.sort((a, b) => a.stargazers_count - b.stargazers_count);
         break;
-      case 'name':
+      case 'activity-desc':
+        sorted.sort((a, b) => getActivityDate(b) - getActivityDate(a));
+        break;
+      case 'activity-asc':
+        sorted.sort((a, b) => getActivityDate(a) - getActivityDate(b));
+        break;
+      case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'issues':
+      case 'name-desc':
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'issues-desc':
         sorted.sort((a, b) => b.open_issues_count - a.open_issues_count);
+        break;
+      case 'issues-asc':
+        sorted.sort((a, b) => a.open_issues_count - b.open_issues_count);
         break;
     }
 
     return sorted;
-  }, [filteredRepos, sortBy]);
+  }, [repositories, sortBy]);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRepos = sortedRepos.slice(startIndex, endIndex);
+  // Pagination logic differs based on whether caller provides pre-paginated data
+  let totalPages: number;
+  let currentRepos: Repository[];
+  let activePage: number;
 
-  // Loading state
-  if (isLoading) {
+  if (dataIsPrepaginated) {
+    // Dashboard provides pre-paginated data
+    if (propTotalPages > 0) {
+      totalPages = propTotalPages;
+    } else if (apiSearchResultTotal !== undefined && itemsPerPage) {
+      // Calculate from API data if available
+      totalPages = Math.ceil(apiSearchResultTotal / itemsPerPage);
+    } else {
+      // Fallback to legacy logic
+      totalPages = hasMoreResults ? propCurrentPage + 1 : propCurrentPage;
+    }
+    currentRepos = sortedRepos; // All results from current search page
+    activePage = propCurrentPage;
+  } else {
+    // Full array provided; RepositoryList slices per page
+    totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    currentRepos = sortedRepos.slice(startIndex, endIndex);
+    activePage = currentPage;
+  }
+
+  // Loading state (only show spinner for initial load, not search)
+  if (isLoading && !isSearching) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div
@@ -125,10 +152,20 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   // Error state
   if (error) {
+    const isGitHubAuthError = error.message.includes('session has expired');
+
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">Error loading repositories</p>
-        <p className="text-sm text-gray-600">{error.message}</p>
+        <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+        {isGitHubAuthError && (
+          <a
+            href="/login"
+            className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            Sign Out and Reconnect
+          </a>
+        )}
       </div>
     );
   }
@@ -150,33 +187,54 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     <div className="bg-white shadow rounded-lg p-4">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search repositories..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-            aria-label="Search repositories"
-          />
-        </div>
+        <form
+          className="flex-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const query = formData.get('search') as string;
+            onSearchSubmit(query);
+            setCurrentPage(1);
+          }}
+        >
+          <div className="flex">
+            <label htmlFor="repo-search" className="sr-only">
+              Search repositories
+            </label>
+            <input
+              id="repo-search"
+              name="search"
+              type="text"
+              placeholder='Search repositories... (use "quotes" for exact name match)'
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Search</span>
+            </button>
+          </div>
+        </form>
 
         {/* Filter */}
         <select
           value={filterBy}
           onChange={(e) => {
-            setFilterBy(e.target.value as FilterOption);
+            onFilterChange(e.target.value as FilterOption);
             setCurrentPage(1);
           }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
           aria-label="Filter repositories"
         >
           <option value="all">All Repositories</option>
-          <option value="trending">Trending</option>
-          <option value="active">Recently Active</option>
+          <option value="starred">Starred Only</option>
         </select>
 
         {/* Sort */}
@@ -186,23 +244,26 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             setSortBy(e.target.value as SortOption);
             setCurrentPage(1);
           }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
           aria-label="Sort repositories"
         >
-          <option value="activity">Recent Activity</option>
-          <option value="stars">Stars</option>
-          <option value="name">Name</option>
-          <option value="issues">Open Issues</option>
+          <option value="stars-desc">Stars (DESC)</option>
+          <option value="stars-asc">Stars (ASC)</option>
+          <option value="activity-desc">Recent Activity (DESC)</option>
+          <option value="activity-asc">Recent Activity (ASC)</option>
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+          <option value="issues-desc">Open Issues (Most)</option>
+          <option value="issues-asc">Open Issues (Least)</option>
         </select>
       </div>
 
-      {/* Results count - only show when there are results */}
-      {sortedRepos.length > 0 && (
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {startIndex + 1}-{Math.min(endIndex, sortedRepos.length)} of {sortedRepos.length}{' '}
-          repositories
-        </div>
-      )}
+      {/* Hidden aria-live region for screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {sortedRepos.length === 0 && (searchQuery || filterBy !== 'all') ? (
+          <>No repositories match your filters</>
+        ) : null}
+      </div>
     </div>
   );
 
@@ -215,8 +276,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <p className="text-gray-500">No repositories match your filters</p>
           <button
             onClick={() => {
-              setSearchQuery('');
-              setFilterBy('all');
+              onSearchChange('');
+              onFilterChange('all');
               setCurrentPage(1);
             }}
             className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
@@ -234,102 +295,184 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentRepos.map((repo) => {
-          const repoWithFollowState = {
-            ...repo,
-            is_following: followedRepos.has(repo.id),
-          };
-          return (
-            <RepoCard
-              key={repo.id}
-              repository={repoWithFollowState}
-              onToggleFollow={
-                onFollow && onUnfollow
-                  ? () => {
-                      if (followedRepos.has(repo.id)) {
-                        onUnfollow(repo.id);
-                      } else {
-                        onFollow(repo.id);
-                      }
-                    }
-                  : undefined
-              }
-            />
-          );
-        })}
+        {isSearching && (
+          <div className="col-span-full text-center py-4">
+            <span className="text-gray-500">Searching GitHub...</span>
+          </div>
+        )}
+        {!isSearching &&
+          currentRepos.map((repo) => {
+            const repoWithStarState = {
+              ...repo,
+              // Set is_starred based on local tracking or existing value
+              is_starred: repo.is_starred || starredRepos.has(repo.id),
+            };
+            return (
+              <RepoCard
+                key={repo.id}
+                repository={repoWithStarState}
+                onToggleStar={() => {
+                  if (repoWithStarState.is_starred) {
+                    onUnstar(repo.id);
+                  } else {
+                    onStar(repo.id);
+                  }
+                }}
+              />
+            );
+          })}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
+      {/* Pagination - Hide when 0 results or 1-10 results in single page */}
+      {totalPages > 1 && sortedRepos.length > 0 && (
         <div className="flex items-center justify-between bg-white px-4 py-3 sm:px-6 rounded-lg shadow">
           <div className="flex flex-1 justify-between sm:hidden">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
+              onClick={() => {
+                if (dataIsPrepaginated) {
+                  onPrepaginatedPageChange(Math.max(1, activePage - 1));
+                } else {
+                  setCurrentPage((prev) => Math.max(1, prev - 1));
+                }
+              }}
+              disabled={activePage === 1}
               className="relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => {
+                if (dataIsPrepaginated) {
+                  const nextPage = activePage + 1;
+                  if (hasMoreResults || nextPage <= totalPages) {
+                    onPrepaginatedPageChange(nextPage);
+                  }
+                } else {
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                }
+              }}
+              disabled={
+                dataIsPrepaginated
+                  ? !hasMoreResults && activePage >= totalPages
+                  : activePage === totalPages
+              }
               className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
           </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Page <span className="font-medium">{currentPage}</span> of{' '}
-                <span className="font-medium">{totalPages}</span>
-              </p>
-            </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-center">
             <div>
               <nav
                 className="isolate inline-flex -space-x-px rounded-md shadow-sm"
                 aria-label="Pagination"
               >
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => {
+                    if (dataIsPrepaginated) {
+                      onPrepaginatedPageChange(Math.max(1, activePage - 1));
+                    } else {
+                      setCurrentPage((prev) => Math.max(1, prev - 1));
+                    }
+                  }}
+                  disabled={activePage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Previous</span>
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
 
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
+                {/* Page numbers with ellipsis */}
+                {totalPages > 1 &&
+                  (() => {
+                    const pages = [];
+                    const maxVisiblePages = 7;
 
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                        currentPage === pageNum
-                          ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                    if (totalPages <= maxVisiblePages) {
+                      // Show all pages if we have 7 or fewer
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Always show first page
+                      pages.push(1);
+
+                      // Logic for middle pages and ellipsis
+                      if (activePage <= 4) {
+                        // Near the beginning: 1, 2, 3, 4, 5, ..., last
+                        for (let i = 2; i <= 5; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      } else if (activePage >= totalPages - 3) {
+                        // Near the end: 1, ..., last-4, last-3, last-2, last-1, last
+                        pages.push('ellipsis');
+                        for (let i = totalPages - 4; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        // In the middle: 1, ..., current-1, current, current+1, ..., last
+                        pages.push('ellipsis');
+                        for (let i = activePage - 1; i <= activePage + 1; i++) {
+                          pages.push(i);
+                        }
+                        pages.push('ellipsis');
+                        pages.push(totalPages);
+                      }
+                    }
+
+                    return pages.map((page, index) => {
+                      if (page === 'ellipsis') {
+                        return (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      const pageNum = page as number;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            if (dataIsPrepaginated) {
+                              onPrepaginatedPageChange(pageNum);
+                            } else {
+                              setCurrentPage(pageNum);
+                            }
+                          }}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            activePage === pageNum
+                              ? 'z-10 bg-indigo-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    });
+                  })()}
 
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    if (dataIsPrepaginated) {
+                      const nextPage = activePage + 1;
+                      if (hasMoreResults || nextPage <= totalPages) {
+                        onPrepaginatedPageChange(nextPage);
+                      }
+                    } else {
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                    }
+                  }}
+                  disabled={
+                    dataIsPrepaginated
+                      ? !hasMoreResults && activePage >= totalPages
+                      : activePage === totalPages
+                  }
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Next</span>

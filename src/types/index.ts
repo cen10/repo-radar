@@ -23,7 +23,9 @@ export interface Repository {
   updated_at: string;
   pushed_at: string | null;
   created_at: string;
-  starred_at?: string;
+  is_starred: boolean; // Simple boolean to indicate star status
+  metrics?: RepositoryMetrics;
+  is_following?: boolean; // Deprecated - to be removed
 }
 
 export interface RepositoryMetrics {
@@ -32,9 +34,4 @@ export interface RepositoryMetrics {
   releases_count?: number;
   last_release_date?: string | null;
   is_trending?: boolean;
-}
-
-export interface RepositoryWithMetrics extends Repository {
-  metrics?: RepositoryMetrics;
-  is_following?: boolean;
 }
