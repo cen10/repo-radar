@@ -65,6 +65,8 @@ const defaultProps = {
   onSearchSubmit: vi.fn(),
   filterBy: 'all' as const,
   onFilterChange: vi.fn(),
+  onPrepaginatedPageChange: vi.fn(),
+  dataIsPrepaginated: false,
 };
 
 describe('RepositoryList', () => {
@@ -450,7 +452,7 @@ describe('RepositoryList', () => {
     });
   });
 
-  describe('Pagination', () => {
+  describe('Pagination (RepositoryList slices repositories array internally)', () => {
     it('displays correct number of items per page', () => {
       const repos = Array.from({ length: 15 }, (_, i) =>
         createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
@@ -601,6 +603,218 @@ describe('RepositoryList', () => {
       // Should be back on page 1
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.queryByTestId('repo-card-6')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Pagination (Dashboard provides pre-paginated data)', () => {
+    it('uses totalSearchPages for pagination instead of calculating from array length', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={10}
+          currentPage={1}
+        />
+      );
+
+      // Should show page 10 button (from totalPages), not just 1 page
+      expect(screen.getByRole('button', { name: '10' })).toBeInTheDocument();
+    });
+
+    it('calls onPrepaginatedPageChange when navigating to a specific page', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={1}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
+      const page2Button = screen.getByRole('button', { name: '2' });
+      fireEvent.click(page2Button);
+
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(2);
+    });
+
+    it('calls onPrepaginatedPageChange when clicking next button', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={1}
+          hasMoreResults={true}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
+      // Find the desktop next button (the one with sr-only "Next" text)
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+      fireEvent.click(nextButtons[0]);
+
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(2);
+    });
+
+    it('calls onPrepaginatedPageChange when clicking previous button', () => {
+      const mockOnPrepaginatedPageChange = vi.fn();
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={2}
+          onPrepaginatedPageChange={mockOnPrepaginatedPageChange}
+        />
+      );
+
+      // Find the desktop previous button
+      const prevButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Previous';
+      });
+      fireEvent.click(prevButtons[0]);
+
+      expect(mockOnPrepaginatedPageChange).toHaveBeenCalledWith(1);
+    });
+
+    it('displays all provided repositories without slicing', () => {
+      // With dataIsPrepaginated, all repos should display (Dashboard already sliced)
+      const repos = Array.from({ length: 30 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={5}
+          currentPage={1}
+          itemsPerPage={10}
+        />
+      );
+
+      // All 30 should be visible, not just 10
+      expect(screen.getAllByTestId(/repo-card-/)).toHaveLength(30);
+    });
+
+    it('highlights current page from currentPage prop', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={5}
+          currentPage={3}
+        />
+      );
+
+      const page3Button = screen.getByRole('button', { name: '3' });
+      expect(page3Button).toHaveClass('bg-indigo-600');
+    });
+
+    it('disables next button when hasMoreResults is false and on last page', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={3}
+          hasMoreResults={false}
+        />
+      );
+
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+
+      nextButtons.forEach((btn) => {
+        expect(btn).toBeDisabled();
+      });
+    });
+
+    it('enables next button when hasMoreResults is true even on calculated last page', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={3}
+          currentPage={3}
+          hasMoreResults={true}
+        />
+      );
+
+      const nextButtons = screen.getAllByRole('button').filter((btn) => {
+        const srOnly = btn.querySelector('.sr-only');
+        return srOnly?.textContent === 'Next';
+      });
+
+      nextButtons.forEach((btn) => {
+        expect(btn).not.toBeDisabled();
+      });
+    });
+
+    it('calculates totalPages from apiSearchResultTotal when totalPages is 0', () => {
+      const repos = Array.from({ length: 5 }, (_, i) =>
+        createMockRepository({ id: i + 1, name: `repo-${i + 1}` })
+      );
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          dataIsPrepaginated={true}
+          totalPages={0}
+          apiSearchResultTotal={50}
+          itemsPerPage={10}
+          currentPage={1}
+        />
+      );
+
+      // Should calculate 5 pages from 50 results / 10 per page
+      expect(screen.getByRole('button', { name: '5' })).toBeInTheDocument();
     });
   });
 

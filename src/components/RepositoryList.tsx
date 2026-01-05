@@ -30,15 +30,16 @@ interface RepositoryListProps {
   onSearchChange: (query: string) => void;
   onSearchSubmit: (query: string) => void;
   isSearching?: boolean;
-  isShowingSearchResults?: boolean;
   filterBy: FilterOption;
   onFilterChange: (filter: FilterOption) => void;
-  // Search pagination props
-  searchPage?: number;
-  totalSearchPages?: number;
+  // Props for prepaginated data that Dashboard provides when the Github search api is used
+  currentPage?: number;
+  totalPages?: number;
   hasMoreResults?: boolean;
-  onSearchPageChange?: (page: number) => void;
+  onPrepaginatedPageChange: (page: number) => void;
   apiSearchResultTotal?: number;
+  // When true, caller provides pre-paginated data. When false, RepositoryList paginates internally.
+  dataIsPrepaginated: boolean;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -53,14 +54,14 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onSearchChange,
   onSearchSubmit,
   isSearching = false,
-  isShowingSearchResults = false,
+  dataIsPrepaginated,
   filterBy,
   onFilterChange,
   // Search pagination props
-  searchPage = 1,
-  totalSearchPages = 0,
+  currentPage: propCurrentPage = 1,
+  totalPages: propTotalPages = 0,
   hasMoreResults = false,
-  onSearchPageChange,
+  onPrepaginatedPageChange,
   // Additional pagination info for enhanced display
   apiSearchResultTotal,
 }) => {
@@ -107,30 +108,26 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     return sorted;
   }, [repositories, sortBy]);
 
-  // Search mode: server-side pagination of search results. Local mode: client-side pagination
-  // of starred repos loaded and cached on page mount
-  const isSearchMode = !!(isShowingSearchResults && onSearchPageChange);
-
-  // Pagination logic differs for search vs local browsing
+  // Pagination logic differs based on whether caller provides pre-paginated data
   let totalPages: number;
   let currentRepos: Repository[];
   let activePage: number;
 
-  if (isSearchMode) {
-    // Search mode: use server-side pagination
-    if (totalSearchPages > 0) {
-      totalPages = totalSearchPages;
+  if (dataIsPrepaginated) {
+    // Dashboard provides pre-paginated data
+    if (propTotalPages > 0) {
+      totalPages = propTotalPages;
     } else if (apiSearchResultTotal !== undefined && itemsPerPage) {
       // Calculate from API data if available
       totalPages = Math.ceil(apiSearchResultTotal / itemsPerPage);
     } else {
       // Fallback to legacy logic
-      totalPages = hasMoreResults ? searchPage + 1 : searchPage;
+      totalPages = hasMoreResults ? propCurrentPage + 1 : propCurrentPage;
     }
     currentRepos = sortedRepos; // All results from current search page
-    activePage = searchPage;
+    activePage = propCurrentPage;
   } else {
-    // Local mode: use client-side pagination
+    // Full array provided; RepositoryList slices per page
     totalPages = Math.ceil(sortedRepos.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -331,8 +328,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <div className="flex flex-1 justify-between sm:hidden">
             <button
               onClick={() => {
-                if (isSearchMode && onSearchPageChange) {
-                  onSearchPageChange(Math.max(1, activePage - 1));
+                if (dataIsPrepaginated) {
+                  onPrepaginatedPageChange(Math.max(1, activePage - 1));
                 } else {
                   setCurrentPage((prev) => Math.max(1, prev - 1));
                 }
@@ -344,17 +341,17 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             </button>
             <button
               onClick={() => {
-                if (isSearchMode && onSearchPageChange) {
+                if (dataIsPrepaginated) {
                   const nextPage = activePage + 1;
                   if (hasMoreResults || nextPage <= totalPages) {
-                    onSearchPageChange(nextPage);
+                    onPrepaginatedPageChange(nextPage);
                   }
                 } else {
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1));
                 }
               }}
               disabled={
-                isSearchMode
+                dataIsPrepaginated
                   ? !hasMoreResults && activePage >= totalPages
                   : activePage === totalPages
               }
@@ -371,8 +368,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
               >
                 <button
                   onClick={() => {
-                    if (isSearchMode && onSearchPageChange) {
-                      onSearchPageChange(Math.max(1, activePage - 1));
+                    if (dataIsPrepaginated) {
+                      onPrepaginatedPageChange(Math.max(1, activePage - 1));
                     } else {
                       setCurrentPage((prev) => Math.max(1, prev - 1));
                     }
@@ -441,8 +438,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                         <button
                           key={pageNum}
                           onClick={() => {
-                            if (isSearchMode && onSearchPageChange) {
-                              onSearchPageChange(pageNum);
+                            if (dataIsPrepaginated) {
+                              onPrepaginatedPageChange(pageNum);
                             } else {
                               setCurrentPage(pageNum);
                             }
@@ -461,17 +458,17 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
                 <button
                   onClick={() => {
-                    if (isSearchMode && onSearchPageChange) {
+                    if (dataIsPrepaginated) {
                       const nextPage = activePage + 1;
                       if (hasMoreResults || nextPage <= totalPages) {
-                        onSearchPageChange(nextPage);
+                        onPrepaginatedPageChange(nextPage);
                       }
                     } else {
                       setCurrentPage((prev) => Math.min(totalPages, prev + 1));
                     }
                   }}
                   disabled={
-                    isSearchMode
+                    dataIsPrepaginated
                       ? !hasMoreResults && activePage >= totalPages
                       : activePage === totalPages
                   }

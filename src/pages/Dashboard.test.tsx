@@ -34,6 +34,7 @@ vi.mock('../components/RepositoryList', () => ({
       isSearching,
       filterBy,
       onFilterChange,
+      dataIsPrepaginated,
     }) => {
       if (isLoading) {
         return <div>Loading repositories...</div>;
@@ -43,6 +44,7 @@ vi.mock('../components/RepositoryList', () => ({
       }
       return (
         <div data-testid="repository-list">
+          <span data-testid="data-is-prepaginated">{dataIsPrepaginated ? 'true' : 'false'}</span>
           {onSearchChange && onSearchSubmit && (
             <form
               onSubmit={(e) => {
@@ -574,6 +576,145 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByText('2 repositories')).toBeInTheDocument();
         expect(screen.getByText('react')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('dataIsPrepaginated prop', () => {
+    it('sets dataIsPrepaginated to false when showing default starred view', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Default starred view should not use pre-paginated data
+      expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('false');
+    });
+
+    it('sets dataIsPrepaginated to true when searching starred repos', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+        isLimited: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      fireEvent.change(searchInput, { target: { value: 'react' } });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('true');
+      });
+    });
+
+    it('sets dataIsPrepaginated to true when searching all repos', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalCount: 100,
+        apiSearchResultTotal: 100,
+        isLimited: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Change filter to "all"
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('true');
+      });
+    });
+
+    it('resets dataIsPrepaginated to false when clearing search and returning to starred view', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+        isLimited: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Perform a search first
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      fireEvent.change(searchInput, { target: { value: 'react' } });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('true');
+      });
+
+      // Clear search and submit empty query
+      fireEvent.change(searchInput, { target: { value: '' } });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('false');
       });
     });
   });

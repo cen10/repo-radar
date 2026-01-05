@@ -16,6 +16,8 @@ import {
   removeFromLocallyUnstarred,
 } from '../utils/repository-filter';
 
+const ITEMS_PER_PAGE = 30;
+
 const Dashboard = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -26,11 +28,11 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
+  const [dataIsPrepaginated, setDataIsPrepaginated] = useState(false);
   const [filterBy, setFilterBy] = useState<'all' | 'starred'>('starred');
   const [error, setError] = useState<Error | null>(null);
-  const [searchPage, setSearchPage] = useState(1);
-  const [totalSearchPages, setTotalSearchPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [hasMoreResults, setHasMoreResults] = useState(false);
   const [apiSearchResultTotal, setApiSearchResultTotal] = useState<number | undefined>();
   const [repoLimitReached, setRepoLimitReached] = useState(false);
@@ -118,96 +120,86 @@ const Dashboard = () => {
     }
   }, [user, session, authLoading]);
 
-  // Search repositories with appropriate API based on filter
+  // Reset to default starred repos view (no API call, client-side pagination)
+  const showDefaultStarredView = useCallback(() => {
+    setSearchResults([]);
+    setRepositories(filterOutLocallyUnstarred(starredRepositories));
+    setDataIsPrepaginated(false);
+    setCurrentPage(1);
+    setTotalPages(0);
+    setHasMoreResults(false);
+    setApiSearchResultTotal(undefined);
+  }, [starredRepositories]);
+
+  // Search within user's starred repositories via API
+  const searchWithinStarredRepos = useCallback(
+    async (query: string, page: number) => {
+      const starredResponse = await searchStarredRepositories(
+        session,
+        query,
+        page,
+        ITEMS_PER_PAGE,
+        starredRepositories
+      );
+
+      const totalPages = Math.ceil(starredResponse.totalCount / ITEMS_PER_PAGE);
+
+      setSearchResults(starredResponse.repositories);
+      setRepositories(filterOutLocallyUnstarred(starredResponse.repositories));
+      setDataIsPrepaginated(true);
+      setCurrentPage(page);
+      setTotalPages(totalPages);
+      setHasMoreResults(page < totalPages);
+      setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
+    },
+    [session, starredRepositories]
+  );
+
+  // Search all GitHub repositories via API
+  const searchAllGitHubRepos = useCallback(
+    async (query: string, page: number) => {
+      const searchResponse = await searchRepositories(session, query, page, ITEMS_PER_PAGE);
+
+      const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
+
+      setSearchResults(searchResponse.repositories);
+      setRepositories(filterOutLocallyUnstarred(searchResponse.repositories));
+      setDataIsPrepaginated(true);
+      setCurrentPage(page);
+      setTotalPages(totalPages);
+      setHasMoreResults(page < totalPages);
+      setApiSearchResultTotal(searchResponse.apiSearchResultTotal);
+    },
+    [session]
+  );
+
+  // Main search router - determines which search behavior to use
   const performSearch = useCallback(
     async (query: string, filter: 'all' | 'starred', page = 1) => {
-      if (!query.trim()) {
-        if (filter === 'starred') {
-          // Show starred repositories with filtering applied
-          setSearchResults([]);
-          setRepositories(filterOutLocallyUnstarred(starredRepositories));
-          setIsShowingSearchResults(false);
-          setSearchPage(1);
-          setTotalSearchPages(0);
-          setHasMoreResults(false);
-          setApiSearchResultTotal(undefined);
-          return;
-        } else {
-          // For 'all' filter with empty query, search for most starred repositories
-          query = 'stars:>1'; // Get repositories with at least 1 star, sorted by stars desc
-        }
+      // No query + starred filter = show default view
+      if (!query.trim() && filter === 'starred') {
+        showDefaultStarredView();
+        return;
       }
 
-      // Set searching state immediately
+      // No query + all filter = search for popular repos
+      const effectiveQuery = query.trim() || 'stars:>1';
+
       setIsSearching(true);
 
-      if (session?.provider_token) {
-        try {
-          let results: Repository[];
-          const perPage = 30;
-
-          if (filter === 'starred') {
-            // Search within starred repositories only
-            const starredResponse = await searchStarredRepositories(
-              session,
-              query,
-              page,
-              perPage,
-              starredRepositories
-            );
-            results = starredResponse.repositories;
-
-            // Set pagination info for client-side filtered starred repos
-            const totalPages = Math.ceil(starredResponse.totalCount / perPage);
-            setTotalSearchPages(totalPages);
-            setHasMoreResults(page < totalPages);
-            setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
-          } else {
-            // Search all GitHub repositories
-            const searchResponse = await searchRepositories(session, query, page, perPage);
-            results = searchResponse.repositories;
-
-            // Set pagination info based on GitHub API response
-            const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / perPage);
-            setTotalSearchPages(totalPages);
-            setHasMoreResults(page < totalPages);
-            setApiSearchResultTotal(searchResponse.apiSearchResultTotal);
-          }
-
-          setSearchResults(results);
-          setRepositories(filterOutLocallyUnstarred(results));
-          setIsShowingSearchResults(true);
-          setSearchPage(page);
-        } catch (err) {
-          setError(err instanceof Error ? err : new Error('Search failed'));
-        } finally {
-          setIsSearching(false);
+      try {
+        if (filter === 'starred') {
+          await searchWithinStarredRepos(effectiveQuery, page);
+        } else {
+          await searchAllGitHubRepos(effectiveQuery, page);
         }
-      } else {
-        // No token, search locally in starred repos only
-        const localQuery = query.toLowerCase();
-        const localMatches = starredRepositories.filter((repo) => {
-          const searchIn = [
-            repo.name,
-            repo.full_name,
-            repo.description || '',
-            repo.language || '',
-            ...(repo.topics || []),
-          ]
-            .join(' ')
-            .toLowerCase();
-          return searchIn.includes(localQuery);
-        });
-
-        setRepositories(filterOutLocallyUnstarred(localMatches));
-        setIsShowingSearchResults(true);
-        setSearchPage(1);
-        setTotalSearchPages(0);
-        setHasMoreResults(false);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Search failed'));
+      } finally {
         setIsSearching(false);
       }
     },
-    [session, starredRepositories]
+    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos]
   );
 
   // Handle search input changes (just updates the input value, no search)
@@ -224,7 +216,7 @@ const Dashboard = () => {
       }
 
       // Reset to page 1 for new searches
-      setSearchPage(1);
+      setCurrentPage(1);
 
       // Perform search immediately
       void performSearch(query, filterBy, 1);
@@ -236,15 +228,10 @@ const Dashboard = () => {
   const handleFilterChange = useCallback(
     (filter: 'all' | 'starred') => {
       setFilterBy(filter);
-      setSearchPage(1); // Reset to page 1 when changing filters
+      setCurrentPage(1); // Reset to page 1 when changing filters
 
-      // If there's a search query, re-run search with new filter
-      if (searchQuery.trim()) {
-        void performSearch(searchQuery, filter, 1);
-      } else {
-        // No search query, use performSearch to handle appropriate default view based on filter
-        void performSearch('', filter, 1);
-      }
+      // Re-run search with new filter (performSearch handles all cases)
+      void performSearch(searchQuery, filter, 1);
     },
     [performSearch, searchQuery]
   );
@@ -428,14 +415,14 @@ const Dashboard = () => {
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           isSearching={isSearching}
-          isShowingSearchResults={isShowingSearchResults}
+          dataIsPrepaginated={dataIsPrepaginated}
           filterBy={filterBy}
           onFilterChange={handleFilterChange}
-          itemsPerPage={30}
-          searchPage={searchPage}
-          totalSearchPages={totalSearchPages}
+          itemsPerPage={ITEMS_PER_PAGE}
+          currentPage={currentPage}
+          totalPages={totalPages}
           hasMoreResults={hasMoreResults}
-          onSearchPageChange={handleSearchPageChange}
+          onPrepaginatedPageChange={handleSearchPageChange}
           apiSearchResultTotal={apiSearchResultTotal}
         />
       </div>
