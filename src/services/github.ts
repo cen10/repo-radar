@@ -278,7 +278,8 @@ export async function searchRepositories(
   session: Session | null,
   query: string,
   page = 1,
-  perPage = 30
+  perPage = 30,
+  signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
@@ -307,13 +308,13 @@ export async function searchRepositories(
 
   try {
     const response = await fetch(url.toString(), {
+      signal,
       headers: {
         Authorization: `Bearer ${session.provider_token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
     });
-
     if (!response.ok) {
       if (response.status === 401) {
         throw new Error('GitHub authentication failed. Please sign in again.');
@@ -381,6 +382,10 @@ export async function searchRepositories(
       isLimited,
     };
   } catch (error) {
+    // Re-throw abort errors without logging - they're expected
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
     logger.error('Failed to search repositories:', error);
     throw error;
   }
@@ -400,7 +405,8 @@ export async function searchStarredRepositories(
   query: string,
   page = 1,
   perPage = 30,
-  allStarredRepos?: Repository[]
+  allStarredRepos?: Repository[],
+  signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
@@ -408,6 +414,11 @@ export async function searchStarredRepositories(
   isLimited: boolean;
 }> {
   try {
+    // Check for abort before doing work
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
     // Get all starred repos (either provided or fetch them)
     let starredRepos: Repository[];
     if (allStarredRepos) {
@@ -415,6 +426,11 @@ export async function searchStarredRepositories(
     } else {
       // Fetch all starred repos - this is expensive but necessary for accurate client-side search
       starredRepos = await fetchStarredRepositories(session, 1, 100); // Get up to 100 for now
+    }
+
+    // Check for abort after async work
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
     }
 
     // Filter repos based on search query
@@ -445,6 +461,10 @@ export async function searchStarredRepositories(
       isLimited: false, // Client-side filtering has no API limitations
     };
   } catch (error) {
+    // Re-throw abort errors without logging - they're expected
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
     logger.error('Failed to search starred repositories:', error);
     throw error;
   }

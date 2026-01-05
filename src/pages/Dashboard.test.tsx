@@ -330,7 +330,8 @@ describe('Dashboard', () => {
         'vue',
         1,
         30,
-        mockRepositories
+        mockRepositories,
+        expect.any(AbortSignal)
       );
     });
 
@@ -522,7 +523,8 @@ describe('Dashboard', () => {
           mockSession,
           'stars:>1',
           1,
-          30
+          30,
+          expect.any(AbortSignal)
         );
       });
 
@@ -566,7 +568,8 @@ describe('Dashboard', () => {
           mockSession,
           'stars:>1',
           1,
-          30
+          30,
+          expect.any(AbortSignal)
         );
       });
 
@@ -716,6 +719,288 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(screen.getByTestId('data-is-prepaginated')).toHaveTextContent('false');
       });
+    });
+  });
+
+  // Add this describe block to Dashboard.test.tsx
+  // NOTE: These tests require the signal parameter to be passed through to the mocked functions
+
+  describe('Search race condition handling', () => {
+    it('ignores stale search results when a newer search is initiated', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      const vueRepos: Repository[] = [
+        {
+          ...mockRepositories[0],
+          id: 100,
+          name: 'vue',
+          full_name: 'vuejs/vue',
+        },
+      ];
+
+      const reactRepos: Repository[] = [
+        {
+          ...mockRepositories[0],
+          id: 101,
+          name: 'react-query',
+          full_name: 'tanstack/react-query',
+        },
+      ];
+
+      let firstSearchResolve: (value: unknown) => void;
+      const firstSearchPromise = new Promise((resolve) => {
+        firstSearchResolve = resolve;
+      });
+
+      let searchCallCount = 0;
+      vi.mocked(githubService.searchStarredRepositories).mockImplementation(
+        async (_session, _query, _page, _perPage, _allStarredRepos, signal) => {
+          searchCallCount++;
+          const callNumber = searchCallCount;
+
+          if (callNumber === 1) {
+            // First search: wait for manual resolution (simulates slow response)
+            await firstSearchPromise;
+
+            // Check abort after delay - simulates real fetch behavior
+            if (signal?.aborted) {
+              throw new DOMException('Aborted', 'AbortError');
+            }
+
+            return {
+              repositories: vueRepos,
+              totalCount: 1,
+              apiSearchResultTotal: 1,
+              isLimited: false,
+            };
+          } else {
+            // Second search: resolve immediately (simulates fast response)
+            return {
+              repositories: reactRepos,
+              totalCount: 1,
+              apiSearchResultTotal: 1,
+              isLimited: false,
+            };
+          }
+        }
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      // First search: "vue" (will be slow)
+      fireEvent.change(searchInput, { target: { value: 'vue' } });
+      fireEvent.click(searchButton);
+
+      // Second search: "react" (will be fast) - initiated before first completes
+      fireEvent.change(searchInput, { target: { value: 'react' } });
+      fireEvent.click(searchButton);
+
+      // Wait for second search to complete
+      await waitFor(() => {
+        expect(screen.getByText('react-query')).toBeInTheDocument();
+      });
+
+      // Now let the first (stale) search complete - it should throw AbortError
+      firstSearchResolve!({});
+
+      // Give time for any potential state updates from stale response
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still show react results, not vue (stale) results
+      expect(screen.getByText('react-query')).toBeInTheDocument();
+      expect(screen.queryByText('vue')).not.toBeInTheDocument();
+    });
+
+    it('ignores stale results when filter changes during search', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      const starredSearchRepos: Repository[] = [
+        {
+          ...mockRepositories[0],
+          id: 200,
+          name: 'starred-result',
+          full_name: 'user/starred-result',
+        },
+      ];
+
+      const allSearchRepos: Repository[] = [
+        {
+          ...mockRepositories[0],
+          id: 201,
+          name: 'all-repos-result',
+          full_name: 'popular/all-repos-result',
+        },
+      ];
+
+      let starredSearchResolve: (value: unknown) => void;
+      const starredSearchPromise = new Promise((resolve) => {
+        starredSearchResolve = resolve;
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockImplementation(
+        async (_session, _query, _page, _perPage, _allStarredRepos, signal) => {
+          await starredSearchPromise;
+
+          // Check abort after delay
+          if (signal?.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+          }
+
+          return {
+            repositories: starredSearchRepos,
+            totalCount: 1,
+            apiSearchResultTotal: 1,
+            isLimited: false,
+          };
+        }
+      );
+
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: allSearchRepos,
+        totalCount: 1,
+        apiSearchResultTotal: 1,
+        isLimited: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+      const filterSelect = screen.getByTestId('filter-select');
+
+      // Start search in "starred" mode (will be slow)
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      fireEvent.click(searchButton);
+
+      // Change filter to "all" before starred search completes
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for "all" search to complete
+      await waitFor(() => {
+        expect(screen.getByText('all-repos-result')).toBeInTheDocument();
+      });
+
+      // Now let the stale starred search complete - it should throw AbortError
+      starredSearchResolve!({});
+
+      // Give time for any potential state updates
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still show "all" results, not stale "starred" results
+      expect(screen.getByText('all-repos-result')).toBeInTheDocument();
+      expect(screen.queryByText('starred-result')).not.toBeInTheDocument();
+    });
+
+    it('ignores stale results when search is cleared', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      const searchRepos: Repository[] = [
+        {
+          ...mockRepositories[0],
+          id: 300,
+          name: 'search-result',
+          full_name: 'org/search-result',
+        },
+      ];
+
+      let searchResolve: (value: unknown) => void;
+      const searchPromise = new Promise((resolve) => {
+        searchResolve = resolve;
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockImplementation(
+        async (_session, _query, _page, _perPage, _allStarredRepos, signal) => {
+          await searchPromise;
+
+          // Check abort after delay - simulates real fetch behavior
+          if (signal?.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+          }
+
+          return {
+            repositories: searchRepos,
+            totalCount: 1,
+            apiSearchResultTotal: 1,
+            isLimited: false,
+          };
+        }
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Verify initial starred repos are shown
+      expect(screen.getByText('react')).toBeInTheDocument();
+      expect(screen.getByText('typescript')).toBeInTheDocument();
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      // Start search (will be slow)
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      fireEvent.click(searchButton);
+
+      // Clear search before it completes
+      fireEvent.change(searchInput, { target: { value: '' } });
+      fireEvent.click(searchButton);
+
+      // Should immediately show original starred repos
+      await waitFor(() => {
+        expect(screen.getByText('react')).toBeInTheDocument();
+        expect(screen.getByText('typescript')).toBeInTheDocument();
+      });
+
+      // Now let the stale search complete - it should throw AbortError
+      searchResolve!({});
+
+      // Give time for any potential state updates
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still show starred repos, not stale search results
+      expect(screen.getByText('react')).toBeInTheDocument();
+      expect(screen.getByText('typescript')).toBeInTheDocument();
+      expect(screen.queryByText('search-result')).not.toBeInTheDocument();
     });
   });
 });

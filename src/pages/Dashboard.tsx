@@ -38,7 +38,7 @@ const Dashboard = () => {
   const [repoLimitReached, setRepoLimitReached] = useState(false);
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const searchAbortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -133,13 +133,14 @@ const Dashboard = () => {
 
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
-    async (query: string, page: number) => {
+    async (query: string, page: number, signal?: AbortSignal) => {
       const starredResponse = await searchStarredRepositories(
         session,
         query,
         page,
         ITEMS_PER_PAGE,
-        starredRepositories
+        starredRepositories,
+        signal
       );
 
       const totalPages = Math.ceil(starredResponse.totalCount / ITEMS_PER_PAGE);
@@ -157,8 +158,8 @@ const Dashboard = () => {
 
   // Search all GitHub repositories via API
   const searchAllGitHubRepos = useCallback(
-    async (query: string, page: number) => {
-      const searchResponse = await searchRepositories(session, query, page, ITEMS_PER_PAGE);
+    async (query: string, page: number, signal?: AbortSignal) => {
+      const searchResponse = await searchRepositories(session, query, page, ITEMS_PER_PAGE, signal);
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
 
@@ -176,6 +177,11 @@ const Dashboard = () => {
   // Main search router - determines which search behavior to use
   const performSearch = useCallback(
     async (query: string, filter: 'all' | 'starred', page = 1) => {
+      // Abort any in-flight search request
+      searchAbortControllerRef.current?.abort();
+      searchAbortControllerRef.current = new AbortController();
+      const signal = searchAbortControllerRef.current.signal;
+
       // No query + starred filter = show default view
       if (!query.trim() && filter === 'starred') {
         showDefaultStarredView();
@@ -189,14 +195,22 @@ const Dashboard = () => {
 
       try {
         if (filter === 'starred') {
-          await searchWithinStarredRepos(effectiveQuery, page);
+          await searchWithinStarredRepos(effectiveQuery, page, signal);
         } else {
-          await searchAllGitHubRepos(effectiveQuery, page);
+          await searchAllGitHubRepos(effectiveQuery, page, signal);
         }
       } catch (err) {
+        // Silently ignore abort errors - request was superseded by newer search
+        // Note: DOMException may not be instanceof Error in all environments (e.g., jsdom)
+        if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
+          return;
+        }
         setError(err instanceof Error ? err : new Error('Search failed'));
       } finally {
-        setIsSearching(false);
+        // Only clear searching state if this request wasn't aborted
+        if (!signal.aborted) {
+          setIsSearching(false);
+        }
       }
     },
     [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos]
@@ -210,11 +224,6 @@ const Dashboard = () => {
   // Handle search submission (when user clicks search button or hits enter)
   const handleSearchSubmit = useCallback(
     (query: string) => {
-      // Clear any existing timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-
       // Reset to page 1 for new searches
       setCurrentPage(1);
 
@@ -236,13 +245,11 @@ const Dashboard = () => {
     [performSearch, searchQuery]
   );
 
-  // Cleanup timeout on unmount
+  // Cleanup abort controller on unmount
   useEffect(() => {
-    const timeoutRef = searchTimeoutRef.current;
     return () => {
-      if (timeoutRef) {
-        clearTimeout(timeoutRef);
-      }
+      // Abort any in-flight search when component unmounts
+      searchAbortControllerRef.current?.abort();
     };
   }, []);
 
