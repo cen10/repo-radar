@@ -152,7 +152,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   // Error state
   if (error) {
-    const isGitHubAuthError = error.message.includes('GitHub connection required');
+    const isGitHubAuthError = error.message.includes('session has expired');
+
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">Error loading repositories</p>
