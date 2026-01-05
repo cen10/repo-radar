@@ -107,7 +107,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     return sorted;
   }, [repositories, sortBy]);
 
-  // Determine if we're in search mode (external search pagination) or local mode (client-side pagination)
+  // Search mode: server-side pagination of search results. Local mode: client-side pagination
+  // of starred repos loaded and cached on page mount
   const isSearchMode = !!(isShowingSearchResults && onSearchPageChange);
 
   // Pagination logic differs for search vs local browsing
