@@ -193,13 +193,13 @@ describe('Dashboard', () => {
     vi.mocked(githubService.searchRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
-      effectiveTotal: 0,
+      apiSearchResultTotal: 0,
       isLimited: false,
     });
     vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
-      effectiveTotal: 0,
+      apiSearchResultTotal: 0,
       isLimited: false,
     });
   });
@@ -496,7 +496,7 @@ describe('Dashboard', () => {
       vi.mocked(githubService.searchRepositories).mockResolvedValue({
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
-        effectiveTotal: 1000,
+        apiSearchResultTotal: 1000,
         isLimited: true,
       });
 
@@ -540,7 +540,7 @@ describe('Dashboard', () => {
       vi.mocked(githubService.searchRepositories).mockResolvedValue({
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
-        effectiveTotal: 1000,
+        apiSearchResultTotal: 1000,
         isLimited: true,
       });
 

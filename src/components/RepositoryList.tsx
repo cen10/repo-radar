@@ -38,8 +38,7 @@ interface RepositoryListProps {
   totalSearchPages?: number;
   hasMoreResults?: boolean;
   onSearchPageChange?: (page: number) => void;
-  // Additional pagination info for enhanced display
-  effectiveTotal?: number;
+  apiSearchResultTotal?: number;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -63,7 +62,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   hasMoreResults = false,
   onSearchPageChange,
   // Additional pagination info for enhanced display
-  effectiveTotal,
+  apiSearchResultTotal,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('stars-desc');
@@ -131,9 +130,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     // Search mode: use server-side pagination
     if (totalSearchPages > 0) {
       totalPages = totalSearchPages;
-    } else if (effectiveTotal !== undefined && itemsPerPage) {
+    } else if (apiSearchResultTotal !== undefined && itemsPerPage) {
       // Calculate from API data if available
-      totalPages = Math.ceil(effectiveTotal / itemsPerPage);
+      totalPages = Math.ceil(apiSearchResultTotal / itemsPerPage);
     } else {
       // Fallback to legacy logic
       totalPages = hasMoreResults ? searchPage + 1 : searchPage;

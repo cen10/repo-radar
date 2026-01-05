@@ -32,7 +32,7 @@ const Dashboard = () => {
   const [searchPage, setSearchPage] = useState(1);
   const [totalSearchPages, setTotalSearchPages] = useState(0);
   const [hasMoreResults, setHasMoreResults] = useState(false);
-  const [effectiveTotal, setEffectiveTotal] = useState<number | undefined>();
+  const [apiSearchResultTotal, setApiSearchResultTotal] = useState<number | undefined>();
   const [repoLimitReached, setRepoLimitReached] = useState(false);
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
@@ -130,7 +130,7 @@ const Dashboard = () => {
           setSearchPage(1);
           setTotalSearchPages(0);
           setHasMoreResults(false);
-          setEffectiveTotal(undefined);
+          setApiSearchResultTotal(undefined);
           return;
         } else {
           // For 'all' filter with empty query, search for most starred repositories
@@ -161,17 +161,17 @@ const Dashboard = () => {
             const totalPages = Math.ceil(starredResponse.totalCount / perPage);
             setTotalSearchPages(totalPages);
             setHasMoreResults(page < totalPages);
-            setEffectiveTotal(starredResponse.effectiveTotal);
+            setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
           } else {
             // Search all GitHub repositories
             const searchResponse = await searchRepositories(session, query, page, perPage);
             results = searchResponse.repositories;
 
             // Set pagination info based on GitHub API response
-            const totalPages = Math.ceil(searchResponse.effectiveTotal / perPage);
+            const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / perPage);
             setTotalSearchPages(totalPages);
             setHasMoreResults(page < totalPages);
-            setEffectiveTotal(searchResponse.effectiveTotal);
+            setApiSearchResultTotal(searchResponse.apiSearchResultTotal);
           }
 
           setSearchResults(results);
@@ -436,7 +436,7 @@ const Dashboard = () => {
           totalSearchPages={totalSearchPages}
           hasMoreResults={hasMoreResults}
           onSearchPageChange={handleSearchPageChange}
-          effectiveTotal={effectiveTotal}
+          apiSearchResultTotal={apiSearchResultTotal}
         />
       </div>
     </div>

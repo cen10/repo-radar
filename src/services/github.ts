@@ -282,7 +282,7 @@ export async function searchRepositories(
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
-  effectiveTotal: number;
+  apiSearchResultTotal: number;
   isLimited: boolean;
 }> {
   if (!session?.provider_token) {
@@ -341,7 +341,7 @@ export async function searchRepositories(
 
     // Apply GitHub API limitation (max 1000 results accessible)
     const GITHUB_SEARCH_LIMIT = 1000;
-    const effectiveTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
+    const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
     const isLimited = totalCount > GITHUB_SEARCH_LIMIT;
 
     // Check if these repos are in user's starred list
@@ -377,7 +377,7 @@ export async function searchRepositories(
     return {
       repositories,
       totalCount,
-      effectiveTotal,
+      apiSearchResultTotal,
       isLimited,
     };
   } catch (error) {
@@ -404,7 +404,7 @@ export async function searchStarredRepositories(
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
-  effectiveTotal: number;
+  apiSearchResultTotal: number;
   isLimited: boolean;
 }> {
   try {
@@ -441,7 +441,7 @@ export async function searchStarredRepositories(
     return {
       repositories: paginatedRepos,
       totalCount,
-      effectiveTotal: totalCount, // No API limit for client-side filtering
+      apiSearchResultTotal: totalCount, // No API limit for client-side filtering
       isLimited: false, // Client-side filtering has no API limitations
     };
   } catch (error) {

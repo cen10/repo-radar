@@ -426,7 +426,7 @@ describe('GitHub API Service', () => {
       expect(result.repositories).toHaveLength(1);
       expect(result.repositories[0].name).toBe('typescript');
       expect(result.totalCount).toBe(50000);
-      expect(result.effectiveTotal).toBe(1000); // GitHub API cap
+      expect(result.apiSearchResultTotal).toBe(1000); // GitHub API cap
       expect(result.isLimited).toBe(true);
     });
 
