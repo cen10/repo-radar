@@ -39,9 +39,7 @@ interface RepositoryListProps {
   hasMoreResults?: boolean;
   onSearchPageChange?: (page: number) => void;
   // Additional pagination info for enhanced display
-  totalCount?: number;
   effectiveTotal?: number;
-  isLimited?: boolean;
 }
 
 const RepositoryList: React.FC<RepositoryListProps> = ({
@@ -65,9 +63,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   hasMoreResults = false,
   onSearchPageChange,
   // Additional pagination info for enhanced display
-  totalCount: _totalCount,
   effectiveTotal,
-  isLimited: _isLimited = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('stars-desc');

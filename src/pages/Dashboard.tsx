@@ -32,9 +32,7 @@ const Dashboard = () => {
   const [searchPage, setSearchPage] = useState(1);
   const [totalSearchPages, setTotalSearchPages] = useState(0);
   const [hasMoreResults, setHasMoreResults] = useState(false);
-  const [totalCount, setTotalCount] = useState<number | undefined>();
   const [effectiveTotal, setEffectiveTotal] = useState<number | undefined>();
-  const [isLimited, setIsLimited] = useState(false);
   const [repoLimitReached, setRepoLimitReached] = useState(false);
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
@@ -89,7 +87,7 @@ const Dashboard = () => {
         setRepositories(filteredRepos); // Initially show starred repos with filtering applied
 
         // Track if we hit the repository limit
-        setRepoLimitReached(result.isLimited);
+        setRepoLimitReached(false); // No longer tracking isLimited from starred repos
         setTotalReposFetched(result.totalFetched);
         setTotalStarredRepos(result.totalStarred);
 
@@ -132,9 +130,7 @@ const Dashboard = () => {
           setSearchPage(1);
           setTotalSearchPages(0);
           setHasMoreResults(false);
-          setTotalCount(undefined);
           setEffectiveTotal(undefined);
-          setIsLimited(false);
           return;
         } else {
           // For 'all' filter with empty query, search for most starred repositories
@@ -165,9 +161,7 @@ const Dashboard = () => {
             const totalPages = Math.ceil(starredResponse.totalCount / perPage);
             setTotalSearchPages(totalPages);
             setHasMoreResults(page < totalPages);
-            setTotalCount(starredResponse.totalCount);
             setEffectiveTotal(starredResponse.effectiveTotal);
-            setIsLimited(starredResponse.isLimited);
           } else {
             // Search all GitHub repositories
             const searchResponse = await searchRepositories(session, query, page, perPage);
@@ -177,9 +171,7 @@ const Dashboard = () => {
             const totalPages = Math.ceil(searchResponse.effectiveTotal / perPage);
             setTotalSearchPages(totalPages);
             setHasMoreResults(page < totalPages);
-            setTotalCount(searchResponse.totalCount);
             setEffectiveTotal(searchResponse.effectiveTotal);
-            setIsLimited(searchResponse.isLimited);
           }
 
           setSearchResults(results);
@@ -444,9 +436,7 @@ const Dashboard = () => {
           totalSearchPages={totalSearchPages}
           hasMoreResults={hasMoreResults}
           onSearchPageChange={handleSearchPageChange}
-          totalCount={totalCount}
           effectiveTotal={effectiveTotal}
-          isLimited={isLimited}
         />
       </div>
     </div>
