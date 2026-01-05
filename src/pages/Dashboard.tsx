@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
+  const initialLoadCompleteRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -74,8 +75,14 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Load starred repositories on mount
+  // Load starred repositories on mount (once only)
   useEffect(() => {
+    // Skip if already loaded - prevents overwriting search/filter results
+    // when session object gets a new reference (e.g., during token refresh)
+    if (initialLoadCompleteRef.current) {
+      return;
+    }
+
     const loadStarredRepositories = async () => {
       try {
         setIsLoading(true);
@@ -99,6 +106,9 @@ const Dashboard = () => {
           const starredIds = JSON.parse(savedStars) as number[];
           setStarredRepos(new Set(starredIds));
         }
+
+        // Mark initial load as complete
+        initialLoadCompleteRef.current = true;
       } catch (err) {
         // Check if it's a GitHub auth error and provide a more user-friendly message
         if (err instanceof Error && err.message.includes('No GitHub access token')) {
@@ -343,10 +353,13 @@ const Dashboard = () => {
     }
   };
 
-  // Handle search page changes
+  // Handle page changes for prepaginated data (API search results)
   const handleSearchPageChange = useCallback(
     (page: number) => {
-      if (searchQuery.trim()) {
+      // Allow pagination when:
+      // 1. There's an explicit search query, OR
+      // 2. The filter is 'all' (which shows popular repos even without a query)
+      if (searchQuery.trim() || filterBy === 'all') {
         void performSearch(searchQuery, filterBy, page);
       }
     },
