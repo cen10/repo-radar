@@ -67,8 +67,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('stars-desc');
 
-  // Search is now handled by parent component with debouncing for API calls
-
   // TODO: Replace native select elements with Headless UI Listbox components for better
   // control over styling and positioning of dropdown arrows. Native selects have
   // browser-controlled arrow positioning that can appear too close to the edge.
