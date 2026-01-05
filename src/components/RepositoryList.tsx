@@ -71,6 +71,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // control over styling and positioning of dropdown arrows. Native selects have
   // browser-controlled arrow positioning that can appear too close to the edge.
 
+  const getActivityDate = (repo: Repository): number =>
+    new Date(repo.pushed_at || repo.updated_at).getTime();
+
   const sortedRepos = useMemo(() => {
     const sorted = [...repositories];
 
@@ -82,18 +85,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         sorted.sort((a, b) => a.stargazers_count - b.stargazers_count);
         break;
       case 'activity-desc':
-        sorted.sort((a, b) => {
-          const aDate = new Date(a.pushed_at || a.updated_at);
-          const bDate = new Date(b.pushed_at || b.updated_at);
-          return bDate.getTime() - aDate.getTime();
-        });
+        sorted.sort((a, b) => getActivityDate(b) - getActivityDate(a));
         break;
       case 'activity-asc':
-        sorted.sort((a, b) => {
-          const aDate = new Date(a.pushed_at || a.updated_at);
-          const bDate = new Date(b.pushed_at || b.updated_at);
-          return aDate.getTime() - bDate.getTime();
-        });
+        sorted.sort((a, b) => getActivityDate(a) - getActivityDate(b));
         break;
       case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name));
