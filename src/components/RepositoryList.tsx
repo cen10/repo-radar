@@ -71,12 +71,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // control over styling and positioning of dropdown arrows. Native selects have
   // browser-controlled arrow positioning that can appear too close to the edge.
 
-  // No client-side filtering - repositories are pre-filtered by Dashboard
-  const filteredRepos = repositories;
-
-  // Sort repositories
   const sortedRepos = useMemo(() => {
-    const sorted = [...filteredRepos];
+    const sorted = [...repositories];
 
     switch (sortBy) {
       case 'stars-desc':
@@ -114,7 +110,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     }
 
     return sorted;
-  }, [filteredRepos, sortBy]);
+  }, [repositories, sortBy]);
 
   // Determine if we're in search mode (external search pagination) or local mode (client-side pagination)
   const isSearchMode = !!(isShowingSearchResults && onSearchPageChange);
