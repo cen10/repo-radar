@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySessionToState]);
 
   const handleAuthStateChange = useCallback(
-    async (_event: AuthChangeEvent, session: Session | null) => {
+    (_event: AuthChangeEvent, session: Session | null) => {
       try {
         applySessionToState(session);
         setLoading(false);
