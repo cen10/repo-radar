@@ -96,7 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    // Listen for auth changes - INITIAL_SESSION fires immediately with current session
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
