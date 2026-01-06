@@ -42,13 +42,16 @@ const Dashboard = () => {
   const searchAbortControllerRef = useRef<AbortController | null>(null);
   const initialLoadCompleteRef = useRef(false);
 
-  const isReauthError = (err: unknown): boolean => {
-    if (err instanceof GitHubReauthRequiredError) {
-      void signOut().then(() => navigate('/login'));
-      return true;
-    }
-    return false;
-  };
+  const isReauthError = useCallback(
+    (err: unknown): boolean => {
+      if (err instanceof GitHubReauthRequiredError) {
+        void signOut().then(() => navigate('/login'));
+        return true;
+      }
+      return false;
+    },
+    [signOut, navigate]
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,7 +132,7 @@ const Dashboard = () => {
     if (user && !authLoading) {
       void loadStarredRepositories();
     }
-  }, [user, session, authLoading, signOut, navigate]);
+  }, [user, session, authLoading, signOut, navigate, isReauthError]);
 
   // Reset to default starred repos view (no API call, client-side pagination)
   const showDefaultStarredView = useCallback(() => {
