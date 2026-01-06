@@ -113,8 +113,7 @@ const Dashboard = () => {
         setStarredRepositories(result.repositories);
         setRepositories(filteredRepos); // Initially show starred repos with filtering applied
 
-        // Track if we hit the repository limit
-        setRepoLimitReached(false); // No longer tracking isLimited from starred repos
+        setRepoLimitReached(result.isLimited);
         setTotalReposFetched(result.totalFetched);
         setTotalStarredRepos(result.totalStarred);
 

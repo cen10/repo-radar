@@ -583,6 +583,73 @@ describe('Dashboard', () => {
     });
   });
 
+  describe('Repository limit warning', () => {
+    it('shows warning banner when user has more starred repos than the fetch limit', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Simulate having 600 starred repos but only fetching 500
+      vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalFetched: 500,
+        totalStarred: 600,
+        isLimited: true,
+        hasMore: true,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Should show the warning banner with correct counts
+      expect(
+        screen.getByText(/showing first 500 of 600 starred repositories/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/100 repositories aren't displayed/i)).toBeInTheDocument();
+    });
+
+    it('does not show warning banner when all starred repos are fetched', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        session: mockSession,
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Simulate fetching all repos (no limit reached)
+      vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalFetched: 100,
+        totalStarred: 100,
+        isLimited: false,
+        hasMore: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Should NOT show the warning banner
+      expect(screen.queryByText(/showing first/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe('dataIsPrepaginated prop', () => {
     it('sets dataIsPrepaginated to false when showing default starred view', async () => {
       mockUseAuth.mockReturnValue({
