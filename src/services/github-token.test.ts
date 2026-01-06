@@ -100,45 +100,45 @@ describe('github-token service', () => {
   });
 
   describe('getValidGitHubToken', () => {
-    it('returns provider_token if available in session', async () => {
+    it('returns provider_token if available in session', () => {
       const session = {
         provider_token: 'valid-github-token',
       } as Session;
 
-      const token = await getValidGitHubToken(session);
+      const token = getValidGitHubToken(session);
       expect(token).toBe('valid-github-token');
     });
 
-    it('returns stored access token when provider_token is null', async () => {
+    it('returns stored access token when provider_token is null', () => {
       const session = {
         provider_token: null,
       } as unknown as Session;
 
       localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
 
-      const token = await getValidGitHubToken(session);
+      const token = getValidGitHubToken(session);
       expect(token).toBe('stored-access-token');
     });
 
-    it('logs info message when using stored access token', async () => {
+    it('logs info message when using stored access token', () => {
       const session = {
         provider_token: null,
       } as unknown as Session;
 
       localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
 
-      await getValidGitHubToken(session);
+      getValidGitHubToken(session);
 
       expect(logger.info).toHaveBeenCalledWith('provider_token is null, using stored access token');
     });
 
-    it('throws GitHubReauthRequiredError if no provider_token and no stored access token', async () => {
+    it('throws GitHubReauthRequiredError if no provider_token and no stored access token', () => {
       const session = {
         provider_token: null,
       } as unknown as Session;
 
-      await expect(getValidGitHubToken(session)).rejects.toThrow(GitHubReauthRequiredError);
-      await expect(getValidGitHubToken(session)).rejects.toThrow(
+      expect(() => getValidGitHubToken(session)).toThrow(GitHubReauthRequiredError);
+      expect(() => getValidGitHubToken(session)).toThrow(
         'No GitHub token available - re-authentication required'
       );
     });

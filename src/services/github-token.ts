@@ -55,7 +55,7 @@ export function clearStoredAccessToken(): void {
  * @returns A valid GitHub access token
  * @throws GitHubReauthRequiredError if no token is available
  */
-export async function getValidGitHubToken(session: Session): Promise<string> {
+export function getValidGitHubToken(session: Session): string {
   // Use provider_token if available
   if (session.provider_token) {
     return session.provider_token;

@@ -36,7 +36,7 @@ interface GitHubStarredRepo {
  * @returns Total number of starred repositories
  */
 async function fetchStarredRepoCount(session: Session): Promise<number> {
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('per_page', '1');
@@ -95,8 +95,8 @@ export async function fetchAllStarredRepositories(
     throw new Error('No GitHub access token available');
   }
 
-  // Validate token upfront (will refresh if needed)
-  await getValidGitHubToken(session);
+  // Validate token is available upfront
+  getValidGitHubToken(session);
 
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(session);
@@ -172,7 +172,7 @@ export async function fetchStarredRepositories(
     throw new Error('No GitHub access token available');
   }
 
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('page', page.toString());
@@ -298,7 +298,7 @@ export async function searchRepositories(
     throw new Error('No GitHub access token available');
   }
 
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   // Check if query is wrapped in quotes for exact match
   const isExactMatch = query.startsWith('"') && query.endsWith('"');
@@ -490,7 +490,7 @@ async function fetchUserStarredIds(session: Session | null): Promise<Set<number>
   }
 
   try {
-    const token = await getValidGitHubToken(session);
+    const token = getValidGitHubToken(session);
 
     const url = new URL(`${GITHUB_API_BASE}/user/starred`);
     url.searchParams.append('per_page', '100'); // Get first 100 starred repos
@@ -528,7 +528,7 @@ export async function starRepository(
     throw new Error('No GitHub access token available');
   }
 
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'PUT',
@@ -562,7 +562,7 @@ export async function unstarRepository(
     throw new Error('No GitHub access token available');
   }
 
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'DELETE',
@@ -597,7 +597,7 @@ export async function isRepositoryStarred(
   }
 
   try {
-    const token = await getValidGitHubToken(session);
+    const token = getValidGitHubToken(session);
 
     const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
       method: 'GET',
@@ -626,7 +626,7 @@ export async function fetchRateLimit(session: Session | null): Promise<{
     throw new Error('No GitHub access token available');
   }
 
-  const token = await getValidGitHubToken(session);
+  const token = getValidGitHubToken(session);
 
   const response = await fetch(`${GITHUB_API_BASE}/rate_limit`, {
     headers: {
