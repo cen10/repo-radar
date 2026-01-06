@@ -326,7 +326,7 @@ describe('Dashboard', () => {
       fireEvent.click(searchButton);
 
       expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
-        mockSession,
+        'test-github-token',
         'vue',
         1,
         30,
@@ -520,7 +520,7 @@ describe('Dashboard', () => {
       // Should search for most starred repositories
       await waitFor(() => {
         expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
-          mockSession,
+          'test-github-token',
           'stars:>1',
           1,
           30,
@@ -565,7 +565,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
-          mockSession,
+          'test-github-token',
           'stars:>1',
           1,
           30,

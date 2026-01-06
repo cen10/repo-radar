@@ -9,7 +9,7 @@ import {
   starRepository,
   unstarRepository,
 } from '../services/github';
-import { GitHubReauthRequiredError } from '../services/github-token';
+import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/github-token';
 import type { Repository } from '../types';
 import {
   filterOutLocallyUnstarred,
@@ -104,9 +104,11 @@ const Dashboard = () => {
         setIsLoading(true);
         setError(null);
 
+        // Get token first - throws GitHubReauthRequiredError if unavailable
+        const token = getValidGitHubToken(session!);
+
         // Fetch real data from GitHub API
-        // This will throw an error if session or provider_token is missing
-        const result = await fetchAllStarredRepositories(session);
+        const result = await fetchAllStarredRepositories(token);
         const filteredRepos = filterOutLocallyUnstarred(result.repositories);
         setStarredRepositories(result.repositories);
         setRepositories(filteredRepos); // Initially show starred repos with filtering applied
@@ -152,8 +154,9 @@ const Dashboard = () => {
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
+      const token = getValidGitHubToken(session!);
       const starredResponse = await searchStarredRepositories(
-        session,
+        token,
         query,
         page,
         ITEMS_PER_PAGE,
@@ -177,7 +180,8 @@ const Dashboard = () => {
   // Search all GitHub repositories via API
   const searchAllGitHubRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const searchResponse = await searchRepositories(session, query, page, ITEMS_PER_PAGE, signal);
+      const token = getValidGitHubToken(session!);
+      const searchResponse = await searchRepositories(token, query, page, ITEMS_PER_PAGE, signal);
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
 
@@ -233,7 +237,7 @@ const Dashboard = () => {
         }
       }
     },
-    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos, signOut, navigate]
+    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos, isReauthError]
   );
 
   // Handle search input changes (just updates the input value, no search)
@@ -289,7 +293,8 @@ const Dashboard = () => {
       }
 
       // Star the repository on GitHub
-      await starRepository(session, repo.owner.login, repo.name);
+      const token = getValidGitHubToken(session!);
+      await starRepository(token, repo.owner.login, repo.name);
 
       // Update local state to reflect the change immediately
       setStarredRepos((prev) => {
@@ -330,7 +335,8 @@ const Dashboard = () => {
       }
 
       // Unstar the repository on GitHub
-      await unstarRepository(session, repo.owner.login, repo.name);
+      const token = getValidGitHubToken(session!);
+      await unstarRepository(token, repo.owner.login, repo.name);
 
       // Add to locally unstarred list to hide until GitHub API syncs
       addToLocallyUnstarred(repoId);

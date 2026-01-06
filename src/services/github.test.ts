@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Session } from '@supabase/supabase-js';
 import {
   fetchAllStarredRepositories,
   fetchStarredRepositories,
   searchRepositories,
   fetchRateLimit,
 } from './github';
-import { GitHubReauthRequiredError } from './github-token';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -23,27 +21,10 @@ vi.mock('../utils/logger', () => ({
 }));
 
 describe('GitHub API Service', () => {
-  const mockSession: Session = {
-    provider_token: 'test-github-token',
-    access_token: 'test-access-token',
-    token_type: 'bearer',
-    expires_in: 3600,
-    expires_at: Date.now() + 3600000,
-    refresh_token: 'test-refresh-token',
-    user: {
-      id: 'test-user-id',
-      email: 'test@example.com',
-      user_metadata: {},
-      app_metadata: {},
-      aud: 'authenticated',
-      created_at: '2024-01-01T00:00:00Z',
-    },
-  };
+  const testToken = 'test-github-token';
 
   beforeEach(() => {
     mockFetch.mockClear();
-    // Clear localStorage to avoid token persistence between tests
-    localStorage.clear();
   });
 
   afterEach(() => {
@@ -79,7 +60,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await fetchStarredRepositories(mockSession);
+      const result = await fetchStarredRepositories(testToken);
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('https://api.github.com/user/starred'),
@@ -103,21 +84,6 @@ describe('GitHub API Service', () => {
       });
     });
 
-    it('should throw error when no session is provided', async () => {
-      await expect(fetchStarredRepositories(null)).rejects.toThrow(
-        'No GitHub access token available'
-      );
-    });
-
-    it('should throw GitHubReauthRequiredError when provider_token is missing', async () => {
-      // When provider_token is missing, the service checks for a stored access token
-      // If no stored access token exists, it throws GitHubReauthRequiredError
-      const sessionWithoutToken = { ...mockSession, provider_token: undefined };
-      await expect(fetchStarredRepositories(sessionWithoutToken)).rejects.toThrow(
-        GitHubReauthRequiredError
-      );
-    });
-
     it('should handle 401 authentication error', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -126,7 +92,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(fetchStarredRepositories(mockSession)).rejects.toThrow(
+      await expect(fetchStarredRepositories(testToken)).rejects.toThrow(
         'GitHub authentication failed. Please sign in again.'
       );
     });
@@ -143,7 +109,7 @@ describe('GitHub API Service', () => {
         }),
       });
 
-      await expect(fetchStarredRepositories(mockSession)).rejects.toThrow(
+      await expect(fetchStarredRepositories(testToken)).rejects.toThrow(
         /GitHub API rate limit exceeded/
       );
     });
@@ -155,7 +121,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await fetchStarredRepositories(mockSession, 2, 50);
+      await fetchStarredRepositories(testToken, 2, 50);
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get('page')).toBe('2');
@@ -224,7 +190,7 @@ describe('GitHub API Service', () => {
           headers: new Headers(),
         });
 
-      const result = await fetchAllStarredRepositories(mockSession);
+      const result = await fetchAllStarredRepositories(testToken);
 
       // Should have made three API calls: 1 for count + 2 for parallel fetching
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -298,7 +264,7 @@ describe('GitHub API Service', () => {
           headers: new Headers(),
         });
 
-      const result = await fetchAllStarredRepositories(mockSession);
+      const result = await fetchAllStarredRepositories(testToken);
 
       // Should have made two API calls: 1 for count + 1 for single page fetch
       expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -356,7 +322,7 @@ describe('GitHub API Service', () => {
           headers: new Headers(),
         });
 
-      const result = await fetchAllStarredRepositories(mockSession, 150); // Custom limit
+      const result = await fetchAllStarredRepositories(testToken, 150); // Custom limit
 
       // Should have made three API calls: 1 for count + 2 for parallel fetching (limited)
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -377,7 +343,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(fetchAllStarredRepositories(mockSession)).rejects.toThrow(
+      await expect(fetchAllStarredRepositories(testToken)).rejects.toThrow(
         'GitHub authentication failed. Please sign in again.'
       );
     });
@@ -423,7 +389,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await searchRepositories(mockSession, 'typescript');
+      const result = await searchRepositories(testToken, 'typescript');
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.pathname).toBe('/search/repositories');
@@ -450,7 +416,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await searchRepositories(mockSession, '"typescript"');
+      await searchRepositories(testToken, '"typescript"');
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get('q')).toBe('typescript in:name');
@@ -494,7 +460,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await searchRepositories(mockSession, 'test');
+      const result = await searchRepositories(testToken, 'test');
 
       expect(result.repositories[0].is_starred).toBe(true);
     });
@@ -507,13 +473,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(searchRepositories(mockSession, '')).rejects.toThrow('Invalid search query');
-    });
-
-    it('should throw error when no session token', async () => {
-      await expect(searchRepositories(null, 'test')).rejects.toThrow(
-        'No GitHub access token available'
-      );
+      await expect(searchRepositories(testToken, '')).rejects.toThrow('Invalid search query');
     });
   });
 
@@ -533,7 +493,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await fetchRateLimit(mockSession);
+      const result = await fetchRateLimit(testToken);
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.github.com/rate_limit',
@@ -568,7 +528,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await fetchRateLimit(mockSession);
+      const result = await fetchRateLimit(testToken);
 
       expect(result.limit).toBe(5000);
       expect(result.remaining).toBe(4999);
@@ -582,11 +542,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(fetchRateLimit(mockSession)).rejects.toThrow('Failed to fetch rate limit');
-    });
-
-    it('should throw error when no session token', async () => {
-      await expect(fetchRateLimit(null)).rejects.toThrow('No GitHub access token available');
+      await expect(fetchRateLimit(testToken)).rejects.toThrow('Failed to fetch rate limit');
     });
   });
 });
