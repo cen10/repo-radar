@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, connectionError]);
 
-  const signInWithGitHub = async () => {
+  const signInWithGitHub = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
@@ -136,9 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.error('Error signing in with GitHub:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     // Clear stored GitHub access token
     clearStoredAccessToken();
 
@@ -148,17 +148,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.error('Error signing out:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
-    providerToken,
-    user,
-    loading,
-    connectionError,
-    signInWithGitHub,
-    signOut,
-    retryAuth: getSession,
-  };
+  const value: AuthContextType = useMemo(
+    () => ({
+      providerToken,
+      user,
+      loading,
+      connectionError,
+      signInWithGitHub,
+      signOut,
+      retryAuth: getSession,
+    }),
+    [providerToken, user, loading, connectionError, signInWithGitHub, signOut, getSession]
+  );
 
   // DEBUG: Log when context value is recreated
   console.log('[AuthProvider] Render - creating new context value', {
