@@ -6,6 +6,11 @@ import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
+import {
+  storeRefreshToken,
+  clearStoredRefreshToken,
+  clearStoredAccessToken,
+} from '../services/github-token';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -40,6 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
     setSession(nextSession);
     setUser(nextUser);
+
+    // Store provider_refresh_token when present (on initial OAuth)
+    // This is safe to store in localStorage - refresh tokens are useless
+    // without the client_secret which is kept server-side
+    if (nextSession?.provider_refresh_token) {
+      storeRefreshToken(nextSession.provider_refresh_token);
+    }
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {
@@ -123,6 +135,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    // Clear stored GitHub tokens
+    clearStoredRefreshToken();
+    clearStoredAccessToken();
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {

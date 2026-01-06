@@ -6,6 +6,7 @@ import {
   searchRepositories,
   fetchRateLimit,
 } from './github';
+import { GitHubReauthRequiredError } from './github-token';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -41,6 +42,8 @@ describe('GitHub API Service', () => {
 
   beforeEach(() => {
     mockFetch.mockClear();
+    // Clear localStorage to avoid token persistence between tests
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -100,14 +103,18 @@ describe('GitHub API Service', () => {
       });
     });
 
-    it('should throw error when no session token is provided', async () => {
+    it('should throw error when no session is provided', async () => {
       await expect(fetchStarredRepositories(null)).rejects.toThrow(
         'No GitHub access token available'
       );
+    });
 
+    it('should throw GitHubReauthRequiredError when provider_token is missing', async () => {
+      // When provider_token is missing, the service tries to refresh using stored token
+      // If no stored refresh token exists, it throws GitHubReauthRequiredError
       const sessionWithoutToken = { ...mockSession, provider_token: undefined };
       await expect(fetchStarredRepositories(sessionWithoutToken)).rejects.toThrow(
-        'No GitHub access token available'
+        GitHubReauthRequiredError
       );
     });
 

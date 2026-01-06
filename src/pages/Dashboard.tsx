@@ -9,6 +9,7 @@ import {
   starRepository,
   unstarRepository,
 } from '../services/github';
+import { GitHubReauthRequiredError } from '../services/github-token';
 import type { Repository } from '../types';
 import {
   filterOutLocallyUnstarred,
@@ -19,7 +20,7 @@ import {
 const ITEMS_PER_PAGE = 30;
 
 const Dashboard = () => {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
@@ -110,6 +111,12 @@ const Dashboard = () => {
         // Mark initial load as complete
         initialLoadCompleteRef.current = true;
       } catch (err) {
+        // Handle token refresh failure - sign out and redirect to login
+        if (err instanceof GitHubReauthRequiredError) {
+          void signOut().then(() => navigate('/login'));
+          return;
+        }
+
         // Check if it's a GitHub auth error and provide a more user-friendly message
         if (err instanceof Error && err.message.includes('No GitHub access token')) {
           setError(
@@ -128,7 +135,7 @@ const Dashboard = () => {
     if (user && !authLoading) {
       void loadStarredRepositories();
     }
-  }, [user, session, authLoading]);
+  }, [user, session, authLoading, signOut, navigate]);
 
   // Reset to default starred repos view (no API call, client-side pagination)
   const showDefaultStarredView = useCallback(() => {
@@ -215,6 +222,13 @@ const Dashboard = () => {
         if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
           return;
         }
+
+        // Handle token refresh failure - sign out and redirect to login
+        if (err instanceof GitHubReauthRequiredError) {
+          void signOut().then(() => navigate('/login'));
+          return;
+        }
+
         setError(err instanceof Error ? err : new Error('Search failed'));
       } finally {
         // Only clear searching state if this request wasn't aborted
@@ -223,7 +237,7 @@ const Dashboard = () => {
         }
       }
     },
-    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos]
+    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos, signOut, navigate]
   );
 
   // Handle search input changes (just updates the input value, no search)
@@ -296,6 +310,11 @@ const Dashboard = () => {
       setSearchResults(updateRepoList);
       setStarredRepositories(updateRepoList);
     } catch (err) {
+      // Handle token refresh failure - sign out and redirect to login
+      if (err instanceof GitHubReauthRequiredError) {
+        void signOut().then(() => navigate('/login'));
+        return;
+      }
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
@@ -349,6 +368,11 @@ const Dashboard = () => {
       setSearchResults(updateSearchResults(searchResults));
       setStarredRepositories(removeFromStarred(starredRepositories));
     } catch (err) {
+      // Handle token refresh failure - sign out and redirect to login
+      if (err instanceof GitHubReauthRequiredError) {
+        void signOut().then(() => navigate('/login'));
+        return;
+      }
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };

@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import type { Repository } from '../types';
 import { logger } from '../utils/logger';
+import { getValidGitHubToken } from './github-token';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -35,12 +36,14 @@ interface GitHubStarredRepo {
  * @returns Total number of starred repositories
  */
 async function fetchStarredRepoCount(session: Session): Promise<number> {
+  const token = await getValidGitHubToken(session);
+
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('per_page', '1');
 
   const response = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -88,9 +91,12 @@ export async function fetchAllStarredRepositories(
   isLimited: boolean;
   hasMore: boolean;
 }> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
+
+  // Validate token upfront (will refresh if needed)
+  await getValidGitHubToken(session);
 
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(session);
@@ -162,9 +168,11 @@ export async function fetchStarredRepositories(
   page = 1,
   perPage = 30
 ): Promise<Repository[]> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
+
+  const token = await getValidGitHubToken(session);
 
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('page', page.toString());
@@ -175,7 +183,7 @@ export async function fetchStarredRepositories(
   try {
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -286,9 +294,11 @@ export async function searchRepositories(
   apiSearchResultTotal: number;
   isLimited: boolean;
 }> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
+
+  const token = await getValidGitHubToken(session);
 
   // Check if query is wrapped in quotes for exact match
   const isExactMatch = query.startsWith('"') && query.endsWith('"');
@@ -310,7 +320,7 @@ export async function searchRepositories(
     const response = await fetch(url.toString(), {
       signal,
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -475,17 +485,19 @@ export async function searchStarredRepositories(
  * This is a lightweight call that only gets IDs
  */
 async function fetchUserStarredIds(session: Session | null): Promise<Set<number>> {
-  if (!session?.provider_token) {
+  if (!session) {
     return new Set();
   }
 
   try {
+    const token = await getValidGitHubToken(session);
+
     const url = new URL(`${GITHUB_API_BASE}/user/starred`);
     url.searchParams.append('per_page', '100'); // Get first 100 starred repos
 
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -512,14 +524,16 @@ export async function starRepository(
   owner: string,
   repo: string
 ): Promise<void> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
+
+  const token = await getValidGitHubToken(session);
 
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'PUT',
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -544,14 +558,16 @@ export async function unstarRepository(
   owner: string,
   repo: string
 ): Promise<void> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
+
+  const token = await getValidGitHubToken(session);
 
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'DELETE',
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -576,15 +592,17 @@ export async function isRepositoryStarred(
   owner: string,
   repo: string
 ): Promise<boolean> {
-  if (!session?.provider_token) {
+  if (!session) {
     return false;
   }
 
   try {
+    const token = await getValidGitHubToken(session);
+
     const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -604,13 +622,15 @@ export async function fetchRateLimit(session: Session | null): Promise<{
   limit: number;
   reset: Date;
 }> {
-  if (!session?.provider_token) {
+  if (!session) {
     throw new Error('No GitHub access token available');
   }
 
+  const token = await getValidGitHubToken(session);
+
   const response = await fetch(`${GITHUB_API_BASE}/rate_limit`, {
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
