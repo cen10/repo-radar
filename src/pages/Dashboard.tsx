@@ -105,7 +105,7 @@ const Dashboard = () => {
         setError(null);
 
         // Get token first - throws GitHubReauthRequiredError if unavailable
-        const token = getValidGitHubToken(session!);
+        const token = getValidGitHubToken(session!.provider_token);
 
         // Fetch real data from GitHub API
         const result = await fetchAllStarredRepositories(token);
@@ -153,7 +153,7 @@ const Dashboard = () => {
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const token = getValidGitHubToken(session!);
+      const token = getValidGitHubToken(session!.provider_token);
       const starredResponse = await searchStarredRepositories(
         token,
         query,
@@ -179,7 +179,7 @@ const Dashboard = () => {
   // Search all GitHub repositories via API
   const searchAllGitHubRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const token = getValidGitHubToken(session!);
+      const token = getValidGitHubToken(session!.provider_token);
       const searchResponse = await searchRepositories(token, query, page, ITEMS_PER_PAGE, signal);
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
@@ -292,7 +292,7 @@ const Dashboard = () => {
       }
 
       // Star the repository on GitHub
-      const token = getValidGitHubToken(session!);
+      const token = getValidGitHubToken(session!.provider_token);
       await starRepository(token, repo.owner.login, repo.name);
 
       // Update local state to reflect the change immediately
@@ -334,7 +334,7 @@ const Dashboard = () => {
       }
 
       // Unstar the repository on GitHub
-      const token = getValidGitHubToken(session!);
+      const token = getValidGitHubToken(session!.provider_token);
       await unstarRepository(token, repo.owner.login, repo.name);
 
       // Add to locally unstarred list to hide until GitHub API syncs

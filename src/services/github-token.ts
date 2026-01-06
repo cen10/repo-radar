@@ -1,4 +1,3 @@
-import type { Session } from '@supabase/supabase-js';
 import { logger } from '../utils/logger';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
@@ -51,14 +50,14 @@ export function clearStoredAccessToken(): void {
 /**
  * Get a valid GitHub access token
  *
- * @param session - The current Supabase session
+ * @param providerToken - The provider_token from Supabase session (null after session refresh)
  * @returns A valid GitHub access token
  * @throws GitHubReauthRequiredError if no token is available
  */
-export function getValidGitHubToken(session: Session): string {
+export function getValidGitHubToken(providerToken: string | null): string {
   // Use provider_token if available
-  if (session.provider_token) {
-    return session.provider_token;
+  if (providerToken) {
+    return providerToken;
   }
 
   // provider_token is null (Supabase drops it on session refresh) - use stored token
