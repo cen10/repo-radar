@@ -40,7 +40,7 @@ const Dashboard = () => {
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
-  const initialLoadCompleteRef = useRef(false);
+  const initialLoadStartedRef = useRef(false);
 
   // Defensive handler for the unlikely case where no GitHub token is available.
   // GitHub OAuth tokens don't expire, so this would only trigger if the user
@@ -94,7 +94,7 @@ const Dashboard = () => {
   // Load starred repositories on mount (once only)
   useEffect(() => {
     // Skip if already loaded - prevents overwriting search/filter results
-    if (initialLoadCompleteRef.current) {
+    if (initialLoadStartedRef.current) {
       return;
     }
 
@@ -124,7 +124,7 @@ const Dashboard = () => {
         }
       } catch (err) {
         // Reset flag on error so retry is possible
-        initialLoadCompleteRef.current = false;
+        initialLoadStartedRef.current = false;
         if (isReauthError(err)) return;
         setError(err instanceof Error ? err : new Error('Failed to load repositories'));
       } finally {
@@ -134,7 +134,7 @@ const Dashboard = () => {
 
     if (user && !authLoading) {
       // Set flag synchronously BEFORE async work to prevent duplicate fetches
-      initialLoadCompleteRef.current = true;
+      initialLoadStartedRef.current = true;
       void loadStarredRepositories();
     }
   }, [user, providerToken, authLoading, signOut, navigate, isReauthError]);
