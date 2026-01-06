@@ -118,12 +118,11 @@ describe('RepositoryList', () => {
 
     it('passes follow state correctly to repo cards', () => {
       const repos = [
-        createMockRepository({ id: 1, name: 'repo-1' }),
-        createMockRepository({ id: 2, name: 'repo-2' }),
+        createMockRepository({ id: 1, name: 'repo-1', is_starred: true }),
+        createMockRepository({ id: 2, name: 'repo-2', is_starred: false }),
       ];
-      const starredRepos = new Set([1]);
 
-      render(<RepositoryList {...defaultProps} repositories={repos} starredRepos={starredRepos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const card1 = screen.getByTestId('repo-card-1');
       const card2 = screen.getByTestId('repo-card-2');
@@ -155,14 +154,12 @@ describe('RepositoryList', () => {
     it('calls onUnstar when unstar button is clicked', () => {
       const onStar = vi.fn();
       const onUnstar = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-      const starredRepos = new Set([1]);
+      const repos = [createMockRepository({ id: 1, name: 'repo-1', is_starred: true })];
 
       render(
         <RepositoryList
           {...defaultProps}
           repositories={repos}
-          starredRepos={starredRepos}
           onStar={onStar}
           onUnstar={onUnstar}
         />

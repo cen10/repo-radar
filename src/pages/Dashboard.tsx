@@ -25,7 +25,6 @@ const Dashboard = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
   const [searchResults, setSearchResults] = useState<Repository[]>([]);
-  const [starredRepos, setStarredRepos] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,13 +112,6 @@ const Dashboard = () => {
         setRepoLimitReached(result.isLimited);
         setTotalReposFetched(result.totalFetched);
         setTotalStarredRepos(result.totalStarred);
-
-        // Load starred repos from localStorage
-        const savedStars = localStorage.getItem('followedRepos');
-        if (savedStars) {
-          const starredIds = JSON.parse(savedStars) as number[];
-          setStarredRepos(new Set(starredIds));
-        }
       } catch (err) {
         // Reset flag on error so retry is possible
         initialLoadStartedRef.current = false;
@@ -445,7 +437,6 @@ const Dashboard = () => {
           error={error}
           onStar={handleStar}
           onUnstar={handleUnstar}
-          starredRepos={starredRepos}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
