@@ -20,6 +20,7 @@ import type {
 export const mockSession: Session = {
   access_token: 'mock-access-token',
   refresh_token: 'mock-refresh-token',
+  provider_token: 'mock-github-token',
   expires_in: 3600,
   expires_at: Math.floor(Date.now() / 1000) + 3600,
   token_type: 'bearer',

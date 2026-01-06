@@ -20,7 +20,7 @@ import {
 const ITEMS_PER_PAGE = 30;
 
 const Dashboard = () => {
-  const { user, session, loading: authLoading, signOut } = useAuth();
+  const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
@@ -94,7 +94,6 @@ const Dashboard = () => {
   // Load starred repositories on mount (once only)
   useEffect(() => {
     // Skip if already loaded - prevents overwriting search/filter results
-    // when session object gets a new reference (e.g., during token refresh)
     if (initialLoadCompleteRef.current) {
       return;
     }
@@ -105,7 +104,7 @@ const Dashboard = () => {
         setError(null);
 
         // Get token first - throws GitHubReauthRequiredError if unavailable
-        const token = getValidGitHubToken(session!.provider_token);
+        const token = getValidGitHubToken(providerToken);
 
         // Fetch real data from GitHub API
         const result = await fetchAllStarredRepositories(token);
@@ -137,7 +136,7 @@ const Dashboard = () => {
     if (user && !authLoading) {
       void loadStarredRepositories();
     }
-  }, [user, session, authLoading, signOut, navigate, isReauthError]);
+  }, [user, providerToken, authLoading, signOut, navigate, isReauthError]);
 
   // Reset to default starred repos view (no API call, client-side pagination)
   const showDefaultStarredView = useCallback(() => {
@@ -153,7 +152,7 @@ const Dashboard = () => {
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const token = getValidGitHubToken(session!.provider_token);
+      const token = getValidGitHubToken(providerToken);
       const starredResponse = await searchStarredRepositories(
         token,
         query,
@@ -173,13 +172,13 @@ const Dashboard = () => {
       setHasMoreResults(page < totalPages);
       setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
     },
-    [session, starredRepositories]
+    [providerToken, starredRepositories]
   );
 
   // Search all GitHub repositories via API
   const searchAllGitHubRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const token = getValidGitHubToken(session!.provider_token);
+      const token = getValidGitHubToken(providerToken);
       const searchResponse = await searchRepositories(token, query, page, ITEMS_PER_PAGE, signal);
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
@@ -192,7 +191,7 @@ const Dashboard = () => {
       setHasMoreResults(page < totalPages);
       setApiSearchResultTotal(searchResponse.apiSearchResultTotal);
     },
-    [session]
+    [providerToken]
   );
 
   // Main search router - determines which search behavior to use
@@ -292,7 +291,7 @@ const Dashboard = () => {
       }
 
       // Star the repository on GitHub
-      const token = getValidGitHubToken(session!.provider_token);
+      const token = getValidGitHubToken(providerToken);
       await starRepository(token, repo.owner.login, repo.name);
 
       // Update local state to reflect the change immediately
@@ -334,7 +333,7 @@ const Dashboard = () => {
       }
 
       // Unstar the repository on GitHub
-      const token = getValidGitHubToken(session!.provider_token);
+      const token = getValidGitHubToken(providerToken);
       await unstarRepository(token, repo.owner.login, repo.name);
 
       // Add to locally unstarred list to hide until GitHub API syncs

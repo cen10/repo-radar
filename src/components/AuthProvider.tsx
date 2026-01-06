@@ -32,14 +32,14 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
-    setSession(nextSession);
+    setProviderToken(nextSession?.provider_token ?? null);
     setUser(nextUser);
 
     // Store GitHub token for later use when Supabase session refresh loses it
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
-        setSession(null);
+        setProviderToken(null);
         setUser(null);
         setLoading(false);
       }
@@ -108,10 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Clear connection error on successful auth
   useEffect(() => {
-    if (session && connectionError) {
+    if (user && connectionError) {
       setConnectionError(null);
     }
-  }, [session, connectionError]);
+  }, [user, connectionError]);
 
   const signInWithGitHub = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value: AuthContextType = {
-    session,
+    providerToken,
     user,
     loading,
     connectionError,

@@ -20,12 +20,12 @@ vi.mock('../utils/logger', () => ({
 }));
 
 const TestComponent = () => {
-  const { user, loading, session, connectionError } = useAuth();
+  const { user, loading, providerToken, connectionError } = useAuth();
   return (
     <div>
       {loading && <span>Loading...</span>}
       {user && <span>User: {user.login}</span>}
-      {session && <span>Session exists</span>}
+      {providerToken && <span>Token exists</span>}
       {connectionError && <span>Connection Error: {connectionError}</span>}
       {!loading && !user && !connectionError && <span>No user</span>}
     </div>
@@ -219,7 +219,7 @@ describe('AuthProvider', () => {
         return (
           <div>
             <div>User: {auth.user ? auth.user.login : 'none'}</div>
-            <div>Session: {auth.session ? 'active' : 'none'}</div>
+            <div>Token: {auth.providerToken ? 'active' : 'none'}</div>
             <div>Loading: {auth.loading ? 'yes' : 'no'}</div>
           </div>
         );
@@ -236,9 +236,9 @@ describe('AuthProvider', () => {
         expect(screen.getByText(/loading: no/i)).toBeInTheDocument();
       });
 
-      // Verify both user and session are null
+      // Verify both user and providerToken are null
       expect(screen.getByText(/user: none/i)).toBeInTheDocument();
-      expect(screen.getByText(/session: none/i)).toBeInTheDocument();
+      expect(screen.getByText(/token: none/i)).toBeInTheDocument();
     });
 
     it('should set user and session when initial session exists', async () => {
@@ -255,7 +255,7 @@ describe('AuthProvider', () => {
       });
 
       expect(screen.getByText(/user: testuser/i)).toBeInTheDocument();
-      expect(screen.getByText(/session exists/i)).toBeInTheDocument();
+      expect(screen.getByText(/token exists/i)).toBeInTheDocument();
     });
 
     it('should provide retry functionality through retryAuth', async () => {

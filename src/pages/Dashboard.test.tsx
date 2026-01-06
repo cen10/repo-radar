@@ -112,23 +112,6 @@ describe('Dashboard', () => {
     email: 'test@example.com',
   };
 
-  const mockSession = {
-    provider_token: 'test-github-token',
-    access_token: 'test-access-token',
-    token_type: 'bearer' as const,
-    expires_in: 3600,
-    expires_at: Date.now() + 3600000,
-    refresh_token: 'test-refresh-token',
-    user: {
-      id: 'test-user-id',
-      email: 'test@example.com',
-      user_metadata: {},
-      app_metadata: {},
-      aud: 'authenticated',
-      created_at: '2024-01-01T00:00:00Z',
-    },
-  };
-
   const mockRepositories: Repository[] = [
     {
       id: 1,
@@ -244,7 +227,7 @@ describe('Dashboard', () => {
   it('renders dashboard when user is authenticated', async () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -271,7 +254,7 @@ describe('Dashboard', () => {
   it('shows loading state while fetching repositories', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -290,7 +273,7 @@ describe('Dashboard', () => {
     it('performs search on form submission', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -335,7 +318,7 @@ describe('Dashboard', () => {
     it('filters starred repositories locally', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -364,7 +347,7 @@ describe('Dashboard', () => {
     it('shows search status in subtitle', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -395,7 +378,7 @@ describe('Dashboard', () => {
 
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -464,7 +447,7 @@ describe('Dashboard', () => {
     it('shows starred repos when filter is "starred" and search is empty', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -488,7 +471,7 @@ describe('Dashboard', () => {
     it('searches for high starred repos when filter is "all" and search is empty', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -532,7 +515,7 @@ describe('Dashboard', () => {
     it('switches between filter modes correctly with empty search', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -582,7 +565,7 @@ describe('Dashboard', () => {
     it('shows warning banner when user has more starred repos than the fetch limit', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -615,7 +598,7 @@ describe('Dashboard', () => {
     it('does not show warning banner when all starred repos are fetched', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -647,7 +630,7 @@ describe('Dashboard', () => {
     it('sets dataIsPrepaginated to false when showing default starred view', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -669,7 +652,7 @@ describe('Dashboard', () => {
     it('sets dataIsPrepaginated to true when searching starred repos', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -704,7 +687,7 @@ describe('Dashboard', () => {
     it('sets dataIsPrepaginated to true when searching all repos', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -737,7 +720,7 @@ describe('Dashboard', () => {
     it('resets dataIsPrepaginated to false when clearing search and returning to starred view', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -786,7 +769,7 @@ describe('Dashboard', () => {
     it('ignores stale search results when a newer search is initiated', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -885,7 +868,7 @@ describe('Dashboard', () => {
     it('ignores stale results when filter changes during search', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -976,7 +959,7 @@ describe('Dashboard', () => {
     it('ignores stale results when search is cleared', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });

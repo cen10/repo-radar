@@ -5,7 +5,6 @@ import { useAuth } from '../hooks/use-auth';
 import { supabase } from '../services/supabase';
 import { AuthError } from '@supabase/auth-js';
 import type { AuthContextType } from '../contexts/auth-context';
-import type { Session } from '@supabase/supabase-js';
 
 vi.mock('../hooks/use-auth');
 vi.mock('../services/supabase', () => ({
@@ -26,7 +25,7 @@ const mockUser = {
 
 const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
   user: mockUser,
-  session: {} as Session,
+  providerToken: 'test-github-token',
   loading: false,
   connectionError: null,
   signInWithGitHub: vi.fn(),
@@ -44,7 +43,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(
       createMockAuthContext({
         user: null,
-        session: null,
+        providerToken: null,
       })
     );
 

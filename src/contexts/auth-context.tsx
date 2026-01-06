@@ -1,9 +1,8 @@
 import { createContext } from 'react';
-import type { Session } from '@supabase/supabase-js';
 import type { User } from '../types';
 
 interface AuthContextType {
-  session: Session | null;
+  providerToken: string | null;
   user: User | null;
   loading: boolean;
   connectionError: string | null;
