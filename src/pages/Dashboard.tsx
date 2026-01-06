@@ -42,6 +42,14 @@ const Dashboard = () => {
   const searchAbortControllerRef = useRef<AbortController | null>(null);
   const initialLoadCompleteRef = useRef(false);
 
+  const isReauthError = (err: unknown): boolean => {
+    if (err instanceof GitHubReauthRequiredError) {
+      void signOut().then(() => navigate('/login'));
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     if (!authLoading && !user) {
       void navigate('/login');
@@ -111,12 +119,7 @@ const Dashboard = () => {
         // Mark initial load as complete
         initialLoadCompleteRef.current = true;
       } catch (err) {
-        // Handle token refresh failure - sign out and redirect to login
-        if (err instanceof GitHubReauthRequiredError) {
-          void signOut().then(() => navigate('/login'));
-          return;
-        }
-
+        if (isReauthError(err)) return;
         setError(err instanceof Error ? err : new Error('Failed to load repositories'));
       } finally {
         setIsLoading(false);
@@ -214,12 +217,7 @@ const Dashboard = () => {
           return;
         }
 
-        // Handle token refresh failure - sign out and redirect to login
-        if (err instanceof GitHubReauthRequiredError) {
-          void signOut().then(() => navigate('/login'));
-          return;
-        }
-
+        if (isReauthError(err)) return;
         setError(err instanceof Error ? err : new Error('Search failed'));
       } finally {
         // Only clear searching state if this request wasn't aborted
@@ -301,11 +299,7 @@ const Dashboard = () => {
       setSearchResults(updateRepoList);
       setStarredRepositories(updateRepoList);
     } catch (err) {
-      // Handle token refresh failure - sign out and redirect to login
-      if (err instanceof GitHubReauthRequiredError) {
-        void signOut().then(() => navigate('/login'));
-        return;
-      }
+      if (isReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
@@ -359,11 +353,7 @@ const Dashboard = () => {
       setSearchResults(updateSearchResults(searchResults));
       setStarredRepositories(removeFromStarred(starredRepositories));
     } catch (err) {
-      // Handle token refresh failure - sign out and redirect to login
-      if (err instanceof GitHubReauthRequiredError) {
-        void signOut().then(() => navigate('/login'));
-        return;
-      }
+      if (isReauthError(err)) return;
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
