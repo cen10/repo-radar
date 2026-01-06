@@ -117,16 +117,7 @@ const Dashboard = () => {
           return;
         }
 
-        // Check if it's a GitHub auth error and provide a more user-friendly message
-        if (err instanceof Error && err.message.includes('No GitHub access token')) {
-          setError(
-            new Error(
-              'Your GitHub session has expired. Please sign out and sign in again to reconnect your GitHub account.'
-            )
-          );
-        } else {
-          setError(err instanceof Error ? err : new Error('Failed to load repositories'));
-        }
+        setError(err instanceof Error ? err : new Error('Failed to load repositories'));
       } finally {
         setIsLoading(false);
       }
