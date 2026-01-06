@@ -93,12 +93,22 @@ const Dashboard = () => {
 
   // Load starred repositories on mount (once only)
   useEffect(() => {
+    // DEBUG: Log every time this effect runs
+    console.log('[Dashboard] useEffect triggered', {
+      initialLoadComplete: initialLoadCompleteRef.current,
+      hasUser: !!user,
+      hasToken: !!providerToken,
+      authLoading,
+    });
+
     // Skip if already loaded - prevents overwriting search/filter results
     if (initialLoadCompleteRef.current) {
+      console.log('[Dashboard] Skipping - already loaded');
       return;
     }
 
     const loadStarredRepositories = async () => {
+      console.log('[Dashboard] Starting loadStarredRepositories');
       try {
         setIsLoading(true);
         setError(null);
@@ -122,10 +132,9 @@ const Dashboard = () => {
           const starredIds = JSON.parse(savedStars) as number[];
           setStarredRepos(new Set(starredIds));
         }
-
-        // Mark initial load as complete
-        initialLoadCompleteRef.current = true;
       } catch (err) {
+        // Reset flag on error so retry is possible
+        initialLoadCompleteRef.current = false;
         if (isReauthError(err)) return;
         setError(err instanceof Error ? err : new Error('Failed to load repositories'));
       } finally {
@@ -134,6 +143,8 @@ const Dashboard = () => {
     };
 
     if (user && !authLoading) {
+      // Set flag synchronously BEFORE async work to prevent duplicate fetches
+      initialLoadCompleteRef.current = true;
       void loadStarredRepositories();
     }
   }, [user, providerToken, authLoading, signOut, navigate, isReauthError]);
