@@ -5,7 +5,12 @@ import { useAuth } from '../hooks/use-auth';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
-import { mockSupabaseClient, mockSession } from '../test/mocks/supabase';
+import {
+  mockSupabaseClient,
+  mockSession,
+  setInitialSession,
+  resetAuthMockState,
+} from '../test/mocks/supabase';
 import type { GetSessionResponse } from '../test/mocks/supabase';
 import type { logger } from '../utils/logger';
 
@@ -54,7 +59,8 @@ const mockGetSessionOnce = (
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetSession();
+    resetAuthMockState();
+    mockGetSession(); // Still needed for retryAuth tests
   });
 
   it('should provide auth context to children', async () => {
@@ -107,7 +113,7 @@ describe('AuthProvider', () => {
 
   describe('Auth state changes', () => {
     it('should clear user and session on SIGNED_OUT event', async () => {
-      mockGetSession(mockSession);
+      setInitialSession(mockSession);
 
       render(
         <AuthProvider>
@@ -146,12 +152,18 @@ describe('AuthProvider', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle connection errors from getSession API error', async () => {
-      mockGetSession(null, new Error('Network error'));
+    it('should handle connection errors from retryAuth API error', async () => {
+      let retryAuth: (() => Promise<boolean>) | undefined;
+
+      const TestRetryComponent = () => {
+        const auth = useAuth();
+        retryAuth = auth.retryAuth;
+        return <TestComponent />;
+      };
 
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestRetryComponent />
         </AuthProvider>
       );
 
@@ -159,18 +171,29 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(
-        screen.getByText(new RegExp(`connection error: ${CONNECTION_FAILED}`, 'i'))
-      ).toBeInTheDocument();
-      expect(screen.queryByText('No user')).not.toBeInTheDocument();
+      // Now trigger an error via retryAuth
+      mockGetSession(null, new Error('Network error'));
+      await retryAuth!();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(new RegExp(`connection error: ${CONNECTION_FAILED}`, 'i'))
+        ).toBeInTheDocument();
+      });
     });
 
-    it('should handle unexpected errors during getSession', async () => {
-      mockSupabaseClient.auth.getSession.mockRejectedValue(new Error('Unexpected error'));
+    it('should handle unexpected errors during retryAuth', async () => {
+      let retryAuth: (() => Promise<boolean>) | undefined;
+
+      const TestRetryComponent = () => {
+        const auth = useAuth();
+        retryAuth = auth.retryAuth;
+        return <TestComponent />;
+      };
 
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestRetryComponent />
         </AuthProvider>
       );
 
@@ -178,20 +201,39 @@ describe('AuthProvider', () => {
         expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       });
 
-      expect(
-        screen.getByText(new RegExp(`connection error: ${UNEXPECTED_ERROR}`, 'i'))
-      ).toBeInTheDocument();
+      // Now trigger an unexpected error via retryAuth
+      mockSupabaseClient.auth.getSession.mockRejectedValue(new Error('Unexpected error'));
+      await retryAuth!();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(new RegExp(`connection error: ${UNEXPECTED_ERROR}`, 'i'))
+        ).toBeInTheDocument();
+      });
     });
 
     it('should clear connection error on successful auth state change', async () => {
-      // Start with connection error
-      mockGetSession(null, new Error('Network error'));
+      let retryAuth: (() => Promise<boolean>) | undefined;
+
+      const TestRetryComponent = () => {
+        const auth = useAuth();
+        retryAuth = auth.retryAuth;
+        return <TestComponent />;
+      };
 
       render(
         <AuthProvider>
-          <TestComponent />
+          <TestRetryComponent />
         </AuthProvider>
       );
+
+      await waitFor(() => {
+        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      });
+
+      // Trigger connection error via retryAuth
+      mockGetSession(null, new Error('Network error'));
+      await retryAuth!();
 
       // Wait for connection error to appear
       await waitFor(() => {
@@ -242,7 +284,7 @@ describe('AuthProvider', () => {
     });
 
     it('should set user and session when initial session exists', async () => {
-      mockGetSession(mockSession);
+      setInitialSession(mockSession);
 
       render(
         <AuthProvider>
@@ -290,9 +332,6 @@ describe('AuthProvider', () => {
     });
 
     it('should clear connection error when retryAuth succeeds after a failure', async () => {
-      mockGetSessionOnce(null, new Error('Network error'));
-      mockGetSessionOnce();
-
       let retryAuth: (() => Promise<boolean>) | undefined;
 
       const TestRetryComponent = () => {
@@ -313,9 +352,19 @@ describe('AuthProvider', () => {
       );
 
       await waitFor(() => {
+        expect(screen.getByText(/loading: no/i)).toBeInTheDocument();
+      });
+
+      // First retryAuth call - trigger error
+      mockGetSessionOnce(null, new Error('Network error'));
+      await retryAuth!();
+
+      await waitFor(() => {
         expect(screen.getByText(new RegExp(CONNECTION_FAILED, 'i'))).toBeInTheDocument();
       });
 
+      // Second retryAuth call - success
+      mockGetSessionOnce();
       await retryAuth!();
 
       await waitFor(() => {
@@ -432,10 +481,7 @@ describe('AuthProvider', () => {
         },
       };
 
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithoutUsername },
-        error: null,
-      });
+      setInitialSession(sessionWithoutUsername);
 
       render(
         <AuthProvider>
@@ -525,10 +571,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithNameOnly },
-        error: null,
-      });
+      setInitialSession(sessionWithNameOnly);
 
       render(
         <AuthProvider>
@@ -566,10 +609,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithoutName },
-        error: null,
-      });
+      setInitialSession(sessionWithoutName);
 
       render(
         <AuthProvider>
@@ -607,10 +647,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithoutAvatar },
-        error: null,
-      });
+      setInitialSession(sessionWithoutAvatar);
 
       render(
         <AuthProvider>
@@ -655,10 +692,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      mockSupabaseClient.auth.getSession.mockResolvedValue({
-        data: { session: sessionWithMinimalOptionalFields },
-        error: null,
-      });
+      setInitialSession(sessionWithMinimalOptionalFields);
 
       render(
         <AuthProvider>
