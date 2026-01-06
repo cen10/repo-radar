@@ -42,6 +42,9 @@ const Dashboard = () => {
   const searchAbortControllerRef = useRef<AbortController | null>(null);
   const initialLoadCompleteRef = useRef(false);
 
+  // Defensive handler for the unlikely case where GitHub auth fails. GitHub OAuth
+  // tokens don't expire, so this would only trigger if a token is revoked or
+  // there's an unexpected API failure. Forces re-authentication to recover.
   const isReauthError = useCallback(
     (err: unknown): boolean => {
       if (err instanceof GitHubReauthRequiredError) {
