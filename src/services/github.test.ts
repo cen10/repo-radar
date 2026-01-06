@@ -110,8 +110,8 @@ describe('GitHub API Service', () => {
     });
 
     it('should throw GitHubReauthRequiredError when provider_token is missing', async () => {
-      // When provider_token is missing, the service tries to refresh using stored token
-      // If no stored refresh token exists, it throws GitHubReauthRequiredError
+      // When provider_token is missing, the service checks for a stored access token
+      // If no stored access token exists, it throws GitHubReauthRequiredError
       const sessionWithoutToken = { ...mockSession, provider_token: undefined };
       await expect(fetchStarredRepositories(sessionWithoutToken)).rejects.toThrow(
         GitHubReauthRequiredError

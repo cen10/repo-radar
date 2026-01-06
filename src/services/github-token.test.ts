@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
 import {
-  storeRefreshToken,
-  getStoredRefreshToken,
-  clearStoredRefreshToken,
+  storeAccessToken,
+  getStoredAccessToken,
+  clearStoredAccessToken,
   getValidGitHubToken,
   GitHubReauthRequiredError,
 } from './github-token';
@@ -19,11 +19,8 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
-// Set up import.meta.env for testing
-vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
-
 describe('github-token service', () => {
-  const REFRESH_TOKEN_KEY = 'github_refresh_token';
+  const ACCESS_TOKEN_KEY = 'github_access_token';
 
   beforeEach(() => {
     // Clear localStorage before each test
@@ -35,10 +32,10 @@ describe('github-token service', () => {
     vi.restoreAllMocks();
   });
 
-  describe('storeRefreshToken', () => {
-    it('stores refresh token in localStorage', () => {
-      storeRefreshToken('test-refresh-token');
-      expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('test-refresh-token');
+  describe('storeAccessToken', () => {
+    it('stores access token in localStorage', () => {
+      storeAccessToken('test-access-token');
+      expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe('test-access-token');
     });
 
     it('logs warning if localStorage fails', () => {
@@ -47,23 +44,23 @@ describe('github-token service', () => {
         throw new Error('Storage full');
       });
 
-      storeRefreshToken('test-token');
+      storeAccessToken('test-token');
 
       expect(logger.warn).toHaveBeenCalledWith(
-        'Failed to store refresh token in localStorage',
+        'Failed to store access token in localStorage',
         expect.any(Error)
       );
     });
   });
 
-  describe('getStoredRefreshToken', () => {
-    it('retrieves refresh token from localStorage', () => {
-      localStorage.setItem(REFRESH_TOKEN_KEY, 'stored-token');
-      expect(getStoredRefreshToken()).toBe('stored-token');
+  describe('getStoredAccessToken', () => {
+    it('retrieves access token from localStorage', () => {
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
+      expect(getStoredAccessToken()).toBe('stored-token');
     });
 
     it('returns null if no token stored', () => {
-      expect(getStoredRefreshToken()).toBeNull();
+      expect(getStoredAccessToken()).toBeNull();
     });
 
     it('logs warning and returns null if localStorage fails', () => {
@@ -72,19 +69,19 @@ describe('github-token service', () => {
         throw new Error('Storage error');
       });
 
-      expect(getStoredRefreshToken()).toBeNull();
+      expect(getStoredAccessToken()).toBeNull();
       expect(logger.warn).toHaveBeenCalledWith(
-        'Failed to retrieve refresh token from localStorage',
+        'Failed to retrieve access token from localStorage',
         expect.any(Error)
       );
     });
   });
 
-  describe('clearStoredRefreshToken', () => {
-    it('removes refresh token from localStorage', () => {
-      localStorage.setItem(REFRESH_TOKEN_KEY, 'token-to-clear');
-      clearStoredRefreshToken();
-      expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
+  describe('clearStoredAccessToken', () => {
+    it('removes access token from localStorage', () => {
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'token-to-clear');
+      clearStoredAccessToken();
+      expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
     });
 
     it('logs warning if localStorage fails', () => {
@@ -93,18 +90,16 @@ describe('github-token service', () => {
         throw new Error('Storage error');
       });
 
-      clearStoredRefreshToken();
+      clearStoredAccessToken();
 
       expect(logger.warn).toHaveBeenCalledWith(
-        'Failed to clear refresh token from localStorage',
+        'Failed to clear access token from localStorage',
         expect.any(Error)
       );
     });
   });
 
   describe('getValidGitHubToken', () => {
-    const ACCESS_TOKEN_KEY = 'github_access_token';
-
     it('returns provider_token if available in session and stores it', async () => {
       const session = {
         provider_token: 'valid-github-token',
@@ -127,117 +122,26 @@ describe('github-token service', () => {
       expect(token).toBe('stored-access-token');
     });
 
-    it('throws GitHubReauthRequiredError if no provider_token and no stored tokens', async () => {
+    it('logs info message when using stored access token', async () => {
       const session = {
         provider_token: null,
       } as unknown as Session;
 
-      // Ensure no stored tokens
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
+
+      await getValidGitHubToken(session);
+
+      expect(logger.info).toHaveBeenCalledWith('provider_token is null, using stored access token');
+    });
+
+    it('throws GitHubReauthRequiredError if no provider_token and no stored access token', async () => {
+      const session = {
+        provider_token: null,
+      } as unknown as Session;
 
       await expect(getValidGitHubToken(session)).rejects.toThrow(GitHubReauthRequiredError);
       await expect(getValidGitHubToken(session)).rejects.toThrow(
         'No GitHub token available - re-authentication required'
-      );
-    });
-
-    it('calls Edge Function to refresh token when no access token but refresh token exists', async () => {
-      const session = {
-        provider_token: null,
-      } as unknown as Session;
-
-      // No stored access token, but has refresh token
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.setItem(REFRESH_TOKEN_KEY, 'stored-refresh-token');
-
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            access_token: 'new-access-token',
-            refresh_token: 'new-refresh-token',
-            expires_in: 28800,
-          }),
-      });
-      vi.stubGlobal('fetch', mockFetch);
-
-      const token = await getValidGitHubToken(session);
-
-      expect(token).toBe('new-access-token');
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://test.supabase.co/functions/v1/refresh-github-token',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refresh_token: 'stored-refresh-token' }),
-        }
-      );
-
-      // Should store the new refresh token
-      expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBe('new-refresh-token');
-    });
-
-    it('throws GitHubReauthRequiredError and clears stored token on refresh failure', async () => {
-      const session = {
-        provider_token: null,
-      } as unknown as Session;
-
-      // No stored access token, but has (invalid) refresh token
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.setItem(REFRESH_TOKEN_KEY, 'invalid-refresh-token');
-
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 401,
-        json: () =>
-          Promise.resolve({
-            error: 'token_refresh_failed',
-            message: 'The refresh token is invalid or expired',
-          }),
-      });
-      vi.stubGlobal('fetch', mockFetch);
-
-      let thrownError: Error | null = null;
-      try {
-        await getValidGitHubToken(session);
-      } catch (err) {
-        thrownError = err as Error;
-      }
-
-      expect(thrownError).toBeInstanceOf(GitHubReauthRequiredError);
-      expect(thrownError?.message).toBe('The refresh token is invalid or expired');
-
-      // Should clear the invalid refresh token
-      expect(localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
-    });
-
-    it('logs info message when attempting to refresh token', async () => {
-      const session = {
-        provider_token: null,
-      } as unknown as Session;
-
-      // No stored access token, but has refresh token
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.setItem(REFRESH_TOKEN_KEY, 'stored-refresh-token');
-
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            access_token: 'new-token',
-            refresh_token: 'new-refresh',
-            expires_in: 28800,
-          }),
-      });
-      vi.stubGlobal('fetch', mockFetch);
-
-      await getValidGitHubToken(session);
-
-      expect(logger.info).toHaveBeenCalledWith(
-        'provider_token is null, attempting to refresh GitHub token'
       );
     });
   });
