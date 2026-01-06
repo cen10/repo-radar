@@ -190,19 +190,16 @@ describe('Dashboard', () => {
       totalFetched: mockRepositories.length,
       totalStarred: mockRepositories.length,
       isLimited: false,
-      hasMore: false,
     });
     vi.mocked(githubService.searchRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
       apiSearchResultTotal: 0,
-      isLimited: false,
     });
     vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
       apiSearchResultTotal: 0,
-      isLimited: false,
     });
   });
 
@@ -500,7 +497,6 @@ describe('Dashboard', () => {
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
         apiSearchResultTotal: 1000,
-        isLimited: true,
       });
 
       render(
@@ -545,7 +541,6 @@ describe('Dashboard', () => {
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
         apiSearchResultTotal: 1000,
-        isLimited: true,
       });
 
       render(
@@ -598,7 +593,6 @@ describe('Dashboard', () => {
         totalFetched: 500,
         totalStarred: 600,
         isLimited: true,
-        hasMore: true,
       });
 
       render(
@@ -632,7 +626,6 @@ describe('Dashboard', () => {
         totalFetched: 100,
         totalStarred: 100,
         isLimited: false,
-        hasMore: false,
       });
 
       render(
@@ -685,7 +678,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 2,
         apiSearchResultTotal: 2,
-        isLimited: false,
       });
 
       render(
@@ -721,7 +713,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 100,
         apiSearchResultTotal: 100,
-        isLimited: false,
       });
 
       render(
@@ -755,7 +746,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 2,
         apiSearchResultTotal: 2,
-        isLimited: false,
       });
 
       render(
@@ -843,7 +833,6 @@ describe('Dashboard', () => {
               repositories: vueRepos,
               totalCount: 1,
               apiSearchResultTotal: 1,
-              isLimited: false,
             };
           } else {
             // Second search: resolve immediately (simulates fast response)
@@ -851,7 +840,6 @@ describe('Dashboard', () => {
               repositories: reactRepos,
               totalCount: 1,
               apiSearchResultTotal: 1,
-              isLimited: false,
             };
           }
         }
@@ -938,7 +926,6 @@ describe('Dashboard', () => {
             repositories: starredSearchRepos,
             totalCount: 1,
             apiSearchResultTotal: 1,
-            isLimited: false,
           };
         }
       );
@@ -947,7 +934,6 @@ describe('Dashboard', () => {
         repositories: allSearchRepos,
         totalCount: 1,
         apiSearchResultTotal: 1,
-        isLimited: false,
       });
 
       render(
@@ -1022,7 +1008,6 @@ describe('Dashboard', () => {
             repositories: searchRepos,
             totalCount: 1,
             apiSearchResultTotal: 1,
-            isLimited: false,
           };
         }
       );

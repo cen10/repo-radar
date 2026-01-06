@@ -217,7 +217,6 @@ describe('GitHub API Service', () => {
       expect(result.totalFetched).toBe(101);
       expect(result.totalStarred).toBe(150); // Based on Link header: 150 total repos
       expect(result.isLimited).toBe(false);
-      expect(result.hasMore).toBe(false);
       // Results should be sorted by star count (repo-2 has 200 stars, repo-1 has 100)
       // repo-2 (1 item) should be first, followed by repo-1 items (100 items)
       expect(result.repositories[0]).toMatchObject({
@@ -272,7 +271,6 @@ describe('GitHub API Service', () => {
       expect(result.totalFetched).toBe(1);
       expect(result.totalStarred).toBe(1);
       expect(result.isLimited).toBe(false);
-      expect(result.hasMore).toBe(false);
       expect(result.repositories[0]).toMatchObject({
         id: 1,
         name: 'single-repo',
@@ -332,7 +330,6 @@ describe('GitHub API Service', () => {
       expect(result.totalFetched).toBe(150);
       expect(result.totalStarred).toBe(300); // Based on Link header: 3 pages * 100 per page
       expect(result.isLimited).toBe(true);
-      expect(result.hasMore).toBe(true);
     });
 
     it('should throw error when authentication fails', async () => {
@@ -400,7 +397,6 @@ describe('GitHub API Service', () => {
       expect(result.repositories[0].name).toBe('typescript');
       expect(result.totalCount).toBe(50000);
       expect(result.apiSearchResultTotal).toBe(1000); // GitHub API cap
-      expect(result.isLimited).toBe(true);
     });
 
     it('should search repositories with exact match using quotes', async () => {

@@ -85,7 +85,6 @@ export async function fetchAllStarredRepositories(
   totalFetched: number;
   totalStarred: number;
   isLimited: boolean;
-  hasMore: boolean;
 }> {
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(token);
@@ -96,7 +95,6 @@ export async function fetchAllStarredRepositories(
       totalFetched: 0,
       totalStarred: 0,
       isLimited: false,
-      hasMore: false,
     };
   }
 
@@ -135,11 +133,11 @@ export async function fetchAllStarredRepositories(
   // Step 5: Sort by star count (most popular first) and then trim to maxRepos if needed
   const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   const trimmedRepos = sortedRepos.slice(0, maxRepos);
-  const hasMore = totalStarred > maxRepos;
+  const isLimited = totalStarred > maxRepos;
 
   logger.info(
     `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
-      hasMore ? ` (limited to ${maxRepos})` : ''
+      isLimited ? ` (limited to ${maxRepos})` : ''
     }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
   );
 
@@ -147,8 +145,7 @@ export async function fetchAllStarredRepositories(
     repositories: trimmedRepos,
     totalFetched: trimmedRepos.length,
     totalStarred,
-    isLimited: hasMore,
-    hasMore,
+    isLimited,
   };
 }
 
@@ -281,7 +278,6 @@ export async function searchRepositories(
   repositories: Repository[];
   totalCount: number;
   apiSearchResultTotal: number;
-  isLimited: boolean;
 }> {
   // Check if query is wrapped in quotes for exact match
   const isExactMatch = query.startsWith('"') && query.endsWith('"');
@@ -336,7 +332,6 @@ export async function searchRepositories(
     // Apply GitHub API limitation (max 1000 results accessible)
     const GITHUB_SEARCH_LIMIT = 1000;
     const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
-    const isLimited = totalCount > GITHUB_SEARCH_LIMIT;
 
     // Check if these repos are in user's starred list
     const starredIds = await fetchUserStarredIds(token);
@@ -372,7 +367,6 @@ export async function searchRepositories(
       repositories,
       totalCount,
       apiSearchResultTotal,
-      isLimited,
     };
   } catch (error) {
     // Re-throw abort errors without logging - they're expected
@@ -404,7 +398,6 @@ export async function searchStarredRepositories(
   repositories: Repository[];
   totalCount: number;
   apiSearchResultTotal: number;
-  isLimited: boolean;
 }> {
   try {
     // Check for abort before doing work
@@ -450,8 +443,7 @@ export async function searchStarredRepositories(
     return {
       repositories: paginatedRepos,
       totalCount,
-      apiSearchResultTotal: totalCount, // No API limit for client-side filtering
-      isLimited: false, // Client-side filtering has no API limitations
+      apiSearchResultTotal: totalCount,
     };
   } catch (error) {
     // Re-throw abort errors without logging - they're expected
