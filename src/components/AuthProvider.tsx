@@ -6,7 +6,7 @@ import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
-import { clearStoredAccessToken } from '../services/github-token';
+import { clearStoredAccessToken, storeAccessToken } from '../services/github-token';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -41,6 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
     setSession(nextSession);
     setUser(nextUser);
+
+    // Store GitHub token for later use when Supabase session refresh loses it
+    if (nextSession?.provider_token) {
+      storeAccessToken(nextSession.provider_token);
+    }
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {

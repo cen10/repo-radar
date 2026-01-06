@@ -56,15 +56,13 @@ export function clearStoredAccessToken(): void {
  * @throws GitHubReauthRequiredError if no token is available
  */
 export async function getValidGitHubToken(session: Session): Promise<string> {
-  // If provider_token is available, store it and use it directly
+  // Use provider_token if available
   if (session.provider_token) {
-    // Store for later use when Supabase session refresh loses it
-    storeAccessToken(session.provider_token);
     return session.provider_token;
   }
 
-  // provider_token is null - try stored access token
-  // (GitHub OAuth App tokens don't expire)
+  // provider_token is null (Supabase drops it on session refresh) - use stored token
+  // GitHub OAuth tokens don't expire, so the stored token remains valid
   const storedAccessToken = getStoredAccessToken();
   if (storedAccessToken) {
     logger.info('provider_token is null, using stored access token');

@@ -100,15 +100,13 @@ describe('github-token service', () => {
   });
 
   describe('getValidGitHubToken', () => {
-    it('returns provider_token if available in session and stores it', async () => {
+    it('returns provider_token if available in session', async () => {
       const session = {
         provider_token: 'valid-github-token',
       } as Session;
 
       const token = await getValidGitHubToken(session);
       expect(token).toBe('valid-github-token');
-      // Should store the token for later use
-      expect(localStorage.getItem(ACCESS_TOKEN_KEY)).toBe('valid-github-token');
     });
 
     it('returns stored access token when provider_token is null', async () => {
