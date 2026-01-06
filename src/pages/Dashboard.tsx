@@ -93,22 +93,12 @@ const Dashboard = () => {
 
   // Load starred repositories on mount (once only)
   useEffect(() => {
-    // DEBUG: Log every time this effect runs
-    console.log('[Dashboard] useEffect triggered', {
-      initialLoadComplete: initialLoadCompleteRef.current,
-      hasUser: !!user,
-      hasToken: !!providerToken,
-      authLoading,
-    });
-
     // Skip if already loaded - prevents overwriting search/filter results
     if (initialLoadCompleteRef.current) {
-      console.log('[Dashboard] Skipping - already loaded');
       return;
     }
 
     const loadStarredRepositories = async () => {
-      console.log('[Dashboard] Starting loadStarredRepositories');
       try {
         setIsLoading(true);
         setError(null);

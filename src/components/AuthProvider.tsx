@@ -38,11 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
-    console.log('[AuthProvider] applySessionToState called', {
-      hasSession: !!nextSession,
-      hasProviderToken: !!nextSession?.provider_token,
-    });
-
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
     setProviderToken(nextSession?.provider_token ?? null);
     setUser(nextUser);
@@ -54,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {
-    console.log('[AuthProvider] getSession called');
     try {
       setLoading(true);
       setConnectionError(null);
@@ -85,8 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySessionToState]);
 
   const handleAuthStateChange = useCallback(
-    (event: AuthChangeEvent, session: Session | null) => {
-      console.log('[AuthProvider] onAuthStateChange fired', { event, hasSession: !!session });
+    (_event: AuthChangeEvent, session: Session | null) => {
       try {
         applySessionToState(session);
         setLoading(false);
@@ -103,17 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    console.log('[AuthProvider] Main useEffect running');
-
     // Listen for auth changes - INITIAL_SESSION fires immediately with current session
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-    return () => {
-      console.log('[AuthProvider] Main useEffect cleanup');
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [handleAuthStateChange]);
 
   // Clear connection error on successful auth
@@ -162,13 +150,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }),
     [providerToken, user, loading, connectionError, signInWithGitHub, signOut, getSession]
   );
-
-  // DEBUG: Log when context value is recreated
-  console.log('[AuthProvider] Render - creating new context value', {
-    hasToken: !!providerToken,
-    hasUser: !!user,
-    loading,
-  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
