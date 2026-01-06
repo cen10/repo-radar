@@ -56,6 +56,13 @@ const mockGetSessionOnce = (
   mockSupabaseClient.auth.getSession.mockResolvedValueOnce(response);
 };
 
+// Type assertion helper - narrows T | undefined to T, throws if undefined
+function assertDefined<T>(val: T | undefined, name: string): asserts val is T {
+  if (val === undefined) {
+    throw new Error(`Expected ${name} to be defined after render`);
+  }
+}
+
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -173,7 +180,8 @@ describe('AuthProvider', () => {
 
       // Now trigger an error via retryAuth
       mockGetSession(null, new Error('Network error'));
-      await retryAuth!();
+      assertDefined(retryAuth, 'retryAuth');
+      await retryAuth();
 
       await waitFor(() => {
         expect(
@@ -203,7 +211,8 @@ describe('AuthProvider', () => {
 
       // Now trigger an unexpected error via retryAuth
       mockSupabaseClient.auth.getSession.mockRejectedValue(new Error('Unexpected error'));
-      await retryAuth!();
+      assertDefined(retryAuth, 'retryAuth');
+      await retryAuth();
 
       await waitFor(() => {
         expect(
@@ -233,7 +242,8 @@ describe('AuthProvider', () => {
 
       // Trigger connection error via retryAuth
       mockGetSession(null, new Error('Network error'));
-      await retryAuth!();
+      assertDefined(retryAuth, 'retryAuth');
+      await retryAuth();
 
       // Wait for connection error to appear
       await waitFor(() => {
@@ -326,7 +336,8 @@ describe('AuthProvider', () => {
 
       // Test that retryAuth calls getSession again
       mockSupabaseClient.auth.getSession.mockClear();
-      await expect(retryAuth!()).resolves.toBe(true);
+      assertDefined(retryAuth, 'retryAuth');
+      await expect(retryAuth()).resolves.toBe(true);
 
       expect(mockSupabaseClient.auth.getSession).toHaveBeenCalledTimes(1);
     });
@@ -357,7 +368,8 @@ describe('AuthProvider', () => {
 
       // First retryAuth call - trigger error
       mockGetSessionOnce(null, new Error('Network error'));
-      await retryAuth!();
+      assertDefined(retryAuth, 'retryAuth');
+      await retryAuth();
 
       await waitFor(() => {
         expect(screen.getByText(new RegExp(CONNECTION_FAILED, 'i'))).toBeInTheDocument();
@@ -365,7 +377,7 @@ describe('AuthProvider', () => {
 
       // Second retryAuth call - success
       mockGetSessionOnce();
-      await retryAuth!();
+      await retryAuth();
 
       await waitFor(() => {
         expect(screen.getByText(/connection: none/i)).toBeInTheDocument();
@@ -399,7 +411,8 @@ describe('AuthProvider', () => {
         expect(typeof signInWithGitHub).toBe('function');
       });
 
-      await expect(signInWithGitHub!()).rejects.toThrow('OAuth failed');
+      assertDefined(signInWithGitHub, 'signInWithGitHub');
+      await expect(signInWithGitHub()).rejects.toThrow('OAuth failed');
     });
 
     it('should throw error from signOut when logout fails', async () => {
@@ -425,7 +438,8 @@ describe('AuthProvider', () => {
         expect(typeof signOut).toBe('function');
       });
 
-      await expect(signOut!()).rejects.toThrow('Sign out failed');
+      assertDefined(signOut, 'signOut');
+      await expect(signOut()).rejects.toThrow('Sign out failed');
     });
 
     it('should call signInWithOAuth with correct parameters', async () => {
@@ -452,7 +466,8 @@ describe('AuthProvider', () => {
         expect(typeof signInWithGitHub).toBe('function');
       });
 
-      await signInWithGitHub!();
+      assertDefined(signInWithGitHub, 'signInWithGitHub');
+      await signInWithGitHub();
 
       expect(mockSupabaseClient.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'github',
