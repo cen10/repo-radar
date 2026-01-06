@@ -103,14 +103,12 @@ const Dashboard = () => {
         setIsLoading(true);
         setError(null);
 
-        // Get token first - throws GitHubReauthRequiredError if unavailable
         const token = getValidGitHubToken(providerToken);
 
-        // Fetch real data from GitHub API
         const result = await fetchAllStarredRepositories(token);
         const filteredRepos = filterOutLocallyUnstarred(result.repositories);
         setStarredRepositories(result.repositories);
-        setRepositories(filteredRepos); // Initially show starred repos with filtering applied
+        setRepositories(filteredRepos);
 
         setRepoLimitReached(result.isLimited);
         setTotalReposFetched(result.totalFetched);
