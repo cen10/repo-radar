@@ -119,7 +119,7 @@ describe('RepositoryList', () => {
     it('passes follow state correctly to repo cards', () => {
       const repos = [
         createMockRepository({ id: 1, name: 'repo-1', is_starred: true }),
-        createMockRepository({ id: 2, name: 'repo-2', is_starred: false }),
+        createMockRepository({ id: 2, name: 'repo-2' }),
       ];
 
       render(<RepositoryList {...defaultProps} repositories={repos} />);
