@@ -91,9 +91,9 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Load starred repositories on mount (once only)
+  // Load starred repositories when auth is ready
   useEffect(() => {
-    // Skip if already loaded - prevents overwriting search/filter results
+    // Guard: skip if load already started - Prevents overwriting search results
     if (initialLoadStartedRef.current) {
       return;
     }
