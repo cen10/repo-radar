@@ -266,3 +266,24 @@ graph TD
 **Total Tasks**: 80
 **Slice 1 (MVP)**: 20 tasks (~3-4 days)
 **Full Implementation**: 80 tasks (~18-20 days)
+
+---
+
+# Technical Improvements
+
+## Test Architecture Restructuring (T081-T084)
+*Goal: Separate unit, integration, and E2E tests for clearer responsibilities*
+
+**Problem**: Current component tests mock child components (e.g., Dashboard.test.tsx mocks RepositoryList), creating mock maintenance burden without integration confidence. Mocks can drift from real implementations.
+
+**Solution**: Three-tier test structure:
+
+- [ ] T081 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
+- [ ] T082 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, star/unstar) to integration tests, keep only Dashboard-specific unit logic
+- [ ] T083 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
+- [ ] T084 Update test documentation in CLAUDE.md with new test tier guidelines
+
+**Test tiers after refactor**:
+1. **Unit tests** - Isolated logic: utilities, API services, hooks, pure functions
+2. **Integration tests** - Real component trees with mocked external boundaries (API, auth)
+3. **E2E tests (Playwright)** - Full browser flows
