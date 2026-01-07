@@ -1,4 +1,3 @@
-import type { Session } from '@supabase/supabase-js';
 import type { Repository } from '../types';
 import { logger } from '../utils/logger';
 
@@ -31,16 +30,16 @@ interface GitHubStarredRepo {
  * in the Link header equals the total count (e.g., page=513 means 513 starred repos).
  *
  * This is a lightweight call—we don't use the response body, just the headers.
- * @param session - The Supabase session containing the GitHub access token
+ * @param token - GitHub access token
  * @returns Total number of starred repositories
  */
-async function fetchStarredRepoCount(session: Session): Promise<number> {
+async function fetchStarredRepoCount(token: string): Promise<number> {
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('per_page', '1');
 
   const response = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -74,26 +73,21 @@ async function fetchStarredRepoCount(session: Session): Promise<number> {
 
 /**
  * Fetches ALL starred repositories using parallel requests for optimal performance
- * @param session - The Supabase session containing the GitHub access token
+ * @param token - GitHub access token
  * @param maxRepos - Maximum number of repositories to fetch (default: 500)
  * @returns Object containing repositories array and metadata about limits
  */
 export async function fetchAllStarredRepositories(
-  session: Session | null,
+  token: string,
   maxRepos = 500
 ): Promise<{
   repositories: Repository[];
   totalFetched: number;
   totalStarred: number;
   isLimited: boolean;
-  hasMore: boolean;
 }> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
   // Step 1: Get total starred count with a single minimal request
-  const totalStarred = await fetchStarredRepoCount(session);
+  const totalStarred = await fetchStarredRepoCount(token);
 
   if (totalStarred === 0) {
     return {
@@ -101,7 +95,6 @@ export async function fetchAllStarredRepositories(
       totalFetched: 0,
       totalStarred: 0,
       isLimited: false,
-      hasMore: false,
     };
   }
 
@@ -114,7 +107,7 @@ export async function fetchAllStarredRepositories(
 
   // Step 3: Fetch all needed pages in parallel
   const results = await Promise.allSettled(
-    pages.map((page) => fetchStarredRepositories(session, page, perPage))
+    pages.map((page) => fetchStarredRepositories(token, page, perPage))
   );
 
   // Step 4: Process results
@@ -140,11 +133,11 @@ export async function fetchAllStarredRepositories(
   // Step 5: Sort by star count (most popular first) and then trim to maxRepos if needed
   const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   const trimmedRepos = sortedRepos.slice(0, maxRepos);
-  const hasMore = totalStarred > maxRepos;
+  const isLimited = totalStarred > maxRepos;
 
   logger.info(
     `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
-      hasMore ? ` (limited to ${maxRepos})` : ''
+      isLimited ? ` (limited to ${maxRepos})` : ''
     }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
   );
 
@@ -152,20 +145,21 @@ export async function fetchAllStarredRepositories(
     repositories: trimmedRepos,
     totalFetched: trimmedRepos.length,
     totalStarred,
-    isLimited: hasMore,
-    hasMore,
+    isLimited,
   };
 }
 
+/**
+ * Fetch starred repositories for a specific page
+ * @param token - GitHub access token
+ * @param page - Page number
+ * @param perPage - Items per page
+ */
 export async function fetchStarredRepositories(
-  session: Session | null,
+  token: string,
   page = 1,
   perPage = 30
 ): Promise<Repository[]> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('page', page.toString());
   url.searchParams.append('per_page', perPage.toString());
@@ -175,7 +169,7 @@ export async function fetchStarredRepositories(
   try {
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -268,14 +262,14 @@ function isTrending(repo: GitHubStarredRepo): boolean {
 
 /**
  * Search GitHub repositories
- * @param session - The Supabase session containing the GitHub access token
+ * @param token - GitHub access token
  * @param query - Search query (can include quotes for exact match)
  * @param page - Page number for pagination
  * @param perPage - Number of items per page
  * @returns Object containing repositories and pagination info
  */
 export async function searchRepositories(
-  session: Session | null,
+  token: string,
   query: string,
   page = 1,
   perPage = 30,
@@ -284,12 +278,7 @@ export async function searchRepositories(
   repositories: Repository[];
   totalCount: number;
   apiSearchResultTotal: number;
-  isLimited: boolean;
 }> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
   // Check if query is wrapped in quotes for exact match
   const isExactMatch = query.startsWith('"') && query.endsWith('"');
   const searchTerm = isExactMatch ? query.slice(1, -1) : query;
@@ -310,7 +299,7 @@ export async function searchRepositories(
     const response = await fetch(url.toString(), {
       signal,
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -343,10 +332,9 @@ export async function searchRepositories(
     // Apply GitHub API limitation (max 1000 results accessible)
     const GITHUB_SEARCH_LIMIT = 1000;
     const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
-    const isLimited = totalCount > GITHUB_SEARCH_LIMIT;
 
     // Check if these repos are in user's starred list
-    const starredIds = await fetchUserStarredIds(session);
+    const starredIds = await fetchUserStarredIds(token);
 
     // Transform GitHub API response to our Repository type
     const repositories = repos.map((repo) => ({
@@ -379,7 +367,6 @@ export async function searchRepositories(
       repositories,
       totalCount,
       apiSearchResultTotal,
-      isLimited,
     };
   } catch (error) {
     // Re-throw abort errors without logging - they're expected
@@ -393,7 +380,7 @@ export async function searchRepositories(
 
 /**
  * Search within the user's starred repositories (client-side filtering and pagination)
- * @param session - The Supabase session containing the GitHub access token
+ * @param token - GitHub access token
  * @param query - The search query string
  * @param page - Page number for pagination (1-indexed)
  * @param perPage - Number of items per page
@@ -401,7 +388,7 @@ export async function searchRepositories(
  * @returns Object containing repositories and pagination info
  */
 export async function searchStarredRepositories(
-  session: Session | null,
+  token: string,
   query: string,
   page = 1,
   perPage = 30,
@@ -411,7 +398,6 @@ export async function searchStarredRepositories(
   repositories: Repository[];
   totalCount: number;
   apiSearchResultTotal: number;
-  isLimited: boolean;
 }> {
   try {
     // Check for abort before doing work
@@ -425,7 +411,7 @@ export async function searchStarredRepositories(
       starredRepos = allStarredRepos;
     } else {
       // Fetch all starred repos - this is expensive but necessary for accurate client-side search
-      starredRepos = await fetchStarredRepositories(session, 1, 100); // Get up to 100 for now
+      starredRepos = await fetchStarredRepositories(token, 1, 100); // Get up to 100 for now
     }
 
     // Check for abort after async work
@@ -457,8 +443,7 @@ export async function searchStarredRepositories(
     return {
       repositories: paginatedRepos,
       totalCount,
-      apiSearchResultTotal: totalCount, // No API limit for client-side filtering
-      isLimited: false, // Client-side filtering has no API limitations
+      apiSearchResultTotal: totalCount,
     };
   } catch (error) {
     // Re-throw abort errors without logging - they're expected
@@ -473,19 +458,16 @@ export async function searchStarredRepositories(
 /**
  * Fetch IDs of all user's starred repositories (for checking if searched repos are starred)
  * This is a lightweight call that only gets IDs
+ * @param token - GitHub access token
  */
-async function fetchUserStarredIds(session: Session | null): Promise<Set<number>> {
-  if (!session?.provider_token) {
-    return new Set();
-  }
-
+async function fetchUserStarredIds(token: string): Promise<Set<number>> {
   try {
     const url = new URL(`${GITHUB_API_BASE}/user/starred`);
     url.searchParams.append('per_page', '100'); // Get first 100 starred repos
 
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -506,20 +488,15 @@ async function fetchUserStarredIds(session: Session | null): Promise<Set<number>
 
 /**
  * Star a repository on GitHub
+ * @param token - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
  */
-export async function starRepository(
-  session: Session | null,
-  owner: string,
-  repo: string
-): Promise<void> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
+export async function starRepository(token: string, owner: string, repo: string): Promise<void> {
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'PUT',
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -538,20 +515,15 @@ export async function starRepository(
 
 /**
  * Unstar a repository on GitHub
+ * @param token - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
  */
-export async function unstarRepository(
-  session: Session | null,
-  owner: string,
-  repo: string
-): Promise<void> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
+export async function unstarRepository(token: string, owner: string, repo: string): Promise<void> {
   const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
     method: 'DELETE',
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -570,13 +542,16 @@ export async function unstarRepository(
 
 /**
  * Check if a repository is starred by the authenticated user
+ * @param token - GitHub access token (returns false if null)
+ * @param owner - Repository owner
+ * @param repo - Repository name
  */
 export async function isRepositoryStarred(
-  session: Session | null,
+  token: string | null,
   owner: string,
   repo: string
 ): Promise<boolean> {
-  if (!session?.provider_token) {
+  if (!token) {
     return false;
   }
 
@@ -584,7 +559,7 @@ export async function isRepositoryStarred(
     const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${session.provider_token}`,
+        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
@@ -598,19 +573,16 @@ export async function isRepositoryStarred(
 
 /**
  * Fetch rate limit status from GitHub API
+ * @param token - GitHub access token
  */
-export async function fetchRateLimit(session: Session | null): Promise<{
+export async function fetchRateLimit(token: string): Promise<{
   remaining: number;
   limit: number;
   reset: Date;
 }> {
-  if (!session?.provider_token) {
-    throw new Error('No GitHub access token available');
-  }
-
   const response = await fetch(`${GITHUB_API_BASE}/rate_limit`, {
     headers: {
-      Authorization: `Bearer ${session.provider_token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },

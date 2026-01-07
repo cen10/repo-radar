@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
@@ -6,6 +6,7 @@ import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
+import { clearStoredAccessToken, storeAccessToken } from '../services/github-token';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -31,15 +32,20 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
-    setSession(nextSession);
+    setProviderToken(nextSession?.provider_token ?? null);
     setUser(nextUser);
+
+    // Store GitHub token for later use when Supabase session refresh loses it
+    if (nextSession?.provider_token) {
+      storeAccessToken(nextSession.provider_token);
+    }
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {
@@ -73,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySessionToState]);
 
   const handleAuthStateChange = useCallback(
-    async (_event: AuthChangeEvent, session: Session | null) => {
+    (_event: AuthChangeEvent, session: Session | null) => {
       try {
         applySessionToState(session);
         setLoading(false);
@@ -81,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
-        setSession(null);
+        setProviderToken(null);
         setUser(null);
         setLoading(false);
       }
@@ -90,24 +96,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    void getSession();
-
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     return () => subscription.unsubscribe();
-  }, [getSession, handleAuthStateChange]);
+  }, [handleAuthStateChange]);
 
   // Clear connection error on successful auth
   useEffect(() => {
-    if (session && connectionError) {
+    if (user && connectionError) {
       setConnectionError(null);
     }
-  }, [session, connectionError]);
+  }, [user, connectionError]);
 
-  const signInWithGitHub = async () => {
+  const signInWithGitHub = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
@@ -120,26 +123,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.error('Error signing in with GitHub:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    // Clear stored GitHub access token
+    clearStoredAccessToken();
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {
       logger.error('Error signing out:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
-    session,
-    user,
-    loading,
-    connectionError,
-    signInWithGitHub,
-    signOut,
-    retryAuth: getSession,
-  };
+  const value: AuthContextType = useMemo(
+    () => ({
+      providerToken,
+      user,
+      loading,
+      connectionError,
+      signInWithGitHub,
+      signOut,
+      retryAuth: getSession,
+    }),
+    [providerToken, user, loading, connectionError, signInWithGitHub, signOut, getSession]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

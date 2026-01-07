@@ -2,17 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
-import { supabase } from '../services/supabase';
-import { AuthError } from '@supabase/auth-js';
 import type { AuthContextType } from '../contexts/auth-context';
-import type { Session } from '@supabase/supabase-js';
 
 vi.mock('../hooks/use-auth');
-vi.mock('../services/supabase', () => ({
-  supabase: {
-    auth: {
-      signOut: vi.fn(),
-    },
+
+// Mock the logger to silence test output
+vi.mock('../utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -26,7 +26,7 @@ const mockUser = {
 
 const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
   user: mockUser,
-  session: {} as Session,
+  providerToken: 'test-github-token',
   loading: false,
   connectionError: null,
   signInWithGitHub: vi.fn(),
@@ -44,7 +44,7 @@ describe('Header', () => {
     vi.mocked(useAuth).mockReturnValue(
       createMockAuthContext({
         user: null,
-        session: null,
+        providerToken: null,
       })
     );
 
@@ -89,11 +89,8 @@ describe('Header', () => {
   });
 
   it('handles sign out successfully', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: null,
-    });
+    const mockSignOut = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -104,19 +101,16 @@ describe('Header', () => {
     expect(signOutButton).toBeDisabled();
 
     await waitFor(() => {
-      expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
       expect(signOutButton).not.toBeDisabled();
       expect(screen.getByText(/sign out/i)).toBeInTheDocument();
     });
   });
 
   it('displays error message when sign out fails', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
     const errorMessage = 'Failed to sign out';
-    vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new AuthError(errorMessage),
-    });
+    const mockSignOut = vi.fn().mockRejectedValue(new Error(errorMessage));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -131,9 +125,8 @@ describe('Header', () => {
   });
 
   it('handles sign out with unexpected error', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('Network error'));
+    const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -148,11 +141,8 @@ describe('Header', () => {
   });
 
   it('handles sign out with error without message', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new AuthError(''),
-    });
+    const mockSignOut = vi.fn().mockRejectedValue(new Error(''));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -177,11 +167,8 @@ describe('Header', () => {
   });
 
   it('displays error with proper accessibility attributes', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new AuthError('Test error'),
-    });
+    const mockSignOut = vi.fn().mockRejectedValue(new Error('Test error'));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -197,10 +184,9 @@ describe('Header', () => {
   });
 
   it('displays user-friendly message for network errors', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
     // Simulate network error with "Failed to fetch" message
-    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('Failed to fetch'));
+    const mockSignOut = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -214,12 +200,11 @@ describe('Header', () => {
   });
 
   it('displays user-friendly message for NetworkError name', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
     // Simulate network error with NetworkError name
     const networkError = new Error('Some network issue');
     networkError.name = 'NetworkError';
-    vi.mocked(supabase.auth.signOut).mockRejectedValue(networkError);
+    const mockSignOut = vi.fn().mockRejectedValue(networkError);
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 
@@ -233,11 +218,8 @@ describe('Header', () => {
   });
 
   it('returns focus to sign out button after error', async () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
-
-    vi.mocked(supabase.auth.signOut).mockResolvedValue({
-      error: new AuthError('Sign out failed'),
-    });
+    const mockSignOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
     render(<Header />);
 

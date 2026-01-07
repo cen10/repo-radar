@@ -9,22 +9,20 @@ import {
   starRepository,
   unstarRepository,
 } from '../services/github';
+import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/github-token';
 import type { Repository } from '../types';
 import {
-  filterOutLocallyUnstarred,
-  addToLocallyUnstarred,
-  removeFromLocallyUnstarred,
+  excludePendingUnstars,
+  markPendingUnstar,
+  clearPendingUnstar,
 } from '../utils/repository-filter';
 
 const ITEMS_PER_PAGE = 30;
 
 const Dashboard = () => {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [starredRepositories, setStarredRepositories] = useState<Repository[]>([]);
-  const [searchResults, setSearchResults] = useState<Repository[]>([]);
-  const [starredRepos, setStarredRepos] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +37,25 @@ const Dashboard = () => {
   const [totalReposFetched, setTotalReposFetched] = useState(0);
   const [totalStarredRepos, setTotalStarredRepos] = useState(0);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
-  const initialLoadCompleteRef = useRef(false);
+  const initialLoadStartedRef = useRef(false);
+
+  // Defensive handler for the unlikely case where no GitHub token is available.
+  // GitHub OAuth tokens don't expire, so this would only trigger if the user
+  // cleared browser storage while Supabase had already dropped provider_token.
+  // Forces re-authentication to recover.
+  const isReauthError = useCallback(
+    (err: unknown): boolean => {
+      if (err instanceof GitHubReauthRequiredError) {
+        // Catch and ignore signOut errors - we're forcing reauth anyway
+        void signOut()
+          .catch(() => {})
+          .then(() => navigate('/login'));
+        return true;
+      }
+      return false;
+    },
+    [signOut, navigate]
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,7 +66,7 @@ const Dashboard = () => {
   // Handle localStorage cleanup and cross-tab synchronization
   useEffect(() => {
     // Clean up expired entries from localStorage on startup
-    const stored = localStorage.getItem('locallyUnstarredRepos');
+    const stored = localStorage.getItem('pendingUnstars');
     if (stored) {
       const entries = JSON.parse(stored);
       const now = Date.now();
@@ -59,15 +75,15 @@ const Dashboard = () => {
       );
 
       if (validEntries.length !== entries.length) {
-        localStorage.setItem('locallyUnstarredRepos', JSON.stringify(validEntries));
+        localStorage.setItem('pendingUnstars', JSON.stringify(validEntries));
       }
     }
 
     // Listen for localStorage changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'locallyUnstarredRepos') {
+      if (e.key === 'pendingUnstars') {
         // Refresh current repository list
-        setRepositories((prev) => filterOutLocallyUnstarred(prev));
+        setRepositories((prev) => excludePendingUnstars(prev));
       }
     };
 
@@ -75,113 +91,102 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Load starred repositories on mount (once only)
+  // Reusable function to fetch starred repositories
+  const loadStarredRepositories = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const token = getValidGitHubToken(providerToken);
+      const result = await fetchAllStarredRepositories(token);
+
+      // Prevent unstarred repos from reappearing on refresh until GitHub API syncs
+      setRepositories(excludePendingUnstars(result.repositories));
+
+      setRepoLimitReached(result.isLimited);
+      setTotalReposFetched(result.totalFetched);
+      setTotalStarredRepos(result.totalStarred);
+
+      return result.repositories;
+    } catch (err) {
+      if (isReauthError(err)) return [];
+      setError(err instanceof Error ? err : new Error('Failed to load repositories'));
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [providerToken, isReauthError]);
+
+  // Load starred repositories when auth is ready
   useEffect(() => {
-    // Skip if already loaded - prevents overwriting search/filter results
-    // when session object gets a new reference (e.g., during token refresh)
-    if (initialLoadCompleteRef.current) {
+    // Guard: skip if load already started - Prevents overwriting search results
+    if (initialLoadStartedRef.current) {
       return;
     }
 
-    const loadStarredRepositories = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch real data from GitHub API
-        // This will throw an error if session or provider_token is missing
-        const result = await fetchAllStarredRepositories(session);
-        const filteredRepos = filterOutLocallyUnstarred(result.repositories);
-        setStarredRepositories(result.repositories);
-        setRepositories(filteredRepos); // Initially show starred repos with filtering applied
-
-        // Track if we hit the repository limit
-        setRepoLimitReached(false); // No longer tracking isLimited from starred repos
-        setTotalReposFetched(result.totalFetched);
-        setTotalStarredRepos(result.totalStarred);
-
-        // Load starred repos from localStorage
-        const savedStars = localStorage.getItem('followedRepos');
-        if (savedStars) {
-          const starredIds = JSON.parse(savedStars) as number[];
-          setStarredRepos(new Set(starredIds));
-        }
-
-        // Mark initial load as complete
-        initialLoadCompleteRef.current = true;
-      } catch (err) {
-        // Check if it's a GitHub auth error and provide a more user-friendly message
-        if (err instanceof Error && err.message.includes('No GitHub access token')) {
-          setError(
-            new Error(
-              'Your GitHub session has expired. Please sign out and sign in again to reconnect your GitHub account.'
-            )
-          );
-        } else {
-          setError(err instanceof Error ? err : new Error('Failed to load repositories'));
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user && !authLoading) {
+      // Set flag synchronously BEFORE async work to prevent duplicate fetches
+      initialLoadStartedRef.current = true;
       void loadStarredRepositories();
     }
-  }, [user, session, authLoading]);
+  }, [user, authLoading, loadStarredRepositories]);
 
-  // Reset to default starred repos view (no API call, client-side pagination)
-  const showDefaultStarredView = useCallback(() => {
-    setSearchResults([]);
-    setRepositories(filterOutLocallyUnstarred(starredRepositories));
+  // Reset to default starred repos view by refetching
+  const showDefaultStarredView = useCallback(async () => {
     setDataIsPrepaginated(false);
     setCurrentPage(1);
     setTotalPages(0);
     setHasMoreResults(false);
     setApiSearchResultTotal(undefined);
-  }, [starredRepositories]);
+    await loadStarredRepositories();
+  }, [loadStarredRepositories]);
 
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
+      const token = getValidGitHubToken(providerToken);
+
+      // Fetch fresh starred repos to search within
+      const result = await fetchAllStarredRepositories(token);
+      const starredRepos = excludePendingUnstars(result.repositories);
+
       const starredResponse = await searchStarredRepositories(
-        session,
+        token,
         query,
         page,
         ITEMS_PER_PAGE,
-        starredRepositories,
+        starredRepos,
         signal
       );
 
       const totalPages = Math.ceil(starredResponse.totalCount / ITEMS_PER_PAGE);
 
-      setSearchResults(starredResponse.repositories);
-      setRepositories(filterOutLocallyUnstarred(starredResponse.repositories));
+      setRepositories(excludePendingUnstars(starredResponse.repositories));
       setDataIsPrepaginated(true);
       setCurrentPage(page);
       setTotalPages(totalPages);
       setHasMoreResults(page < totalPages);
       setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
     },
-    [session, starredRepositories]
+    [providerToken]
   );
 
   // Search all GitHub repositories via API
   const searchAllGitHubRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
-      const searchResponse = await searchRepositories(session, query, page, ITEMS_PER_PAGE, signal);
+      const token = getValidGitHubToken(providerToken);
+      const searchResponse = await searchRepositories(token, query, page, ITEMS_PER_PAGE, signal);
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
 
-      setSearchResults(searchResponse.repositories);
-      setRepositories(filterOutLocallyUnstarred(searchResponse.repositories));
+      setRepositories(excludePendingUnstars(searchResponse.repositories));
       setDataIsPrepaginated(true);
       setCurrentPage(page);
       setTotalPages(totalPages);
       setHasMoreResults(page < totalPages);
       setApiSearchResultTotal(searchResponse.apiSearchResultTotal);
     },
-    [session]
+    [providerToken]
   );
 
   // Main search router - determines which search behavior to use
@@ -194,7 +199,9 @@ const Dashboard = () => {
 
       // No query + starred filter = show default view
       if (!query.trim() && filter === 'starred') {
-        showDefaultStarredView();
+        // Clear any stuck searching state from aborted search before returning
+        setIsSearching(false);
+        await showDefaultStarredView();
         return;
       }
 
@@ -215,6 +222,8 @@ const Dashboard = () => {
         if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
           return;
         }
+
+        if (isReauthError(err)) return;
         setError(err instanceof Error ? err : new Error('Search failed'));
       } finally {
         // Only clear searching state if this request wasn't aborted
@@ -223,7 +232,7 @@ const Dashboard = () => {
         }
       }
     },
-    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos]
+    [showDefaultStarredView, searchWithinStarredRepos, searchAllGitHubRepos, isReauthError]
   );
 
   // Handle search input changes (just updates the input value, no search)
@@ -263,55 +272,28 @@ const Dashboard = () => {
     };
   }, []);
 
-  const handleStar = async (repoId: number) => {
+  const handleStar = async (repo: Repository) => {
     try {
-      // Remove from locally unstarred list immediately
-      removeFromLocallyUnstarred(repoId);
-
-      // Find the repository to get owner and name
-      const repo =
-        repositories.find((r) => r.id === repoId) ||
-        searchResults.find((r) => r.id === repoId) ||
-        starredRepositories.find((r) => r.id === repoId);
-
-      if (!repo) {
-        throw new Error('Repository not found');
-      }
-
       // Star the repository on GitHub
-      await starRepository(session, repo.owner.login, repo.name);
+      const token = getValidGitHubToken(providerToken);
+      await starRepository(token, repo.owner.login, repo.name);
 
-      // Update local state to reflect the change immediately
-      setStarredRepos((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(repoId);
-        return newSet;
-      });
+      // Clear pending unstar only after successful star
+      // This prevents losing unstar protection if the API call fails
+      clearPendingUnstar(repo.id);
 
-      // Update the repository lists to mark it as starred
-      const updateRepoList = (repos: Repository[]) =>
-        repos.map((r) => (r.id === repoId ? { ...r, is_starred: true } : r));
-
-      setRepositories(updateRepoList);
-      setSearchResults(updateRepoList);
-      setStarredRepositories(updateRepoList);
+      // Update repositories to mark as starred
+      setRepositories((prev) =>
+        prev.map((r) => (r.id === repo.id ? { ...r, is_starred: true } : r))
+      );
     } catch (err) {
+      if (isReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
-  const handleUnstar = async (repoId: number) => {
+  const handleUnstar = async (repo: Repository) => {
     try {
-      // Find the repository to get owner and name
-      const repo =
-        repositories.find((r) => r.id === repoId) ||
-        searchResults.find((r) => r.id === repoId) ||
-        starredRepositories.find((r) => r.id === repoId);
-
-      if (!repo) {
-        throw new Error('Repository not found');
-      }
-
       // Show confirmation dialog
       const confirmMessage = `Are you sure you want to unstar "${repo.name}" on GitHub?\n\nNote: Due to GitHub API delays, this repository may briefly reappear if you refresh the page. The change typically syncs within 30-45 seconds.`;
       if (!window.confirm(confirmMessage)) {
@@ -319,36 +301,22 @@ const Dashboard = () => {
       }
 
       // Unstar the repository on GitHub
-      await unstarRepository(session, repo.owner.login, repo.name);
+      const token = getValidGitHubToken(providerToken);
+      await unstarRepository(token, repo.owner.login, repo.name);
 
-      // Add to locally unstarred list to hide until GitHub API syncs
-      addToLocallyUnstarred(repoId);
+      // Hide repo until GitHub API syncs
+      markPendingUnstar(repo.id);
 
-      // Update local state to reflect the change immediately
-      setStarredRepos((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(repoId);
-        return newSet;
-      });
-
-      // For search results, update the star status
-      const updateSearchResults = (repos: Repository[]) =>
-        repos.map((r) => (r.id === repoId ? { ...r, is_starred: false } : r));
-
-      // For starred repositories list, REMOVE the unstarred repo entirely
-      const removeFromStarred = (repos: Repository[]) => repos.filter((r) => r.id !== repoId);
-
-      // If we're not in a search (showing starred repos), remove the repo from view
-      if (!searchQuery) {
-        setRepositories(filterOutLocallyUnstarred(removeFromStarred(repositories)));
-      } else {
-        // In search mode, just update the star status and apply filtering
-        setRepositories(filterOutLocallyUnstarred(updateSearchResults(repositories)));
-      }
-
-      setSearchResults(updateSearchResults(searchResults));
-      setStarredRepositories(removeFromStarred(starredRepositories));
+      // In starred view, remove the repo (it's no longer starred)
+      // In all view, keep visible with "Star" button (it's a search result)
+      const isStarredView = filterBy === 'starred';
+      setRepositories((prev) =>
+        isStarredView
+          ? prev.filter((r) => r.id !== repo.id)
+          : prev.map((r) => (r.id === repo.id ? { ...r, is_starred: false } : r))
+      );
     } catch (err) {
+      if (isReauthError(err)) return;
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
@@ -393,7 +361,7 @@ const Dashboard = () => {
           {repoLimitReached && !searchQuery && filterBy === 'starred' && (
             <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <svg
                     className="h-5 w-5 text-amber-400"
                     viewBox="0 0 20 20"
@@ -430,7 +398,6 @@ const Dashboard = () => {
           error={error}
           onStar={handleStar}
           onUnstar={handleUnstar}
-          starredRepos={starredRepos}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}

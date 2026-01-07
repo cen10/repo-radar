@@ -65,7 +65,7 @@ describe('RepoCard', () => {
 
   it('renders repository basic information correctly', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText('awesome-repo')).toBeInTheDocument();
     expect(screen.getByText('by octocat')).toBeInTheDocument();
@@ -76,35 +76,35 @@ describe('RepoCard', () => {
 
   it('displays star count with proper formatting', () => {
     const repo = createMockRepository({ stargazers_count: 1234 });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText(/Stars: 1.2k/)).toBeInTheDocument();
   });
 
   it('displays star count without formatting for small numbers', () => {
     const repo = createMockRepository({ stargazers_count: 567 });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText(/Stars: 567/)).toBeInTheDocument();
   });
 
   it('displays issue count correctly', () => {
     const repo = createMockRepository({ open_issues_count: 42 });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText(/Open issues: 42/)).toBeInTheDocument();
   });
 
   it('displays primary language when present', () => {
     const repo = createMockRepository({ language: 'JavaScript' });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText(/primary language: javascript/i)).toBeInTheDocument();
   });
 
   it('omits language row when repository has no language', () => {
     const repo = createMockRepository({ language: null });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.queryByText(/primary language/i)).not.toBeInTheDocument();
   });
@@ -113,7 +113,7 @@ describe('RepoCard', () => {
     const repo = createMockRepository({
       topics: ['testing', 'react'],
     });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByRole('group', { name: /labels: testing, react/i })).toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('RepoCard', () => {
     const repo = createMockRepository({
       topics: ['topic1', 'topic2', 'topic3', 'topic4', 'topic5'],
     });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.getByText('topic1')).toBeInTheDocument();
     expect(screen.getByText('topic2')).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('RepoCard', () => {
 
   it('handles repository without topics', () => {
     const repo = createMockRepository({ topics: [] });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.queryByText(/topic/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
@@ -143,14 +143,14 @@ describe('RepoCard', () => {
 
   it('handles repository without description', () => {
     const repo = createMockRepository({ description: null });
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
   it('configures repository link to open in new tab securely', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
     expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
@@ -161,7 +161,7 @@ describe('RepoCard', () => {
   it('link is reachable via keyboard navigation', async () => {
     const user = userEvent.setup();
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     await user.tab();
 
@@ -171,7 +171,7 @@ describe('RepoCard', () => {
 
   it('renders as an article element for semantic structure', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} />);
+    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
 
     const article = screen.getByRole('article');
     expect(article).toBeInTheDocument();

@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import * as githubService from '../services/github';
+import { GitHubReauthRequiredError } from '../services/github-token';
 import type { User, Repository } from '../types';
 
 // Mock the useAuth hook
@@ -18,6 +19,8 @@ vi.mock('../services/github', () => ({
   fetchAllStarredRepositories: vi.fn(),
   searchRepositories: vi.fn(),
   searchStarredRepositories: vi.fn(),
+  starRepository: vi.fn(),
+  unstarRepository: vi.fn(),
   fetchRateLimit: vi.fn(),
 }));
 
@@ -34,6 +37,8 @@ vi.mock('../components/RepositoryList', () => ({
       isSearching,
       filterBy,
       onFilterChange,
+      onStar,
+      onUnstar,
       dataIsPrepaginated,
     }) => {
       if (isLoading) {
@@ -82,9 +87,19 @@ vi.mock('../components/RepositoryList', () => ({
           )}
           {isSearching && <div>Searching GitHub...</div>}
           <div data-testid="repo-count">{repositories.length} repositories</div>
-          {repositories.map((repo: { id: number; name: string }) => (
+          {repositories.map((repo: { id: number; name: string; is_starred?: boolean }) => (
             <div key={repo.id} data-testid={`repo-${repo.id}`}>
               {repo.name}
+              {onUnstar && repo.is_starred && (
+                <button data-testid={`unstar-${repo.id}`} onClick={() => onUnstar(repo)}>
+                  Unstar
+                </button>
+              )}
+              {onStar && !repo.is_starred && (
+                <button data-testid={`star-${repo.id}`} onClick={() => onStar(repo)}>
+                  Star
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -110,23 +125,6 @@ describe('Dashboard', () => {
     name: 'Test User',
     avatar_url: 'https://example.com/avatar.jpg',
     email: 'test@example.com',
-  };
-
-  const mockSession = {
-    provider_token: 'test-github-token',
-    access_token: 'test-access-token',
-    token_type: 'bearer' as const,
-    expires_in: 3600,
-    expires_at: Date.now() + 3600000,
-    refresh_token: 'test-refresh-token',
-    user: {
-      id: 'test-user-id',
-      email: 'test@example.com',
-      user_metadata: {},
-      app_metadata: {},
-      aud: 'authenticated',
-      created_at: '2024-01-01T00:00:00Z',
-    },
   };
 
   const mockRepositories: Repository[] = [
@@ -190,19 +188,16 @@ describe('Dashboard', () => {
       totalFetched: mockRepositories.length,
       totalStarred: mockRepositories.length,
       isLimited: false,
-      hasMore: false,
     });
     vi.mocked(githubService.searchRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
       apiSearchResultTotal: 0,
-      isLimited: false,
     });
     vi.mocked(githubService.searchStarredRepositories).mockResolvedValue({
       repositories: [],
       totalCount: 0,
       apiSearchResultTotal: 0,
-      isLimited: false,
     });
   });
 
@@ -247,7 +242,7 @@ describe('Dashboard', () => {
   it('renders dashboard when user is authenticated', async () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -274,7 +269,7 @@ describe('Dashboard', () => {
   it('shows loading state while fetching repositories', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -293,7 +288,7 @@ describe('Dashboard', () => {
     it('performs search on form submission', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -325,20 +320,23 @@ describe('Dashboard', () => {
       // Submit the form by clicking search button
       fireEvent.click(searchButton);
 
-      expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
-        mockSession,
-        'vue',
-        1,
-        30,
-        mockRepositories,
-        expect.any(AbortSignal)
-      );
+      // Search fetches fresh starred repos first, so wait for the call
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
+          'test-github-token',
+          'vue',
+          1,
+          30,
+          expect.arrayContaining(mockRepositories),
+          expect.any(AbortSignal)
+        );
+      });
     });
 
     it('filters starred repositories locally', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -367,7 +365,7 @@ describe('Dashboard', () => {
     it('shows search status in subtitle', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -392,13 +390,186 @@ describe('Dashboard', () => {
     });
   });
 
+  describe('Star/Unstar Functionality', () => {
+    it('removes repo from list when unstarred in starred view', async () => {
+      // Mock window.confirm to return true
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Find and click the unstar button for the first repo
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // Repo should be removed from the list (not just marked as unstarred)
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('1 repositories');
+      });
+
+      // The unstarred repo should no longer be in the DOM
+      expect(screen.queryByTestId('repo-1')).not.toBeInTheDocument();
+    });
+
+    it('keeps repo visible with Star button when unstarred in all view', async () => {
+      // Mock window.confirm to return true
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      // Mock search results for "all" filter
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "all" filter
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalled();
+      });
+
+      // Find and click the unstar button for the first repo
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // Repo should still be in the list (count stays at 2)
+      // and the repo should now show a Star button instead of Unstar
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+        expect(screen.queryByTestId('unstar-1')).not.toBeInTheDocument();
+        expect(screen.getByTestId('star-1')).toBeInTheDocument();
+      });
+    });
+
+    it('preserves pending unstar entry when star API call fails', async () => {
+      // Mock window.confirm for unstar action
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Mock unstar to succeed
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      // Mock search results for "all" filter - repo shows as starred initially
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockRepositories, // Both repos starred
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+      });
+
+      // Mock star API to fail
+      vi.mocked(githubService.starRepository).mockRejectedValue(new Error('Network error'));
+
+      // Mock window.alert to capture error message
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load with starred repos
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "all" filter first
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalled();
+      });
+
+      // User unstars repo 1 in "all" view - this creates a pending unstar entry
+      // and the repo remains visible with Star button (since we're in "all" view)
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // In "all" view, repo stays visible but now shows Star button
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('star-1')).toBeInTheDocument();
+      });
+
+      // Verify pending unstar was created
+      let storedPendingUnstars = JSON.parse(localStorage.getItem('pendingUnstars') || '[]');
+      expect(storedPendingUnstars).toHaveLength(1);
+      expect(storedPendingUnstars[0].id).toBe(1);
+
+      // User immediately tries to re-star - this should fail
+      const starButton = screen.getByTestId('star-1');
+      fireEvent.click(starButton);
+
+      // Wait for the error alert
+      await vi.waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to star repository'));
+      });
+
+      // Verify pending unstar entry is still preserved in localStorage (not cleared)
+      // This is the key assertion - the bug was that clearPendingUnstar was called
+      // before the API call, so on failure the pending unstar would be lost
+      storedPendingUnstars = JSON.parse(localStorage.getItem('pendingUnstars') || '[]');
+      expect(storedPendingUnstars).toHaveLength(1);
+      expect(storedPendingUnstars[0].id).toBe(1);
+
+      alertSpy.mockRestore();
+    });
+  });
+
   it('handles repository loading errors', async () => {
     // Mock console.error to avoid noise in tests
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      session: mockSession,
+      providerToken: 'test-github-token',
       loading: false,
       signOut: vi.fn(),
     });
@@ -467,7 +638,7 @@ describe('Dashboard', () => {
     it('shows starred repos when filter is "starred" and search is empty', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -491,7 +662,7 @@ describe('Dashboard', () => {
     it('searches for high starred repos when filter is "all" and search is empty', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -500,7 +671,6 @@ describe('Dashboard', () => {
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
         apiSearchResultTotal: 1000,
-        isLimited: true,
       });
 
       render(
@@ -520,7 +690,7 @@ describe('Dashboard', () => {
       // Should search for most starred repositories
       await waitFor(() => {
         expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
-          mockSession,
+          'test-github-token',
           'stars:>1',
           1,
           30,
@@ -536,7 +706,7 @@ describe('Dashboard', () => {
     it('switches between filter modes correctly with empty search', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -545,7 +715,6 @@ describe('Dashboard', () => {
         repositories: mockHighStarredRepos,
         totalCount: 1000000,
         apiSearchResultTotal: 1000,
-        isLimited: true,
       });
 
       render(
@@ -565,7 +734,7 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalledWith(
-          mockSession,
+          'test-github-token',
           'stars:>1',
           1,
           30,
@@ -583,11 +752,76 @@ describe('Dashboard', () => {
     });
   });
 
+  describe('Repository limit warning', () => {
+    it('shows warning banner when user has more starred repos than the fetch limit', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Simulate having 600 starred repos but only fetching 500
+      vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalFetched: 500,
+        totalStarred: 600,
+        isLimited: true,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Should show the warning banner with correct counts
+      expect(
+        screen.getByText(/showing first 500 of 600 starred repositories/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/100 repositories aren't displayed/i)).toBeInTheDocument();
+    });
+
+    it('does not show warning banner when all starred repos are fetched', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Simulate fetching all repos (no limit reached)
+      vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalFetched: 100,
+        totalStarred: 100,
+        isLimited: false,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      // Should NOT show the warning banner
+      expect(screen.queryByText(/showing first/i)).not.toBeInTheDocument();
+    });
+  });
+
   describe('dataIsPrepaginated prop', () => {
     it('sets dataIsPrepaginated to false when showing default starred view', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -609,7 +843,7 @@ describe('Dashboard', () => {
     it('sets dataIsPrepaginated to true when searching starred repos', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -618,7 +852,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 2,
         apiSearchResultTotal: 2,
-        isLimited: false,
       });
 
       render(
@@ -645,7 +878,7 @@ describe('Dashboard', () => {
     it('sets dataIsPrepaginated to true when searching all repos', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -654,7 +887,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 100,
         apiSearchResultTotal: 100,
-        isLimited: false,
       });
 
       render(
@@ -679,7 +911,7 @@ describe('Dashboard', () => {
     it('resets dataIsPrepaginated to false when clearing search and returning to starred view', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -688,7 +920,6 @@ describe('Dashboard', () => {
         repositories: mockRepositories,
         totalCount: 2,
         apiSearchResultTotal: 2,
-        isLimited: false,
       });
 
       render(
@@ -729,7 +960,7 @@ describe('Dashboard', () => {
     it('ignores stale search results when a newer search is initiated', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -776,7 +1007,6 @@ describe('Dashboard', () => {
               repositories: vueRepos,
               totalCount: 1,
               apiSearchResultTotal: 1,
-              isLimited: false,
             };
           } else {
             // Second search: resolve immediately (simulates fast response)
@@ -784,7 +1014,6 @@ describe('Dashboard', () => {
               repositories: reactRepos,
               totalCount: 1,
               apiSearchResultTotal: 1,
-              isLimited: false,
             };
           }
         }
@@ -830,7 +1059,7 @@ describe('Dashboard', () => {
     it('ignores stale results when filter changes during search', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -871,7 +1100,6 @@ describe('Dashboard', () => {
             repositories: starredSearchRepos,
             totalCount: 1,
             apiSearchResultTotal: 1,
-            isLimited: false,
           };
         }
       );
@@ -880,7 +1108,6 @@ describe('Dashboard', () => {
         repositories: allSearchRepos,
         totalCount: 1,
         apiSearchResultTotal: 1,
-        isLimited: false,
       });
 
       render(
@@ -920,10 +1147,84 @@ describe('Dashboard', () => {
       expect(screen.queryByText('starred-result')).not.toBeInTheDocument();
     });
 
+    it('clears isSearching state when search is aborted via early return', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      let searchResolve: (value: unknown) => void;
+      const searchPromise = new Promise((resolve) => {
+        searchResolve = resolve;
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockImplementation(
+        async (_session, _query, _page, _perPage, _allStarredRepos, signal) => {
+          await searchPromise;
+
+          if (signal?.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+          }
+
+          return {
+            repositories: mockRepositories,
+            totalCount: 2,
+            apiSearchResultTotal: 2,
+          };
+        }
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      // Start search - this will set isSearching to true
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      fireEvent.click(searchButton);
+
+      // Verify isSearching is true (shows "Searching GitHub...")
+      await waitFor(() => {
+        expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
+      });
+
+      // Clear search and submit empty query - this triggers the early return path
+      // which aborts the in-flight search
+      fireEvent.change(searchInput, { target: { value: '' } });
+      fireEvent.click(searchButton);
+
+      // Bug: isSearching stays true because:
+      // 1. The aborted search's finally block checks if (!signal.aborted) which is false
+      // 2. The early return path doesn't clear isSearching
+      // Fix: setIsSearching(false) before the early return
+
+      // isSearching should be cleared immediately
+      await waitFor(() => {
+        expect(screen.queryByText('Searching GitHub...')).not.toBeInTheDocument();
+      });
+
+      // Let the aborted search complete to ensure no state corruption
+      searchResolve!({});
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still not show searching indicator
+      expect(screen.queryByText('Searching GitHub...')).not.toBeInTheDocument();
+    });
+
     it('ignores stale results when search is cleared', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
-        session: mockSession,
+        providerToken: 'test-github-token',
         loading: false,
         signOut: vi.fn(),
       });
@@ -955,7 +1256,6 @@ describe('Dashboard', () => {
             repositories: searchRepos,
             totalCount: 1,
             apiSearchResultTotal: 1,
-            isLimited: false,
           };
         }
       );
@@ -1001,6 +1301,67 @@ describe('Dashboard', () => {
       expect(screen.getByText('react')).toBeInTheDocument();
       expect(screen.getByText('typescript')).toBeInTheDocument();
       expect(screen.queryByText('search-result')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Reauth error recovery', () => {
+    it('navigates to login even when signOut throws an error', async () => {
+      const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      vi.mocked(githubService.fetchAllStarredRepositories).mockRejectedValue(
+        new GitHubReauthRequiredError()
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+      });
+
+      // Navigation should happen via finally() even when signOut rejects
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
+      });
+    });
+
+    it('navigates to login when signOut succeeds', async () => {
+      const mockSignOut = vi.fn().mockResolvedValue(undefined);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      vi.mocked(githubService.fetchAllStarredRepositories).mockRejectedValue(
+        new GitHubReauthRequiredError()
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
+      });
     });
   });
 });

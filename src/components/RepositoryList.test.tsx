@@ -118,12 +118,11 @@ describe('RepositoryList', () => {
 
     it('passes follow state correctly to repo cards', () => {
       const repos = [
-        createMockRepository({ id: 1, name: 'repo-1' }),
+        createMockRepository({ id: 1, name: 'repo-1', is_starred: true }),
         createMockRepository({ id: 2, name: 'repo-2' }),
       ];
-      const starredRepos = new Set([1]);
 
-      render(<RepositoryList {...defaultProps} repositories={repos} starredRepos={starredRepos} />);
+      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       const card1 = screen.getByTestId('repo-card-1');
       const card2 = screen.getByTestId('repo-card-2');
@@ -149,20 +148,18 @@ describe('RepositoryList', () => {
       const starButton = screen.getByRole('button', { name: /star/i });
       fireEvent.click(starButton);
 
-      expect(onStar).toHaveBeenCalledWith(1);
+      expect(onStar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
 
     it('calls onUnstar when unstar button is clicked', () => {
       const onStar = vi.fn();
       const onUnstar = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-      const starredRepos = new Set([1]);
+      const repos = [createMockRepository({ id: 1, name: 'repo-1', is_starred: true })];
 
       render(
         <RepositoryList
           {...defaultProps}
           repositories={repos}
-          starredRepos={starredRepos}
           onStar={onStar}
           onUnstar={onUnstar}
         />
@@ -171,7 +168,7 @@ describe('RepositoryList', () => {
       const unstarButton = screen.getByRole('button', { name: /unstar/i });
       fireEvent.click(unstarButton);
 
-      expect(onUnstar).toHaveBeenCalledWith(1);
+      expect(onUnstar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
   });
 

@@ -22,9 +22,8 @@ interface RepositoryListProps {
   repositories: Repository[];
   isLoading?: boolean;
   error?: Error | null;
-  onStar: (repoId: number) => void;
-  onUnstar: (repoId: number) => void;
-  starredRepos?: Set<number>;
+  onStar: (repo: Repository) => void;
+  onUnstar: (repo: Repository) => void;
   itemsPerPage?: number;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -48,7 +47,6 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   error = null,
   onStar,
   onUnstar,
-  starredRepos = new Set(),
   itemsPerPage = 12,
   searchQuery,
   onSearchChange,
@@ -301,26 +299,19 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           </div>
         )}
         {!isSearching &&
-          currentRepos.map((repo) => {
-            const repoWithStarState = {
-              ...repo,
-              // Set is_starred based on local tracking or existing value
-              is_starred: repo.is_starred || starredRepos.has(repo.id),
-            };
-            return (
-              <RepoCard
-                key={repo.id}
-                repository={repoWithStarState}
-                onToggleStar={() => {
-                  if (repoWithStarState.is_starred) {
-                    onUnstar(repo.id);
-                  } else {
-                    onStar(repo.id);
-                  }
-                }}
-              />
-            );
-          })}
+          currentRepos.map((repo) => (
+            <RepoCard
+              key={repo.id}
+              repository={repo}
+              onToggleStar={() => {
+                if (repo.is_starred) {
+                  onUnstar(repo);
+                } else {
+                  onStar(repo);
+                }
+              }}
+            />
+          ))}
       </div>
 
       {/* Pagination - Hide when 0 results or 1-10 results in single page */}

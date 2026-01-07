@@ -24,7 +24,7 @@ describe('useAuth', () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current).toHaveProperty('user');
-    expect(result.current).toHaveProperty('session');
+    expect(result.current).toHaveProperty('providerToken');
     expect(result.current).toHaveProperty('loading');
     expect(result.current).toHaveProperty('signInWithGitHub');
     expect(result.current).toHaveProperty('signOut');

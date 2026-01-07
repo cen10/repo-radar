@@ -20,6 +20,7 @@ import type {
 export const mockSession: Session = {
   access_token: 'mock-access-token',
   refresh_token: 'mock-refresh-token',
+  provider_token: 'mock-github-token',
   expires_in: 3600,
   expires_at: Math.floor(Date.now() / 1000) + 3600,
   token_type: 'bearer',
@@ -53,6 +54,31 @@ export type OnAuthStateChangeResponse = {
   error: null;
 };
 
+// Store the auth state change callback so tests can trigger auth events
+let authStateChangeCallback: ((event: AuthChangeEvent, session: Session | null) => void) | null =
+  null;
+
+// Store the initial session to fire with INITIAL_SESSION event
+let initialSessionForAuthChange: Session | null = null;
+
+// Helper to set the initial session for onAuthStateChange
+export const setInitialSession = (session: Session | null) => {
+  initialSessionForAuthChange = session;
+};
+
+// Reset mock state between tests
+export const resetAuthMockState = () => {
+  authStateChangeCallback = null;
+  initialSessionForAuthChange = null;
+};
+
+// Helper to trigger auth state changes in tests
+export const triggerAuthStateChange = (event: AuthChangeEvent, session: Session | null) => {
+  if (authStateChangeCallback) {
+    authStateChangeCallback(event, session);
+  }
+};
+
 export const mockSupabaseClient = {
   auth: {
     getSession: vi.fn<() => Promise<GetSessionResponse>>(() =>
@@ -62,8 +88,14 @@ export const mockSupabaseClient = {
       (
         callback: (event: AuthChangeEvent, session: Session | null) => void
       ) => OnAuthStateChangeResponse
-    >((_callback) => {
-      const unsubscribe = vi.fn();
+    >((callback) => {
+      // Store callback for later use
+      authStateChangeCallback = callback;
+      // Fire INITIAL_SESSION with the configured session (set via setInitialSession)
+      setTimeout(() => callback('INITIAL_SESSION', initialSessionForAuthChange), 0);
+      const unsubscribe = vi.fn(() => {
+        authStateChangeCallback = null;
+      });
       return { data: { subscription: { unsubscribe } }, error: null };
     }),
     signInWithOAuth: vi.fn<
