@@ -126,6 +126,56 @@ vi.mock('../utils/logger', () => ({
 
 Apply this pattern in any test file that uses the logger or tests components that internally use the logger.
 
+## Accessibility Patterns
+
+### Hidden Labels for Form Inputs
+
+Use `aria-hidden="true"` on visually hidden labels to prevent double announcements:
+
+```html
+<label for="input-id" class="sr-only" aria-hidden="true">
+  Input Label Text
+</label>
+<input id="input-id" aria-label="Input Label Text" />
+```
+
+The label still provides the accessible name via `htmlFor`/`id` connection, but VoiceOver won't announce it as a separate navigation stop.
+
+### JSX Text Nodes for Screen Readers
+
+Screen readers navigate between separate text nodes individually. Use template literals to create single text nodes:
+
+```jsx
+// BAD: Multiple text nodes, choppy navigation
+<p>Welcome {username}, you have {count} messages</p>
+
+// GOOD: Single text node, smooth navigation
+<p>{`Welcome ${username}, you have ${count} messages`}</p>
+```
+
+### Nested Interactive Elements
+
+Never nest buttons inside links—it's invalid HTML and causes unpredictable screen reader behavior. Use siblings instead:
+
+```jsx
+<div className="relative">
+  <a href="/repo" className="block">
+    {/* Card content */}
+  </a>
+  <button className="absolute top-2 right-2">
+    Follow
+  </button>
+</div>
+```
+
+## Trending Criteria
+
+A repository is "trending" if it meets ALL of:
+
+1. Has ≥100 stars total
+2. Grows ≥25% in 24 hours
+3. Gains ≥50 stars in that same 24-hour period
+
 ## Commit Message Rules
 
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
