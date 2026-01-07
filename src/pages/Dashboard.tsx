@@ -23,7 +23,6 @@ const Dashboard = () => {
   const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [searchResults, setSearchResults] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,6 +88,32 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Reusable function to fetch starred repositories
+  const loadStarredRepositories = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const token = getValidGitHubToken(providerToken);
+      const result = await fetchAllStarredRepositories(token);
+
+      // Prevent unstarred repos from reappearing on refresh until GitHub API syncs
+      setRepositories(excludePendingUnstars(result.repositories));
+
+      setRepoLimitReached(result.isLimited);
+      setTotalReposFetched(result.totalFetched);
+      setTotalStarredRepos(result.totalStarred);
+
+      return result.repositories;
+    } catch (err) {
+      if (isReauthError(err)) return [];
+      setError(err instanceof Error ? err : new Error('Failed to load repositories'));
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [providerToken, isReauthError]);
+
   // Load starred repositories when auth is ready
   useEffect(() => {
     // Guard: skip if load already started - Prevents overwriting search results
@@ -96,71 +121,51 @@ const Dashboard = () => {
       return;
     }
 
-    const loadStarredRepositories = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const token = getValidGitHubToken(providerToken);
-
-        const result = await fetchAllStarredRepositories(token);
-
-        // Prevent unstarred repos from reappearing on refresh until GitHub API syncs
-        setRepositories(excludePendingUnstars(result.repositories));
-
-        setRepoLimitReached(result.isLimited);
-        setTotalReposFetched(result.totalFetched);
-        setTotalStarredRepos(result.totalStarred);
-      } catch (err) {
-        // Reset flag on error so retry is possible
-        initialLoadStartedRef.current = false;
-        if (isReauthError(err)) return;
-        setError(err instanceof Error ? err : new Error('Failed to load repositories'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user && !authLoading) {
       // Set flag synchronously BEFORE async work to prevent duplicate fetches
       initialLoadStartedRef.current = true;
       void loadStarredRepositories();
     }
-  }, [user, providerToken, authLoading, signOut, navigate, isReauthError]);
+  }, [user, authLoading, loadStarredRepositories]);
 
-  // Reset to default starred repos view (no API call, client-side pagination)
-  const showDefaultStarredView = useCallback(() => {
-    setSearchResults([]);
+  // Reset to default starred repos view by refetching
+  const showDefaultStarredView = useCallback(async () => {
     setDataIsPrepaginated(false);
     setCurrentPage(1);
     setTotalPages(0);
     setHasMoreResults(false);
     setApiSearchResultTotal(undefined);
-  }, []);
+    await loadStarredRepositories();
+  }, [loadStarredRepositories]);
 
   // Search within user's starred repositories via API
   const searchWithinStarredRepos = useCallback(
     async (query: string, page: number, signal?: AbortSignal) => {
       const token = getValidGitHubToken(providerToken);
+
+      // Fetch fresh starred repos to search within
+      const result = await fetchAllStarredRepositories(token);
+      const starredRepos = excludePendingUnstars(result.repositories);
+
       const starredResponse = await searchStarredRepositories(
         token,
         query,
         page,
         ITEMS_PER_PAGE,
-        repositories,
+        starredRepos,
         signal
       );
 
       const totalPages = Math.ceil(starredResponse.totalCount / ITEMS_PER_PAGE);
 
-      setSearchResults(excludePendingUnstars(starredResponse.repositories));
+      setRepositories(excludePendingUnstars(starredResponse.repositories));
       setDataIsPrepaginated(true);
       setCurrentPage(page);
       setTotalPages(totalPages);
       setHasMoreResults(page < totalPages);
       setApiSearchResultTotal(starredResponse.apiSearchResultTotal);
     },
-    [providerToken, repositories]
+    [providerToken]
   );
 
   // Search all GitHub repositories via API
@@ -171,7 +176,7 @@ const Dashboard = () => {
 
       const totalPages = Math.ceil(searchResponse.apiSearchResultTotal / ITEMS_PER_PAGE);
 
-      setSearchResults(excludePendingUnstars(searchResponse.repositories));
+      setRepositories(excludePendingUnstars(searchResponse.repositories));
       setDataIsPrepaginated(true);
       setCurrentPage(page);
       setTotalPages(totalPages);
@@ -191,7 +196,7 @@ const Dashboard = () => {
 
       // No query + starred filter = show default view
       if (!query.trim() && filter === 'starred') {
-        showDefaultStarredView();
+        await showDefaultStarredView();
         return;
       }
 
@@ -262,50 +267,27 @@ const Dashboard = () => {
     };
   }, []);
 
-  const handleStar = async (repoId: number) => {
+  const handleStar = async (repo: Repository) => {
     try {
       // Clear pending unstar (if it exists) since user is re-starring
-      clearPendingUnstar(repoId);
-
-      // Find the repository to get owner and name
-      const repo = explain;
-      if (!repo) {
-        throw new Error('Repository not found');
-      }
+      clearPendingUnstar(repo.id);
 
       // Star the repository on GitHub
       const token = getValidGitHubToken(providerToken);
       await starRepository(token, repo.owner.login, repo.name);
 
-      // Update the repository lists to mark it as starred
-      const markAsStarred = (r: Repository) => (r.id === repoId ? { ...r, is_starred: true } : r);
-
-      // Add to starred repos if not already there
-      setRepositories((prev) => {
-        const exists = prev.some((r) => r.id === repoId);
-        if (exists) {
-          return prev.map(markAsStarred);
-        }
-        return [...prev, { ...repo, is_starred: true }];
-      });
-
-      setSearchResults((prev) => prev.map(markAsStarred));
+      // Update repositories to mark as starred
+      setRepositories((prev) =>
+        prev.map((r) => (r.id === repo.id ? { ...r, is_starred: true } : r))
+      );
     } catch (err) {
       if (isReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
-  const handleUnstar = async (repoId: number) => {
+  const handleUnstar = async (repo: Repository) => {
     try {
-      // Find the repository to get owner and name
-      const repo =
-        repositories.find((r) => r.id === repoId) || searchResults.find((r) => r.id === repoId);
-
-      if (!repo) {
-        throw new Error('Repository not found');
-      }
-
       // Show confirmation dialog
       const confirmMessage = `Are you sure you want to unstar "${repo.name}" on GitHub?\n\nNote: Due to GitHub API delays, this repository may briefly reappear if you refresh the page. The change typically syncs within 30-45 seconds.`;
       if (!window.confirm(confirmMessage)) {
@@ -317,14 +299,11 @@ const Dashboard = () => {
       await unstarRepository(token, repo.owner.login, repo.name);
 
       // Hide repo until GitHub API syncs
-      markPendingUnstar(repoId);
+      markPendingUnstar(repo.id);
 
-      // Remove from starred repos list
-      setRepositories((prev) => prev.filter((r) => r.id !== repoId));
-
-      // In search results, mark as unstarred (but keep visible since it's a search result)
-      setSearchResults((prev) =>
-        prev.map((r) => (r.id === repoId ? { ...r, is_starred: false } : r))
+      // Update repositories to mark as unstarred
+      setRepositories((prev) =>
+        prev.map((r) => (r.id === repo.id ? { ...r, is_starred: false } : r))
       );
     } catch (err) {
       if (isReauthError(err)) return;
@@ -404,7 +383,7 @@ const Dashboard = () => {
         </div>
 
         <RepositoryList
-          repositories={searchResults.length > 0 ? searchResults : repositories}
+          repositories={repositories}
           isLoading={isLoading}
           error={error}
           onStar={handleStar}

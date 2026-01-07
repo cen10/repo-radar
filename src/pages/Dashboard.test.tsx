@@ -305,14 +305,17 @@ describe('Dashboard', () => {
       // Submit the form by clicking search button
       fireEvent.click(searchButton);
 
-      expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
-        'test-github-token',
-        'vue',
-        1,
-        30,
-        mockRepositories,
-        expect.any(AbortSignal)
-      );
+      // Search fetches fresh starred repos first, so wait for the call
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchStarredRepositories)).toHaveBeenCalledWith(
+          'test-github-token',
+          'vue',
+          1,
+          30,
+          expect.arrayContaining(mockRepositories),
+          expect.any(AbortSignal)
+        );
+      });
     });
 
     it('filters starred repositories locally', async () => {

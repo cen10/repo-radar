@@ -148,7 +148,7 @@ describe('RepositoryList', () => {
       const starButton = screen.getByRole('button', { name: /star/i });
       fireEvent.click(starButton);
 
-      expect(onStar).toHaveBeenCalledWith(1);
+      expect(onStar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
 
     it('calls onUnstar when unstar button is clicked', () => {
@@ -168,7 +168,7 @@ describe('RepositoryList', () => {
       const unstarButton = screen.getByRole('button', { name: /unstar/i });
       fireEvent.click(unstarButton);
 
-      expect(onUnstar).toHaveBeenCalledWith(1);
+      expect(onUnstar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
   });
 

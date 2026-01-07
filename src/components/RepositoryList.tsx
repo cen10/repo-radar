@@ -22,8 +22,8 @@ interface RepositoryListProps {
   repositories: Repository[];
   isLoading?: boolean;
   error?: Error | null;
-  onStar: (repoId: number) => void;
-  onUnstar: (repoId: number) => void;
+  onStar: (repo: Repository) => void;
+  onUnstar: (repo: Repository) => void;
   itemsPerPage?: number;
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -305,9 +305,9 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
               repository={repo}
               onToggleStar={() => {
                 if (repo.is_starred) {
-                  onUnstar(repo.id);
+                  onUnstar(repo);
                 } else {
-                  onStar(repo.id);
+                  onStar(repo);
                 }
               }}
             />
