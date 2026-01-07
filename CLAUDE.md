@@ -82,13 +82,16 @@ npm run build        # Build for production
 3. Maintain >80% test coverage
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
-6. **Tailwind v3 syntax**: Use canonical v3 class names, not legacy v2 names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
-7. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
-8. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
-9. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
-10. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
-11. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-12. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+6. **Task branching**: Create feature branches from main using pattern: `t{task-number}-{brief-description}` (e.g., `git checkout -b t014-repo-card-component`)
+7. **Task tracking**: Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
+8. **Knowledge capture**: When solving problems that took significant time, established new patterns, or involved architecture decisions, suggest adding the solution to this file. Focus on practical knowledge with code examples, not general advice.
+9. **Tailwind v3 syntax**: Use canonical v3 class names, not legacy v2 names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
+10. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
+11. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
+12. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
+13. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
+14. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
+15. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
@@ -133,10 +136,8 @@ Apply this pattern in any test file that uses the logger or tests components tha
 Use `aria-hidden="true"` on visually hidden labels to prevent double announcements:
 
 ```html
-<label for="input-id" class="sr-only" aria-hidden="true">
-  Input Label Text
-</label>
-<input id="input-id" aria-label="Input Label Text" />
+<label htmlFor="input-id" className="sr-only" aria-hidden="true"> Input Label Text </label>
+<input id="input-id" type="text" placeholder="Visible placeholder..." />
 ```
 
 The label still provides the accessible name via `htmlFor`/`id` connection, but VoiceOver won't announce it as a separate navigation stop.
@@ -159,27 +160,44 @@ Never nest buttons inside links—it's invalid HTML and causes unpredictable scr
 
 ```jsx
 <div className="relative">
-  <a href="/repo" className="block">
+  <a href={url} className="block p-6">
     {/* Card content */}
   </a>
-  <button className="absolute top-2 right-2">
-    Follow
-  </button>
+  <button className="absolute top-6 right-6">Follow</button>
 </div>
 ```
 
-## Trending Criteria
+## Data Validation Pattern
 
-A repository is "trending" if it meets ALL of:
+1. **Validate at the call site, not inside the function.** If a function requires certain data to exist (like `user_name`), check for that data before calling the function. If it's missing, handle the error right there — don't call the function at all.
+2. **Keep mapping/transformation functions pure.** A function like `mapXToY` should only map data. It should not validate inputs, throw errors, or have side effects. It trusts that the caller has already ensured the data is valid.
+3. **Don't pass derived values as extra parameters.** If you can derive a value from an object you're already passing (e.g., `login` from `supabaseUser.user_metadata.user_name`), don't pass both the object and the derived value. Just pass the object and let the function extract what it needs.
+4. **Handle errors where you have context.** The call site knows what error message to show, what state to update, etc. Don't bury error handling inside utility functions that lack that context.
 
-1. Has ≥100 stars total
-2. Grows ≥25% in 24 hours
-3. Gains ≥50 stars in that same 24-hour period
+```typescript
+// ✓ Good: Validate first, then call
+if (!data.requiredField) {
+  handleError();
+  return;
+}
+const result = mapData(data);
+
+// ✗ Bad: Let the function throw and catch it
+try {
+  const result = mapData(data); // throws if requiredField missing
+} catch (err) {
+  handleError();
+}
+
+// ✗ Bad: Pass derived values as extra params
+const result = mapData(data, data.requiredField);
+```
 
 ## Commit Message Rules
 
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")
 - Body: wrap at 72 chars; explain the _why_
+- **Avoid force pushes**: Don't amend commits that have been pushed. Create new commits instead.
 
 ## Environment Variables
 
@@ -189,4 +207,3 @@ VITE_SUPABASE_ANON_KEY=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 ```
-
