@@ -10,7 +10,7 @@ GitHub Repository Momentum Dashboard - Track star growth, releases, and issue ac
 
 - **Framework**: React 18 with Vite 5
 - **Language**: TypeScript 5.x
-- **Styling**: TailwindCSS with Headless UI
+- **Styling**: TailwindCSS v3 with Headless UI
 - **State Management**: TanStack Query (React Query)
 - **Charts**: Chart.js with react-chartjs-2
 - **Routing**: React Router v6
@@ -82,12 +82,13 @@ npm run build        # Build for production
 3. Maintain >80% test coverage
 4. Implement accessibility (WCAG 2.1 AA)
 5. Progressive enhancement approach
-6. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
-7. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
-8. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
-9. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
-10. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-11. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+6. **Tailwind v3 syntax**: Use canonical v3 class names, not legacy v2 names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
+7. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
+8. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
+9. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
+10. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
+11. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
+12. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
