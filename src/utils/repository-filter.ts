@@ -1,45 +1,44 @@
 import type { Repository } from '../types';
 
-interface LocallyUnstarredRepo {
+interface PendingUnstar {
   id: number;
   timestamp: number;
 }
 
+const STORAGE_KEY = 'pendingUnstars';
 const MAX_AGE_MS = 60000; // 1 minute
 
-export function filterOutLocallyUnstarred(repos: Repository[]): Repository[] {
-  const stored = localStorage.getItem('locallyUnstarredRepos');
+export function excludePendingUnstars(repos: Repository[]): Repository[] {
+  const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return repos;
 
-  const locallyUnstarred: LocallyUnstarredRepo[] = JSON.parse(stored);
+  const pending: PendingUnstar[] = JSON.parse(stored);
   const now = Date.now();
 
-  // Clean up expired entries
-  const validEntries = locallyUnstarred.filter((entry) => now - entry.timestamp < MAX_AGE_MS);
+  const validEntries = pending.filter((entry) => now - entry.timestamp < MAX_AGE_MS);
 
-  if (validEntries.length !== locallyUnstarred.length) {
-    localStorage.setItem('locallyUnstarredRepos', JSON.stringify(validEntries));
+  if (validEntries.length !== pending.length) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(validEntries));
   }
 
-  const hiddenIds = new Set(validEntries.map((entry) => entry.id));
-  return repos.filter((repo) => !hiddenIds.has(repo.id));
+  const pendingIds = new Set(validEntries.map((entry) => entry.id));
+  return repos.filter((repo) => !pendingIds.has(repo.id));
 }
 
-export function addToLocallyUnstarred(repoId: number): void {
-  const stored = localStorage.getItem('locallyUnstarredRepos') || '[]';
-  const entries: LocallyUnstarredRepo[] = JSON.parse(stored);
+export function markUnstarPending(repoId: number): void {
+  const stored = localStorage.getItem(STORAGE_KEY) || '[]';
+  const entries: PendingUnstar[] = JSON.parse(stored);
 
-  // Remove existing entry for this repo and add new one
   const filtered = entries.filter((entry) => entry.id !== repoId);
   filtered.push({ id: repoId, timestamp: Date.now() });
 
-  localStorage.setItem('locallyUnstarredRepos', JSON.stringify(filtered));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 }
 
-export function removeFromLocallyUnstarred(repoId: number): void {
-  const stored = localStorage.getItem('locallyUnstarredRepos') || '[]';
-  const entries: LocallyUnstarredRepo[] = JSON.parse(stored);
+export function clearUnstarPending(repoId: number): void {
+  const stored = localStorage.getItem(STORAGE_KEY) || '[]';
+  const entries: PendingUnstar[] = JSON.parse(stored);
   const filtered = entries.filter((entry) => entry.id !== repoId);
 
-  localStorage.setItem('locallyUnstarredRepos', JSON.stringify(filtered));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 }
