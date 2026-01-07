@@ -480,6 +480,87 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('star-1')).toBeInTheDocument();
       });
     });
+
+    it('preserves pending unstar entry when star API call fails', async () => {
+      // Mock window.confirm for unstar action
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Mock unstar to succeed
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      // Mock search results for "all" filter - repo shows as starred initially
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockRepositories, // Both repos starred
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+      });
+
+      // Mock star API to fail
+      vi.mocked(githubService.starRepository).mockRejectedValue(new Error('Network error'));
+
+      // Mock window.alert to capture error message
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load with starred repos
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "all" filter first
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalled();
+      });
+
+      // User unstars repo 1 in "all" view - this creates a pending unstar entry
+      // and the repo remains visible with Star button (since we're in "all" view)
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // In "all" view, repo stays visible but now shows Star button
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('star-1')).toBeInTheDocument();
+      });
+
+      // Verify pending unstar was created
+      let storedPendingUnstars = JSON.parse(localStorage.getItem('pendingUnstars') || '[]');
+      expect(storedPendingUnstars).toHaveLength(1);
+      expect(storedPendingUnstars[0].id).toBe(1);
+
+      // User immediately tries to re-star - this should fail
+      const starButton = screen.getByTestId('star-1');
+      fireEvent.click(starButton);
+
+      // Wait for the error alert
+      await vi.waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to star repository'));
+      });
+
+      // Verify pending unstar entry is still preserved in localStorage (not cleared)
+      // This is the key assertion - the bug was that clearPendingUnstar was called
+      // before the API call, so on failure the pending unstar would be lost
+      storedPendingUnstars = JSON.parse(localStorage.getItem('pendingUnstars') || '[]');
+      expect(storedPendingUnstars).toHaveLength(1);
+      expect(storedPendingUnstars[0].id).toBe(1);
+
+      alertSpy.mockRestore();
+    });
   });
 
   it('handles repository loading errors', async () => {

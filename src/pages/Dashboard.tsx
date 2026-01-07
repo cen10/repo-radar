@@ -272,12 +272,13 @@ const Dashboard = () => {
 
   const handleStar = async (repo: Repository) => {
     try {
-      // Clear pending unstar (if it exists) since user is re-starring
-      clearPendingUnstar(repo.id);
-
       // Star the repository on GitHub
       const token = getValidGitHubToken(providerToken);
       await starRepository(token, repo.owner.login, repo.name);
+
+      // Clear pending unstar only after successful star
+      // This prevents losing unstar protection if the API call fails
+      clearPendingUnstar(repo.id);
 
       // Update repositories to mark as starred
       setRepositories((prev) =>
