@@ -1147,6 +1147,80 @@ describe('Dashboard', () => {
       expect(screen.queryByText('starred-result')).not.toBeInTheDocument();
     });
 
+    it('clears isSearching state when search is aborted via early return', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      let searchResolve: (value: unknown) => void;
+      const searchPromise = new Promise((resolve) => {
+        searchResolve = resolve;
+      });
+
+      vi.mocked(githubService.searchStarredRepositories).mockImplementation(
+        async (_session, _query, _page, _perPage, _allStarredRepos, signal) => {
+          await searchPromise;
+
+          if (signal?.aborted) {
+            throw new DOMException('Aborted', 'AbortError');
+          }
+
+          return {
+            repositories: mockRepositories,
+            totalCount: 2,
+            apiSearchResultTotal: 2,
+          };
+        }
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(vi.mocked(githubService.fetchAllStarredRepositories)).toHaveBeenCalled();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchButton = screen.getByTestId('search-button');
+
+      // Start search - this will set isSearching to true
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      fireEvent.click(searchButton);
+
+      // Verify isSearching is true (shows "Searching GitHub...")
+      await waitFor(() => {
+        expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
+      });
+
+      // Clear search and submit empty query - this triggers the early return path
+      // which aborts the in-flight search
+      fireEvent.change(searchInput, { target: { value: '' } });
+      fireEvent.click(searchButton);
+
+      // Bug: isSearching stays true because:
+      // 1. The aborted search's finally block checks if (!signal.aborted) which is false
+      // 2. The early return path doesn't clear isSearching
+      // Fix: setIsSearching(false) before the early return
+
+      // isSearching should be cleared immediately
+      await waitFor(() => {
+        expect(screen.queryByText('Searching GitHub...')).not.toBeInTheDocument();
+      });
+
+      // Let the aborted search complete to ensure no state corruption
+      searchResolve!({});
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Should still not show searching indicator
+      expect(screen.queryByText('Searching GitHub...')).not.toBeInTheDocument();
+    });
+
     it('ignores stale results when search is cleared', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,

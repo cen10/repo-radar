@@ -199,6 +199,8 @@ const Dashboard = () => {
 
       // No query + starred filter = show default view
       if (!query.trim() && filter === 'starred') {
+        // Clear any stuck searching state from aborted search before returning
+        setIsSearching(false);
         await showDefaultStarredView();
         return;
       }
