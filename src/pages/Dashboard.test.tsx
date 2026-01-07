@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import * as githubService from '../services/github';
+import { GitHubReauthRequiredError } from '../services/github-token';
 import type { User, Repository } from '../types';
 
 // Mock the useAuth hook
@@ -1145,6 +1146,67 @@ describe('Dashboard', () => {
       expect(screen.getByText('react')).toBeInTheDocument();
       expect(screen.getByText('typescript')).toBeInTheDocument();
       expect(screen.queryByText('search-result')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Reauth error recovery', () => {
+    it('navigates to login even when signOut throws an error', async () => {
+      const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      vi.mocked(githubService.fetchAllStarredRepositories).mockRejectedValue(
+        new GitHubReauthRequiredError()
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+      });
+
+      // Navigation should happen via finally() even when signOut rejects
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
+      });
+    });
+
+    it('navigates to login when signOut succeeds', async () => {
+      const mockSignOut = vi.fn().mockResolvedValue(undefined);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      vi.mocked(githubService.fetchAllStarredRepositories).mockRejectedValue(
+        new GitHubReauthRequiredError()
+      );
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      await waitFor(() => {
+        expect(mockSignOut).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
+      });
     });
   });
 });

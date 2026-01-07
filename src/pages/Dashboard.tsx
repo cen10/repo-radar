@@ -46,7 +46,10 @@ const Dashboard = () => {
   const isReauthError = useCallback(
     (err: unknown): boolean => {
       if (err instanceof GitHubReauthRequiredError) {
-        void signOut().then(() => navigate('/login'));
+        // Catch and ignore signOut errors - we're forcing reauth anyway
+        void signOut()
+          .catch(() => {})
+          .then(() => navigate('/login'));
         return true;
       }
       return false;
