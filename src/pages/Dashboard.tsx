@@ -13,8 +13,8 @@ import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/gith
 import type { Repository } from '../types';
 import {
   excludePendingUnstars,
-  markUnstarPending,
-  clearUnstarPending,
+  markPendingUnstar,
+  clearPendingUnstar,
 } from '../utils/repository-filter';
 
 const ITEMS_PER_PAGE = 30;
@@ -265,7 +265,7 @@ const Dashboard = () => {
   const handleStar = async (repoId: number) => {
     try {
       // Clear pending unstar since user is re-starring
-      clearUnstarPending(repoId);
+      clearPendingUnstar(repoId);
 
       // Find the repository to get owner and name
       const repo =
@@ -319,7 +319,7 @@ const Dashboard = () => {
       await unstarRepository(token, repo.owner.login, repo.name);
 
       // Hide repo until GitHub API syncs
-      markUnstarPending(repoId);
+      markPendingUnstar(repoId);
 
       // Remove from starred repos list
       setRepositories((prev) => prev.filter((r) => r.id !== repoId));

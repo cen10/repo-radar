@@ -25,7 +25,7 @@ export function excludePendingUnstars(repos: Repository[]): Repository[] {
   return repos.filter((repo) => !pendingIds.has(repo.id));
 }
 
-export function markUnstarPending(repoId: number): void {
+export function markPendingUnstar(repoId: number): void {
   const stored = localStorage.getItem(STORAGE_KEY) || '[]';
   const entries: PendingUnstar[] = JSON.parse(stored);
 
@@ -35,7 +35,7 @@ export function markUnstarPending(repoId: number): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 }
 
-export function clearUnstarPending(repoId: number): void {
+export function clearPendingUnstar(repoId: number): void {
   const stored = localStorage.getItem(STORAGE_KEY) || '[]';
   const entries: PendingUnstar[] = JSON.parse(stored);
   const filtered = entries.filter((entry) => entry.id !== repoId);
