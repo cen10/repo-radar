@@ -33,7 +33,7 @@ interface GitHubStarredRepo {
  * @param token - GitHub access token
  * @returns Total number of starred repositories
  */
-async function fetchStarredRepoCount(token: string): Promise<number> {
+export async function fetchStarredRepoCount(token: string): Promise<number> {
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('per_page', '1');
 
@@ -72,19 +72,14 @@ async function fetchStarredRepoCount(token: string): Promise<number> {
 }
 
 /**
- * Fetches ALL starred repositories using parallel requests for optimal performance
+ * Fetches ALL starred repositories using parallel requests for optimal performance.
+ * Sorts by star count (most popular first) for "Most Stars" sort option.
  * @param token - GitHub access token
- * @param maxRepos - Maximum number of repositories to fetch (default: 500)
- * @returns Object containing repositories array and metadata about limits
+ * @returns Object containing repositories array sorted by star count
  */
-export async function fetchAllStarredRepositories(
-  token: string,
-  maxRepos = 500
-): Promise<{
+export async function fetchAllStarredRepositories(token: string): Promise<{
   repositories: Repository[];
   totalFetched: number;
-  totalStarred: number;
-  isLimited: boolean;
 }> {
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(token);
@@ -93,19 +88,15 @@ export async function fetchAllStarredRepositories(
     return {
       repositories: [],
       totalFetched: 0,
-      totalStarred: 0,
-      isLimited: false,
     };
   }
 
-  // Step 2: Calculate how many pages we actually need
+  // Step 2: Calculate how many pages we need to fetch all repos
   const perPage = 100;
-  const pagesForAllStars = Math.ceil(totalStarred / perPage);
-  const pagesForMaxRepos = Math.ceil(maxRepos / perPage);
-  const pagesToFetch = Math.min(pagesForAllStars, pagesForMaxRepos);
+  const pagesToFetch = Math.ceil(totalStarred / perPage);
   const pages = Array.from({ length: pagesToFetch }, (_, i) => i + 1);
 
-  // Step 3: Fetch all needed pages in parallel
+  // Step 3: Fetch all pages in parallel
   const results = await Promise.allSettled(
     pages.map((page) => fetchStarredRepositories(token, page, perPage))
   );
@@ -130,41 +121,44 @@ export async function fetchAllStarredRepositories(
     throw new Error('Failed to fetch any starred repositories');
   }
 
-  // Step 5: Sort by star count (most popular first) and then trim to maxRepos if needed
+  // Step 5: Sort by star count (most popular first)
   const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
-  const trimmedRepos = sortedRepos.slice(0, maxRepos);
-  const isLimited = totalStarred > maxRepos;
 
   logger.info(
-    `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
-      isLimited ? ` (limited to ${maxRepos})` : ''
-    }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
+    `Fetched ${sortedRepos.length} starred repositories across ${pagesToFetch} pages${
+      failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''
+    }`
   );
 
   return {
-    repositories: trimmedRepos,
-    totalFetched: trimmedRepos.length,
-    totalStarred,
-    isLimited,
+    repositories: sortedRepos,
+    totalFetched: sortedRepos.length,
   };
 }
+
+export type StarredSortOption = 'created' | 'updated';
+export type SortDirection = 'asc' | 'desc';
 
 /**
  * Fetch starred repositories for a specific page
  * @param token - GitHub access token
  * @param page - Page number
  * @param perPage - Items per page
+ * @param sort - Sort field: 'created' or 'updated' (GitHub API limitation)
+ * @param direction - Sort direction: 'asc' or 'desc'
  */
 export async function fetchStarredRepositories(
   token: string,
   page = 1,
-  perPage = 30
+  perPage = 30,
+  sort: StarredSortOption = 'updated',
+  direction: SortDirection = 'desc'
 ): Promise<Repository[]> {
   const url = new URL(`${GITHUB_API_BASE}/user/starred`);
   url.searchParams.append('page', page.toString());
   url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'created');
-  url.searchParams.append('direction', 'desc');
+  url.searchParams.append('sort', sort);
+  url.searchParams.append('direction', direction);
 
   try {
     const response = await fetch(url.toString(), {

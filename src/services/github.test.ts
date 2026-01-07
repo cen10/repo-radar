@@ -215,8 +215,6 @@ describe('GitHub API Service', () => {
       // Should return all repositories (100 + 1 = 101)
       expect(result.repositories).toHaveLength(101);
       expect(result.totalFetched).toBe(101);
-      expect(result.totalStarred).toBe(150); // Based on Link header: 150 total repos
-      expect(result.isLimited).toBe(false);
       // Results should be sorted by star count (repo-2 has 200 stars, repo-1 has 100)
       // repo-2 (1 item) should be first, followed by repo-1 items (100 items)
       expect(result.repositories[0]).toMatchObject({
@@ -269,67 +267,10 @@ describe('GitHub API Service', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(result.repositories).toHaveLength(1);
       expect(result.totalFetched).toBe(1);
-      expect(result.totalStarred).toBe(1);
-      expect(result.isLimited).toBe(false);
       expect(result.repositories[0]).toMatchObject({
         id: 1,
         name: 'single-repo',
       });
-    });
-
-    it('should respect repository limit and indicate when limit is reached', async () => {
-      const mockRepo = {
-        id: 1,
-        name: 'test-repo',
-        full_name: 'user/test-repo',
-        owner: {
-          login: 'user',
-          avatar_url: 'https://example.com/avatar.jpg',
-        },
-        description: 'Test repository',
-        html_url: 'https://github.com/user/test-repo',
-        stargazers_count: 100,
-        open_issues_count: 5,
-        language: 'TypeScript',
-        topics: ['testing'],
-        updated_at: '2024-01-01T00:00:00Z',
-        pushed_at: '2024-01-01T00:00:00Z',
-        created_at: '2023-01-01T00:00:00Z',
-      };
-
-      // Mock the initial count request (fetchStarredRepoCount which is called by fetchAllStarredRepositories):
-      // return a Link header showing last page=300 at per_page=1 => 300 total repos.
-      // The next two mocks simulate pages 1 and 2 with 100 repos each; page 3 isn't fetched
-      // because the test caps maxRepos at 150.
-      const linkHeader = '<https://api.github.com/user/starred?page=300&per_page=1>; rel="last"';
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [mockRepo], // Single item for count calculation
-          headers: new Headers({ Link: linkHeader }),
-        })
-        // Mock parallel calls for page 1 and page 2 (only fetching 2 pages for 150 limit)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => Array(100).fill(mockRepo), // Page 1: 100 repos
-          headers: new Headers(),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => Array(100).fill(mockRepo), // Page 2: 100 repos
-          headers: new Headers(),
-        });
-
-      const result = await fetchAllStarredRepositories(testToken, 150); // Custom limit
-
-      // Should have made three API calls: 1 for count + 2 for parallel fetching (limited)
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-
-      // Should return exactly the limit amount (trimmed from 200 fetched to 150 limit)
-      expect(result.repositories).toHaveLength(150);
-      expect(result.totalFetched).toBe(150);
-      expect(result.totalStarred).toBe(300); // Based on Link header: 3 pages * 100 per page
-      expect(result.isLimited).toBe(true);
     });
 
     it('should throw error when authentication fails', async () => {
