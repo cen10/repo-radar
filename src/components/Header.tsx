@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/use-auth';
-import { supabase } from '../services/supabase';
 import { LoadingSpinner, ArrowRightOnRectangleIcon, ExclamationCircleIcon } from './icons';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
@@ -46,7 +45,7 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const signOutButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,17 +61,10 @@ export function Header() {
     try {
       setSignOutError(null);
       setIsSigningOut(true);
-
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        const message = getSignOutErrorMessage(error);
-        logger.error('Sign out error:', error);
-        setSignOutError(message);
-        return;
-      }
+      await signOut();
     } catch (err) {
       const message = getSignOutErrorMessage(err);
-      logger.error('Unexpected sign out error:', err);
+      logger.error('Sign out error:', err);
       setSignOutError(message);
     } finally {
       setIsSigningOut(false);
