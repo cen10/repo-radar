@@ -301,9 +301,13 @@ const Dashboard = () => {
       // Hide repo until GitHub API syncs
       markPendingUnstar(repo.id);
 
-      // Update repositories to mark as unstarred
+      // In starred view, remove the repo (it's no longer starred)
+      // In all view, keep visible with "Star" button (it's a search result)
+      const isStarredView = filterBy === 'starred';
       setRepositories((prev) =>
-        prev.map((r) => (r.id === repo.id ? { ...r, is_starred: false } : r))
+        isStarredView
+          ? prev.filter((r) => r.id !== repo.id)
+          : prev.map((r) => (r.id === repo.id ? { ...r, is_starred: false } : r))
       );
     } catch (err) {
       if (isReauthError(err)) return;

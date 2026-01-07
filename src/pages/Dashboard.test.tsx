@@ -18,6 +18,8 @@ vi.mock('../services/github', () => ({
   fetchAllStarredRepositories: vi.fn(),
   searchRepositories: vi.fn(),
   searchStarredRepositories: vi.fn(),
+  starRepository: vi.fn(),
+  unstarRepository: vi.fn(),
   fetchRateLimit: vi.fn(),
 }));
 
@@ -34,6 +36,8 @@ vi.mock('../components/RepositoryList', () => ({
       isSearching,
       filterBy,
       onFilterChange,
+      onStar,
+      onUnstar,
       dataIsPrepaginated,
     }) => {
       if (isLoading) {
@@ -82,9 +86,19 @@ vi.mock('../components/RepositoryList', () => ({
           )}
           {isSearching && <div>Searching GitHub...</div>}
           <div data-testid="repo-count">{repositories.length} repositories</div>
-          {repositories.map((repo: { id: number; name: string }) => (
+          {repositories.map((repo: { id: number; name: string; is_starred?: boolean }) => (
             <div key={repo.id} data-testid={`repo-${repo.id}`}>
               {repo.name}
+              {onUnstar && repo.is_starred && (
+                <button data-testid={`unstar-${repo.id}`} onClick={() => onUnstar(repo)}>
+                  Unstar
+                </button>
+              )}
+              {onStar && !repo.is_starred && (
+                <button data-testid={`star-${repo.id}`} onClick={() => onStar(repo)}>
+                  Star
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -371,6 +385,98 @@ describe('Dashboard', () => {
       // Should show search status
       await waitFor(() => {
         expect(screen.getByText(/Searching for "test"/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Star/Unstar Functionality', () => {
+    it('removes repo from list when unstarred in starred view', async () => {
+      // Mock window.confirm to return true
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Find and click the unstar button for the first repo
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // Repo should be removed from the list (not just marked as unstarred)
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('1 repositories');
+      });
+
+      // The unstarred repo should no longer be in the DOM
+      expect(screen.queryByTestId('repo-1')).not.toBeInTheDocument();
+    });
+
+    it('keeps repo visible with Star button when unstarred in all view', async () => {
+      // Mock window.confirm to return true
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      // Mock search results for "all" filter
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: mockRepositories,
+        totalCount: 2,
+        apiSearchResultTotal: 2,
+      });
+
+      render(
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+      );
+
+      // Wait for initial load
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "all" filter
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results
+      await vi.waitFor(() => {
+        expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalled();
+      });
+
+      // Find and click the unstar button for the first repo
+      const unstarButton = screen.getByTestId('unstar-1');
+      fireEvent.click(unstarButton);
+
+      // Repo should still be in the list (count stays at 2)
+      // and the repo should now show a Star button instead of Unstar
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+        expect(screen.queryByTestId('unstar-1')).not.toBeInTheDocument();
+        expect(screen.getByTestId('star-1')).toBeInTheDocument();
       });
     });
   });
