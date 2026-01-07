@@ -264,13 +264,11 @@ const Dashboard = () => {
 
   const handleStar = async (repoId: number) => {
     try {
-      // Clear pending unstar since user is re-starring
+      // Clear pending unstar (if it exists) since user is re-starring
       clearPendingUnstar(repoId);
 
       // Find the repository to get owner and name
-      const repo =
-        repositories.find((r) => r.id === repoId) || searchResults.find((r) => r.id === repoId);
-
+      const repo = explain;
       if (!repo) {
         throw new Error('Repository not found');
       }
