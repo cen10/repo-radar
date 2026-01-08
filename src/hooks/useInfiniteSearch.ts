@@ -5,11 +5,13 @@ import type { Repository } from '../types';
 const ITEMS_PER_PAGE = 30;
 
 type SearchFilter = 'all' | 'starred';
+type SearchSortOption = 'updated' | 'created' | 'stars';
 
 interface UseInfiniteSearchOptions {
   token: string | null;
   query: string;
   filter: SearchFilter;
+  sortBy?: SearchSortOption;
   starredRepos?: Repository[];
   enabled?: boolean;
 }
@@ -36,15 +38,20 @@ export function useInfiniteSearch({
   token,
   query,
   filter,
+  sortBy = 'updated',
   starredRepos,
   enabled = true,
 }: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
 
+  // Use a stable reference for starred repos to prevent query key thrashing
+  // We only care if we have starred repos, not how many (that changes during loading)
+  const hasStarredRepos = (starredRepos?.length ?? 0) > 0;
+
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
     useInfiniteQuery({
-      queryKey: ['searchRepositories', token, trimmedQuery, filter, starredRepos?.length],
+      queryKey: ['searchRepositories', token, trimmedQuery, filter, sortBy, hasStarredRepos],
       queryFn: async ({ pageParam, signal }) => {
         if (filter === 'starred' && starredRepos) {
           return searchStarredRepositories(
@@ -53,10 +60,11 @@ export function useInfiniteSearch({
             pageParam,
             ITEMS_PER_PAGE,
             starredRepos,
+            sortBy,
             signal
           );
         }
-        return searchRepositories(token!, trimmedQuery, pageParam, ITEMS_PER_PAGE, signal);
+        return searchRepositories(token!, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
       },
       initialPageParam: 1,
       getNextPageParam: (lastPage, _allPages, lastPageParam) => {

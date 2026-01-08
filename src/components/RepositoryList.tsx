@@ -1,11 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 export type SortOption = 'updated' | 'created' | 'stars';
-export type FilterOption = 'all' | 'starred';
+export type ViewMode = 'starred' | 'all';
+/** @deprecated Use ViewMode instead */
+export type FilterOption = ViewMode;
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -44,6 +47,31 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onSortChange,
   onLoadMore,
 }) => {
+  // Track if we've already triggered a fetch to prevent race conditions
+  const isFetchingRef = useRef(false);
+
+  // Reset the fetching ref when isFetchingMore changes or when sort/filter changes
+  useEffect(() => {
+    if (isFetchingMore) {
+      isFetchingRef.current = true;
+    } else {
+      isFetchingRef.current = false;
+    }
+  }, [isFetchingMore]);
+
+  // Reset fetching state when sort or filter changes
+  useEffect(() => {
+    isFetchingRef.current = false;
+  }, [sortBy, filterBy]);
+
+  // Stable callback that checks conditions before fetching
+  const handleLoadMore = useCallback(() => {
+    if (!isFetchingRef.current && hasMore && !isFetchingMore && !isLoading) {
+      isFetchingRef.current = true;
+      onLoadMore();
+    }
+  }, [hasMore, isFetchingMore, isLoading, onLoadMore]);
+
   // Set up intersection observer for infinite scroll
   const { ref: loadMoreRef, isIntersecting } = useIntersectionObserver({
     enabled: hasMore && !isFetchingMore && !isLoading,
@@ -52,10 +80,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   // Auto-load more when sentinel is visible
   useEffect(() => {
-    if (isIntersecting && hasMore && !isFetchingMore && !isLoading) {
-      onLoadMore();
+    if (isIntersecting) {
+      handleLoadMore();
     }
-  }, [isIntersecting, hasMore, isFetchingMore, isLoading, onLoadMore]);
+  }, [isIntersecting, handleLoadMore]);
 
   // Loading state (only show spinner for initial load, not search or load more)
   if (isLoading && repositories.length === 0 && !isSearching) {
@@ -92,71 +120,127 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     );
   }
 
-  // Controls - search, filter, sort
+  // Get sort options based on current view
+  const getSortOptions = () => {
+    if (filterBy === 'starred') {
+      return [
+        { value: 'updated', label: 'Recently Updated' },
+        { value: 'created', label: 'Recently Starred' },
+        { value: 'stars', label: 'Most Stars' },
+      ];
+    }
+    // For "all" view, "Recently Starred" doesn't make sense
+    return [
+      { value: 'updated', label: 'Recently Updated' },
+      { value: 'stars', label: 'Most Stars' },
+    ];
+  };
+
+  const sortOptions = getSortOptions();
+
+  // Controls - tabs, search, sort
   const controls = (
-    <div className="bg-white shadow rounded-lg p-4">
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Search */}
-        <form
-          className="flex-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const query = formData.get('search') as string;
-            onSearchSubmit(query);
-          }}
-        >
-          <div className="flex">
-            <label htmlFor="repo-search" className="sr-only">
-              Search repositories
-            </label>
-            <input
-              id="repo-search"
-              name="search"
-              type="text"
-              placeholder='Search repositories... (use "quotes" for exact name match)'
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-            >
-              <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
-              <span className="sr-only">Search</span>
-            </button>
-          </div>
-        </form>
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex" aria-label="Repository views">
+          <button
+            onClick={() => onFilterChange('starred')}
+            className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
+              filterBy === 'starred'
+                ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+            aria-current={filterBy === 'starred' ? 'page' : undefined}
+          >
+            <span className="flex items-center justify-center gap-2">
+              {filterBy === 'starred' ? (
+                <StarIconSolid className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <StarIcon className="h-5 w-5" aria-hidden="true" />
+              )}
+              My Stars
+            </span>
+          </button>
+          <button
+            onClick={() => onFilterChange('all')}
+            className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
+              filterBy === 'all'
+                ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+            aria-current={filterBy === 'all' ? 'page' : undefined}
+          >
+            <span className="flex items-center justify-center gap-2">
+              <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
+              Explore All
+            </span>
+          </button>
+        </nav>
+      </div>
 
-        {/* Filter */}
-        <select
-          value={filterBy}
-          onChange={(e) => onFilterChange(e.target.value as FilterOption)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
-          aria-label="Filter repositories"
-        >
-          <option value="starred">Starred Only</option>
-          <option value="all">All Repositories</option>
-        </select>
+      {/* Search and Sort */}
+      <div className="p-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search */}
+          <form
+            className="flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const query = formData.get('search') as string;
+              onSearchSubmit(query);
+            }}
+          >
+            <div className="flex">
+              <label htmlFor="repo-search" className="sr-only">
+                {filterBy === 'starred'
+                  ? 'Search your starred repositories'
+                  : 'Search all GitHub repositories'}
+              </label>
+              <input
+                id="repo-search"
+                name="search"
+                type="text"
+                placeholder={
+                  filterBy === 'starred'
+                    ? 'Search your stars...'
+                    : 'Search all GitHub repositories...'
+                }
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Search</span>
+              </button>
+            </div>
+          </form>
 
-        {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
-          aria-label="Sort repositories"
-        >
-          <option value="updated">Recently Updated</option>
-          <option value="created">Recently Starred</option>
-          <option value="stars">Most Stars</option>
-        </select>
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value as SortOption)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
+            aria-label="Sort repositories"
+          >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {repositories.length === 0 && (searchQuery || filterBy !== 'starred') ? (
-          <>No repositories match your filters</>
+          <>No repositories found</>
         ) : null}
       </div>
     </div>
@@ -165,24 +249,23 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // Empty state - no repositories at all
   if (repositories.length === 0 && !isLoading && !isSearching) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="repository-list">
         {controls}
         <div className="text-center py-12">
           <p className="text-gray-500">No repositories found</p>
           <p className="text-sm text-gray-400 mt-2">
             {searchQuery
               ? 'Try a different search term'
-              : 'Star some repositories on GitHub to see them here'}
+              : filterBy === 'starred'
+                ? 'Star some repositories on GitHub to see them here'
+                : 'Try searching for repositories above'}
           </p>
-          {(searchQuery || filterBy !== 'starred') && (
+          {searchQuery && (
             <button
-              onClick={() => {
-                onSearchChange('');
-                onFilterChange('starred');
-              }}
+              onClick={() => onSearchChange('')}
               className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
             >
-              Clear filters
+              Clear search
             </button>
           )}
         </div>

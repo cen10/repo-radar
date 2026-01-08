@@ -24,6 +24,13 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
+// Mock github-token service to control stored token behavior
+vi.mock('../services/github-token', () => ({
+  storeAccessToken: vi.fn(),
+  getStoredAccessToken: vi.fn(() => null),
+  clearStoredAccessToken: vi.fn(),
+}));
+
 const TestComponent = () => {
   const { user, loading, providerToken, connectionError } = useAuth();
   return (

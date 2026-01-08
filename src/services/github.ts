@@ -262,11 +262,14 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param perPage - Number of items per page
  * @returns Object containing repositories and pagination info
  */
+export type SearchSortOption = 'updated' | 'created' | 'stars';
+
 export async function searchRepositories(
   token: string,
   query: string,
   page = 1,
   perPage = 30,
+  sortBy: SearchSortOption = 'updated',
   signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
@@ -282,11 +285,20 @@ export async function searchRepositories(
   // For fuzzy match, search broadly
   const searchQuery = isExactMatch ? `${searchTerm} in:name` : searchTerm;
 
+  // Map our sort options to GitHub API sort options
+  // GitHub search supports: stars, forks, help-wanted-issues, updated
+  // 'created' doesn't have a direct mapping, so we use 'updated' as fallback
+  const githubSortMap: Record<SearchSortOption, string> = {
+    updated: 'updated',
+    created: 'updated', // GitHub search doesn't support created, fallback to updated
+    stars: 'stars',
+  };
+
   const url = new URL(`${GITHUB_API_BASE}/search/repositories`);
   url.searchParams.append('q', searchQuery);
   url.searchParams.append('page', page.toString());
   url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'stars');
+  url.searchParams.append('sort', githubSortMap[sortBy]);
   url.searchParams.append('order', 'desc');
 
   try {
@@ -387,6 +399,7 @@ export async function searchStarredRepositories(
   page = 1,
   perPage = 30,
   allStarredRepos?: Repository[],
+  sortBy: SearchSortOption = 'updated',
   signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
@@ -428,11 +441,26 @@ export async function searchStarredRepositories(
       return searchIn.includes(queryLower);
     });
 
+    // Sort results based on sortBy option
+    const sortedRepos = [...filteredRepos].sort((a, b) => {
+      switch (sortBy) {
+        case 'stars':
+          return b.stargazers_count - a.stargazers_count;
+        case 'created': {
+          // Sort by created_at (when the repo was created)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+        case 'updated':
+        default:
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }
+    });
+
     // Client-side pagination
-    const totalCount = filteredRepos.length;
+    const totalCount = sortedRepos.length;
     const startIndex = (page - 1) * perPage;
     const endIndex = startIndex + perPage;
-    const paginatedRepos = filteredRepos.slice(startIndex, endIndex);
+    const paginatedRepos = sortedRepos.slice(startIndex, endIndex);
 
     return {
       repositories: paginatedRepos,

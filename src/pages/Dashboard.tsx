@@ -54,6 +54,7 @@ const Dashboard = () => {
     token: providerToken,
     query: activeSearchQuery || 'stars:>1', // Default to popular repos for "all" filter
     filter: filterBy,
+    sortBy: sortBy as 'updated' | 'created' | 'stars',
     starredRepos: filterBy === 'starred' ? starredRepos : undefined,
     enabled: isSearchMode && !!user,
   });
@@ -135,17 +136,14 @@ const Dashboard = () => {
   }, []);
 
   // Handle filter changes
-  const handleFilterChange = useCallback(
-    (filter: FilterOption) => {
-      setFilterBy(filter);
-      // If switching to 'all' without a search query, it will show popular repos
-      // If switching to 'starred', clear the active search to show starred repos
-      if (filter === 'starred' && !activeSearchQuery.trim()) {
-        setActiveSearchQuery('');
-      }
-    },
-    [activeSearchQuery]
-  );
+  const handleFilterChange = useCallback((filter: FilterOption) => {
+    setFilterBy(filter);
+    // If switching to 'starred', clear any active search to show starred repos
+    if (filter === 'starred') {
+      setActiveSearchQuery('');
+      setSearchQuery('');
+    }
+  }, []);
 
   // Handle sort changes
   const handleSortChange = useCallback((sort: SortOption) => {

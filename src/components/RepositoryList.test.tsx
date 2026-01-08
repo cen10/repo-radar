@@ -117,10 +117,10 @@ describe('RepositoryList', () => {
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
     });
 
-    it('shows clear filters button when filters are active', () => {
+    it('shows clear search button when search is active', () => {
       render(<RepositoryList {...defaultProps} searchQuery="test" />);
 
-      expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
   });
 
@@ -168,7 +168,8 @@ describe('RepositoryList', () => {
         />
       );
 
-      const starButton = screen.getByRole('button', { name: /star/i });
+      // Get the star button inside the repo card (exact match to avoid "My Stars" tab)
+      const starButton = screen.getByRole('button', { name: 'Star' });
       fireEvent.click(starButton);
 
       expect(onStar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
@@ -200,7 +201,7 @@ describe('RepositoryList', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
       render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="test" />);
 
-      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchInput = screen.getByPlaceholderText(/search your stars/i);
       expect(searchInput).toHaveValue('test');
     });
 
@@ -215,7 +216,7 @@ describe('RepositoryList', () => {
         />
       );
 
-      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      const searchInput = screen.getByPlaceholderText(/search your stars/i);
       fireEvent.change(searchInput, { target: { value: 'new search' } });
 
       expect(mockOnSearchChange).toHaveBeenCalledWith('new search');
@@ -246,20 +247,23 @@ describe('RepositoryList', () => {
       expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
     });
 
-    it('shows search placeholder with quotes hint', () => {
+    it('shows different search placeholders based on active tab', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
-      render(<RepositoryList {...defaultProps} repositories={repos} />);
 
-      const searchInput = screen.getByPlaceholderText(/search repositories/i);
-      expect(searchInput).toHaveAttribute(
-        'placeholder',
-        'Search repositories... (use "quotes" for exact name match)'
+      // Starred tab shows "Search your stars..."
+      const { rerender } = render(
+        <RepositoryList {...defaultProps} repositories={repos} filterBy="starred" />
       );
+      expect(screen.getByPlaceholderText('Search your stars...')).toBeInTheDocument();
+
+      // All tab shows "Search all GitHub repositories..."
+      rerender(<RepositoryList {...defaultProps} repositories={repos} filterBy="all" />);
+      expect(screen.getByPlaceholderText('Search all GitHub repositories...')).toBeInTheDocument();
     });
   });
 
-  describe('Filter functionality', () => {
-    it('calls onFilterChange when filter is changed', () => {
+  describe('Tab navigation', () => {
+    it('calls onFilterChange when tab is clicked', () => {
       const mockOnFilterChange = vi.fn();
       const repos = [createMockRepository({ id: 1 })];
 
@@ -271,19 +275,31 @@ describe('RepositoryList', () => {
         />
       );
 
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      // Click "Explore All" tab
+      const allTab = screen.getByRole('button', { name: /explore all/i });
+      fireEvent.click(allTab);
 
       expect(mockOnFilterChange).toHaveBeenCalledWith('all');
     });
 
-    it('shows correct filter value', () => {
+    it('shows correct active tab', () => {
       const repos = [createMockRepository({ id: 1 })];
 
-      render(<RepositoryList {...defaultProps} repositories={repos} filterBy="all" />);
+      // Starred tab is active by default
+      const { rerender } = render(
+        <RepositoryList {...defaultProps} repositories={repos} filterBy="starred" />
+      );
+      expect(screen.getByRole('button', { name: /my stars/i })).toHaveAttribute(
+        'aria-current',
+        'page'
+      );
 
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      expect(filterSelect).toHaveValue('all');
+      // All tab is active
+      rerender(<RepositoryList {...defaultProps} repositories={repos} filterBy="all" />);
+      expect(screen.getByRole('button', { name: /explore all/i })).toHaveAttribute(
+        'aria-current',
+        'page'
+      );
     });
   });
 
@@ -366,7 +382,7 @@ describe('RepositoryList', () => {
   });
 
   describe('Combined functionality', () => {
-    it('calls appropriate handlers when both search and filter are changed', () => {
+    it('calls appropriate handlers when both search and tab are changed', () => {
       const mockOnSearchChange = vi.fn();
       const mockOnFilterChange = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'react-app' })];
@@ -383,13 +399,13 @@ describe('RepositoryList', () => {
       );
 
       // Change search
-      const searchInput = screen.getByLabelText(/search repositories/i);
+      const searchInput = screen.getByLabelText(/search your starred repositories/i);
       fireEvent.change(searchInput, { target: { value: 'vue' } });
       expect(mockOnSearchChange).toHaveBeenCalledWith('vue');
 
-      // Change filter
-      const filterSelect = screen.getByLabelText(/filter repositories/i);
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      // Change tab
+      const allTab = screen.getByRole('button', { name: /explore all/i });
+      fireEvent.click(allTab);
       expect(mockOnFilterChange).toHaveBeenCalledWith('all');
 
       // Repository should still be displayed

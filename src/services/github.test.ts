@@ -332,7 +332,7 @@ describe('GitHub API Service', () => {
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.pathname).toBe('/search/repositories');
       expect(url.searchParams.get('q')).toBe('typescript');
-      expect(url.searchParams.get('sort')).toBe('stars');
+      expect(url.searchParams.get('sort')).toBe('updated'); // Default sort is now 'updated'
 
       expect(result.repositories).toHaveLength(1);
       expect(result.repositories[0].name).toBe('typescript');

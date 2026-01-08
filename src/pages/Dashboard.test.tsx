@@ -152,7 +152,8 @@ const createTestQueryClient = () =>
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: 0,
+        gcTime: 1000 * 60, // Keep cache for 1 minute during tests
+        staleTime: 0, // Always refetch on mount
       },
     },
   });
@@ -419,6 +420,47 @@ describe('Dashboard', () => {
       // Should show search results
       await waitFor(() => {
         expect(vi.mocked(githubService.searchRepositories)).toHaveBeenCalled();
+      });
+    });
+
+    it('clears search when switching from all to starred tab', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      renderWithProviders(<Dashboard />);
+
+      // Wait for initial starred repos load
+      await waitFor(() => {
+        expect(screen.getByText('react')).toBeInTheDocument();
+      });
+
+      // Switch to "all" tab
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for all tab to be active
+      await waitFor(() => {
+        expect(screen.getByTestId('search-input')).toBeInTheDocument();
+      });
+
+      // Type in the search input (this updates searchQuery state)
+      const searchInput = screen.getByTestId('search-input');
+      fireEvent.change(searchInput, { target: { value: 'test query' } });
+      expect(searchInput).toHaveValue('test query');
+
+      // Re-query the filter select to get fresh reference
+      const filterSelectAfterSearch = screen.getByTestId('filter-select');
+
+      // Switch back to "starred" tab - should clear search
+      fireEvent.change(filterSelectAfterSearch, { target: { value: 'starred' } });
+
+      // Search input should be cleared
+      await waitFor(() => {
+        expect(screen.getByTestId('search-input')).toHaveValue('');
       });
     });
   });
