@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import RepositoryList from '../components/RepositoryList';
 import type { SortOption, FilterOption } from '../components/RepositoryList';
 import { useAuth } from '../hooks/useAuth';
@@ -17,6 +18,7 @@ import {
 const Dashboard = () => {
   const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +26,8 @@ const Dashboard = () => {
   const [filterBy, setFilterBy] = useState<FilterOption>('starred');
   const [sortBy, setSortBy] = useState<SortOption>('updated');
   const [isSearching, setIsSearching] = useState(false);
+  // State to trigger re-render when pending unstars change (value unused, only setter matters)
+  const [, setPendingUnstarsVersion] = useState(0);
 
   // Determine if we're in search mode
   const isSearchMode = activeSearchQuery.trim().length > 0 || filterBy === 'all';
@@ -113,7 +117,8 @@ const Dashboard = () => {
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'pendingUnstars') {
-        // TanStack Query will handle refetching automatically
+        // Trigger re-render to apply updated pending unstars filter
+        setPendingUnstarsVersion((v) => v + 1);
       }
     };
 
@@ -161,7 +166,10 @@ const Dashboard = () => {
       const token = getValidGitHubToken(providerToken);
       await starRepository(token, repo.owner.login, repo.name);
       clearPendingUnstar(repo.id);
-      // TanStack Query will handle refetching on next query
+      setPendingUnstarsVersion((v) => v + 1);
+      // Invalidate starred repositories cache to refetch with new star
+      await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
+      await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
     } catch (err) {
       if (isReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -178,7 +186,11 @@ const Dashboard = () => {
       const token = getValidGitHubToken(providerToken);
       await unstarRepository(token, repo.owner.login, repo.name);
       markPendingUnstar(repo.id);
-      // TanStack Query will handle refetching on next query
+      // Trigger re-render to filter out the unstarred repo immediately
+      setPendingUnstarsVersion((v) => v + 1);
+      // Invalidate cache to refetch without the unstarred repo
+      await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
+      await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
     } catch (err) {
       if (isReauthError(err)) return;
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
