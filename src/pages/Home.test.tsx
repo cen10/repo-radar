@@ -5,6 +5,7 @@ import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './Home';
 import type { User } from '../types';
+import type { AuthContextType } from '../contexts/auth-context';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();
@@ -22,25 +23,32 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-describe('Home', () => {
-  const mockUser: User = {
-    id: '1',
-    login: 'testuser',
-    name: 'Test User',
-    avatar_url: 'https://example.com/avatar.jpg',
-    email: 'test@example.com',
-  };
+const mockUser: User = {
+  id: '1',
+  login: 'testuser',
+  name: 'Test User',
+  avatar_url: 'https://example.com/avatar.jpg',
+  email: 'test@example.com',
+};
 
+const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
+  user: null,
+  providerToken: null,
+  loading: false,
+  connectionError: null,
+  signInWithGitHub: vi.fn(),
+  signOut: vi.fn(),
+  retryAuth: vi.fn(),
+  ...overrides,
+});
+
+describe('Home', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders the home page content', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false,
-      signInWithGitHub: vi.fn(),
-    });
+    mockUseAuth.mockReturnValue(createMockAuthContext());
 
     render(
       <BrowserRouter>
@@ -54,11 +62,7 @@ describe('Home', () => {
   });
 
   it('displays feature cards', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false,
-      signInWithGitHub: vi.fn(),
-    });
+    mockUseAuth.mockReturnValue(createMockAuthContext());
 
     render(
       <BrowserRouter>
@@ -77,11 +81,7 @@ describe('Home', () => {
   });
 
   it('redirects to dashboard when user is authenticated', () => {
-    mockUseAuth.mockReturnValue({
-      user: mockUser,
-      loading: false,
-      signInWithGitHub: vi.fn(),
-    });
+    mockUseAuth.mockReturnValue(createMockAuthContext({ user: mockUser }));
 
     render(
       <BrowserRouter>
@@ -94,11 +94,7 @@ describe('Home', () => {
 
   it('sign in button triggers GitHub OAuth flow', async () => {
     const mockSignIn = vi.fn();
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false,
-      signInWithGitHub: mockSignIn,
-    });
+    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
 
     const user = userEvent.setup();
 
@@ -116,11 +112,7 @@ describe('Home', () => {
 
   it('resets button state when sign in fails', async () => {
     const mockSignIn = vi.fn().mockRejectedValue(new Error('Network error'));
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false,
-      signInWithGitHub: mockSignIn,
-    });
+    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
 
     const user = userEvent.setup();
 
