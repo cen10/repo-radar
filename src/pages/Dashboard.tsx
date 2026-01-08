@@ -49,7 +49,7 @@ const Dashboard = () => {
         // Catch and ignore signOut errors - we're forcing reauth anyway
         void signOut()
           .catch(() => {})
-          .then(() => navigate('/login'));
+          .then(() => navigate('/'));
         return true;
       }
       return false;
@@ -59,7 +59,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      void navigate('/login');
+      void navigate('/');
     }
   }, [user, authLoading, navigate]);
 

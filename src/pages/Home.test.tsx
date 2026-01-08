@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './Home';
@@ -38,6 +39,7 @@ describe('Home', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
+      signInWithGitHub: vi.fn(),
     });
 
     render(
@@ -48,13 +50,14 @@ describe('Home', () => {
 
     expect(screen.getByText('Repo Radar')).toBeInTheDocument();
     expect(screen.getByText(/track momentum and activity/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /sign in with github/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in with github/i })).toBeInTheDocument();
   });
 
   it('displays feature cards', () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
+      signInWithGitHub: vi.fn(),
     });
 
     render(
@@ -77,6 +80,7 @@ describe('Home', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
       loading: false,
+      signInWithGitHub: vi.fn(),
     });
 
     render(
@@ -88,11 +92,15 @@ describe('Home', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 
-  it('sign in button links to login page', () => {
+  it('sign in button triggers GitHub OAuth flow', async () => {
+    const mockSignIn = vi.fn();
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
+      signInWithGitHub: mockSignIn,
     });
+
+    const user = userEvent.setup();
 
     render(
       <BrowserRouter>
@@ -100,7 +108,9 @@ describe('Home', () => {
       </BrowserRouter>
     );
 
-    const signInLink = screen.getByRole('link', { name: /sign in with github/i });
-    expect(signInLink).toHaveAttribute('href', '/login');
+    const signInButton = screen.getByRole('button', { name: /sign in with github/i });
+    await user.click(signInButton);
+
+    expect(mockSignIn).toHaveBeenCalled();
   });
 });

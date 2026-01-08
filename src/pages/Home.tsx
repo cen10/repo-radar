@@ -1,17 +1,38 @@
-import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, loading, signInWithGitHub } = useAuth();
   const navigate = useNavigate();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleSignIn = () => {
+    setIsSigningIn(true);
+    void signInWithGitHub();
+    // Note: signInWithGitHub redirects to GitHub, so we don't reset isSigningIn
+    // If the user comes back without completing OAuth, the page will remount fresh
+  };
 
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       void navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  // Show loading spinner while checking auth state to prevent flash
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, show nothing while redirect happens
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
@@ -48,12 +69,13 @@ const Home = () => {
           </div>
         </div>
 
-        <Link
-          to="/login"
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        <button
+          onClick={handleSignIn}
+          disabled={isSigningIn}
+          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Sign in with GitHub
-        </Link>
+          {isSigningIn ? 'Signing in...' : 'Sign in with GitHub'}
+        </button>
       </div>
     </div>
   );
