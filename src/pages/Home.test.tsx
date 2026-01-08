@@ -113,4 +113,28 @@ describe('Home', () => {
 
     expect(mockSignIn).toHaveBeenCalled();
   });
+
+  it('resets button state when sign in fails', async () => {
+    const mockSignIn = vi.fn().mockRejectedValue(new Error('Network error'));
+    mockUseAuth.mockReturnValue({
+      user: null,
+      loading: false,
+      signInWithGitHub: mockSignIn,
+    });
+
+    const user = userEvent.setup();
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    const signInButton = screen.getByRole('button', { name: /sign in with github/i });
+    await user.click(signInButton);
+
+    // Button should be re-enabled after error
+    expect(signInButton).not.toBeDisabled();
+    expect(signInButton).toHaveTextContent(/sign in with github/i);
+  });
 });

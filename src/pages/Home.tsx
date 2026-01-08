@@ -7,11 +7,14 @@ const Home = () => {
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     setIsSigningIn(true);
-    void signInWithGitHub();
-    // Note: signInWithGitHub redirects to GitHub, so we don't reset isSigningIn
-    // If the user comes back without completing OAuth, the page will remount fresh
+    try {
+      await signInWithGitHub();
+    } catch {
+      // Reset button state so user can retry (e.g., network error, popup blocked)
+      setIsSigningIn(false);
+    }
   };
 
   useEffect(() => {
