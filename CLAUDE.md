@@ -126,6 +126,34 @@ vi.mock('../utils/logger', () => ({
 
 Apply this pattern in any test file that uses the logger or tests components that internally use the logger.
 
+### React Query Cache Invalidation Testing
+
+When testing actions that modify data and should invalidate caches (e.g., star/unstar, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
+
+```typescript
+// Create queryClient outside render so you can spy on it
+const queryClient = createTestQueryClient();
+const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+// Pass queryClient to render helper
+renderWithProviders(<Component />, queryClient);
+
+// After triggering the action, verify ALL caches are invalidated
+await waitFor(() => {
+  expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+    queryKey: ['primaryCache'],
+  });
+  expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+    queryKey: ['secondaryCache'], // Don't forget related caches!
+  });
+});
+```
+
+Key points:
+- Test from different UI contexts (e.g., action from search results vs. main list)
+- Clear the spy before the action to isolate assertions: `invalidateQueriesSpy.mockClear()`
+- Consider all query keys that contain the modified data
+
 ## Commit Message Rules
 
 - Title ≤ 50 chars, imperative ("Fix…", not "Fixed…")

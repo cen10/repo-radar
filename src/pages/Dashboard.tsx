@@ -25,7 +25,6 @@ const Dashboard = () => {
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState<FilterOption>('starred');
   const [sortBy, setSortBy] = useState<SortOption>('updated');
-  const [isSearching, setIsSearching] = useState(false);
   // State to trigger re-render when pending unstars change (value unused, only setter matters)
   const [, setPendingUnstarsVersion] = useState(0);
 
@@ -133,11 +132,8 @@ const Dashboard = () => {
 
   // Handle search submission
   const handleSearchSubmit = useCallback((query: string) => {
-    setIsSearching(true);
     setActiveSearchQuery(query);
     // The useInfiniteSearch hook will automatically fetch when activeSearchQuery changes
-    // Set searching to false after a brief delay to show the searching state
-    setTimeout(() => setIsSearching(false), 100);
   }, []);
 
   // Handle filter changes
@@ -167,9 +163,10 @@ const Dashboard = () => {
       await starRepository(token, repo.owner.login, repo.name);
       clearPendingUnstar(repo.id);
       setPendingUnstarsVersion((v) => v + 1);
-      // Invalidate starred repositories cache to refetch with new star
+      // Invalidate caches to refetch with new star
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
+      await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
       if (isReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -188,9 +185,10 @@ const Dashboard = () => {
       markPendingUnstar(repo.id);
       // Trigger re-render to filter out the unstarred repo immediately
       setPendingUnstarsVersion((v) => v + 1);
-      // Invalidate cache to refetch without the unstarred repo
+      // Invalidate caches to refetch without the unstarred repo
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
+      await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
       if (isReauthError(err)) return;
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -216,7 +214,7 @@ const Dashboard = () => {
           <h2 className="text-3xl font-bold text-gray-900">Repository Dashboard</h2>
           <p className="mt-2 text-gray-600">
             {activeSearchQuery
-              ? `Searching for "${activeSearchQuery}"${isSearching ? '...' : ''}`
+              ? `Searching for "${activeSearchQuery}"${isLoading ? '...' : ''}`
               : 'Track and manage your starred GitHub repositories'}
           </p>
         </div>
@@ -232,7 +230,7 @@ const Dashboard = () => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
-          isSearching={isSearching}
+          isSearching={isSearchMode && isLoading}
           filterBy={filterBy}
           onFilterChange={handleFilterChange}
           sortBy={sortBy}

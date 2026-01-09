@@ -159,10 +159,10 @@ const createTestQueryClient = () =>
   });
 
 // Wrapper component with QueryClientProvider
-const renderWithProviders = (ui: React.ReactElement) => {
-  const queryClient = createTestQueryClient();
+const renderWithProviders = (ui: React.ReactElement, queryClient?: QueryClient) => {
+  const client = queryClient ?? createTestQueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={client}>
       <BrowserRouter>{ui}</BrowserRouter>
     </QueryClientProvider>
   );
@@ -526,6 +526,130 @@ describe('Dashboard', () => {
           'facebook',
           'react'
         );
+      });
+    });
+
+    it('invalidates all relevant caches including search when starring from search results', async () => {
+      const queryClient = createTestQueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Set up search results with an unstarred repo
+      const searchResultRepo: Repository = {
+        ...mockRepositories[0],
+        id: 99,
+        name: 'unstarred-repo',
+        is_starred: false,
+      };
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: [searchResultRepo],
+        totalCount: 1,
+        apiSearchResultTotal: 1,
+      });
+      vi.mocked(githubService.starRepository).mockResolvedValue(undefined);
+
+      renderWithProviders(<Dashboard />, queryClient);
+
+      // Wait for initial starred repos load
+      await waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "Explore All" mode
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results to load
+      await waitFor(() => {
+        expect(screen.getByTestId('star-99')).toBeInTheDocument();
+      });
+
+      // Clear any previous invalidations from switching tabs
+      invalidateQueriesSpy.mockClear();
+
+      // Star the repo from search results
+      fireEvent.click(screen.getByTestId('star-99'));
+
+      // Verify ALL relevant caches were invalidated
+      await waitFor(() => {
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['starredRepositories'],
+        });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['allStarredRepositories'],
+        });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['searchRepositories'],
+        });
+      });
+    });
+
+    it('invalidates all relevant caches including search when unstarring from search results', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      const queryClient = createTestQueryClient();
+      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      // Set up search results with a starred repo
+      const searchResultRepo: Repository = {
+        ...mockRepositories[0],
+        id: 99,
+        name: 'starred-repo',
+        is_starred: true,
+      };
+      vi.mocked(githubService.searchRepositories).mockResolvedValue({
+        repositories: [searchResultRepo],
+        totalCount: 1,
+        apiSearchResultTotal: 1,
+      });
+      vi.mocked(githubService.unstarRepository).mockResolvedValue(undefined);
+
+      renderWithProviders(<Dashboard />, queryClient);
+
+      // Wait for initial starred repos load
+      await waitFor(() => {
+        expect(screen.getByTestId('repo-count')).toHaveTextContent('2 repositories');
+      });
+
+      // Switch to "Explore All" mode
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Wait for search results to load
+      await waitFor(() => {
+        expect(screen.getByTestId('unstar-99')).toBeInTheDocument();
+      });
+
+      // Clear any previous invalidations from switching tabs
+      invalidateQueriesSpy.mockClear();
+
+      // Unstar the repo from search results
+      fireEvent.click(screen.getByTestId('unstar-99'));
+
+      // Verify ALL relevant caches were invalidated
+      await waitFor(() => {
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['starredRepositories'],
+        });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['allStarredRepositories'],
+        });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['searchRepositories'],
+        });
       });
     });
   });
