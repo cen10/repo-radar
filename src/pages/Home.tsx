@@ -1,5 +1,5 @@
 import { useAuth } from '../hooks/useAuth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 
@@ -7,6 +7,7 @@ const Home = () => {
   const { user, loading, signInWithGitHub } = useAuth();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const signInButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
@@ -23,6 +24,13 @@ const Home = () => {
       void navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+
+  // Focus the sign-in button when the page loads
+  useEffect(() => {
+    if (!loading && !user) {
+      signInButtonRef.current?.focus();
+    }
+  }, [loading, user]);
 
   // Show loading spinner while checking auth state to prevent flash
   if (loading) {
@@ -78,6 +86,7 @@ const Home = () => {
         </div>
 
         <button
+          ref={signInButtonRef}
           onClick={handleSignIn}
           disabled={isSigningIn}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -61,6 +61,19 @@ describe('Home', () => {
     expect(screen.getByRole('button', { name: /sign in with github/i })).toBeInTheDocument();
   });
 
+  it('focuses the sign-in button on page load', () => {
+    mockUseAuth.mockReturnValue(createMockAuthContext());
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    const signInButton = screen.getByRole('button', { name: /sign in with github/i });
+    expect(signInButton).toHaveFocus();
+  });
+
   it('displays feature cards', () => {
     mockUseAuth.mockReturnValue(createMockAuthContext());
 
