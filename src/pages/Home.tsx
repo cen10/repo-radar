@@ -1,6 +1,7 @@
 import { useAuth } from '../hooks/useAuth';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LoadingSpinner } from '../components/icons';
 
 const Home = () => {
   const { user, loading, signInWithGitHub } = useAuth();
@@ -26,8 +27,12 @@ const Home = () => {
   // Show loading spinner while checking auth state to prevent flash
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      <div
+        className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
       </div>
     );
   }

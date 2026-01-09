@@ -6,6 +6,7 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './icons';
 
 export type SortOption =
   | 'stars-desc'
@@ -136,14 +137,12 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // Loading state (only show spinner for initial load, not search)
   if (isLoading && !isSearching) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
-          role="status"
-          aria-label="Loading"
-        >
-          <span className="sr-only">Loading...</span>
-        </div>
+      <div
+        className="flex justify-center items-center min-h-[400px]"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
       </div>
     );
   }
