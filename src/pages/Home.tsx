@@ -51,7 +51,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-5xl font-bold text-gray-900 mb-6">Repo Radar</h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
