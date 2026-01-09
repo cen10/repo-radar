@@ -280,8 +280,13 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isSearching && repositories.length === 0 && (
-          <div className="col-span-full text-center py-4">
-            <span className="text-gray-500">Searching GitHub...</span>
+          <div className="col-span-full flex justify-center items-center py-8">
+            <div
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
+              role="status"
+              aria-label="Searching"
+            />
+            <span className="ml-3 text-gray-500">Searching GitHub...</span>
           </div>
         )}
         {repositories.map((repo) => (
