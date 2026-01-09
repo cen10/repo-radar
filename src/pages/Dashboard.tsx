@@ -78,7 +78,7 @@ const Dashboard = () => {
       if (err instanceof GitHubReauthRequiredError) {
         void signOut()
           .catch(() => {})
-          .then(() => navigate('/login'));
+          .then(() => navigate('/'));
         return true;
       }
       return false;
@@ -89,7 +89,7 @@ const Dashboard = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      void navigate('/login');
+      void navigate('/');
     }
   }, [user, authLoading, navigate]);
 
@@ -198,7 +198,13 @@ const Dashboard = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
+          role="status"
+          aria-label="Loading"
+        >
+          <span className="sr-only">Loading...</span>
+        </div>
       </div>
     );
   }

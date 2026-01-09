@@ -110,7 +110,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         <p className="text-sm text-gray-600 mb-4">{error.message}</p>
         {isGitHubAuthError && (
           <a
-            href="/login"
+            href="/"
             className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             Sign Out and Reconnect

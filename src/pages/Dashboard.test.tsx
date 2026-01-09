@@ -278,7 +278,7 @@ describe('Dashboard', () => {
     renderWithProviders(<Dashboard />);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
@@ -681,7 +681,39 @@ describe('Dashboard', () => {
   });
 
   describe('Reauth error recovery', () => {
-    it('navigates to login on reauth error', async () => {
+    it('navigates to home even when signOut throws an error', async () => {
+      const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
+
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: mockSignOut,
+      });
+
+      vi.mocked(githubService.fetchStarredRepositories).mockRejectedValue(
+        new GitHubReauthRequiredError('Session expired')
+      );
+
+      renderWithProviders(<Dashboard />);
+
+      await waitFor(
+        () => {
+          expect(mockSignOut).toHaveBeenCalled();
+        },
+        { timeout: 3000 }
+      );
+
+      // Navigation should happen via finally() even when signOut rejects
+      await waitFor(
+        () => {
+          expect(mockNavigate).toHaveBeenCalledWith('/');
+        },
+        { timeout: 3000 }
+      );
+    });
+
+    it('navigates to home when signOut succeeds', async () => {
       const mockSignOut = vi.fn().mockResolvedValue(undefined);
 
       mockUseAuth.mockReturnValue({
@@ -706,7 +738,7 @@ describe('Dashboard', () => {
 
       await waitFor(
         () => {
-          expect(mockNavigate).toHaveBeenCalledWith('/login');
+          expect(mockNavigate).toHaveBeenCalledWith('/');
         },
         { timeout: 3000 }
       );

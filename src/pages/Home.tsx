@@ -1,20 +1,57 @@
-import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LoadingSpinner } from '../components/icons';
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, loading, signInWithGitHub } = useAuth();
   const navigate = useNavigate();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const signInButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleSignIn = async () => {
+    setIsSigningIn(true);
+    try {
+      await signInWithGitHub();
+    } catch {
+      // Reset button state so user can retry (e.g., network error, popup blocked)
+      setIsSigningIn(false);
+    }
+  };
 
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       void navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  // Focus the sign-in button when the page loads
+  useEffect(() => {
+    if (!loading && !user) {
+      signInButtonRef.current?.focus();
+    }
+  }, [loading, user]);
+
+  // Show loading spinner while checking auth state to prevent flash
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, show nothing while redirect happens
+  if (user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-5xl font-bold text-gray-900 mb-6">Repo Radar</h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -48,12 +85,21 @@ const Home = () => {
           </div>
         </div>
 
-        <Link
-          to="/login"
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        <button
+          ref={signInButtonRef}
+          onClick={handleSignIn}
+          disabled={isSigningIn}
+          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Sign in with GitHub
-        </Link>
+          {isSigningIn ? (
+            <>
+              <LoadingSpinner className="h-5 w-5 mr-2" />
+              Signing in...
+            </>
+          ) : (
+            'Sign in with GitHub'
+          )}
+        </button>
       </div>
     </div>
   );

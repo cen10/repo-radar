@@ -86,8 +86,8 @@ describe('RepositoryList', () => {
   describe('Loading state', () => {
     it('displays loading spinner when isLoading is true', () => {
       render(<RepositoryList {...defaultProps} isLoading={true} />);
-      const spinner = screen.getByRole('status', { hidden: true });
-      expect(spinner).toHaveClass('animate-spin');
+      const loadingContainer = screen.getByRole('status');
+      expect(loadingContainer).toHaveAttribute('aria-label', 'Loading');
     });
 
     it('does not show loading spinner when there are already repositories', () => {
