@@ -22,6 +22,12 @@ interface GitHubStarredRepo {
   created_at: string;
 }
 
+// Response format when using Accept: application/vnd.github.star+json
+interface GitHubStarredRepoWithTimestamp {
+  starred_at: string;
+  repo: GitHubStarredRepo;
+}
+
 /**
  * Gets the total number of starred repositories for the authenticated user.
  *
@@ -164,7 +170,8 @@ export async function fetchStarredRepositories(
     const response = await fetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
+        // Use star+json to get starred_at timestamp for each repo
+        Accept: 'application/vnd.github.star+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
     });
@@ -187,35 +194,33 @@ export async function fetchStarredRepositories(
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-
-    // Standard GitHub API response format
-    const repos: GitHubStarredRepo[] = data;
+    const data: GitHubStarredRepoWithTimestamp[] = await response.json();
 
     // Transform GitHub API response to our Repository type
-    return repos.map((repo) => ({
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
+    return data.map((item) => ({
+      id: item.repo.id,
+      name: item.repo.name,
+      full_name: item.repo.full_name,
       owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatar_url,
+        login: item.repo.owner.login,
+        avatar_url: item.repo.owner.avatar_url,
       },
-      description: repo.description,
-      html_url: repo.html_url,
-      stargazers_count: repo.stargazers_count,
-      open_issues_count: repo.open_issues_count,
-      language: repo.language,
-      topics: repo.topics || [],
-      updated_at: repo.updated_at,
-      pushed_at: repo.pushed_at,
-      created_at: repo.created_at,
+      description: item.repo.description,
+      html_url: item.repo.html_url,
+      stargazers_count: item.repo.stargazers_count,
+      open_issues_count: item.repo.open_issues_count,
+      language: item.repo.language,
+      topics: item.repo.topics || [],
+      updated_at: item.repo.updated_at,
+      pushed_at: item.repo.pushed_at,
+      created_at: item.repo.created_at,
+      starred_at: item.starred_at, // When the user starred this repo
       is_starred: true, // These are all starred repos by definition
       // Calculate basic metrics (in production, these would come from a backend service)
       metrics: {
-        stars_growth_rate: calculateGrowthRate(repo),
+        stars_growth_rate: calculateGrowthRate(item.repo),
         issues_growth_rate: 0, // Would need historical data
-        is_trending: isTrending(repo),
+        is_trending: isTrending(item.repo),
       },
       is_following: false, // This would come from user's saved preferences
     }));
@@ -447,8 +452,11 @@ export async function searchStarredRepositories(
         case 'stars':
           return b.stargazers_count - a.stargazers_count;
         case 'created': {
-          // Sort by created_at (when the repo was created)
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          // Sort by starred_at (when the user starred the repo)
+          // Fall back to created_at if starred_at is not available
+          const aDate = a.starred_at || a.created_at;
+          const bDate = b.starred_at || b.created_at;
+          return new Date(bDate).getTime() - new Date(aDate).getTime();
         }
         case 'updated':
         default:
