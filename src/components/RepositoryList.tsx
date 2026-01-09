@@ -134,7 +134,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     activePage = currentPage;
   }
 
-  // Loading state (only show spinner for initial load, not search)
+  // Full page loading spinner
   if (isLoading && !isSearching) {
     return (
       <div
