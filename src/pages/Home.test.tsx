@@ -110,6 +110,25 @@ describe('Home', () => {
     expect(mockSignIn).toHaveBeenCalled();
   });
 
+  it('shows loading state while signing in', async () => {
+    // Mock that never resolves to keep loading state active
+    const mockSignIn = vi.fn().mockImplementation(() => new Promise(() => {}));
+    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
+
+    const user = userEvent.setup();
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    await user.click(screen.getByRole('button', { name: /sign in with github/i }));
+
+    const button = screen.getByRole('button', { name: /signing in/i });
+    expect(button).toBeDisabled();
+  });
+
   it('resets button state when sign in fails', async () => {
     const mockSignIn = vi.fn().mockRejectedValue(new Error('Network error'));
     mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));

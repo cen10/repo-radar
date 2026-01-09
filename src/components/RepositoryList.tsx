@@ -293,7 +293,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isSearching && (
-          <div className="col-span-full text-center py-4">
+          <div className="col-span-full flex items-center justify-center py-4">
+            <LoadingSpinner className="h-5 w-5 mr-2 text-gray-500" />
             <span className="text-gray-500">Searching GitHub...</span>
           </div>
         )}
