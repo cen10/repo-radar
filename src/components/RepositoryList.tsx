@@ -6,6 +6,7 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from './icons';
 
 export type SortOption =
   | 'stars-desc'
@@ -133,17 +134,15 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     activePage = currentPage;
   }
 
-  // Loading state (only show spinner for initial load, not search)
+  // Full page loading spinner
   if (isLoading && !isSearching) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
-          role="status"
-          aria-label="Loading"
-        >
-          <span className="sr-only">Loading...</span>
-        </div>
+      <div
+        className="flex justify-center items-center min-h-[400px]"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
       </div>
     );
   }
@@ -158,7 +157,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         <p className="text-sm text-gray-600 mb-4">{error.message}</p>
         {isGitHubAuthError && (
           <a
-            href="/login"
+            href="/"
             className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             Sign Out and Reconnect
@@ -294,7 +293,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isSearching && (
-          <div className="col-span-full text-center py-4">
+          <div className="col-span-full flex items-center justify-center py-4">
+            <LoadingSpinner className="h-5 w-5 mr-2 text-gray-500" />
             <span className="text-gray-500">Searching GitHub...</span>
           </div>
         )}

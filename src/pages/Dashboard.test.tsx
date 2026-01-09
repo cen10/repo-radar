@@ -235,7 +235,7 @@ describe('Dashboard', () => {
     );
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/login');
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
@@ -1331,7 +1331,7 @@ describe('Dashboard', () => {
 
       // Navigation should happen via finally() even when signOut rejects
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/login');
+        expect(mockNavigate).toHaveBeenCalledWith('/');
       });
     });
 
@@ -1360,7 +1360,7 @@ describe('Dashboard', () => {
       });
 
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/login');
+        expect(mockNavigate).toHaveBeenCalledWith('/');
       });
     });
   });

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RepositoryList from '../components/RepositoryList';
 import { useAuth } from '../hooks/useAuth';
+import { LoadingSpinner } from '../components/icons';
 import {
   fetchAllStarredRepositories,
   searchRepositories,
@@ -49,7 +50,7 @@ const Dashboard = () => {
         // Catch and ignore signOut errors - we're forcing reauth anyway
         void signOut()
           .catch(() => {})
-          .then(() => navigate('/login'));
+          .then(() => navigate('/'));
         return true;
       }
       return false;
@@ -59,7 +60,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      void navigate('/login');
+      void navigate('/');
     }
   }, [user, authLoading, navigate]);
 
@@ -336,8 +337,12 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+      <div
+        className="min-h-screen bg-gray-50 flex items-center justify-center"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
       </div>
     );
   }

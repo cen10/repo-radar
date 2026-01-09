@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from './components/AuthProvider';
 import { Header } from './components/Header';
-import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
@@ -27,7 +26,6 @@ function App() {
             <Header />
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
           </div>
