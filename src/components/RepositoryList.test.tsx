@@ -91,11 +91,13 @@ describe('RepositoryList', () => {
     });
 
     it('does not show loading spinner when there are already repositories', () => {
+      // changing sort, infinite scroll, etc
       const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
       render(<RepositoryList {...defaultProps} repositories={repos} isLoading={true} />);
 
       // Should show repos, not spinner
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument();
     });
   });
 
