@@ -262,7 +262,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           </p>
           {searchQuery && (
             <button
-              onClick={() => onSearchChange('')}
+              onClick={() => {
+                onSearchChange('');
+                onSearchSubmit('');
+              }}
               className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
             >
               Clear search
