@@ -119,8 +119,8 @@ describe('RepositoryList', () => {
       expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
     });
 
-    it('shows clear search button when search is active', () => {
-      render(<RepositoryList {...defaultProps} searchQuery="test" />);
+    it('shows clear search button when search returns no results', () => {
+      render(<RepositoryList {...defaultProps} repositories={[]} searchQuery="test" />);
 
       expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
