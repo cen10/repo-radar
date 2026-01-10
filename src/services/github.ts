@@ -436,7 +436,8 @@ export async function searchStarredRepositories(
       starredRepos = allStarredRepos;
     } else {
       // Fetch all starred repos - this is expensive but necessary for accurate client-side search
-      starredRepos = await fetchStarredRepositories(token, 1, 100); // Get up to 100 for now
+      const result = await fetchAllStarredRepositories(token);
+      starredRepos = result.repositories;
     }
 
     // Check for abort after async work
