@@ -58,7 +58,6 @@ const Dashboard = () => {
     query: activeSearchQuery || 'stars:>1', // Default to popular repos for "all" filter
     filter: filterBy,
     sortBy: sortBy as 'updated' | 'created' | 'stars',
-    starredRepos: filterBy === 'starred' ? starredRepos : undefined,
     enabled: isSearchMode && !!user,
   });
 

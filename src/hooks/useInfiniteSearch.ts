@@ -1,5 +1,9 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { searchRepositories, searchStarredRepositories } from '../services/github';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  searchRepositories,
+  searchStarredRepositories,
+  fetchAllStarredRepositories,
+} from '../services/github';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -12,7 +16,6 @@ interface UseInfiniteSearchOptions {
   query: string;
   filter: SearchFilter;
   sortBy?: SearchSortOption;
-  starredRepos?: Repository[];
   enabled?: boolean;
 }
 
@@ -32,34 +35,46 @@ interface UseInfiniteSearchReturn {
  *
  * Supports two search modes:
  * - 'all': Search across all GitHub repositories (uses GitHub search API)
- * - 'starred': Search within user's starred repositories (client-side filtering)
+ * - 'starred': Search within user's starred repositories (fetches ALL starred repos, then filters client-side)
  */
 export function useInfiniteSearch({
   token,
   query,
   filter,
   sortBy = 'updated',
-  starredRepos,
   enabled = true,
 }: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
+  const isStarredSearch = filter === 'starred';
 
-  // Use a stable reference for starred repos to prevent query key thrashing
-  // We only care if we have starred repos, not how many (that changes during loading)
-  const hasStarredRepos = (starredRepos?.length ?? 0) > 0;
+  // Fetch ALL starred repos when searching within starred to ensure complete results
+  // This uses the same query key as useInfiniteRepositories for cache sharing
+  const {
+    data: allStarredData,
+    isLoading: isLoadingAllStarred,
+    error: allStarredError,
+  } = useQuery({
+    queryKey: ['allStarredRepositories', token],
+    queryFn: () => fetchAllStarredRepositories(token!),
+    enabled: shouldFetch && isStarredSearch,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const allStarredRepos: Repository[] = allStarredData?.repositories ?? [];
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
     useInfiniteQuery({
-      queryKey: ['searchRepositories', token, trimmedQuery, filter, sortBy, hasStarredRepos],
+      queryKey: ['searchRepositories', token, trimmedQuery, filter, sortBy],
       queryFn: async ({ pageParam, signal }) => {
-        if (filter === 'starred' && starredRepos) {
+        if (isStarredSearch) {
+          // Use all starred repos for complete search results
           return searchStarredRepositories(
             token!,
             trimmedQuery,
             pageParam,
             ITEMS_PER_PAGE,
-            starredRepos,
+            allStarredRepos,
             sortBy,
             signal
           );
@@ -72,19 +87,25 @@ export function useInfiniteSearch({
         if (lastPageParam >= totalPages) return undefined;
         return lastPageParam + 1;
       },
-      enabled: shouldFetch,
+      // Only enable search after all starred repos are loaded (for starred search)
+      enabled: shouldFetch && (!isStarredSearch || allStarredRepos.length > 0),
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
   const totalCount = data?.pages[0]?.apiSearchResultTotal ?? 0;
 
+  // Combine loading states: loading if fetching all starred OR running search
+  const combinedIsLoading = isStarredSearch ? isLoadingAllStarred || isLoading : isLoading;
+  // Surface any error from either query
+  const combinedError = (allStarredError || error) as Error | null;
+
   return {
     repositories,
-    isLoading,
+    isLoading: combinedIsLoading,
     isFetchingNextPage,
     hasNextPage: hasNextPage ?? false,
     fetchNextPage,
-    error: error as Error | null,
+    error: combinedError,
     totalCount,
     refetch,
   };
