@@ -137,14 +137,20 @@ const Dashboard = () => {
   }, []);
 
   // Handle filter changes
-  const handleFilterChange = useCallback((filter: FilterOption) => {
-    setFilterBy(filter);
-    // If switching to 'starred', clear any active search to show starred repos
-    if (filter === 'starred') {
-      setActiveSearchQuery('');
-      setSearchQuery('');
-    }
-  }, []);
+  const handleFilterChange = useCallback(
+    (filter: FilterOption) => {
+      setFilterBy(filter);
+      if (filter === 'starred') {
+        // Clear any active search to show starred repos
+        setActiveSearchQuery('');
+        setSearchQuery('');
+      } else if (filter === 'all' && sortBy === 'created') {
+        // 'Recently Starred' sort not available in Explore All view
+        setSortBy('updated');
+      }
+    },
+    [sortBy]
+  );
 
   // Handle sort changes
   const handleSortChange = useCallback((sort: SortOption) => {

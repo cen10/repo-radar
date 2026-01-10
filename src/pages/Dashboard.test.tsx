@@ -493,6 +493,39 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('sort-by')).toHaveTextContent('stars');
       });
     });
+
+    it('resets sort to updated when switching to Explore All with Recently Starred selected', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      renderWithProviders(<Dashboard />);
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('react')).toBeInTheDocument();
+      });
+
+      // Change sort to 'created' (Recently Starred)
+      const sortSelect = screen.getByTestId('sort-select');
+      fireEvent.change(sortSelect, { target: { value: 'created' } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('created');
+      });
+
+      // Switch to "Explore All" tab
+      const filterSelect = screen.getByTestId('filter-select');
+      fireEvent.change(filterSelect, { target: { value: 'all' } });
+
+      // Sort should reset to 'updated' since 'created' is not available in Explore All
+      await waitFor(() => {
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('updated');
+      });
+    });
   });
 
   describe('Star/Unstar Functionality', () => {
