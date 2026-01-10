@@ -122,6 +122,27 @@ describe('RepositoryList', () => {
 
       expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
+
+    it('clears both search input and active search when clear search button is clicked', () => {
+      const mockOnSearchChange = vi.fn();
+      const mockOnSearchSubmit = vi.fn();
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          searchQuery="test query"
+          onSearchChange={mockOnSearchChange}
+          onSearchSubmit={mockOnSearchSubmit}
+        />
+      );
+
+      const clearButton = screen.getByRole('button', { name: /clear search/i });
+      fireEvent.click(clearButton);
+
+      // Should call both handlers to clear input value and trigger search reset
+      expect(mockOnSearchChange).toHaveBeenCalledWith('');
+      expect(mockOnSearchSubmit).toHaveBeenCalledWith('');
+    });
   });
 
   describe('Repository display', () => {

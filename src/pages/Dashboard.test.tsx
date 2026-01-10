@@ -526,6 +526,45 @@ describe('Dashboard', () => {
         expect(screen.getByTestId('sort-by')).toHaveTextContent('best-match');
       });
     });
+
+    it('resets sort to created when switching back to My Stars tab', async () => {
+      mockUseAuth.mockReturnValue({
+        user: mockUser,
+        providerToken: 'test-github-token',
+        loading: false,
+        signOut: vi.fn(),
+      });
+
+      renderWithProviders(<Dashboard />);
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(screen.getByText('react')).toBeInTheDocument();
+      });
+
+      // Switch to "Explore All" tab
+      fireEvent.change(screen.getByTestId('filter-select'), { target: { value: 'all' } });
+
+      // Sort should be 'best-match' in Explore All
+      await waitFor(() => {
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('best-match');
+      });
+
+      // Change sort to 'stars' while in Explore All
+      fireEvent.change(screen.getByTestId('sort-select'), { target: { value: 'stars' } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('stars');
+      });
+
+      // Switch back to "My Stars" tab - should reset sort to 'created'
+      fireEvent.change(screen.getByTestId('filter-select'), { target: { value: 'starred' } });
+
+      // Sort should reset to 'created' (Recently Starred) for My Stars
+      await waitFor(() => {
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('created');
+      });
+    });
   });
 
   describe('Star/Unstar Functionality', () => {
