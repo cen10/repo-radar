@@ -494,7 +494,7 @@ describe('Dashboard', () => {
       });
     });
 
-    it('resets sort to updated when switching to Explore All with Recently Starred selected', async () => {
+    it('resets sort to best-match when switching to Explore All with Recently Starred selected', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         providerToken: 'test-github-token',
@@ -521,9 +521,9 @@ describe('Dashboard', () => {
       const filterSelect = screen.getByTestId('filter-select');
       fireEvent.change(filterSelect, { target: { value: 'all' } });
 
-      // Sort should reset to 'updated' since 'created' is not available in Explore All
+      // Sort should reset to 'best-match' since 'created' is not available in Explore All
       await waitFor(() => {
-        expect(screen.getByTestId('sort-by')).toHaveTextContent('updated');
+        expect(screen.getByTestId('sort-by')).toHaveTextContent('best-match');
       });
     });
   });

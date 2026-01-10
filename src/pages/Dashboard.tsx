@@ -144,9 +144,14 @@ const Dashboard = () => {
         // Clear any active search to show starred repos
         setActiveSearchQuery('');
         setSearchQuery('');
+        // Reset sort if current option is not available in starred view
+        const starredSortOptions = ['updated', 'created', 'stars'];
+        if (!starredSortOptions.includes(sortBy)) {
+          setSortBy('updated');
+        }
       } else if (filter === 'all' && sortBy === 'created') {
         // 'Recently Starred' sort not available in Explore All view
-        setSortBy('updated');
+        setSortBy('best-match');
       }
     },
     [sortBy]

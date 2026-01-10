@@ -267,7 +267,13 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param perPage - Number of items per page
  * @returns Object containing repositories and pagination info
  */
-export type SearchSortOption = 'updated' | 'created' | 'stars';
+export type SearchSortOption =
+  | 'updated'
+  | 'created'
+  | 'stars'
+  | 'forks'
+  | 'help-wanted'
+  | 'best-match';
 
 export async function searchRepositories(
   token: string,
@@ -292,19 +298,26 @@ export async function searchRepositories(
 
   // Map our sort options to GitHub API sort options
   // GitHub search supports: stars, forks, help-wanted-issues, updated
+  // 'best-match' means no sort parameter (GitHub's default relevance ranking)
   // 'created' doesn't have a direct mapping, so we use 'updated' as fallback
-  const githubSortMap: Record<SearchSortOption, string> = {
+  const githubSortMap: Record<SearchSortOption, string | null> = {
     updated: 'updated',
     created: 'updated', // GitHub search doesn't support created, fallback to updated
     stars: 'stars',
+    forks: 'forks',
+    'help-wanted': 'help-wanted-issues',
+    'best-match': null, // No sort = relevance ranking
   };
 
   const url = new URL(`${GITHUB_API_BASE}/search/repositories`);
   url.searchParams.append('q', searchQuery);
   url.searchParams.append('page', page.toString());
   url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', githubSortMap[sortBy]);
-  url.searchParams.append('order', 'desc');
+  const sortParam = githubSortMap[sortBy];
+  if (sortParam) {
+    url.searchParams.append('sort', sortParam);
+    url.searchParams.append('order', 'desc');
+  }
 
   try {
     const response = await fetch(url.toString(), {

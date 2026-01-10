@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon, StarIcon, GlobeAltIcon } from '@heroicons/react/24
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
-export type SortOption = 'updated' | 'created' | 'stars';
+export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 export type ViewMode = 'starred' | 'all';
 /** @deprecated Use ViewMode instead */
 export type FilterOption = ViewMode;
@@ -129,10 +129,13 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         { value: 'stars', label: 'Most Stars' },
       ];
     }
-    // For "all" view, "Recently Starred" doesn't make sense
+    // For "all" view, offer GitHub search sort options
     return [
+      { value: 'best-match', label: 'Best Match' },
       { value: 'updated', label: 'Recently Updated' },
       { value: 'stars', label: 'Most Stars' },
+      { value: 'forks', label: 'Most Forks' },
+      { value: 'help-wanted', label: 'Help Wanted' },
     ];
   };
 
