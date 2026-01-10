@@ -24,7 +24,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState<FilterOption>('starred');
-  const [sortBy, setSortBy] = useState<SortOption>('updated');
+  const [sortBy, setSortBy] = useState<SortOption>('created'); // Default: Recently Starred for My Stars tab
   // State to trigger re-render when pending unstars change (value unused, only setter matters)
   const [, setPendingUnstarsVersion] = useState(0);
 
@@ -136,25 +136,19 @@ const Dashboard = () => {
   }, []);
 
   // Handle filter changes
-  const handleFilterChange = useCallback(
-    (filter: FilterOption) => {
-      setFilterBy(filter);
-      if (filter === 'starred') {
-        // Clear any active search to show starred repos
-        setActiveSearchQuery('');
-        setSearchQuery('');
-        // Reset sort if current option is not available in starred view
-        const starredSortOptions = ['updated', 'created', 'stars'];
-        if (!starredSortOptions.includes(sortBy)) {
-          setSortBy('updated');
-        }
-      } else if (filter === 'all' && sortBy === 'created') {
-        // 'Recently Starred' sort not available in Explore All view
-        setSortBy('best-match');
-      }
-    },
-    [sortBy]
-  );
+  const handleFilterChange = useCallback((filter: FilterOption) => {
+    setFilterBy(filter);
+    if (filter === 'starred') {
+      // Clear any active search to show starred repos
+      setActiveSearchQuery('');
+      setSearchQuery('');
+      // Default to Recently Starred for My Stars tab
+      setSortBy('created');
+    } else {
+      // Default to Best Match for Explore All tab
+      setSortBy('best-match');
+    }
+  }, []);
 
   // Handle sort changes
   const handleSortChange = useCallback((sort: SortOption) => {

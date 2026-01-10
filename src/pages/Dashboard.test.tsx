@@ -481,8 +481,8 @@ describe('Dashboard', () => {
         expect(screen.getByText('react')).toBeInTheDocument();
       });
 
-      // Default sort should be 'updated'
-      expect(screen.getByTestId('sort-by')).toHaveTextContent('updated');
+      // Default sort should be 'created' (Recently Starred) for My Stars tab
+      expect(screen.getByTestId('sort-by')).toHaveTextContent('created');
 
       // Change sort to 'stars'
       const sortSelect = screen.getByTestId('sort-select');
