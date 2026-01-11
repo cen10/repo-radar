@@ -86,7 +86,7 @@ const RepositoryList = ({
     }
   }, [isIntersecting, handleLoadMore]);
 
-  // Loading state (only show spinner for initial load, not search or load more)
+  // Loading state (show *full page* spinner only for initial load)
   if (isLoading && repositories.length === 0 && !isSearching) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
