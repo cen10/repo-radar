@@ -371,7 +371,7 @@ describe('RepositoryList', () => {
       expect(screen.getByText(/loading more repositories/i)).toBeInTheDocument();
     });
 
-    it('shows sentinel element when hasMore is true', () => {
+    it('renders infinite scroll trigger when hasMore is true', () => {
       const repos = [createMockRepository({ id: 1 })];
 
       render(<RepositoryList {...defaultProps} repositories={repos} hasMore={true} />);
@@ -379,7 +379,7 @@ describe('RepositoryList', () => {
       expect(screen.getByTestId('load-more-sentinel')).toBeInTheDocument();
     });
 
-    it('does not show sentinel when hasMore is false', () => {
+    it('does not render infinite scroll trigger when hasMore is false', () => {
       const repos = [createMockRepository({ id: 1 })];
 
       render(<RepositoryList {...defaultProps} repositories={repos} hasMore={false} />);
