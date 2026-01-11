@@ -39,8 +39,8 @@ vi.mock('../components/RepositoryList', () => ({
       onSearchChange,
       onSearchSubmit,
       isSearching,
-      filterBy,
-      onFilterChange,
+      viewMode,
+      onViewChange,
       sortBy,
       onSortChange,
       onStar,
@@ -78,14 +78,14 @@ vi.mock('../components/RepositoryList', () => ({
               </button>
             </form>
           )}
-          {onFilterChange && (
+          {onViewChange && (
             <div>
-              <label htmlFor="filter-select">Filter:</label>
+              <label htmlFor="view-select">View:</label>
               <select
-                id="filter-select"
-                data-testid="filter-select"
-                value={filterBy || 'starred'}
-                onChange={(e) => onFilterChange(e.target.value as 'all' | 'starred')}
+                id="view-select"
+                data-testid="view-select"
+                value={viewMode || 'starred'}
+                onChange={(e) => onViewChange(e.target.value as 'all' | 'starred')}
               >
                 <option value="starred">Starred</option>
                 <option value="all">All Repositories</option>
@@ -389,8 +389,8 @@ describe('Dashboard', () => {
     });
   });
 
-  describe('Filter functionality', () => {
-    it('switches to all repositories filter', async () => {
+  describe('View switching', () => {
+    it('switches to Explore All view', async () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         providerToken: 'test-github-token',
@@ -413,9 +413,9 @@ describe('Dashboard', () => {
         expect(screen.getByText('react')).toBeInTheDocument();
       });
 
-      // Change filter to "all"
-      const filterSelect = screen.getByTestId('filter-select');
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      // Switch to "all" view
+      const viewSelect = screen.getByTestId('view-select');
+      fireEvent.change(viewSelect, { target: { value: 'all' } });
 
       // Should show search results
       await waitFor(() => {
@@ -439,8 +439,8 @@ describe('Dashboard', () => {
       });
 
       // Switch to "all" tab
-      const filterSelect = screen.getByTestId('filter-select');
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      const viewSelect = screen.getByTestId('view-select');
+      fireEvent.change(viewSelect, { target: { value: 'all' } });
 
       // Wait for all tab to be active
       await waitFor(() => {
@@ -453,10 +453,10 @@ describe('Dashboard', () => {
       expect(searchInput).toHaveValue('test query');
 
       // Re-query the filter select to get fresh reference
-      const filterSelectAfterSearch = screen.getByTestId('filter-select');
+      const viewSelectAfterSearch = screen.getByTestId('view-select');
 
       // Switch back to "starred" tab - should clear search
-      fireEvent.change(filterSelectAfterSearch, { target: { value: 'starred' } });
+      fireEvent.change(viewSelectAfterSearch, { target: { value: 'starred' } });
 
       // Search input should be cleared
       await waitFor(() => {
@@ -518,8 +518,8 @@ describe('Dashboard', () => {
       });
 
       // Switch to "Explore All" tab
-      const filterSelect = screen.getByTestId('filter-select');
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      const viewSelect = screen.getByTestId('view-select');
+      fireEvent.change(viewSelect, { target: { value: 'all' } });
 
       // Sort should reset to 'best-match' since 'created' is not available in Explore All
       await waitFor(() => {
@@ -543,7 +543,7 @@ describe('Dashboard', () => {
       });
 
       // Switch to "Explore All" tab
-      fireEvent.change(screen.getByTestId('filter-select'), { target: { value: 'all' } });
+      fireEvent.change(screen.getByTestId('view-select'), { target: { value: 'all' } });
 
       // Sort should be 'best-match' in Explore All
       await waitFor(() => {
@@ -558,7 +558,7 @@ describe('Dashboard', () => {
       });
 
       // Switch back to "My Stars" tab - should reset sort to 'created'
-      fireEvent.change(screen.getByTestId('filter-select'), { target: { value: 'starred' } });
+      fireEvent.change(screen.getByTestId('view-select'), { target: { value: 'starred' } });
 
       // Sort should reset to 'created' (Recently Starred) for My Stars
       await waitFor(() => {
@@ -634,8 +634,8 @@ describe('Dashboard', () => {
       });
 
       // Switch to "Explore All" mode
-      const filterSelect = screen.getByTestId('filter-select');
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      const viewSelect = screen.getByTestId('view-select');
+      fireEvent.change(viewSelect, { target: { value: 'all' } });
 
       // Wait for search results to load
       await waitFor(() => {
@@ -697,8 +697,8 @@ describe('Dashboard', () => {
       });
 
       // Switch to "Explore All" mode
-      const filterSelect = screen.getByTestId('filter-select');
-      fireEvent.change(filterSelect, { target: { value: 'all' } });
+      const viewSelect = screen.getByTestId('view-select');
+      fireEvent.change(viewSelect, { target: { value: 'all' } });
 
       // Wait for search results to load
       await waitFor(() => {

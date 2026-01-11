@@ -7,8 +7,6 @@ import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 export type ViewMode = 'starred' | 'all';
-/** @deprecated Use ViewMode instead */
-export type FilterOption = ViewMode;
 
 interface RepositoryListProps {
   repositories: Repository[];
@@ -22,8 +20,8 @@ interface RepositoryListProps {
   onSearchChange: (query: string) => void;
   onSearchSubmit: (query: string) => void;
   isSearching?: boolean;
-  filterBy: FilterOption;
-  onFilterChange: (filter: FilterOption) => void;
+  viewMode: ViewMode;
+  onViewChange: (view: ViewMode) => void;
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   onLoadMore: () => void;
@@ -41,8 +39,8 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   onSearchChange,
   onSearchSubmit,
   isSearching = false,
-  filterBy,
-  onFilterChange,
+  viewMode,
+  onViewChange,
   sortBy,
   onSortChange,
   onLoadMore,
@@ -50,7 +48,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
 
-  // Reset the fetching ref when isFetchingMore changes or when sort/filter changes
+  // Reset the fetching ref when isFetchingMore changes or when sort/view changes
   useEffect(() => {
     if (isFetchingMore) {
       isFetchingRef.current = true;
@@ -59,10 +57,10 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
     }
   }, [isFetchingMore]);
 
-  // Reset fetching state when sort or filter changes
+  // Reset fetching state when sort or view changes
   useEffect(() => {
     isFetchingRef.current = false;
-  }, [sortBy, filterBy]);
+  }, [sortBy, viewMode]);
 
   // Stable callback that checks conditions before fetching
   const handleLoadMore = useCallback(() => {
@@ -122,7 +120,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
   // Get sort options based on current view
   const getSortOptions = () => {
-    if (filterBy === 'starred') {
+    if (viewMode === 'starred') {
       return [
         { value: 'updated', label: 'Recently Updated' },
         { value: 'created', label: 'Recently Starred' },
@@ -148,16 +146,16 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
       <div className="border-b border-gray-200">
         <nav className="flex" aria-label="Repository views">
           <button
-            onClick={() => onFilterChange('starred')}
+            onClick={() => onViewChange('starred')}
             className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
-              filterBy === 'starred'
+              viewMode === 'starred'
                 ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
-            aria-current={filterBy === 'starred' ? 'page' : undefined}
+            aria-current={viewMode === 'starred' ? 'page' : undefined}
           >
             <span className="flex items-center justify-center gap-2">
-              {filterBy === 'starred' ? (
+              {viewMode === 'starred' ? (
                 <StarIconSolid className="h-5 w-5" aria-hidden="true" />
               ) : (
                 <StarIcon className="h-5 w-5" aria-hidden="true" />
@@ -166,13 +164,13 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
             </span>
           </button>
           <button
-            onClick={() => onFilterChange('all')}
+            onClick={() => onViewChange('all')}
             className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
-              filterBy === 'all'
+              viewMode === 'all'
                 ? 'border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
-            aria-current={filterBy === 'all' ? 'page' : undefined}
+            aria-current={viewMode === 'all' ? 'page' : undefined}
           >
             <span className="flex items-center justify-center gap-2">
               <GlobeAltIcon className="h-5 w-5" aria-hidden="true" />
@@ -197,7 +195,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           >
             <div className="flex">
               <label htmlFor="repo-search" className="sr-only">
-                {filterBy === 'starred'
+                {viewMode === 'starred'
                   ? 'Search your starred repositories'
                   : 'Search all GitHub repositories'}
               </label>
@@ -206,7 +204,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                 name="search"
                 type="text"
                 placeholder={
-                  filterBy === 'starred'
+                  viewMode === 'starred'
                     ? 'Search your stars...'
                     : 'Search all GitHub repositories...'
                 }
@@ -242,7 +240,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {repositories.length === 0 && (searchQuery || filterBy !== 'starred') ? (
+        {repositories.length === 0 && (searchQuery || viewMode !== 'starred') ? (
           <>No repositories found</>
         ) : null}
       </div>
@@ -259,7 +257,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
           <p className="text-sm text-gray-400 mt-2">
             {searchQuery
               ? 'Try a different search term'
-              : filterBy === 'starred'
+              : viewMode === 'starred'
                 ? 'Star some repositories on GitHub to see them here'
                 : 'Try searching for repositories above'}
           </p>

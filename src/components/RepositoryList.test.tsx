@@ -71,8 +71,8 @@ const defaultProps = {
   searchQuery: '',
   onSearchChange: vi.fn(),
   onSearchSubmit: vi.fn(),
-  filterBy: 'starred' as const,
-  onFilterChange: vi.fn(),
+  viewMode: 'starred' as const,
+  onViewChange: vi.fn(),
   sortBy: 'updated' as const,
   onSortChange: vi.fn(),
   onLoadMore: vi.fn(),
@@ -275,34 +275,30 @@ describe('RepositoryList', () => {
 
       // Starred tab shows "Search your stars..."
       const { rerender } = render(
-        <RepositoryList {...defaultProps} repositories={repos} filterBy="starred" />
+        <RepositoryList {...defaultProps} repositories={repos} viewMode="starred" />
       );
       expect(screen.getByPlaceholderText('Search your stars...')).toBeInTheDocument();
 
       // All tab shows "Search all GitHub repositories..."
-      rerender(<RepositoryList {...defaultProps} repositories={repos} filterBy="all" />);
+      rerender(<RepositoryList {...defaultProps} repositories={repos} viewMode="all" />);
       expect(screen.getByPlaceholderText('Search all GitHub repositories...')).toBeInTheDocument();
     });
   });
 
   describe('Tab navigation', () => {
-    it('calls onFilterChange when tab is clicked', () => {
-      const mockOnFilterChange = vi.fn();
+    it('calls onViewChange when tab is clicked', () => {
+      const mockOnViewChange = vi.fn();
       const repos = [createMockRepository({ id: 1 })];
 
       render(
-        <RepositoryList
-          {...defaultProps}
-          repositories={repos}
-          onFilterChange={mockOnFilterChange}
-        />
+        <RepositoryList {...defaultProps} repositories={repos} onViewChange={mockOnViewChange} />
       );
 
       // Click "Explore All" tab
       const allTab = screen.getByRole('button', { name: /explore all/i });
       fireEvent.click(allTab);
 
-      expect(mockOnFilterChange).toHaveBeenCalledWith('all');
+      expect(mockOnViewChange).toHaveBeenCalledWith('all');
     });
 
     it('shows correct active tab', () => {
@@ -310,7 +306,7 @@ describe('RepositoryList', () => {
 
       // Starred tab is active by default
       const { rerender } = render(
-        <RepositoryList {...defaultProps} repositories={repos} filterBy="starred" />
+        <RepositoryList {...defaultProps} repositories={repos} viewMode="starred" />
       );
       expect(screen.getByRole('button', { name: /my stars/i })).toHaveAttribute(
         'aria-current',
@@ -318,7 +314,7 @@ describe('RepositoryList', () => {
       );
 
       // All tab is active
-      rerender(<RepositoryList {...defaultProps} repositories={repos} filterBy="all" />);
+      rerender(<RepositoryList {...defaultProps} repositories={repos} viewMode="all" />);
       expect(screen.getByRole('button', { name: /explore all/i })).toHaveAttribute(
         'aria-current',
         'page'
@@ -407,7 +403,7 @@ describe('RepositoryList', () => {
   describe('Combined functionality', () => {
     it('calls appropriate handlers when both search and tab are changed', () => {
       const mockOnSearchChange = vi.fn();
-      const mockOnFilterChange = vi.fn();
+      const mockOnViewChange = vi.fn();
       const repos = [createMockRepository({ id: 1, name: 'react-app' })];
 
       render(
@@ -415,9 +411,9 @@ describe('RepositoryList', () => {
           {...defaultProps}
           repositories={repos}
           searchQuery="react"
-          filterBy="starred"
+          viewMode="starred"
           onSearchChange={mockOnSearchChange}
-          onFilterChange={mockOnFilterChange}
+          onViewChange={mockOnViewChange}
         />
       );
 
@@ -429,7 +425,7 @@ describe('RepositoryList', () => {
       // Change tab
       const allTab = screen.getByRole('button', { name: /explore all/i });
       fireEvent.click(allTab);
-      expect(mockOnFilterChange).toHaveBeenCalledWith('all');
+      expect(mockOnViewChange).toHaveBeenCalledWith('all');
 
       // Repository should still be displayed
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();

@@ -8,13 +8,13 @@ import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
 
-type SearchFilter = 'all' | 'starred';
+type SearchMode = 'all' | 'starred';
 type SearchSortOption = 'updated' | 'created' | 'stars';
 
 interface UseInfiniteSearchOptions {
   token: string | null;
   query: string;
-  filter: SearchFilter;
+  mode: SearchMode;
   sortBy?: SearchSortOption;
   enabled?: boolean;
 }
@@ -40,13 +40,13 @@ interface UseInfiniteSearchReturn {
 export function useInfiniteSearch({
   token,
   query,
-  filter,
+  mode,
   sortBy = 'updated',
   enabled = true,
 }: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
-  const isStarredSearch = filter === 'starred';
+  const isStarredSearch = mode === 'starred';
 
   // Fetch ALL starred repos when searching within starred to ensure complete results
   // This uses the same query key as useInfiniteRepositories for cache sharing
@@ -65,7 +65,7 @@ export function useInfiniteSearch({
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
     useInfiniteQuery({
-      queryKey: ['searchRepositories', token, trimmedQuery, filter, sortBy],
+      queryKey: ['searchRepositories', token, trimmedQuery, mode, sortBy],
       queryFn: async ({ pageParam, signal }) => {
         if (isStarredSearch) {
           // Use all starred repos for complete search results

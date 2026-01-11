@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import RepositoryList from '../components/RepositoryList';
-import type { SortOption, FilterOption } from '../components/RepositoryList';
+import type { SortOption, ViewMode } from '../components/RepositoryList';
 import { useAuth } from '../hooks/useAuth';
 import { useInfiniteRepositories, type SortByOption } from '../hooks/useInfiniteRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
@@ -23,13 +23,13 @@ const Dashboard = () => {
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState<FilterOption>('starred');
+  const [viewMode, setViewMode] = useState<ViewMode>('starred');
   const [sortBy, setSortBy] = useState<SortOption>('created'); // Default: Recently Starred for My Stars tab
   // State to trigger re-render when pending unstars change (value unused, only setter matters)
   const [, setPendingUnstarsVersion] = useState(0);
 
   // Determine if we're in search mode
-  const isSearchMode = activeSearchQuery.trim().length > 0 || filterBy === 'all';
+  const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
 
   // Infinite repositories for starred repos
   const {
@@ -55,8 +55,8 @@ const Dashboard = () => {
     error: searchError,
   } = useInfiniteSearch({
     token: providerToken,
-    query: activeSearchQuery || 'stars:>1', // Default to popular repos for "all" filter
-    filter: filterBy,
+    query: activeSearchQuery || 'stars:>1', // Default to popular repos for "all" view
+    mode: viewMode,
     sortBy: sortBy as 'updated' | 'created' | 'stars',
     enabled: isSearchMode && !!user,
   });
@@ -135,10 +135,10 @@ const Dashboard = () => {
     // The useInfiniteSearch hook will automatically fetch when activeSearchQuery changes
   }, []);
 
-  // Handle filter changes
-  const handleFilterChange = useCallback((filter: FilterOption) => {
-    setFilterBy(filter);
-    if (filter === 'starred') {
+  // Handle view changes
+  const handleViewChange = useCallback((view: ViewMode) => {
+    setViewMode(view);
+    if (view === 'starred') {
       // Clear any active search to show starred repos
       setActiveSearchQuery('');
       setSearchQuery('');
@@ -241,8 +241,8 @@ const Dashboard = () => {
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           isSearching={isSearchMode && isLoading}
-          filterBy={filterBy}
-          onFilterChange={handleFilterChange}
+          viewMode={viewMode}
+          onViewChange={handleViewChange}
           sortBy={sortBy}
           onSortChange={handleSortChange}
           onLoadMore={handleLoadMore}
