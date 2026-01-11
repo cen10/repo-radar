@@ -191,9 +191,7 @@ const RepositoryList = ({
             className="flex-1"
             onSubmit={(e) => {
               e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              const query = formData.get('search') as string;
-              onSearchSubmit(query);
+              onSearchSubmit(searchQuery);
             }}
           >
             <div className="flex">
