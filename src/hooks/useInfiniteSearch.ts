@@ -15,8 +15,8 @@ interface UseInfiniteSearchOptions {
   token: string | null;
   query: string;
   mode: SearchMode;
-  sortBy?: SearchSortOption;
-  enabled?: boolean;
+  sortBy: SearchSortOption;
+  enabled: boolean;
 }
 
 interface UseInfiniteSearchReturn {
@@ -41,8 +41,8 @@ export function useInfiniteSearch({
   token,
   query,
   mode,
-  sortBy = 'updated',
-  enabled = true,
+  sortBy,
+  enabled,
 }: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;

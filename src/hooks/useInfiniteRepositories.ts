@@ -13,9 +13,9 @@ export type SortByOption = 'updated' | 'created' | 'stars';
 
 interface UseInfiniteRepositoriesOptions {
   token: string | null;
-  sortBy?: SortByOption;
+  sortBy: SortByOption;
   sortDirection?: SortDirection;
-  enabled?: boolean;
+  enabled: boolean;
 }
 
 interface UseInfiniteRepositoriesReturn {
@@ -39,9 +39,9 @@ interface UseInfiniteRepositoriesReturn {
  */
 export function useInfiniteRepositories({
   token,
-  sortBy = 'updated',
+  sortBy,
   sortDirection = 'desc',
-  enabled = true,
+  enabled,
 }: UseInfiniteRepositoriesOptions): UseInfiniteRepositoriesReturn {
   const isStarsSort = sortBy === 'stars';
 
