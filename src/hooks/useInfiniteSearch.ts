@@ -48,8 +48,8 @@ export function useInfiniteSearch({
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
-  // Fetch ALL starred repos when searching within starred to ensure complete results
-  // This uses the same query key as useInfiniteRepositories for cache sharing
+  // Fetch ALL starred repos when searching within starred to ensure complete results.
+  // Uses the same query key as useInfiniteStarredRepositories for cache sharing.
   const {
     data: allStarredData,
     isLoading: isLoadingAllStarred,
