@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
+import { LoadingSpinner } from './icons';
 import { MagnifyingGlassIcon, StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
@@ -89,14 +90,13 @@ const RepositoryList = ({
   // Loading state (show *full page* spinner only for initial load)
   if (isLoading && repositories.length === 0 && !isSearching) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
-          role="status"
-          aria-label="Loading"
-        >
-          <span className="sr-only">Loading...</span>
-        </div>
+      <div
+        className="flex justify-center items-center min-h-[400px]"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
+        <span className="sr-only">Loading...</span>
       </div>
     );
   }
@@ -292,12 +292,12 @@ const RepositoryList = ({
       {/* Repository Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isSearching && repositories.length === 0 && (
-          <div className="col-span-full flex justify-center items-center py-8">
-            <div
-              className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
-              role="status"
-              aria-label="Searching"
-            />
+          <div
+            className="col-span-full flex justify-center items-center py-8"
+            role="status"
+            aria-label="Searching"
+          >
+            <LoadingSpinner className="h-8 w-8 text-indigo-600" />
             <span className="ml-3 text-gray-500">Searching GitHub...</span>
           </div>
         )}
@@ -318,8 +318,12 @@ const RepositoryList = ({
 
       {/* Loading More Indicator */}
       {isFetchingMore && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div
+          className="flex justify-center items-center py-8"
+          role="status"
+          aria-label="Loading more repositories"
+        >
+          <LoadingSpinner className="h-8 w-8 text-indigo-600" />
           <span className="ml-3 text-gray-600">Loading more repositories...</span>
         </div>
       )}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import RepositoryList from '../components/RepositoryList';
 import type { SortOption, ViewMode } from '../components/RepositoryList';
+import { LoadingSpinner } from '../components/icons';
 import { useAuth } from '../hooks/useAuth';
 import { useInfiniteRepositories, type SortByOption } from '../hooks/useInfiniteRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
@@ -201,14 +202,13 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div
-          className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"
-          role="status"
-          aria-label="Loading"
-        >
-          <span className="sr-only">Loading...</span>
-        </div>
+      <div
+        className="min-h-screen bg-gray-50 flex items-center justify-center"
+        role="status"
+        aria-label="Loading"
+      >
+        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
+        <span className="sr-only">Loading...</span>
       </div>
     );
   }
