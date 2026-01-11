@@ -120,8 +120,9 @@ describe('RepositoryList', () => {
     it('displays empty state when no repositories are provided', () => {
       render(<RepositoryList {...defaultProps} />);
 
-      expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
-      expect(screen.getByText(/star some repositories/i)).toBeInTheDocument();
+      // Text appears in both visible UI and aria-live region for screen readers
+      expect(screen.getAllByText(/no repositories found/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/star some repositories/i).length).toBeGreaterThan(0);
     });
 
     it('shows clear search button when search returns no results', () => {

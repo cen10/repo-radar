@@ -241,9 +241,16 @@ const RepositoryList = ({
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {repositories.length === 0 && (searchQuery || viewMode !== 'starred') ? (
-          <>No repositories found</>
-        ) : null}
+        {repositories.length === 0 && (
+          <>
+            No repositories found.{' '}
+            {
+              searchQuery
+                ? 'Try a different search term'
+                : 'Star some repositories on GitHub to see them here' /* Only reachable on starred view */
+            }
+          </>
+        )}
       </div>
     </div>
   );
@@ -256,11 +263,11 @@ const RepositoryList = ({
         <div className="text-center py-12">
           <p className="text-gray-500">No repositories found</p>
           <p className="text-sm text-gray-400 mt-2">
-            {searchQuery
-              ? 'Try a different search term'
-              : viewMode === 'starred'
-                ? 'Star some repositories on GitHub to see them here'
-                : 'Try searching for repositories above'}
+            {
+              searchQuery
+                ? 'Try a different search term'
+                : 'Star some repositories on GitHub to see them here' /* Only reachable on starred view */
+            }
           </p>
           {searchQuery && (
             <button
