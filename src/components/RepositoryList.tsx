@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
 import { MagnifyingGlassIcon, StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -27,7 +27,7 @@ interface RepositoryListProps {
   onLoadMore: () => void;
 }
 
-const RepositoryList: React.FC<RepositoryListProps> = ({
+const RepositoryList = ({
   repositories,
   isLoading = false,
   isFetchingMore = false,
@@ -44,7 +44,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
   sortBy,
   onSortChange,
   onLoadMore,
-}) => {
+}: RepositoryListProps) => {
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
 
