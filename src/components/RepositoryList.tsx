@@ -10,16 +10,16 @@ export type ViewMode = 'starred' | 'all';
 
 interface RepositoryListProps {
   repositories: Repository[];
-  isLoading?: boolean;
-  isFetchingMore?: boolean;
-  hasMore?: boolean;
-  error?: Error | null;
+  isLoading: boolean;
+  isFetchingMore: boolean;
+  hasMore: boolean;
+  error: Error | null;
   onStar: (repo: Repository) => void;
   onUnstar: (repo: Repository) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchSubmit: (query: string) => void;
-  isSearching?: boolean;
+  isSearching: boolean;
   viewMode: ViewMode;
   onViewChange: (view: ViewMode) => void;
   sortBy: SortOption;
@@ -29,16 +29,16 @@ interface RepositoryListProps {
 
 const RepositoryList = ({
   repositories,
-  isLoading = false,
-  isFetchingMore = false,
-  hasMore = false,
-  error = null,
+  isLoading,
+  isFetchingMore,
+  hasMore,
+  error,
   onStar,
   onUnstar,
   searchQuery,
   onSearchChange,
   onSearchSubmit,
-  isSearching = false,
+  isSearching,
   viewMode,
   onViewChange,
   sortBy,

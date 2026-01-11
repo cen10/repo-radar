@@ -66,11 +66,16 @@ const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
 
 const defaultProps = {
   repositories: [],
+  isLoading: false,
+  isFetchingMore: false,
+  hasMore: false,
+  error: null,
   onStar: vi.fn(),
   onUnstar: vi.fn(),
   searchQuery: '',
   onSearchChange: vi.fn(),
   onSearchSubmit: vi.fn(),
+  isSearching: false,
   viewMode: 'starred' as const,
   onViewChange: vi.fn(),
   sortBy: 'updated' as const,

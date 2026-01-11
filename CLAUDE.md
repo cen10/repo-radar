@@ -91,7 +91,8 @@ npm run build        # Build for production
 12. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
 13. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
 14. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-15. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+15. **Production code over test convenience**: Never make production code decisions (like optional props, public methods, or loose types) just to make tests easier to write. Tests should adapt to production code, not the other way around.
+16. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
