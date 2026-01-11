@@ -30,14 +30,16 @@ interface UseInfiniteRepositoriesReturn {
 }
 
 /**
- * Hook for infinite scroll loading of starred repositories.
+ * Hook for browsing the user's starred repositories list (without search).
+ *
+ * For searching within starred repos, use useInfiniteSearch with mode: 'starred'.
  *
  * Supports three sort modes:
  * - 'updated': Server-side sort by recently updated (fast, incremental loading)
  * - 'created': Server-side sort by recently starred (fast, incremental loading)
  * - 'stars': Client-side sort by star count (loads all repos at once, then sorts)
  */
-export function useInfiniteRepositories({
+export function useInfiniteStarredRepositories({
   token,
   sortBy,
   sortDirection = 'desc',

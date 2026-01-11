@@ -5,7 +5,10 @@ import RepositoryList from '../components/RepositoryList';
 import type { SortOption, ViewMode } from '../components/RepositoryList';
 import { LoadingSpinner } from '../components/icons';
 import { useAuth } from '../hooks/useAuth';
-import { useInfiniteRepositories, type SortByOption } from '../hooks/useInfiniteRepositories';
+import {
+  useInfiniteStarredRepositories,
+  type SortByOption,
+} from '../hooks/useInfiniteStarredRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { starRepository, unstarRepository } from '../services/github';
 import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/github-token';
@@ -32,7 +35,7 @@ const Dashboard = () => {
   // Determine if we're in search mode
   const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
 
-  // Infinite repositories for starred repos
+  // Starred repos list (without search)
   const {
     repositories: starredRepos,
     isLoading: isLoadingStarred,
@@ -40,7 +43,7 @@ const Dashboard = () => {
     hasNextPage: hasMoreStarred,
     fetchNextPage: fetchMoreStarred,
     error: starredError,
-  } = useInfiniteRepositories({
+  } = useInfiniteStarredRepositories({
     token: providerToken,
     sortBy: sortBy as SortByOption,
     enabled: !isSearchMode && !!user,
