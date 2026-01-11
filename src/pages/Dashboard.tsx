@@ -202,11 +202,7 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
-        role="status"
-        aria-label="Loading"
-      >
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
         <LoadingSpinner className="h-12 w-12 text-indigo-600" />
         <span className="sr-only">Loading...</span>
       </div>
