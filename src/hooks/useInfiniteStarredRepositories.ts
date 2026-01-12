@@ -11,14 +11,14 @@ const ITEMS_PER_PAGE = 30;
 
 export type SortByOption = 'updated' | 'created' | 'stars';
 
-interface UseInfiniteRepositoriesOptions {
+interface UseInfiniteStarredRepositoriesOptions {
   token: string | null;
   sortBy: SortByOption;
   sortDirection?: SortDirection;
   enabled: boolean;
 }
 
-interface UseInfiniteRepositoriesReturn {
+interface UseInfiniteStarredRepositoriesReturn {
   repositories: Repository[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
@@ -44,7 +44,7 @@ export function useInfiniteStarredRepositories({
   sortBy,
   sortDirection = 'desc',
   enabled,
-}: UseInfiniteRepositoriesOptions): UseInfiniteRepositoriesReturn {
+}: UseInfiniteStarredRepositoriesOptions): UseInfiniteStarredRepositoriesReturn {
   const isStarsSort = sortBy === 'stars';
 
   // For 'stars' sort: load all repos at once using parallel fetching, then sort client-side
@@ -60,6 +60,26 @@ export function useInfiniteStarredRepositories({
     staleTime: 5 * 60 * 1000,
   });
 
+  const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
+    const repos = await fetchStarredRepositories(
+      token!,
+      pageParam,
+      ITEMS_PER_PAGE,
+      sortBy as StarredSortOption,
+      sortDirection
+    );
+    return {
+      repositories: repos,
+      page: pageParam,
+      hasMore: repos.length === ITEMS_PER_PAGE,
+    };
+  };
+
+  const getNextPageParam = (lastPage: { hasMore: boolean; page: number }) => {
+    if (!lastPage.hasMore) return undefined;
+    return lastPage.page + 1;
+  };
+
   // For 'updated'/'created' sort: use infinite query for incremental loading
   const {
     data: infiniteData,
@@ -71,25 +91,9 @@ export function useInfiniteStarredRepositories({
     refetch: refetchInfinite,
   } = useInfiniteQuery({
     queryKey: ['starredRepositories', token, sortBy, sortDirection],
-    queryFn: async ({ pageParam }) => {
-      const repos = await fetchStarredRepositories(
-        token!,
-        pageParam,
-        ITEMS_PER_PAGE,
-        sortBy as StarredSortOption,
-        sortDirection
-      );
-      return {
-        repositories: repos,
-        page: pageParam,
-        hasMore: repos.length === ITEMS_PER_PAGE,
-      };
-    },
+    queryFn: fetchStarredPage,
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore) return undefined;
-      return lastPage.page + 1;
-    },
+    getNextPageParam,
     enabled: enabled && !!token && !isStarsSort,
   });
 
