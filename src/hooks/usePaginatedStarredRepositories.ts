@@ -40,8 +40,11 @@ export function usePaginatedStarredRepositories({
   enabled,
 }: UsePaginatedStarredRepositoriesOptions): UsePaginatedStarredRepositoriesReturn {
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
+    if (!token) {
+      throw new Error('Token required');
+    }
     const repos = await fetchStarredRepositories(
-      token!,
+      token,
       pageParam,
       ITEMS_PER_PAGE,
       sortBy as StarredSortOption,

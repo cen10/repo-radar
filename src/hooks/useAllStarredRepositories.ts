@@ -31,7 +31,12 @@ export function useAllStarredRepositories({
 }: UseAllStarredRepositoriesOptions): UseAllStarredRepositoriesReturn {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['allStarredRepositories', token],
-    queryFn: () => fetchAllStarredRepositories(token!),
+    queryFn: () => {
+      if (!token) {
+        throw new Error('Token required');
+      }
+      return fetchAllStarredRepositories(token);
+    },
     enabled: enabled && !!token,
     staleTime: 5 * 60 * 1000,
   });

@@ -56,7 +56,12 @@ export function useInfiniteSearch({
     error: allStarredError,
   } = useQuery({
     queryKey: ['allStarredRepositories', token],
-    queryFn: () => fetchAllStarredRepositories(token!),
+    queryFn: () => {
+      if (!token) {
+        throw new Error('Token required');
+      }
+      return fetchAllStarredRepositories(token);
+    },
     enabled: shouldFetch && isStarredSearch,
     staleTime: 5 * 60 * 1000,
   });
@@ -70,9 +75,12 @@ export function useInfiniteSearch({
     pageParam: number;
     signal?: AbortSignal;
   }) => {
+    if (!token) {
+      throw new Error('Token required');
+    }
     if (isStarredSearch) {
       return searchStarredRepositories(
-        token!,
+        token,
         trimmedQuery,
         pageParam,
         ITEMS_PER_PAGE,
@@ -81,7 +89,7 @@ export function useInfiniteSearch({
         signal
       );
     }
-    return searchRepositories(token!, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
+    return searchRepositories(token, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
   };
 
   const getNextPageParam = (
