@@ -63,49 +63,67 @@ export function useInfiniteSearch({
 
   const allStarredRepos: Repository[] = allStarredData?.repositories ?? [];
 
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
-    useInfiniteQuery({
-      queryKey: ['searchRepositories', token, trimmedQuery, mode, sortBy],
-      queryFn: async ({ pageParam, signal }) => {
-        if (isStarredSearch) {
-          // Use all starred repos for complete search results
-          return searchStarredRepositories(
-            token!,
-            trimmedQuery,
-            pageParam,
-            ITEMS_PER_PAGE,
-            allStarredRepos,
-            sortBy,
-            signal
-          );
-        }
-        return searchRepositories(token!, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
-      },
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-        const totalPages = Math.ceil(lastPage.apiSearchResultTotal / ITEMS_PER_PAGE);
-        if (lastPageParam >= totalPages) return undefined;
-        return lastPageParam + 1;
-      },
-      // Only enable search after all starred repos are loaded (for starred search)
-      enabled: shouldFetch && (!isStarredSearch || allStarredRepos.length > 0),
-    });
+  const fetchSearchPage = async ({
+    pageParam,
+    signal,
+  }: {
+    pageParam: number;
+    signal?: AbortSignal;
+  }) => {
+    if (isStarredSearch) {
+      return searchStarredRepositories(
+        token!,
+        trimmedQuery,
+        pageParam,
+        ITEMS_PER_PAGE,
+        allStarredRepos,
+        sortBy,
+        signal
+      );
+    }
+    return searchRepositories(token!, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
+  };
+
+  const getNextPageParam = (
+    lastPage: { apiSearchResultTotal: number },
+    _allPages: unknown,
+    lastPageParam: number
+  ) => {
+    const totalPages = Math.ceil(lastPage.apiSearchResultTotal / ITEMS_PER_PAGE);
+    if (lastPageParam >= totalPages) return undefined;
+    return lastPageParam + 1;
+  };
+
+  const {
+    data,
+    isLoading: isLoadingSearch,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error: searchError,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['searchRepositories', token, trimmedQuery, mode, sortBy],
+    queryFn: fetchSearchPage,
+    initialPageParam: 1,
+    getNextPageParam,
+    // Only enable search after all starred repos are loaded (for starred search)
+    enabled: shouldFetch && (!isStarredSearch || allStarredRepos.length > 0),
+  });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
   const totalCount = data?.pages[0]?.apiSearchResultTotal ?? 0;
 
-  // Combine loading states: loading if fetching all starred OR running search
-  const combinedIsLoading = isStarredSearch ? isLoadingAllStarred || isLoading : isLoading;
-  // Surface any error from either query
-  const combinedError = (allStarredError || error) as Error | null;
+  const isLoading = isLoadingSearch || isLoadingAllStarred;
+  const error = (searchError || allStarredError) as Error | null;
 
   return {
     repositories,
-    isLoading: combinedIsLoading,
+    isLoading,
     isFetchingNextPage,
     hasNextPage: hasNextPage ?? false,
     fetchNextPage,
-    error: combinedError,
+    error,
     totalCount,
     refetch,
   };
