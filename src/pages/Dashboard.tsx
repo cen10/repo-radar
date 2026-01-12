@@ -5,10 +5,11 @@ import RepositoryList from '../components/RepositoryList';
 import type { SortOption, ViewMode } from '../components/RepositoryList';
 import { LoadingSpinner } from '../components/icons';
 import { useAuth } from '../hooks/useAuth';
+import { useAllStarredRepositories } from '../hooks/useAllStarredRepositories';
 import {
-  useInfiniteStarredRepositories,
-  type SortByOption,
-} from '../hooks/useInfiniteStarredRepositories';
+  usePaginatedStarredRepositories,
+  type PaginatedSortOption,
+} from '../hooks/usePaginatedStarredRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { starRepository, unstarRepository } from '../services/github';
 import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/github-token';
@@ -32,22 +33,42 @@ const Dashboard = () => {
   // State to trigger re-render when pending unstars change (value unused, only setter matters)
   const [, setPendingUnstarsVersion] = useState(0);
 
-  // Determine if we're in search mode
   const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
+  const isStarsSort = sortBy === 'stars';
 
-  // Starred repos list (without search)
+  // Both the useAllStarredRepositories and usePaginatedStarredRepositories hooks are always
+  // called (Rules of Hooks), but only one fetches at a time. React Query's `enabled` flag
+  // prevents network requests when false. Stars sorting requires all repos client-side;
+  // other sorts use server-side pagination.
+
+  // Starred repos - bulk fetch for sorting by star count
   const {
-    repositories: starredRepos,
-    isLoading: isLoadingStarred,
+    repositories: allStarredRepos,
+    isLoading: isLoadingAllStarred,
+    error: allStarredError,
+  } = useAllStarredRepositories({
+    token: providerToken,
+    enabled: !isSearchMode && isStarsSort,
+  });
+
+  // Starred repos - paginated fetch for server-side sorting
+  const {
+    repositories: paginatedRepos,
+    isLoading: isLoadingPaginated,
     isFetchingNextPage: isFetchingMoreStarred,
     hasNextPage: hasMoreStarred,
     fetchNextPage: fetchMoreStarred,
-    error: starredError,
-  } = useInfiniteStarredRepositories({
+    error: paginatedError,
+  } = usePaginatedStarredRepositories({
     token: providerToken,
-    sortBy: sortBy as SortByOption,
-    enabled: !isSearchMode && !!user,
+    sortBy: sortBy as PaginatedSortOption,
+    enabled: !isSearchMode && !isStarsSort,
   });
+
+  // Combine results from whichever hook is active
+  const starredRepos = isStarsSort ? allStarredRepos : paginatedRepos;
+  const isLoadingStarred = isLoadingAllStarred || isLoadingPaginated;
+  const starredError = allStarredError || paginatedError;
 
   // Infinite search results
   const {
