@@ -10,6 +10,7 @@ interface UseAllStarredRepositoriesOptions {
 
 interface UseAllStarredRepositoriesReturn {
   repositories: Repository[];
+  totalStarred: number;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -48,6 +49,7 @@ export function useAllStarredRepositories({
 
   return {
     repositories,
+    totalStarred: data?.totalStarred ?? 0,
     isLoading,
     error: error as Error | null,
     refetch,

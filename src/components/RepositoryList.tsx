@@ -11,6 +11,7 @@ export type ViewMode = 'starred' | 'all';
 
 interface RepositoryListProps {
   repositories: Repository[];
+  totalStarred?: number;
   isLoading: boolean;
   isFetchingMore: boolean;
   hasMore: boolean;
@@ -30,6 +31,7 @@ interface RepositoryListProps {
 
 const RepositoryList = ({
   repositories,
+  totalStarred,
   isLoading,
   isFetchingMore,
   hasMore,
@@ -329,9 +331,27 @@ const RepositoryList = ({
       {/* End of Results */}
       {!hasMore && repositories.length > 0 && !isSearching && (
         <div className="text-center py-4 text-gray-500">
-          <p>
-            {repositories.length === 1 ? '1 repository' : `${repositories.length} repositories`}
-          </p>
+          {totalStarred && totalStarred > repositories.length && viewMode === 'starred' ? (
+            <>
+              <p>{`Showing ${repositories.length} of ${totalStarred} starred repositories`}</p>
+              <p className="text-sm mt-1">
+                Use search to find specific repos, or visit{' '}
+                <a
+                  href="https://github.com/stars"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-700 underline"
+                >
+                  GitHub Stars
+                </a>{' '}
+                to browse all.
+              </p>
+            </>
+          ) : (
+            <p>
+              {repositories.length === 1 ? '1 repository' : `${repositories.length} repositories`}
+            </p>
+          )}
         </div>
       )}
     </div>

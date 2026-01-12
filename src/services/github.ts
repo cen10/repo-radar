@@ -86,6 +86,7 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
 export async function fetchAllStarredRepositories(token: string): Promise<{
   repositories: Repository[];
   totalFetched: number;
+  totalStarred: number;
 }> {
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(token);
@@ -94,12 +95,15 @@ export async function fetchAllStarredRepositories(token: string): Promise<{
     return {
       repositories: [],
       totalFetched: 0,
+      totalStarred: 0,
     };
   }
 
-  // Step 2: Calculate how many pages we need to fetch all repos
+  // Step 2: Calculate how many pages we need (capped at 500 repos / 5 parallel calls)
+  const MAX_STARRED_REPOS = 500;
   const perPage = 100;
-  const pagesToFetch = Math.ceil(totalStarred / perPage);
+  const reposToFetch = Math.min(totalStarred, MAX_STARRED_REPOS);
+  const pagesToFetch = Math.ceil(reposToFetch / perPage);
   const pages = Array.from({ length: pagesToFetch }, (_, i) => i + 1);
 
   // Step 3: Fetch all pages in parallel
@@ -139,6 +143,7 @@ export async function fetchAllStarredRepositories(token: string): Promise<{
   return {
     repositories: sortedRepos,
     totalFetched: sortedRepos.length,
+    totalStarred,
   };
 }
 

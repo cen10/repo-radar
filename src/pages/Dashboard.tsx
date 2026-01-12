@@ -44,6 +44,7 @@ const Dashboard = () => {
   // Starred repos - bulk fetch for sorting by star count
   const {
     repositories: allStarredRepos,
+    totalStarred,
     isLoading: isLoadingAllStarred,
     error: allStarredError,
   } = useAllStarredRepositories({
@@ -251,6 +252,7 @@ const Dashboard = () => {
 
         <RepositoryList
           repositories={repositories}
+          totalStarred={isStarsSort ? totalStarred : undefined}
           isLoading={isLoading}
           isFetchingMore={isFetchingMore}
           hasMore={hasMore}
