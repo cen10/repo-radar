@@ -29,7 +29,7 @@ export function useIntersectionObserver({
   const [node, setNode] = useState<HTMLElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Callback ref pattern - more stable than using useRef directly
+  // Callback ref pattern - useRef won't work because ref.current changes don't trigger re-renders
   const ref = useCallback((newNode: HTMLElement | null) => {
     setNode(newNode);
   }, []);
