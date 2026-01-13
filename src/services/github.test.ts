@@ -166,10 +166,8 @@ describe('GitHub API Service', () => {
   describe('fetchAllStarredRepositories', () => {
     it('should fetch all starred repositories across multiple pages', async () => {
       const mockRepo1 = createMockStarredRepo({
-        id: 1,
         name: 'repo-1',
         description: 'First repository',
-        stargazers_count: 100,
         starred_at: '2024-01-10T10:00:00Z',
       });
 
@@ -180,7 +178,6 @@ describe('GitHub API Service', () => {
         stargazers_count: 200,
         language: 'JavaScript',
         topics: ['backend'],
-        starred_at: '2024-01-15T10:00:00Z',
       });
 
       // Mock fetchStarredRepoCount call (first call with per_page=1)
@@ -243,7 +240,6 @@ describe('GitHub API Service', () => {
 
     it('should handle single page of starred repositories', async () => {
       const mockRepo = createMockStarredRepo({
-        id: 1,
         name: 'single-repo',
         description: 'Only repository',
         stargazers_count: 50,
@@ -359,7 +355,6 @@ describe('GitHub API Service', () => {
         items: [
           createMockSearchResultItem({
             id: 123,
-            name: 'test-repo',
             description: 'Test',
             topics: [],
           }),
