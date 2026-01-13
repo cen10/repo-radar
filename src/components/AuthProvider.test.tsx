@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
@@ -70,6 +71,23 @@ function assertDefined<T>(val: T | undefined, name: string): asserts val is T {
   }
 }
 
+// Helper to create a test QueryClient
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
+// Wrapper component that provides QueryClient context
+const renderWithQueryClient = (ui: React.ReactElement, queryClient?: QueryClient) => {
+  const client = queryClient ?? createTestQueryClient();
+  return {
+    ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>),
+    queryClient: client,
+  };
+};
+
 describe('AuthProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,7 +96,7 @@ describe('AuthProvider', () => {
   });
 
   it('should provide auth context to children', async () => {
-    render(
+    renderWithQueryClient(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
@@ -92,7 +110,7 @@ describe('AuthProvider', () => {
   });
 
   it('should start with loading state', () => {
-    render(
+    renderWithQueryClient(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>
@@ -114,7 +132,7 @@ describe('AuthProvider', () => {
       return null;
     };
 
-    render(
+    renderWithQueryClient(
       <AuthProvider>
         <TestMethodComponent />
       </AuthProvider>
@@ -129,7 +147,7 @@ describe('AuthProvider', () => {
     it('should clear user and session on SIGNED_OUT event', async () => {
       setInitialSession(mockSession);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -149,7 +167,7 @@ describe('AuthProvider', () => {
     });
 
     it('should unsubscribe from auth changes on unmount', () => {
-      const { unmount } = render(
+      const { unmount } = renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -175,7 +193,7 @@ describe('AuthProvider', () => {
         return <TestComponent />;
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestRetryComponent />
         </AuthProvider>
@@ -206,7 +224,7 @@ describe('AuthProvider', () => {
         return <TestComponent />;
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestRetryComponent />
         </AuthProvider>
@@ -237,7 +255,7 @@ describe('AuthProvider', () => {
         return <TestComponent />;
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestRetryComponent />
         </AuthProvider>
@@ -284,7 +302,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -303,7 +321,7 @@ describe('AuthProvider', () => {
     it('should set user and session when initial session exists', async () => {
       setInitialSession(mockSession);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -329,7 +347,7 @@ describe('AuthProvider', () => {
       // Start with successful getSession
       mockGetSession();
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestRetryComponent />
         </AuthProvider>
@@ -363,7 +381,7 @@ describe('AuthProvider', () => {
         );
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestRetryComponent />
         </AuthProvider>
@@ -408,7 +426,7 @@ describe('AuthProvider', () => {
         error: new Error('OAuth failed'),
       });
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestMethodComponent />
         </AuthProvider>
@@ -435,7 +453,7 @@ describe('AuthProvider', () => {
         error: new Error('Sign out failed'),
       });
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestMethodComponent />
         </AuthProvider>
@@ -447,6 +465,36 @@ describe('AuthProvider', () => {
 
       assertDefined(signOut, 'signOut');
       await expect(signOut()).rejects.toThrow('Sign out failed');
+    });
+
+    it('should clear React Query cache on signOut', async () => {
+      let signOut: (() => Promise<void>) | undefined;
+
+      const TestMethodComponent = () => {
+        const auth = useAuth();
+        signOut = auth.signOut;
+        return null;
+      };
+
+      mockSupabaseClient.auth.signOut.mockResolvedValue({ error: null });
+
+      const { queryClient } = renderWithQueryClient(
+        <AuthProvider>
+          <TestMethodComponent />
+        </AuthProvider>
+      );
+
+      // Spy on the clear method
+      const clearSpy = vi.spyOn(queryClient, 'clear');
+
+      await waitFor(() => {
+        expect(typeof signOut).toBe('function');
+      });
+
+      assertDefined(signOut, 'signOut');
+      await signOut();
+
+      expect(clearSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should call signInWithOAuth with correct parameters', async () => {
@@ -463,7 +511,7 @@ describe('AuthProvider', () => {
         error: null,
       });
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestMethodComponent />
         </AuthProvider>
@@ -505,7 +553,7 @@ describe('AuthProvider', () => {
 
       setInitialSession(sessionWithoutUsername);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -543,7 +591,7 @@ describe('AuthProvider', () => {
         },
       };
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponent />
         </AuthProvider>
@@ -595,7 +643,7 @@ describe('AuthProvider', () => {
 
       setInitialSession(sessionWithNameOnly);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponentWithName />
         </AuthProvider>
@@ -633,7 +681,7 @@ describe('AuthProvider', () => {
 
       setInitialSession(sessionWithoutName);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponentWithName />
         </AuthProvider>
@@ -671,7 +719,7 @@ describe('AuthProvider', () => {
 
       setInitialSession(sessionWithoutAvatar);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponentWithAvatar />
         </AuthProvider>
@@ -716,7 +764,7 @@ describe('AuthProvider', () => {
 
       setInitialSession(sessionWithMinimalOptionalFields);
 
-      render(
+      renderWithQueryClient(
         <AuthProvider>
           <TestComponentFull />
         </AuthProvider>

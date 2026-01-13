@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
@@ -36,6 +37,7 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,13 +139,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clear stored GitHub access token
     clearStoredAccessToken();
 
+    // Clear React Query cache so next login fetches fresh data from GitHub
+    queryClient.clear();
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {
       logger.error('Error signing out:', error);
       throw error;
     }
-  }, []);
+  }, [queryClient]);
 
   const value: AuthContextType = useMemo(
     () => ({
