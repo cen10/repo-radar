@@ -22,6 +22,7 @@ interface RepositoryListProps {
   onSearchChange: (query: string) => void;
   onSearchSubmit: (query: string) => void;
   isSearching: boolean;
+  hasActiveSearch: boolean;
   viewMode: ViewMode;
   onViewChange: (view: ViewMode) => void;
   sortBy: SortOption;
@@ -42,6 +43,7 @@ const RepositoryList = ({
   onSearchChange,
   onSearchSubmit,
   isSearching,
+  hasActiveSearch,
   viewMode,
   onViewChange,
   sortBy,
@@ -243,7 +245,7 @@ const RepositoryList = ({
           <>
             No repositories found.{' '}
             {
-              searchQuery
+              hasActiveSearch
                 ? 'Try a different search term'
                 : 'Star some repositories on GitHub to see them here' /* Only reachable on starred view */
             }
@@ -262,12 +264,12 @@ const RepositoryList = ({
           <p className="text-gray-500">No repositories found</p>
           <p className="text-sm text-gray-400 mt-2">
             {
-              searchQuery
+              hasActiveSearch
                 ? 'Try a different search term'
                 : 'Star some repositories on GitHub to see them here' /* Only reachable on starred view */
             }
           </p>
-          {searchQuery && (
+          {hasActiveSearch && (
             <button
               onClick={() => {
                 onSearchChange('');

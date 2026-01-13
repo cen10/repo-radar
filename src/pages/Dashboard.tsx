@@ -342,6 +342,7 @@ const Dashboard = () => {
           onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           isSearching={isSearchMode && isLoading}
+          hasActiveSearch={activeSearchQuery.trim().length > 0}
           viewMode={viewMode}
           onViewChange={handleViewChange}
           sortBy={sortBy}

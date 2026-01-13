@@ -76,6 +76,7 @@ const defaultProps = {
   onSearchChange: vi.fn(),
   onSearchSubmit: vi.fn(),
   isSearching: false,
+  hasActiveSearch: false,
   viewMode: 'starred' as const,
   onViewChange: vi.fn(),
   sortBy: 'updated' as const,
@@ -127,7 +128,7 @@ describe('RepositoryList', () => {
     });
 
     it('shows clear search button when search returns no results', () => {
-      render(<RepositoryList {...defaultProps} repositories={[]} searchQuery="test" />);
+      render(<RepositoryList {...defaultProps} repositories={[]} hasActiveSearch={true} />);
 
       expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
@@ -140,6 +141,7 @@ describe('RepositoryList', () => {
         <RepositoryList
           {...defaultProps}
           searchQuery="test query"
+          hasActiveSearch={true}
           onSearchChange={mockOnSearchChange}
           onSearchSubmit={mockOnSearchSubmit}
         />
