@@ -40,10 +40,10 @@ interface GitHubStarredRepoWithTimestamp {
  * @returns Total number of starred repositories
  */
 export async function fetchStarredRepoCount(token: string): Promise<number> {
-  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-  url.searchParams.append('per_page', '1');
+  const params = new URLSearchParams({ per_page: '1' });
+  const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
@@ -134,18 +134,20 @@ export async function fetchAllStarredRepositories(
     throw new Error('Failed to fetch any starred repositories');
   }
 
-  // Step 5: Sort by star count (most popular first)
+  // Step 5: Sort by star count (most popular first) and trim to maxRepos if needed
   const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
+  const trimmedRepos = sortedRepos.slice(0, maxRepos);
+  const isLimited = totalStarred > maxRepos;
 
   logger.info(
-    `Fetched ${sortedRepos.length} starred repositories across ${pagesToFetch} pages${
-      failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''
-    }`
+    `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
+      isLimited ? ` (limited to ${maxRepos})` : ''
+    }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
   );
 
   return {
-    repositories: sortedRepos,
-    totalFetched: sortedRepos.length,
+    repositories: trimmedRepos,
+    totalFetched: trimmedRepos.length,
     totalStarred,
   };
 }
@@ -168,14 +170,16 @@ export async function fetchStarredRepositories(
   sort: StarredSortOption = 'updated',
   direction: SortDirection = 'desc'
 ): Promise<Repository[]> {
-  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-  url.searchParams.append('page', page.toString());
-  url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', sort);
-  url.searchParams.append('direction', direction);
+  const params = new URLSearchParams({
+    page: page.toString(),
+    per_page: perPage.toString(),
+    sort,
+    direction,
+  });
+  const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         // Use star+json to get starred_at timestamp for each repo
@@ -317,18 +321,17 @@ export async function searchRepositories(
     'best-match': null, // No sort = relevance ranking
   };
 
-  const url = new URL(`${GITHUB_API_BASE}/search/repositories`);
-  url.searchParams.append('q', searchQuery);
-  url.searchParams.append('page', page.toString());
-  url.searchParams.append('per_page', perPage.toString());
   const sortParam = githubSortMap[sortBy];
-  if (sortParam) {
-    url.searchParams.append('sort', sortParam);
-    url.searchParams.append('order', 'desc');
-  }
+  const params = new URLSearchParams({
+    q: searchQuery,
+    page: page.toString(),
+    per_page: perPage.toString(),
+    ...(sortParam && { sort: sortParam, order: 'desc' }),
+  });
+  const url = `${GITHUB_API_BASE}/search/repositories?${params}`;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       signal,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -514,10 +517,10 @@ export async function searchStarredRepositories(
  */
 async function fetchUserStarredIds(token: string): Promise<Set<number>> {
   try {
-    const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-    url.searchParams.append('per_page', '100'); // Get first 100 starred repos
+    const params = new URLSearchParams({ per_page: '100' }); // Get first 100 starred repos
+    const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github.v3+json',
