@@ -278,13 +278,12 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param perPage - Number of items per page
  * @returns Object containing repositories and pagination info
  */
-export type SearchSortOption =
-  | 'updated'
-  | 'created'
-  | 'stars'
-  | 'forks'
-  | 'help-wanted'
-  | 'best-match';
+// Sort options for GitHub's search API (Explore All view)
+export type SearchSortOption = 'updated' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
+
+// Sort options for client-side starred search (My Stars view)
+// Includes 'created' which sorts by when the user starred the repo
+export type StarredSearchSortOption = 'updated' | 'stars' | 'created';
 
 export async function searchRepositories(
   token: string,
@@ -307,13 +306,11 @@ export async function searchRepositories(
   // For fuzzy match, search broadly
   const searchQuery = isExactMatch ? `${searchTerm} in:name` : searchTerm;
 
-  // Map our sort options to GitHub API sort options
+  // Map our sort options to GitHub API sort parameters
   // GitHub search supports: stars, forks, help-wanted-issues, updated
   // 'best-match' means no sort parameter (GitHub's default relevance ranking)
-  // 'created' doesn't have a direct mapping, so we use 'updated' as fallback
   const githubSortMap: Record<SearchSortOption, string | null> = {
     updated: 'updated',
-    created: 'updated', // GitHub search doesn't support created, fallback to updated
     stars: 'stars',
     forks: 'forks',
     'help-wanted': 'help-wanted-issues',
@@ -427,7 +424,7 @@ export async function searchStarredRepositories(
   page = 1,
   perPage = 30,
   allStarredRepos?: Repository[],
-  sortBy: SearchSortOption = 'updated',
+  sortBy: StarredSearchSortOption = 'updated',
   signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
