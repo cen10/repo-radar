@@ -209,30 +209,29 @@ export async function fetchStarredRepositories(
     const data: GitHubStarredRepoWithTimestamp[] = await response.json();
 
     // Transform GitHub API response to our Repository type
-    return data.map((item) => ({
-      id: item.repo.id,
-      name: item.repo.name,
-      full_name: item.repo.full_name,
+    return data.map(({ repo, starred_at }) => ({
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
       owner: {
-        login: item.repo.owner.login,
-        avatar_url: item.repo.owner.avatar_url,
+        login: repo.owner.login,
+        avatar_url: repo.owner.avatar_url,
       },
-      description: item.repo.description,
-      html_url: item.repo.html_url,
-      stargazers_count: item.repo.stargazers_count,
-      open_issues_count: item.repo.open_issues_count,
-      language: item.repo.language,
-      topics: item.repo.topics || [],
-      updated_at: item.repo.updated_at,
-      pushed_at: item.repo.pushed_at,
-      created_at: item.repo.created_at,
-      starred_at: item.starred_at, // When the user starred this repo
+      description: repo.description,
+      html_url: repo.html_url,
+      stargazers_count: repo.stargazers_count,
+      open_issues_count: repo.open_issues_count,
+      language: repo.language,
+      topics: repo.topics || [],
+      updated_at: repo.updated_at,
+      pushed_at: repo.pushed_at,
+      created_at: repo.created_at,
+      starred_at, // When the user starred this repo
       is_starred: true, // These are all starred repos by definition
-      // Calculate basic metrics (in production, these would come from a backend service)
       metrics: {
-        stars_growth_rate: calculateGrowthRate(item.repo),
+        stars_growth_rate: calculateGrowthRate(repo),
         issues_growth_rate: 0, // Would need historical data
-        is_trending: isTrending(item.repo),
+        is_trending: isTrending(repo),
       },
       is_following: false, // This would come from user's saved preferences
     }));
