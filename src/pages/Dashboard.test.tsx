@@ -239,6 +239,7 @@ describe('Dashboard', () => {
     vi.mocked(githubService.fetchAllStarredRepositories).mockResolvedValue({
       repositories: mockRepositories,
       totalFetched: mockRepositories.length,
+      totalStarred: mockRepositories.length,
     });
     vi.mocked(githubService.searchRepositories).mockResolvedValue({
       repositories: [],

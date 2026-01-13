@@ -75,6 +75,25 @@ npm run build        # Build for production
 - Pagination: 100 repos per page
 - Hourly data refresh cycle
 
+## Performance Debugging
+
+Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode are often caused by React's development overhead (`jsxDEV`, `createTask`, React DevTools instrumentation), not actual performance issues.
+
+**Before optimizing:**
+1. Run production build: `npm run build && npm run preview`
+2. Preview server runs on **port 4173** (not 5173 which is dev)
+3. If violations disappear in production, no action needed
+
+**When to investigate:**
+- Violations persist in production build
+- PRs touching rendering-heavy code (lists, animations, complex components)
+
+**Debugging tools:**
+- Chrome DevTools → Performance tab → Record → look for "Long Task" markers
+- Click on long tasks to see the call stack and identify the slow code
+
+**To hide dev-mode violations:** In Chrome Console, filter with `-Violation`
+
 ## Development Guidelines
 
 1. Follow TDD: Write tests first
