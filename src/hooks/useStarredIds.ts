@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { Repository } from '../types';
 
 interface AllStarredData {
@@ -30,7 +30,7 @@ interface UseStarredIdsReturn {
  */
 export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsReturn {
   const queryClient = useQueryClient();
-  const queryKey = ['allStarredRepositories', token];
+  const queryKey = useMemo(() => ['allStarredRepositories', token], [token]);
 
   // Cache the Set to avoid creating new references on every render
   const cachedSetRef = useRef<Set<number>>(new Set());
