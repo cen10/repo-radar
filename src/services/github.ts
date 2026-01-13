@@ -139,10 +139,14 @@ export async function fetchAllStarredRepositories(
   const trimmedRepos = sortedRepos.slice(0, maxRepos);
   const isLimited = totalStarred > maxRepos;
 
+  const notes = [
+    isLimited && `limited to ${maxRepos}`,
+    failedPages.length > 0 && `${failedPages.length} pages failed`,
+  ].filter(Boolean);
   logger.info(
-    `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
-      isLimited ? ` (limited to ${maxRepos})` : ''
-    }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
+    `Bulk-fetched ${trimmedRepos.length} of ${totalStarred} repos for use with the Most Stars filter${
+      notes.length > 0 ? ` (${notes.join(', ')})` : ''
+    }`
   );
 
   return {
