@@ -20,6 +20,60 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
+// Helper to create mock GitHub API starred repo response (star+json format)
+interface MockStarredRepoOptions {
+  id?: number;
+  name?: string;
+  description?: string;
+  stargazers_count?: number;
+  open_issues_count?: number;
+  language?: string;
+  topics?: string[];
+  starred_at?: string;
+}
+
+const createMockStarredRepo = (options: MockStarredRepoOptions = {}) => ({
+  starred_at: options.starred_at ?? '2024-01-15T10:00:00Z',
+  repo: {
+    id: options.id ?? 1,
+    name: options.name ?? 'test-repo',
+    full_name: `user/${options.name ?? 'test-repo'}`,
+    owner: {
+      login: 'user',
+      avatar_url: 'https://example.com/avatar.jpg',
+    },
+    description: options.description ?? 'Test repository',
+    html_url: `https://github.com/user/${options.name ?? 'test-repo'}`,
+    stargazers_count: options.stargazers_count ?? 100,
+    open_issues_count: options.open_issues_count ?? 5,
+    language: options.language ?? 'TypeScript',
+    topics: options.topics ?? ['testing'],
+    updated_at: '2024-01-01T00:00:00Z',
+    pushed_at: '2024-01-01T00:00:00Z',
+    created_at: '2023-01-01T00:00:00Z',
+  },
+});
+
+// Helper to create mock GitHub API search result item
+const createMockSearchResultItem = (options: MockStarredRepoOptions = {}) => ({
+  id: options.id ?? 1,
+  name: options.name ?? 'test-repo',
+  full_name: `user/${options.name ?? 'test-repo'}`,
+  owner: {
+    login: 'user',
+    avatar_url: 'https://example.com/avatar.jpg',
+  },
+  description: options.description ?? 'Test repository',
+  html_url: `https://github.com/user/${options.name ?? 'test-repo'}`,
+  stargazers_count: options.stargazers_count ?? 100,
+  open_issues_count: options.open_issues_count ?? 5,
+  language: options.language ?? 'TypeScript',
+  topics: options.topics ?? ['testing'],
+  updated_at: '2024-01-01T00:00:00Z',
+  pushed_at: '2024-01-01T00:00:00Z',
+  created_at: '2023-01-01T00:00:00Z',
+});
+
 describe('GitHub API Service', () => {
   const testToken = 'test-github-token';
 
@@ -33,34 +87,9 @@ describe('GitHub API Service', () => {
 
   describe('fetchStarredRepositories', () => {
     it('should fetch starred repositories successfully', async () => {
-      // Mock response in star+json format: { starred_at, repo }
-      const mockRepos = [
-        {
-          starred_at: '2024-01-15T10:00:00Z',
-          repo: {
-            id: 1,
-            name: 'test-repo',
-            full_name: 'user/test-repo',
-            owner: {
-              login: 'user',
-              avatar_url: 'https://example.com/avatar.jpg',
-            },
-            description: 'Test repository',
-            html_url: 'https://github.com/user/test-repo',
-            stargazers_count: 100,
-            open_issues_count: 5,
-            language: 'TypeScript',
-            topics: ['testing'],
-            updated_at: '2024-01-01T00:00:00Z',
-            pushed_at: '2024-01-01T00:00:00Z',
-            created_at: '2023-01-01T00:00:00Z',
-          },
-        },
-      ];
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockRepos,
+        json: async () => [createMockStarredRepo()],
         headers: new Headers(),
       });
 
@@ -136,50 +165,23 @@ describe('GitHub API Service', () => {
 
   describe('fetchAllStarredRepositories', () => {
     it('should fetch all starred repositories across multiple pages', async () => {
-      // Mock repos in star+json format: { starred_at, repo }
-      const mockRepo1 = {
+      const mockRepo1 = createMockStarredRepo({
+        id: 1,
+        name: 'repo-1',
+        description: 'First repository',
+        stargazers_count: 100,
         starred_at: '2024-01-10T10:00:00Z',
-        repo: {
-          id: 1,
-          name: 'repo-1',
-          full_name: 'user/repo-1',
-          owner: {
-            login: 'user',
-            avatar_url: 'https://example.com/avatar.jpg',
-          },
-          description: 'First repository',
-          html_url: 'https://github.com/user/repo-1',
-          stargazers_count: 100,
-          open_issues_count: 5,
-          language: 'TypeScript',
-          topics: ['testing'],
-          updated_at: '2024-01-01T00:00:00Z',
-          pushed_at: '2024-01-01T00:00:00Z',
-          created_at: '2023-01-01T00:00:00Z',
-        },
-      };
+      });
 
-      const mockRepo2 = {
+      const mockRepo2 = createMockStarredRepo({
+        id: 2,
+        name: 'repo-2',
+        description: 'Second repository',
+        stargazers_count: 200,
+        language: 'JavaScript',
+        topics: ['backend'],
         starred_at: '2024-01-15T10:00:00Z',
-        repo: {
-          id: 2,
-          name: 'repo-2',
-          full_name: 'user/repo-2',
-          owner: {
-            login: 'user',
-            avatar_url: 'https://example.com/avatar.jpg',
-          },
-          description: 'Second repository',
-          html_url: 'https://github.com/user/repo-2',
-          stargazers_count: 200,
-          open_issues_count: 10,
-          language: 'JavaScript',
-          topics: ['backend'],
-          updated_at: '2024-01-02T00:00:00Z',
-          pushed_at: '2024-01-02T00:00:00Z',
-          created_at: '2023-01-02T00:00:00Z',
-        },
-      };
+      });
 
       // Mock fetchStarredRepoCount call (first call with per_page=1)
       // Mock with Link header indicating 150 total repos (last page is 150 with per_page=1)
@@ -240,28 +242,15 @@ describe('GitHub API Service', () => {
     });
 
     it('should handle single page of starred repositories', async () => {
-      // Mock repo in star+json format: { starred_at, repo }
-      const mockRepo = {
+      const mockRepo = createMockStarredRepo({
+        id: 1,
+        name: 'single-repo',
+        description: 'Only repository',
+        stargazers_count: 50,
+        language: 'Python',
+        topics: ['ai'],
         starred_at: '2024-01-10T10:00:00Z',
-        repo: {
-          id: 1,
-          name: 'single-repo',
-          full_name: 'user/single-repo',
-          owner: {
-            login: 'user',
-            avatar_url: 'https://example.com/avatar.jpg',
-          },
-          description: 'Only repository',
-          html_url: 'https://github.com/user/single-repo',
-          stargazers_count: 50,
-          open_issues_count: 2,
-          language: 'Python',
-          topics: ['ai'],
-          updated_at: '2024-01-01T00:00:00Z',
-          pushed_at: '2024-01-01T00:00:00Z',
-          created_at: '2023-01-01T00:00:00Z',
-        },
-      };
+      });
 
       // Mock fetchStarredRepoCount call (first call with per_page=1) - single page scenario
       mockFetch
@@ -307,24 +296,14 @@ describe('GitHub API Service', () => {
     it('should search repositories with fuzzy match', async () => {
       const mockSearchResults = {
         items: [
-          {
+          createMockSearchResultItem({
             id: 2,
             name: 'typescript',
-            full_name: 'microsoft/typescript',
-            owner: {
-              login: 'microsoft',
-              avatar_url: 'https://example.com/ms.jpg',
-            },
             description: 'TypeScript language',
-            html_url: 'https://github.com/microsoft/typescript',
             stargazers_count: 90000,
             open_issues_count: 5000,
-            language: 'TypeScript',
             topics: ['typescript', 'javascript'],
-            updated_at: '2024-01-01T00:00:00Z',
-            pushed_at: '2024-01-01T00:00:00Z',
-            created_at: '2014-01-01T00:00:00Z',
-          },
+          }),
         ],
         total_count: 50000,
       };
@@ -378,21 +357,12 @@ describe('GitHub API Service', () => {
     it('should mark repositories as starred if user has them starred', async () => {
       const mockSearchResults = {
         items: [
-          {
+          createMockSearchResultItem({
             id: 123,
             name: 'test-repo',
-            full_name: 'user/test-repo',
-            owner: { login: 'user', avatar_url: 'https://example.com/avatar.jpg' },
             description: 'Test',
-            html_url: 'https://github.com/user/test-repo',
-            stargazers_count: 100,
-            open_issues_count: 5,
-            language: 'TypeScript',
             topics: [],
-            updated_at: '2024-01-01T00:00:00Z',
-            pushed_at: '2024-01-01T00:00:00Z',
-            created_at: '2023-01-01T00:00:00Z',
-          },
+          }),
         ],
         total_count: 1,
       };
