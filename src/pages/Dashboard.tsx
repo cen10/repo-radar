@@ -42,10 +42,9 @@ const Dashboard = () => {
   const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
   const isStarsSort = sortBy === 'stars';
 
-  // Starred IDs for optimistic updates when starring/unstarring repos
-  const { addId, removeId } = useStarredIds({
+  // Optimistic cache updates when starring/unstarring repos
+  const { addRepo, removeRepo } = useStarredIds({
     token: providerToken,
-    enabled: !!user,
   });
 
   // Both the useAllStarredRepositories and usePaginatedStarredRepositories hooks are always
@@ -61,7 +60,9 @@ const Dashboard = () => {
     error: allStarredError,
   } = useAllStarredRepositories({
     token: providerToken,
-    enabled: !isSearchMode && isStarsSort,
+    // Always fetch to pre-warm cache; with staleTime: Infinity, this only
+    // makes API calls on first load (or after page refresh)
+    enabled: !!user && !isSearchMode,
   });
 
   // Starred repos - paginated fetch for server-side sorting
@@ -206,11 +207,11 @@ const Dashboard = () => {
       await starRepository(token, repo.owner.login, repo.name);
       clearPendingUnstar(repo.id);
       setPendingUnstarsVersion((v) => v + 1);
-      // Optimistically update starred IDs cache
-      addId(repo.id);
-      // Invalidate starred repos caches to refetch with new star
+      // Optimistically update the bulk starred repos cache (if populated)
+      addRepo(repo);
+      // Invalidate paginated/search caches to refetch with new star
+      // (allStarredRepositories uses optimistic update above, no invalidation needed)
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
-      await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
       if (handleIfReauthError(err)) return;
@@ -230,11 +231,11 @@ const Dashboard = () => {
       markPendingUnstar(repo.id);
       // Trigger re-render to filter out the unstarred repo immediately
       setPendingUnstarsVersion((v) => v + 1);
-      // Optimistically update starred IDs cache
-      removeId(repo.id);
-      // Invalidate starred repos caches to refetch without the unstarred repo
+      // Optimistically update the bulk starred repos cache (if populated)
+      removeRepo(repo);
+      // Invalidate paginated/search caches to refetch without the unstarred repo
+      // (allStarredRepositories uses optimistic update above, no invalidation needed)
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
-      await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
       if (handleIfReauthError(err)) return;

@@ -70,7 +70,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       return fetchAllStarredRepositories(token);
     },
     enabled: shouldFetch && isStarredSearch,
-    staleTime: 5 * 60 * 1000,
+    staleTime: Infinity,
   });
 
   const allStarredRepos: Repository[] = allStarredData?.repositories ?? [];

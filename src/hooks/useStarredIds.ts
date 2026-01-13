@@ -1,75 +1,98 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
-import { fetchAllStarredRepositories } from '../services/github';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
+import type { Repository } from '../types';
 
-const QUERY_KEY = ['starredIds'];
+interface AllStarredData {
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+}
 
 interface UseStarredIdsOptions {
   token: string | null;
-  enabled?: boolean;
+  enabled?: boolean; // Kept for API compatibility, but doesn't trigger fetching
 }
 
 interface UseStarredIdsReturn {
   starredIds: Set<number>;
-  isLoading: boolean;
-  error: Error | null;
-  addId: (id: number) => void;
-  removeId: (id: number) => void;
+  addRepo: (repo: Repository) => void;
+  removeRepo: (repo: Repository) => void;
 }
 
 /**
- * Hook for managing starred repository IDs with optimistic updates.
+ * Hook for reading and optimistically updating the starred repositories cache.
  *
- * Fetches all starred repo IDs on mount and provides functions to
- * optimistically add/remove IDs when the user stars/unstars repos.
+ * Does NOT fetch data - just reads from and manipulates the cache used by
+ * useAllStarredRepositories. The actual fetch only happens when that hook
+ * is enabled (e.g., when sorting by "Most Stars").
+ *
+ * Returns starredIds derived from the cache (empty Set if cache not populated).
  */
-export function useStarredIds({
-  token,
-  enabled = true,
-}: UseStarredIdsOptions): UseStarredIdsReturn {
+export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsReturn {
   const queryClient = useQueryClient();
+  const queryKey = ['allStarredRepositories', token];
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: async () => {
-      if (!token) {
-        throw new Error('Token required');
+  // Cache the Set to avoid creating new references on every render
+  const cachedSetRef = useRef<Set<number>>(new Set());
+  const cachedIdsStringRef = useRef<string>('');
+
+  // Subscribe to cache changes to get starredIds reactively
+  const starredIds = useSyncExternalStore(
+    (onStoreChange) => {
+      return queryClient.getQueryCache().subscribe(onStoreChange);
+    },
+    () => {
+      const data = queryClient.getQueryData<AllStarredData>(queryKey);
+      if (!data) {
+        if (cachedSetRef.current.size === 0) return cachedSetRef.current;
+        cachedSetRef.current = new Set();
+        cachedIdsStringRef.current = '';
+        return cachedSetRef.current;
       }
-      const result = await fetchAllStarredRepositories(token);
-      // Extract just the IDs
-      return new Set(result.repositories.map((repo) => repo.id));
-    },
-    enabled: enabled && !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
 
-  const addId = useCallback(
-    (id: number) => {
-      queryClient.setQueryData<Set<number>>(QUERY_KEY, (old) => {
-        const newSet = new Set(old);
-        newSet.add(id);
-        return newSet;
-      });
-    },
-    [queryClient]
+      // Only create a new Set if the IDs have changed
+      const idsString = data.repositories.map((r) => r.id).join(',');
+      if (idsString !== cachedIdsStringRef.current) {
+        cachedSetRef.current = new Set(data.repositories.map((repo) => repo.id));
+        cachedIdsStringRef.current = idsString;
+      }
+      return cachedSetRef.current;
+    }
   );
 
-  const removeId = useCallback(
-    (id: number) => {
-      queryClient.setQueryData<Set<number>>(QUERY_KEY, (old) => {
-        const newSet = new Set(old);
-        newSet.delete(id);
-        return newSet;
+  const addRepo = useCallback(
+    (repo: Repository) => {
+      queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
+        if (!old) return old;
+        // Add repo if not already present
+        if (old.repositories.some((r) => r.id === repo.id)) return old;
+        return {
+          ...old,
+          repositories: [{ ...repo, is_starred: true }, ...old.repositories],
+          totalStarred: old.totalStarred + 1,
+        };
       });
     },
-    [queryClient]
+    [queryClient, queryKey]
+  );
+
+  const removeRepo = useCallback(
+    (repo: Repository) => {
+      queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          repositories: old.repositories.filter((r) => r.id !== repo.id),
+          totalStarred: Math.max(0, old.totalStarred - 1),
+        };
+      });
+    },
+    [queryClient, queryKey]
   );
 
   return {
-    starredIds: data ?? new Set(),
-    isLoading,
-    error: error as Error | null,
-    addId,
-    removeId,
+    starredIds,
+    addRepo,
+    removeRepo,
   };
 }

@@ -648,13 +648,11 @@ describe('Dashboard', () => {
       // Star the repo from search results
       fireEvent.click(screen.getByTestId('star-99'));
 
-      // Verify ALL relevant caches were invalidated
+      // Verify paginated and search caches were invalidated
+      // (allStarredRepositories uses optimistic updates, no invalidation needed)
       await waitFor(() => {
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['starredRepositories'],
-        });
-        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-          queryKey: ['allStarredRepositories'],
         });
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['searchRepositories'],
@@ -711,13 +709,11 @@ describe('Dashboard', () => {
       // Unstar the repo from search results
       fireEvent.click(screen.getByTestId('unstar-99'));
 
-      // Verify ALL relevant caches were invalidated
+      // Verify paginated and search caches were invalidated
+      // (allStarredRepositories uses optimistic updates, no invalidation needed)
       await waitFor(() => {
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['starredRepositories'],
-        });
-        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-          queryKey: ['allStarredRepositories'],
         });
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['searchRepositories'],
