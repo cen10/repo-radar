@@ -10,8 +10,14 @@ import {
   usePaginatedStarredRepositories,
   type PaginatedSortOption,
 } from '../hooks/usePaginatedStarredRepositories';
-import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
-import { starRepository, unstarRepository } from '../services/github';
+import { useInfiniteSearch, type SearchModeConfig } from '../hooks/useInfiniteSearch';
+import { useStarredIds } from '../hooks/useStarredIds';
+import {
+  starRepository,
+  unstarRepository,
+  type SearchSortOption,
+  type StarredSearchSortOption,
+} from '../services/github';
 import { GitHubReauthRequiredError, getValidGitHubToken } from '../services/github-token';
 import type { Repository } from '../types';
 import {
@@ -35,6 +41,12 @@ const Dashboard = () => {
 
   const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
   const isStarsSort = sortBy === 'stars';
+
+  // Starred IDs for optimistic updates when starring/unstarring repos
+  const { addId, removeId } = useStarredIds({
+    token: providerToken,
+    enabled: !!user,
+  });
 
   // Both the useAllStarredRepositories and usePaginatedStarredRepositories hooks are always
   // called (Rules of Hooks), but only one fetches at a time. React Query's `enabled` flag
@@ -71,6 +83,13 @@ const Dashboard = () => {
   const isLoadingStarred = isLoadingAllStarred || isLoadingPaginated;
   const starredError = allStarredError || paginatedError;
 
+  // Build type-safe search config based on view mode
+  // The discriminated union ensures we pass valid mode+sortBy combinations
+  const searchModeConfig: SearchModeConfig =
+    viewMode === 'all'
+      ? { mode: 'all', sortBy: sortBy as SearchSortOption }
+      : { mode: 'starred', sortBy: sortBy as StarredSearchSortOption };
+
   // Infinite search results
   const {
     repositories: searchResults,
@@ -82,8 +101,7 @@ const Dashboard = () => {
   } = useInfiniteSearch({
     token: providerToken,
     query: activeSearchQuery || 'stars:>1', // Default to popular repos for "all" view
-    mode: viewMode,
-    sortBy: sortBy as 'updated' | 'created' | 'stars',
+    ...searchModeConfig,
     enabled: isSearchMode && !!user,
   });
 
@@ -188,12 +206,14 @@ const Dashboard = () => {
       await starRepository(token, repo.owner.login, repo.name);
       clearPendingUnstar(repo.id);
       setPendingUnstarsVersion((v) => v + 1);
-      // Invalidate caches to refetch with new star
+      // Optimistically update starred IDs cache
+      addId(repo.id);
+      // Invalidate starred repos caches to refetch with new star
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
-      if (isReauthError(err)) return;
+      if (handleIfReauthError(err)) return;
       alert(`Failed to star repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
@@ -210,12 +230,14 @@ const Dashboard = () => {
       markPendingUnstar(repo.id);
       // Trigger re-render to filter out the unstarred repo immediately
       setPendingUnstarsVersion((v) => v + 1);
-      // Invalidate caches to refetch without the unstarred repo
+      // Optimistically update starred IDs cache
+      removeId(repo.id);
+      // Invalidate starred repos caches to refetch without the unstarred repo
       await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['allStarredRepositories'] });
       await queryClient.invalidateQueries({ queryKey: ['searchRepositories'] });
     } catch (err) {
-      if (isReauthError(err)) return;
+      if (handleIfReauthError(err)) return;
       alert(`Failed to unstar repository: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };

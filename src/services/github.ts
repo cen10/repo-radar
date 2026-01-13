@@ -276,6 +276,9 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param query - Search query (can include quotes for exact match)
  * @param page - Page number for pagination
  * @param perPage - Number of items per page
+ * @param sortBy - Sort option for results
+ * @param signal - AbortSignal for cancellation
+ * @param starredIds - Set of repository IDs the user has starred (for marking search results)
  * @returns Object containing repositories and pagination info
  */
 // Sort options for GitHub's search API (Explore All view)
@@ -288,10 +291,11 @@ export type StarredSearchSortOption = 'updated' | 'stars' | 'created';
 export async function searchRepositories(
   token: string,
   query: string,
-  page = 1,
-  perPage = 30,
-  sortBy: SearchSortOption = 'updated',
-  signal: AbortSignal
+  page: number,
+  perPage: number,
+  sortBy: SearchSortOption,
+  signal: AbortSignal,
+  starredIds: Set<number>
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
@@ -363,9 +367,6 @@ export async function searchRepositories(
     // Apply GitHub API limitation (max 1000 results accessible)
     const GITHUB_SEARCH_LIMIT = 1000;
     const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
-
-    // Check if these repos are in user's starred list
-    const starredIds = await fetchUserStarredIds(token);
 
     // Transform GitHub API response to our Repository type
     const repositories = repos.map((repo) => ({
@@ -499,37 +500,6 @@ export async function searchStarredRepositories(
     }
     logger.error('Failed to search starred repositories:', error);
     throw error;
-  }
-}
-
-/**
- * Fetch IDs of all user's starred repositories (for checking if searched repos are starred)
- * This is a lightweight call that only gets IDs
- * @param token - GitHub access token
- */
-async function fetchUserStarredIds(token: string): Promise<Set<number>> {
-  try {
-    const params = new URLSearchParams({ per_page: '100' }); // Get first 100 starred repos
-    const url = `${GITHUB_API_BASE}/user/starred?${params}`;
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-
-    if (!response.ok) {
-      return new Set();
-    }
-
-    const repos: Array<{ id: number; name?: string }> = await response.json();
-    const starredIds = new Set(repos.map((repo) => repo.id));
-
-    return starredIds;
-  } catch {
-    return new Set();
   }
 }
 

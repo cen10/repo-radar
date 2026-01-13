@@ -3,21 +3,27 @@ import {
   searchRepositories,
   searchStarredRepositories,
   fetchAllStarredRepositories,
+  type SearchSortOption,
+  type StarredSearchSortOption,
 } from '../services/github';
+import { useStarredIds } from './useStarredIds';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
 
-type SearchMode = 'all' | 'starred';
-type SearchSortOption = 'updated' | 'created' | 'stars';
+// Discriminated union: mode determines which sort options are valid
+// Exported so callers can build type-safe options
+export type SearchModeConfig =
+  | { mode: 'all'; sortBy: SearchSortOption }
+  | { mode: 'starred'; sortBy: StarredSearchSortOption };
 
-interface UseInfiniteSearchOptions {
+interface UseInfiniteSearchBaseOptions {
   token: string | null;
   query: string;
-  mode: SearchMode;
-  sortBy: SearchSortOption;
   enabled: boolean;
 }
+
+type UseInfiniteSearchOptions = UseInfiniteSearchBaseOptions & SearchModeConfig;
 
 interface UseInfiniteSearchReturn {
   repositories: Repository[];
@@ -37,16 +43,17 @@ interface UseInfiniteSearchReturn {
  * - 'all': Search across all GitHub repositories (uses GitHub search API)
  * - 'starred': Search within user's starred repositories (fetches ALL starred repos, then filters client-side)
  */
-export function useInfiniteSearch({
-  token,
-  query,
-  mode,
-  sortBy,
-  enabled,
-}: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
+export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
+  const { token, query, mode, sortBy, enabled } = options;
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
+
+  // Get starred IDs for marking search results (used in 'all' mode)
+  const { starredIds } = useStarredIds({
+    token,
+    enabled: shouldFetch && !isStarredSearch,
+  });
 
   // Fetch ALL starred repos when searching within starred to ensure complete results.
   // Uses the same query key as useAllStarredRepositories for cache sharing.
@@ -73,23 +80,32 @@ export function useInfiniteSearch({
     signal,
   }: {
     pageParam: number;
-    signal?: AbortSignal;
+    signal: AbortSignal;
   }) => {
     if (!token) {
       throw new Error('Token required');
     }
-    if (isStarredSearch) {
+    // Use options.mode for narrowing - TypeScript knows sortBy type from discriminated union
+    if (options.mode === 'starred') {
       return searchStarredRepositories(
         token,
         trimmedQuery,
         pageParam,
         ITEMS_PER_PAGE,
         allStarredRepos,
-        sortBy,
+        options.sortBy,
         signal
       );
     }
-    return searchRepositories(token, trimmedQuery, pageParam, ITEMS_PER_PAGE, sortBy, signal);
+    return searchRepositories(
+      token,
+      trimmedQuery,
+      pageParam,
+      ITEMS_PER_PAGE,
+      options.sortBy,
+      signal,
+      starredIds
+    );
   };
 
   const getNextPageParam = (

@@ -307,33 +307,27 @@ describe('GitHub API Service', () => {
         total_count: 50000,
       };
 
-      // Mock for search
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockSearchResults,
         headers: new Headers(),
       });
 
-      // Mock for fetchUserStarredIds
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-        headers: new Headers(),
-      });
-
+      const starredIds = new Set<number>();
       const result = await searchRepositories(
         testToken,
         'typescript',
         1,
         30,
         'updated',
-        createSignal()
+        createSignal(),
+        starredIds
       );
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.pathname).toBe('/search/repositories');
       expect(url.searchParams.get('q')).toBe('typescript');
-      expect(url.searchParams.get('sort')).toBe('updated'); // Default sort is now 'updated'
+      expect(url.searchParams.get('sort')).toBe('updated');
 
       expect(result.repositories).toHaveLength(1);
       expect(result.repositories[0].name).toBe('typescript');
@@ -348,13 +342,16 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-        headers: new Headers(),
-      });
-
-      await searchRepositories(testToken, '"typescript"', 1, 30, 'updated', createSignal());
+      const starredIds = new Set<number>();
+      await searchRepositories(
+        testToken,
+        '"typescript"',
+        1,
+        30,
+        'updated',
+        createSignal(),
+        starredIds
+      );
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get('q')).toBe('typescript in:name');
@@ -372,23 +369,23 @@ describe('GitHub API Service', () => {
         total_count: 1,
       };
 
-      const mockStarredRepos = [{ id: 123, name: 'test-repo', full_name: 'user/test-repo' }];
-
-      // Mock search results
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockSearchResults,
         headers: new Headers(),
       });
 
-      // Mock starred repos check
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStarredRepos,
-        headers: new Headers(),
-      });
-
-      const result = await searchRepositories(testToken, 'test', 1, 30, 'updated', createSignal());
+      // Pass starredIds with the repo ID to mark it as starred
+      const starredIds = new Set<number>([123]);
+      const result = await searchRepositories(
+        testToken,
+        'test',
+        1,
+        30,
+        'updated',
+        createSignal(),
+        starredIds
+      );
 
       expect(result.repositories[0].is_starred).toBe(true);
     });
@@ -401,8 +398,9 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
+      const starredIds = new Set<number>();
       await expect(
-        searchRepositories(testToken, '', 1, 30, 'updated', createSignal())
+        searchRepositories(testToken, '', 1, 30, 'updated', createSignal(), starredIds)
       ).rejects.toThrow('Invalid search query');
     });
   });
