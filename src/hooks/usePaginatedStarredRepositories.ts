@@ -32,6 +32,9 @@ interface UsePaginatedStarredRepositoriesReturn {
  *
  * Supports incremental loading (infinite scroll) for 'updated' and 'created' sorts.
  * For sorting by star count, use useAllStarredRepositories instead.
+ *
+ * Note: No cap on total repos - users can scroll through all their starred repos.
+ * This is fine since we fetch one page at a time (no parallel API call concerns).
  */
 export function usePaginatedStarredRepositories({
   token,
