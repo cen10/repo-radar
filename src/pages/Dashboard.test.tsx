@@ -602,7 +602,7 @@ describe('Dashboard', () => {
       });
     });
 
-    it('invalidates all relevant caches including search when starring from search results', async () => {
+    it('optimistically updates UI and invalidates paginated cache when starring from search results', async () => {
       const queryClient = createTestQueryClient();
       const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -649,19 +649,20 @@ describe('Dashboard', () => {
       // Star the repo from search results
       fireEvent.click(screen.getByTestId('star-99'));
 
-      // Verify paginated and search caches were invalidated
-      // (allStarredRepositories uses optimistic updates, no invalidation needed)
+      // Verify UI updates immediately (optimistic update)
+      await waitFor(() => {
+        expect(screen.getByTestId('unstar-99')).toBeInTheDocument();
+      });
+
+      // Verify paginated cache was invalidated (search cache uses optimistic updates)
       await waitFor(() => {
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['starredRepositories'],
         });
-        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-          queryKey: ['searchRepositories'],
-        });
       });
     });
 
-    it('invalidates all relevant caches including search when unstarring from search results', async () => {
+    it('optimistically updates star status but keeps repo visible when unstarring from Explore All view', async () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const queryClient = createTestQueryClient();
@@ -710,14 +711,16 @@ describe('Dashboard', () => {
       // Unstar the repo from search results
       fireEvent.click(screen.getByTestId('unstar-99'));
 
-      // Verify paginated and search caches were invalidated
-      // (allStarredRepositories uses optimistic updates, no invalidation needed)
+      // Verify repo stays visible but star status changes (optimistic update)
+      // In "Explore All" view, unstarred repos should remain visible
+      await waitFor(() => {
+        expect(screen.getByTestId('star-99')).toBeInTheDocument();
+      });
+
+      // Verify paginated cache was invalidated (search cache uses optimistic updates)
       await waitFor(() => {
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({
           queryKey: ['starredRepositories'],
-        });
-        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-          queryKey: ['searchRepositories'],
         });
       });
     });
