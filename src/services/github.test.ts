@@ -289,6 +289,9 @@ describe('GitHub API Service', () => {
   });
 
   describe('searchRepositories', () => {
+    // AbortController for tests - signal is required in production
+    const createSignal = () => new AbortController().signal;
+
     it('should search repositories with fuzzy match', async () => {
       const mockSearchResults = {
         items: [
@@ -318,7 +321,14 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await searchRepositories(testToken, 'typescript');
+      const result = await searchRepositories(
+        testToken,
+        'typescript',
+        1,
+        30,
+        'updated',
+        createSignal()
+      );
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.pathname).toBe('/search/repositories');
@@ -344,7 +354,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await searchRepositories(testToken, '"typescript"');
+      await searchRepositories(testToken, '"typescript"', 1, 30, 'updated', createSignal());
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get('q')).toBe('typescript in:name');
@@ -378,7 +388,7 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      const result = await searchRepositories(testToken, 'test');
+      const result = await searchRepositories(testToken, 'test', 1, 30, 'updated', createSignal());
 
       expect(result.repositories[0].is_starred).toBe(true);
     });
@@ -391,7 +401,9 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(searchRepositories(testToken, '')).rejects.toThrow('Invalid search query');
+      await expect(
+        searchRepositories(testToken, '', 1, 30, 'updated', createSignal())
+      ).rejects.toThrow('Invalid search query');
     });
   });
 

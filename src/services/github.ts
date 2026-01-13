@@ -292,7 +292,7 @@ export async function searchRepositories(
   page = 1,
   perPage = 30,
   sortBy: SearchSortOption = 'updated',
-  signal?: AbortSignal
+  signal: AbortSignal
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
