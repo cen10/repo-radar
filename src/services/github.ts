@@ -472,13 +472,9 @@ export async function searchStarredRepositories(
       switch (sortBy) {
         case 'stars':
           return b.stargazers_count - a.stargazers_count;
-        case 'created': {
+        case 'created':
           // Sort by starred_at (when the user starred the repo)
-          // Fall back to created_at if starred_at is not available
-          const aDate = a.starred_at || a.created_at;
-          const bDate = b.starred_at || b.created_at;
-          return new Date(bDate).getTime() - new Date(aDate).getTime();
-        }
+          return new Date(b.starred_at!).getTime() - new Date(a.starred_at!).getTime();
         case 'updated':
         default:
           return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
