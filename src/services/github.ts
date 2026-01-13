@@ -81,9 +81,13 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
  * Fetches ALL starred repositories using parallel requests for optimal performance.
  * Sorts by star count (most popular first) for "Most Stars" sort option.
  * @param token - GitHub access token
+ * @param maxRepos - Maximum number of repositories to fetch (limits parallel API calls)
  * @returns Object containing repositories array sorted by star count
  */
-export async function fetchAllStarredRepositories(token: string): Promise<{
+export async function fetchAllStarredRepositories(
+  token: string,
+  maxRepos = 500
+): Promise<{
   repositories: Repository[];
   totalFetched: number;
   totalStarred: number;
@@ -99,10 +103,9 @@ export async function fetchAllStarredRepositories(token: string): Promise<{
     };
   }
 
-  // Step 2: Calculate how many pages we need (capped at 500 repos / 5 parallel calls)
-  const MAX_STARRED_REPOS = 500;
+  // Step 2: Calculate how many pages we need (capped by maxRepos to limit parallel calls)
   const perPage = 100;
-  const reposToFetch = Math.min(totalStarred, MAX_STARRED_REPOS);
+  const reposToFetch = Math.min(totalStarred, maxRepos);
   const pagesToFetch = Math.ceil(reposToFetch / perPage);
   const pages = Array.from({ length: pagesToFetch }, (_, i) => i + 1);
 
