@@ -98,7 +98,7 @@ const Dashboard = () => {
   const fetchMore = isSearchMode ? fetchMoreSearch : fetchMoreStarred;
 
   // Defensive handler for the unlikely case where no GitHub token is available
-  const isReauthError = useCallback(
+  const handleIfReauthError = useCallback(
     (err: unknown): boolean => {
       if (err instanceof GitHubReauthRequiredError) {
         void signOut()
@@ -118,12 +118,12 @@ const Dashboard = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Handle reauth errors from query hooks
+  // Check if any query error requires re-authentication
   useEffect(() => {
     if (error) {
-      isReauthError(error);
+      handleIfReauthError(error);
     }
-  }, [error, isReauthError]);
+  }, [error, handleIfReauthError]);
 
   // Handle localStorage cleanup and cross-tab synchronization
   useEffect(() => {
@@ -150,18 +150,15 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Handle search input changes
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
   }, []);
 
-  // Handle search submission
   const handleSearchSubmit = useCallback((query: string) => {
     setActiveSearchQuery(query);
     // The useInfiniteSearch hook will automatically fetch when activeSearchQuery changes
   }, []);
 
-  // Handle view changes
   const handleViewChange = useCallback((view: ViewMode) => {
     setViewMode(view);
     if (view === 'starred') {
@@ -176,13 +173,11 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Handle sort changes
   const handleSortChange = useCallback((sort: SortOption) => {
     setSortBy(sort);
     // The useInfiniteRepositories hook will refetch with the new sort
   }, []);
 
-  // Handle load more
   const handleLoadMore = useCallback(() => {
     fetchMore();
   }, [fetchMore]);
