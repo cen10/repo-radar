@@ -78,8 +78,7 @@ const Dashboard = () => {
   const isSearchMode = activeSearchQuery.trim().length > 0 || viewMode === 'all';
   const isStarsSort = sortBy === 'stars';
 
-  // Optimistic cache updates when starring/unstarring repos
-  const { addRepo, removeRepo } = useStarredIds({
+  const { addRepoToStarredCache, removeRepoFromStarredCache } = useStarredIds({
     token: providerToken,
   });
 
@@ -244,7 +243,7 @@ const Dashboard = () => {
     // Optimistic update: Update UI immediately
     clearPendingUnstar(repo.id);
     setPendingUnstarsVersion((v) => v + 1);
-    addRepo(repo);
+    addRepoToStarredCache(repo);
     updateSearchCacheStarStatus(queryClient, repo.id, true);
 
     const performStar = async () => {
@@ -255,7 +254,7 @@ const Dashboard = () => {
         await queryClient.invalidateQueries({ queryKey: ['starredRepositories'] });
       } catch (err) {
         // Revert optimistic update on failure
-        removeRepo(repo);
+        removeRepoFromStarredCache(repo);
         updateSearchCacheStarStatus(queryClient, repo.id, false);
         setPendingUnstarsVersion((v) => v + 1);
 
@@ -279,7 +278,7 @@ const Dashboard = () => {
     // - In "Explore All" view: applyPendingUnstarStatus marks it as unstarred
     markPendingUnstar(repo.id);
     setPendingUnstarsVersion((v) => v + 1);
-    removeRepo(repo);
+    removeRepoFromStarredCache(repo);
     updateSearchCacheStarStatus(queryClient, repo.id, false);
 
     const performUnstar = async () => {
@@ -292,7 +291,7 @@ const Dashboard = () => {
         // Revert optimistic update on failure
         clearPendingUnstar(repo.id);
         setPendingUnstarsVersion((v) => v + 1);
-        addRepo(repo);
+        addRepoToStarredCache(repo);
         updateSearchCacheStarStatus(queryClient, repo.id, true);
 
         if (handleIfReauthError(err)) return;

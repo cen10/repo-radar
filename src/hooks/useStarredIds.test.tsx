@@ -110,13 +110,13 @@ describe('useStarredIds', () => {
     });
   });
 
-  describe('addRepo', () => {
+  describe('addRepoToStarredCache', () => {
     it('does nothing when cache is not populated', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       const newRepo = createMockRepository({ id: 99 });
       act(() => {
-        result.current.addRepo(newRepo);
+        result.current.addRepoToStarredCache(newRepo);
       });
 
       // Cache should still be empty
@@ -131,7 +131,7 @@ describe('useStarredIds', () => {
 
       const newRepo = createMockRepository({ id: 99, is_starred: false });
       act(() => {
-        result.current.addRepo(newRepo);
+        result.current.addRepoToStarredCache(newRepo);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -150,7 +150,7 @@ describe('useStarredIds', () => {
       vi.setSystemTime(now);
 
       act(() => {
-        result.current.addRepo(newRepo);
+        result.current.addRepoToStarredCache(newRepo);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -163,7 +163,7 @@ describe('useStarredIds', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       act(() => {
-        result.current.addRepo(createMockRepository({ id: 99 }));
+        result.current.addRepoToStarredCache(createMockRepository({ id: 99 }));
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -178,7 +178,7 @@ describe('useStarredIds', () => {
 
       const newRepo = createMockRepository({ id: 99, name: 'new-repo' });
       act(() => {
-        result.current.addRepo(newRepo);
+        result.current.addRepoToStarredCache(newRepo);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -194,7 +194,7 @@ describe('useStarredIds', () => {
 
       // Try to add same repo again
       act(() => {
-        result.current.addRepo(createMockRepository({ id: 1 }));
+        result.current.addRepoToStarredCache(createMockRepository({ id: 1 }));
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -210,19 +210,19 @@ describe('useStarredIds', () => {
       expect(result.current.starredIds.has(99)).toBe(false);
 
       act(() => {
-        result.current.addRepo(createMockRepository({ id: 99 }));
+        result.current.addRepoToStarredCache(createMockRepository({ id: 99 }));
       });
 
       expect(result.current.starredIds.has(99)).toBe(true);
     });
   });
 
-  describe('removeRepo', () => {
+  describe('removeRepoFromStarredCache', () => {
     it('does nothing when cache is not populated', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       act(() => {
-        result.current.removeRepo(createMockRepository({ id: 1 }));
+        result.current.removeRepoFromStarredCache(createMockRepository({ id: 1 }));
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -237,7 +237,7 @@ describe('useStarredIds', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       act(() => {
-        result.current.removeRepo(repo1);
+        result.current.removeRepoFromStarredCache(repo1);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -252,7 +252,7 @@ describe('useStarredIds', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       act(() => {
-        result.current.removeRepo(repo);
+        result.current.removeRepoFromStarredCache(repo);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -266,7 +266,7 @@ describe('useStarredIds', () => {
       const { result } = renderHook(() => useStarredIds({ token: TEST_TOKEN }), { wrapper });
 
       act(() => {
-        result.current.removeRepo(repo);
+        result.current.removeRepoFromStarredCache(repo);
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);
@@ -282,7 +282,7 @@ describe('useStarredIds', () => {
       expect(result.current.starredIds.has(1)).toBe(true);
 
       act(() => {
-        result.current.removeRepo(repo);
+        result.current.removeRepoFromStarredCache(repo);
       });
 
       expect(result.current.starredIds.has(1)).toBe(false);
@@ -296,7 +296,7 @@ describe('useStarredIds', () => {
 
       // Try to remove a repo that doesn't exist in cache
       act(() => {
-        result.current.removeRepo(createMockRepository({ id: 999 }));
+        result.current.removeRepoFromStarredCache(createMockRepository({ id: 999 }));
       });
 
       const cacheData = queryClient.getQueryData<AllStarredData>(QUERY_KEY);

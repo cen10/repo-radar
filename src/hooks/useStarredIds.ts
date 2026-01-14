@@ -15,8 +15,8 @@ interface UseStarredIdsOptions {
 
 interface UseStarredIdsReturn {
   starredIds: Set<number>;
-  addRepo: (repo: Repository) => void;
-  removeRepo: (repo: Repository) => void;
+  addRepoToStarredCache: (repo: Repository) => void;
+  removeRepoFromStarredCache: (repo: Repository) => void;
 }
 
 /**
@@ -60,7 +60,7 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
     }
   );
 
-  const addRepo = useCallback(
+  const addRepoToStarredCache = useCallback(
     (repo: Repository) => {
       queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
         if (!old) return old;
@@ -72,9 +72,6 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
             {
               ...repo,
               is_starred: true,
-              // Set starred_at for correct "Recently Starred" sort order.
-              // Repos from search don't have this field; without it, the sort
-              // comparator gets NaN and produces unstable ordering.
               starred_at: new Date().toISOString(),
             },
             ...old.repositories,
@@ -86,7 +83,7 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
     [queryClient, queryKey]
   );
 
-  const removeRepo = useCallback(
+  const removeRepoFromStarredCache = useCallback(
     (repo: Repository) => {
       queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
         if (!old) return old;
@@ -102,7 +99,7 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
 
   return {
     starredIds,
-    addRepo,
-    removeRepo,
+    addRepoToStarredCache,
+    removeRepoFromStarredCache,
   };
 }
