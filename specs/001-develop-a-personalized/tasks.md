@@ -121,110 +121,123 @@ _Goal: Add current metrics and growth indicators_
 
 ---
 
-# MVP SLICE 3: Personal Tracking (T033-T046)
+# MVP SLICE 3: Navigation & Radar Feature (T033-T055)
 
-_Goal: Follow/unfollow with persistence_
+_Goal: Sidebar navigation, radar collections, and repository detail pages_
+_See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
-## Phase 3.11: Database Setup (T033-T036)
+## Phase 3.11: Layout & Navigation (T033-T038)
 
-- [ ] T033 Create Supabase migrations in `supabase/migrations/001_initial_schema.sql`
-- [ ] T034 Set up Row Level Security policies for user_preferences table
-- [ ] T035 [P] Create database types in `src/types/database.ts`
-- [ ] T036 Create Supabase service functions in `src/services/database.ts`
+- [ ] T033 Create Sidebar component in `src/components/Sidebar.tsx` with My Stars, Explore nav items
+- [ ] T034 Create SidebarRadarList component for displaying user's radars with counts
+- [ ] T035 Create MobileDrawer component with hamburger menu trigger
+- [ ] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content
+- [ ] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
+- [ ] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
 
-## Phase 3.12: Preference Management (T037-T040)
+## Phase 3.12: Supabase Radar Schema (T039-T042)
 
-- [ ] T037 Create `api/preferences.ts` endpoint for managing follow/unfollow
-- [ ] T038 Create usePreferences hook in `src/hooks/usePreferences.ts`
-- [ ] T039 Add follow/unfollow toggle to RepoCard component
-- [ ] T040 Create preference state management in Dashboard
+- [ ] T039 Create Supabase migration for radars table in `supabase/migrations/001_create_radars.sql`
+- [ ] T040 Create Supabase migration for radar_repos table with RLS policies
+- [ ] T041 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
+- [ ] T042 Create radar service functions in `src/services/radar.ts` (CRUD operations)
 
-## Phase 3.13: Filtering & Views (T041-T044)
+## Phase 3.13: Radar UI Components (T043-T049)
 
-- [ ] T041 Create FilterBar component in `src/components/FilterBar.tsx`
-- [ ] T042 Add "All" vs "Following" filter logic to Dashboard
-- [ ] T043 [P] Create EmptyState component in `src/components/EmptyState.tsx`
-- [ ] T044 Implement pagination logic in useRepositories hook
+- [ ] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
+- [ ] T044 Create RadarDropdown component for desktop "Add to Radar" interaction
+- [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction
+- [ ] T046 Add radar icon to RepoCard with filled/outline states
+- [ ] T047 Create radar sweep animation CSS/component for add-to-radar feedback
+- [ ] T048 Create CreateRadarModal component for creating new radars from sidebar
+- [ ] T049 Create RadarContextMenu component with Rename/Delete actions
 
-## Phase 3.14: Testing Slice 3 (T045-T046)
+## Phase 3.14: Radar Page & Detail Page (T050-T053)
 
-- [ ] T045 [P] Write integration tests for preference persistence in `tests/integration/preferences.test.ts`
-- [ ] T046 [P] Write E2E test for follow/unfollow flow in `tests/e2e/tracking.spec.ts`
+- [ ] T050 Create RadarPage component in `src/pages/RadarPage.tsx` with header and repo list
+- [ ] T051 Create RepoDetailPage component in `src/pages/RepoDetailPage.tsx`
+- [ ] T052 Update RepoCard click behavior to navigate to internal detail page
+- [ ] T053 [P] Create EmptyState components for empty radar, no stars, no search results
+
+## Phase 3.15: Search & Polish (T054-T055)
+
+- [ ] T054 Create CollapsibleSearch component with ⌘K shortcut support
+- [ ] T055 Add limit handling UI (disabled states, tooltips for 5 radars/25 repos/50 total limits)
 
 ---
 
-# MVP SLICE 4: Trend Detection (T047-T062)
+# MVP SLICE 4: Trend Detection (T056-T071)
 
 _Goal: Historical tracking and trend visualization_
 
-## Phase 3.15: Historical Data Schema (T047-T050)
+## Phase 3.16: Historical Data Schema (T056-T059)
 
-- [ ] T047 Create migration for star_metrics table in `supabase/migrations/002_metrics.sql`
-- [ ] T048 Create migration for issue_metrics table
-- [ ] T049 [P] Update database types for metrics entities
-- [ ] T050 Create metrics service in `src/services/metrics.ts`
+- [ ] T056 Create migration for star_metrics table in `supabase/migrations/002_metrics.sql`
+- [ ] T057 Create migration for issue_metrics table
+- [ ] T058 [P] Update database types for metrics entities
+- [ ] T059 Create metrics service in `src/services/metrics.ts`
 
-## Phase 3.16: Data Collection (T051-T054)
+## Phase 3.17: Data Collection (T060-T063)
 
-- [ ] T051 Create `api/sync.ts` serverless function for data collection
-- [ ] T052 Configure Vercel cron job in `vercel.json` for hourly sync
-- [ ] T053 Create sync status endpoint in `api/sync-status.ts`
-- [ ] T054 Add sync status indicator to Dashboard
+- [ ] T060 Create `api/sync.ts` serverless function for data collection
+- [ ] T061 Configure Vercel cron job in `vercel.json` for hourly sync
+- [ ] T062 Create sync status endpoint in `api/sync-status.ts`
+- [ ] T063 Add sync status indicator to Dashboard
 
-## Phase 3.17: Trend Calculations (T055-T057)
+## Phase 3.18: Trend Calculations (T064-T066)
 
-- [ ] T055 [P] Create trend calculation utilities in `src/utils/trends.ts`
-- [ ] T056 Update metrics service to fetch historical data
-- [ ] T057 Create useTrends hook in `src/hooks/useTrends.ts`
+- [ ] T064 [P] Create trend calculation utilities in `src/utils/trends.ts`
+- [ ] T065 Update metrics service to fetch historical data
+- [ ] T066 Create useTrends hook in `src/hooks/useTrends.ts`
 
-## Phase 3.18: Sparkline Charts (T058-T062)
+## Phase 3.19: Sparkline Charts (T067-T071)
 
-- [ ] T058 Install chart library: `npm install react-sparklines`
-- [ ] T059 [P] Create SparklineChart component in `src/components/charts/SparklineChart.tsx`
-- [ ] T060 Add sparklines to RepoCard component
-- [ ] T061 Create TrendingSection component in `src/components/TrendingSection.tsx`
-- [ ] T062 Add sort by growth rate option to Dashboard
+- [ ] T067 Install chart library: `npm install react-sparklines`
+- [ ] T068 [P] Create SparklineChart component in `src/components/charts/SparklineChart.tsx`
+- [ ] T069 Add sparklines to RepoCard component
+- [ ] T070 Create TrendingSection component in `src/components/TrendingSection.tsx`
+- [ ] T071 Add sort by growth rate option to RepositoryList
 
 ---
 
-# MVP SLICE 5: Full Analytics (T063-T080)
+# MVP SLICE 5: Full Analytics (T072-T089)
 
 _Goal: Detailed analytics and complete features_
 
-## Phase 3.19: Full Charts (T063-T067)
+## Phase 3.20: Full Charts (T072-T076)
 
-- [ ] T063 Install Chart.js: `npm install chart.js react-chartjs-2`
-- [ ] T064 [P] Create LineChart component in `src/components/charts/LineChart.tsx`
-- [ ] T065 [P] Create BarChart component in `src/components/charts/BarChart.tsx`
-- [ ] T066 Create MetricsModal component in `src/components/MetricsModal.tsx`
-- [ ] T067 Add "View Details" action to RepoCard
+- [ ] T072 Install Chart.js: `npm install chart.js react-chartjs-2`
+- [ ] T073 [P] Create LineChart component in `src/components/charts/LineChart.tsx`
+- [ ] T074 [P] Create BarChart component in `src/components/charts/BarChart.tsx`
+- [ ] T075 Create MetricsModal component in `src/components/MetricsModal.tsx`
+- [ ] T076 Add "View Details" action to RepoCard
 
-## Phase 3.20: Advanced Metrics (T068-T071)
+## Phase 3.21: Advanced Metrics (T077-T080)
 
-- [ ] T068 Create `api/repos/[id]/metrics.ts` for detailed metrics
-- [ ] T069 Add release timeline to MetricsModal
-- [ ] T070 Calculate and display issue velocity
-- [ ] T071 Create useDetailedMetrics hook
+- [ ] T077 Create `api/repos/[id]/metrics.ts` for detailed metrics
+- [ ] T078 Add release timeline to MetricsModal
+- [ ] T079 Calculate and display issue velocity
+- [ ] T080 Create useDetailedMetrics hook
 
-## Phase 3.21: Data Export (T072-T074)
+## Phase 3.22: Data Export (T081-T083)
 
-- [ ] T072 [P] Create CSV export utility in `src/utils/export.ts`
-- [ ] T073 Add export button to Dashboard
-- [ ] T074 Create `api/export.ts` endpoint for data export
+- [ ] T081 [P] Create CSV export utility in `src/utils/export.ts`
+- [ ] T082 Add export button to radar views
+- [ ] T083 Create `api/export.ts` endpoint for data export
 
-## Phase 3.22: Account Management (T075-T077)
+## Phase 3.23: Account Management (T084-T086)
 
-- [ ] T075 Create AccountSettings page in `src/pages/AccountSettings.tsx`
-- [ ] T076 Create `api/user/delete.ts` endpoint for account deletion
-- [ ] T077 Implement soft delete with 30-day recovery window
+- [ ] T084 Create AccountSettings page in `src/pages/AccountSettings.tsx`
+- [ ] T085 Create `api/user/delete.ts` endpoint for account deletion
+- [ ] T086 Implement soft delete with 30-day recovery window
 
-## Phase 3.23: PWA & Polish (T078-T080)
+## Phase 3.24: PWA & Polish (T087-T089)
 
-- [ ] T078 [P] Create PWA manifest in `public/manifest.json`
-- [ ] T079 [P] Add service worker for offline support
-- [ ] T080 Performance optimization: implement virtual scrolling for large lists
+- [ ] T087 [P] Create PWA manifest in `public/manifest.json`
+- [ ] T088 [P] Add service worker for offline support
+- [ ] T089 Performance optimization: implement virtual scrolling for large lists
 
-## Phase 3.24 Test Architecture Restructuring (T081-T084)
+## Phase 3.25: Test Architecture Restructuring (T090-T093)
 
 _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 
@@ -232,10 +245,10 @@ _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 
 **Solution**: Three-tier test structure:
 
-- [ ] T081 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
-- [ ] T082 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, star/unstar) to integration tests, keep only Dashboard-specific unit logic
-- [ ] T083 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
-- [ ] T084 Update test documentation in CLAUDE.md with new test tier guidelines
+- [ ] T090 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
+- [ ] T091 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, star/unstar) to integration tests, keep only Dashboard-specific unit logic
+- [ ] T092 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
+- [ ] T093 Update test documentation in CLAUDE.md with new test tier guidelines
 
 **Test tiers after refactor**:
 

@@ -62,9 +62,9 @@ As a GitHub user who stars repositories to track interesting projects, I want a 
 
 2. **Given** a repository experiences rapid star growth, defined as (a) a 20 % or greater increase in star count over the past 24 hours, or (b) a minimum of 50 new stars in a seven‑day window, whichever comes first, **When** the user views the dashboard, **Then** that repository is visually highlighted or ranked prominently to indicate high momentum
 
-3. **Given** a user is viewing the repository list, **When** they click the follow toggle for a specific repository, **Then** the system saves their preference and that repository appears in their personalized tracking view
+3. **Given** a user is viewing the repository list, **When** they click the radar icon for a specific repository, **Then** the system displays their radars and allows them to add the repository to one or more radars for active monitoring
 
-4. **Given** a user wants to unfollow a repository, **When** they click the unfollow toggle, **Then** the repository is removed from their personalized tracking view but remains in their GitHub starred list
+4. **Given** a user wants to stop monitoring a repository, **When** they remove it from a radar, **Then** the repository is removed from that radar's tracking view but remains in their GitHub starred list and any other radars it belongs to
 
 5. **Given** a user wants detailed information about a repository, **When** they click on "more details" or the repository name, **Then** they see expanded trend summaries showing historical star growth, release timeline, and issue activity patterns
 
@@ -94,11 +94,11 @@ As a GitHub user who stars repositories to track interesting projects, I want a 
 - **FR-005**: System MUST display issue volume metrics showing open/closed issues and trends
 - **FR-006**: System MUST highlight repositories with "sudden spikes" in stars. “Sudden spike” is defined using the same thresholds as the “rapid‑growth” criteria in an earlier acceptance scenario—i.e., highlight any repository whose stars grow by at least 20 % in 24 hours or gain 50 or more stars in a week.
 - **FR-007**: System MUST identify and prominently display "fast-rising tools" based on star growth velocity
-- **FR-008**: Users MUST be able to follow specific repositories for personalized tracking
-- **FR-009**: Users MUST be able to unfollow repositories to remove them from personalized view
-- **FR-010**: System MUST persist user's follow/unfollow preferences across sessions
-- **FR-011**: System MUST provide a clean list view as the primary interface
-- **FR-012**: Each repository in the list MUST show name, owner, key metrics, and follow/unfollow toggle
+- **FR-008**: Users MUST be able to create radars (named collections) to organize repositories for active monitoring, with a maximum of 5 radars per user
+- **FR-009**: Users MUST be able to add repositories to radars, with a maximum of 25 repos per radar and 50 total repos across all radars
+- **FR-010**: Users MUST be able to remove repositories from radars and delete radars entirely
+- **FR-011**: System MUST provide a clean list view as the primary interface with sidebar navigation
+- **FR-012**: Each repository in the list MUST show name, owner, key metrics, radar icon, and star toggle
 - **FR-013**: System MUST provide expandable details showing comprehensive trend summaries
 - **FR-014**: System MUST refresh data once per hour for new star counts, releases and issues. Provide a “refresh now” button to update a specific repo on demand without waiting for the next scheduled refresh.
 - **FR-015**: All interactions MUST be keyboard accessible and screen reader compatible
@@ -112,8 +112,12 @@ As a GitHub user who stars repositories to track interesting projects, I want a 
 - **Star Metric**: Time-series data tracking star count changes over time for trend analysis
 - **Release**: Information about repository releases including version, date, and release notes
 - **Issue Metric**: Aggregated data about repository issues including counts, velocity, and resolution rates
-- **User Preference**: Saved follow/unfollow status for each repository per user
+- **Radar**: A user-created named collection for organizing repositories to actively monitor (max 5 per user)
+- **Radar Repository**: The association between a radar and a repository, allowing repos to belong to multiple radars
 - **Trend Summary**: Calculated analytics showing patterns in stars, releases, and issues over time periods
+
+### Related Documents
+- **[ux-spec.md](./ux-spec.md)**: Detailed UX design specification including navigation structure, component designs, and interaction patterns
 
 ---
 
