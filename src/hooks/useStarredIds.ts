@@ -68,7 +68,17 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
         if (old.repositories.some((r) => r.id === repo.id)) return old;
         return {
           ...old,
-          repositories: [{ ...repo, is_starred: true }, ...old.repositories],
+          repositories: [
+            {
+              ...repo,
+              is_starred: true,
+              // Set starred_at for correct "Recently Starred" sort order.
+              // Repos from search don't have this field; without it, the sort
+              // comparator gets NaN and produces unstable ordering.
+              starred_at: new Date().toISOString(),
+            },
+            ...old.repositories,
+          ],
           totalStarred: old.totalStarred + 1,
         };
       });
