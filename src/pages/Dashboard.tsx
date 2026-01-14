@@ -96,9 +96,10 @@ const Dashboard = () => {
     error: allStarredError,
   } = useAllStarredRepositories({
     token: providerToken,
-    // Always fetch to pre-warm cache; with staleTime: Infinity, this only
-    // makes API calls on first load (or after page refresh)
-    enabled: !!user && !isSearchMode,
+    // Always fetch to pre-warm cache for useStarredIds (used to mark
+    // is_starred on search results). With staleTime: Infinity, this only
+    // makes API calls on first load (or after page refresh).
+    enabled: !!user,
   });
 
   // Starred repos - paginated fetch for server-side sorting
