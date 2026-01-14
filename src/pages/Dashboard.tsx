@@ -104,7 +104,7 @@ const Dashboard = () => {
   // Starred repos - paginated fetch for server-side sorting
   const {
     repositories: paginatedRepos,
-    isLoading: isLoadingPaginated,
+    isLoading: isLoadingPaginatedStarred,
     isFetchingNextPage: isFetchingMoreStarred,
     hasNextPage: hasMoreStarred,
     fetchNextPage: fetchMoreStarred,
@@ -117,7 +117,7 @@ const Dashboard = () => {
 
   // Combine results from whichever hook is active
   const starredRepos = isStarsSort ? allStarredRepos : paginatedRepos;
-  const isLoadingStarred = isLoadingAllStarred || isLoadingPaginated;
+  const isLoadingStarred = isLoadingAllStarred || isLoadingPaginatedStarred;
   const starredError = allStarredError || paginatedError;
 
   // Build type-safe search config based on view mode
