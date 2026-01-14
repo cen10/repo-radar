@@ -136,18 +136,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    // Clear stored GitHub access token
-    clearStoredAccessToken();
-
-    // Clear React Query cache so next login fetches fresh data from GitHub
-    queryClient.clear();
-
     const { error } = await supabase.auth.signOut();
 
     if (error) {
       logger.error('Error signing out:', error);
       throw error;
     }
+
+    // Only clear after sign-out succeeds to avoid data loss on failure
+    clearStoredAccessToken();
+    queryClient.clear();
   }, [queryClient]);
 
   const value: AuthContextType = useMemo(
