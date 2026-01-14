@@ -8,25 +8,22 @@ GitHub Repository Momentum Dashboard - Track star growth, releases, and issue ac
 
 ### Frontend
 
-- **Framework**: React 18 with Vite 5
+- **Framework**: React 19 with Vite 7
 - **Language**: TypeScript 5.x
-- **Styling**: TailwindCSS v3 with Headless UI
+- **Styling**: TailwindCSS v4 with Headless UI
 - **State Management**: TanStack Query (React Query)
-- **Charts**: Chart.js with react-chartjs-2
-- **Routing**: React Router v6
+- **Routing**: React Router v7
 
 ### Backend
 
-- **Runtime**: Node.js 20.x
-- **Functions**: Vercel/Netlify Serverless Functions
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth with GitHub OAuth
-- **API**: RESTful endpoints
+- **API**: GitHub REST API (client-side)
 
 ### Testing
 
+- **Test Runner**: Vitest
 - **Unit/Integration**: React Testing Library
-- **E2E**: Playwright
 - **Linting**: ESLint
 - **Formatting**: Prettier
 
@@ -34,23 +31,31 @@ GitHub Repository Momentum Dashboard - Track star growth, releases, and issue ac
 
 ```
 src/
-  components/       # React components
-  pages/           # Route pages
+  assets/          # Static assets
+  components/      # React components (tests co-located)
+  constants/       # Constants and error messages
+  contexts/        # React contexts (auth)
   hooks/           # Custom React hooks
+  pages/           # Route pages
   services/        # API clients
-  utils/           # Utility functions
+  test/            # Test setup and mocks
   types/           # TypeScript interfaces
-api/              # Serverless functions
-tests/            # All test files
+  utils/           # Utility functions
+specs/            # Feature specifications
 ```
 
 ## Key Commands
 
 ```bash
 npm run dev          # Start development server
-npm run test         # Run tests
-npm run lint         # Lint code
 npm run build        # Build for production
+npm run preview      # Preview production build
+npm run test         # Run tests
+npm run typecheck    # TypeScript type checking
+npm run lint         # Lint code
+npm run lint:fix     # Lint and auto-fix
+npm run format       # Format code with Prettier
+npm run format:check # Check formatting
 ```
 
 ## Key Decisions
@@ -75,6 +80,25 @@ npm run build        # Build for production
 - Pagination: 100 repos per page
 - Hourly data refresh cycle
 
+## Performance Debugging
+
+Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode are often caused by React's development overhead (`jsxDEV`, `createTask`, React DevTools instrumentation), not actual performance issues.
+
+**Before optimizing:**
+1. Run production build: `npm run build && npm run preview`
+2. Preview server runs on **port 4173** (not 5173 which is dev)
+3. If violations disappear in production, no action needed
+
+**When to investigate:**
+- Violations persist in production build
+- PRs touching rendering-heavy code (lists, animations, complex components)
+
+**Debugging tools:**
+- Chrome DevTools → Performance tab → Record → look for "Long Task" markers
+- Click on long tasks to see the call stack and identify the slow code
+
+**To hide dev-mode violations:** In Chrome Console, filter with `-Violation`
+
 ## Development Guidelines
 
 1. Follow TDD: Write tests first
@@ -85,13 +109,14 @@ npm run build        # Build for production
 6. **Task branching**: Create feature branches from main using pattern: `t{task-number}-{brief-description}` (e.g., `git checkout -b t014-repo-card-component`)
 7. **Task tracking**: Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 8. **Knowledge capture**: When solving problems that took significant time, established new patterns, or involved architecture decisions, suggest adding the solution to this file. Focus on practical knowledge with code examples, not general advice.
-9. **Tailwind v3 syntax**: Use canonical v3 class names, not legacy v2 names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
+9. **Tailwind v4 syntax**: Use canonical v4 class names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
 10. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
 11. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
 12. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
 13. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
 14. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-15. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+15. **Production code over test convenience**: Never make production code decisions (like optional props, public methods, or loose types) just to make tests easier to write. Tests should adapt to production code, not the other way around.
+16. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
@@ -128,6 +153,34 @@ vi.mock('../utils/logger', () => ({
 ```
 
 Apply this pattern in any test file that uses the logger or tests components that internally use the logger.
+
+### React Query Cache Invalidation Testing
+
+When testing actions that modify data and should invalidate caches (e.g., star/unstar, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
+
+```typescript
+// Create queryClient outside render so you can spy on it
+const queryClient = createTestQueryClient();
+const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+// Pass queryClient to render helper
+renderWithProviders(<Component />, queryClient);
+
+// After triggering the action, verify ALL caches are invalidated
+await waitFor(() => {
+  expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+    queryKey: ['primaryCache'],
+  });
+  expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+    queryKey: ['secondaryCache'], // Don't forget related caches!
+  });
+});
+```
+
+Key points:
+- Test from different UI contexts (e.g., action from search results vs. main list)
+- Clear the spy before the action to isolate assertions: `invalidateQueriesSpy.mockClear()`
+- Consider all query keys that contain the modified data
 
 ## Accessibility Patterns
 

@@ -22,6 +22,12 @@ interface GitHubStarredRepo {
   created_at: string;
 }
 
+// Response format when using Accept: application/vnd.github.star+json
+interface GitHubStarredRepoWithTimestamp {
+  starred_at: string;
+  repo: GitHubStarredRepo;
+}
+
 /**
  * Gets the total number of starred repositories for the authenticated user.
  *
@@ -33,11 +39,11 @@ interface GitHubStarredRepo {
  * @param token - GitHub access token
  * @returns Total number of starred repositories
  */
-async function fetchStarredRepoCount(token: string): Promise<number> {
-  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-  url.searchParams.append('per_page', '1');
+export async function fetchStarredRepoCount(token: string): Promise<number> {
+  const params = new URLSearchParams({ per_page: '1' });
+  const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
@@ -72,10 +78,11 @@ async function fetchStarredRepoCount(token: string): Promise<number> {
 }
 
 /**
- * Fetches ALL starred repositories using parallel requests for optimal performance
+ * Fetches ALL starred repositories using parallel requests for optimal performance.
+ * Sorts by star count (most popular first) for "Most Stars" sort option.
  * @param token - GitHub access token
- * @param maxRepos - Maximum number of repositories to fetch (default: 500)
- * @returns Object containing repositories array and metadata about limits
+ * @param maxRepos - Maximum number of repositories to fetch (limits parallel API calls)
+ * @returns Object containing repositories array sorted by star count
  */
 export async function fetchAllStarredRepositories(
   token: string,
@@ -84,7 +91,6 @@ export async function fetchAllStarredRepositories(
   repositories: Repository[];
   totalFetched: number;
   totalStarred: number;
-  isLimited: boolean;
 }> {
   // Step 1: Get total starred count with a single minimal request
   const totalStarred = await fetchStarredRepoCount(token);
@@ -94,18 +100,16 @@ export async function fetchAllStarredRepositories(
       repositories: [],
       totalFetched: 0,
       totalStarred: 0,
-      isLimited: false,
     };
   }
 
-  // Step 2: Calculate how many pages we actually need
+  // Step 2: Calculate how many pages we need (capped by maxRepos to limit parallel calls)
   const perPage = 100;
-  const pagesForAllStars = Math.ceil(totalStarred / perPage);
-  const pagesForMaxRepos = Math.ceil(maxRepos / perPage);
-  const pagesToFetch = Math.min(pagesForAllStars, pagesForMaxRepos);
+  const reposToFetch = Math.min(totalStarred, maxRepos);
+  const pagesToFetch = Math.ceil(reposToFetch / perPage);
   const pages = Array.from({ length: pagesToFetch }, (_, i) => i + 1);
 
-  // Step 3: Fetch all needed pages in parallel
+  // Step 3: Fetch all pages in parallel
   const results = await Promise.allSettled(
     pages.map((page) => fetchStarredRepositories(token, page, perPage))
   );
@@ -130,47 +134,60 @@ export async function fetchAllStarredRepositories(
     throw new Error('Failed to fetch any starred repositories');
   }
 
-  // Step 5: Sort by star count (most popular first) and then trim to maxRepos if needed
+  // Step 5: Sort by star count (most popular first) and trim to maxRepos if needed
   const sortedRepos = allRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   const trimmedRepos = sortedRepos.slice(0, maxRepos);
   const isLimited = totalStarred > maxRepos;
 
+  const notes = [
+    isLimited && `limited to ${maxRepos}`,
+    failedPages.length > 0 && `${failedPages.length} pages failed`,
+  ].filter(Boolean);
   logger.info(
-    `Fetched ${trimmedRepos.length} of ${totalStarred} starred repositories across ${pagesToFetch} pages${
-      isLimited ? ` (limited to ${maxRepos})` : ''
-    }${failedPages.length > 0 ? ` (${failedPages.length} pages failed)` : ''}`
+    `Bulk-fetched ${trimmedRepos.length} of ${totalStarred} repos for use with the Most Stars filter${
+      notes.length > 0 ? ` (${notes.join(', ')})` : ''
+    }`
   );
 
   return {
     repositories: trimmedRepos,
     totalFetched: trimmedRepos.length,
     totalStarred,
-    isLimited,
   };
 }
+
+export type StarredSortOption = 'created' | 'updated';
+export type SortDirection = 'asc' | 'desc';
 
 /**
  * Fetch starred repositories for a specific page
  * @param token - GitHub access token
  * @param page - Page number
  * @param perPage - Items per page
+ * @param sort - Sort field: 'created' or 'updated' (GitHub API limitation)
+ * @param direction - Sort direction: 'asc' or 'desc'
  */
 export async function fetchStarredRepositories(
   token: string,
   page = 1,
-  perPage = 30
+  perPage = 30,
+  sort: StarredSortOption = 'updated',
+  direction: SortDirection = 'desc'
 ): Promise<Repository[]> {
-  const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-  url.searchParams.append('page', page.toString());
-  url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'created');
-  url.searchParams.append('direction', 'desc');
+  const params = new URLSearchParams({
+    page: page.toString(),
+    per_page: perPage.toString(),
+    sort,
+    direction,
+  });
+  const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
+        // Use star+json to get starred_at timestamp for each repo
+        Accept: 'application/vnd.github.star+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
     });
@@ -193,13 +210,10 @@ export async function fetchStarredRepositories(
       throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
-
-    // Standard GitHub API response format
-    const repos: GitHubStarredRepo[] = data;
+    const data: GitHubStarredRepoWithTimestamp[] = await response.json();
 
     // Transform GitHub API response to our Repository type
-    return repos.map((repo) => ({
+    return data.map(({ repo, starred_at }) => ({
       id: repo.id,
       name: repo.name,
       full_name: repo.full_name,
@@ -216,8 +230,8 @@ export async function fetchStarredRepositories(
       updated_at: repo.updated_at,
       pushed_at: repo.pushed_at,
       created_at: repo.created_at,
+      starred_at, // When the user starred this repo
       is_starred: true, // These are all starred repos by definition
-      // Calculate basic metrics (in production, these would come from a backend service)
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
         issues_growth_rate: 0, // Would need historical data
@@ -266,14 +280,26 @@ function isTrending(repo: GitHubStarredRepo): boolean {
  * @param query - Search query (can include quotes for exact match)
  * @param page - Page number for pagination
  * @param perPage - Number of items per page
+ * @param sortBy - Sort option for results
+ * @param signal - AbortSignal for cancellation
+ * @param starredIds - Set of repository IDs the user has starred (for marking search results)
  * @returns Object containing repositories and pagination info
  */
+// Sort options for GitHub's search API (Explore All view)
+export type SearchSortOption = 'updated' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
+
+// Sort options for client-side starred search (My Stars view)
+// Includes 'created' which sorts by when the user starred the repo
+export type StarredSearchSortOption = 'updated' | 'stars' | 'created';
+
 export async function searchRepositories(
   token: string,
   query: string,
-  page = 1,
-  perPage = 30,
-  signal?: AbortSignal
+  page: number,
+  perPage: number,
+  sortBy: SearchSortOption,
+  signal: AbortSignal,
+  starredIds: Set<number>
 ): Promise<{
   repositories: Repository[];
   totalCount: number;
@@ -288,15 +314,28 @@ export async function searchRepositories(
   // For fuzzy match, search broadly
   const searchQuery = isExactMatch ? `${searchTerm} in:name` : searchTerm;
 
-  const url = new URL(`${GITHUB_API_BASE}/search/repositories`);
-  url.searchParams.append('q', searchQuery);
-  url.searchParams.append('page', page.toString());
-  url.searchParams.append('per_page', perPage.toString());
-  url.searchParams.append('sort', 'stars');
-  url.searchParams.append('order', 'desc');
+  // Map our sort options to GitHub API sort parameters
+  // GitHub search supports: stars, forks, help-wanted-issues, updated
+  // 'best-match' means no sort parameter (GitHub's default relevance ranking)
+  const githubSortMap: Record<SearchSortOption, string | null> = {
+    updated: 'updated',
+    stars: 'stars',
+    forks: 'forks',
+    'help-wanted': 'help-wanted-issues',
+    'best-match': null, // No sort = relevance ranking
+  };
+
+  const sortParam = githubSortMap[sortBy];
+  const params = new URLSearchParams({
+    q: searchQuery,
+    page: page.toString(),
+    per_page: perPage.toString(),
+    ...(sortParam && { sort: sortParam, order: 'desc' }),
+  });
+  const url = `${GITHUB_API_BASE}/search/repositories?${params}`;
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
       signal,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -332,9 +371,6 @@ export async function searchRepositories(
     // Apply GitHub API limitation (max 1000 results accessible)
     const GITHUB_SEARCH_LIMIT = 1000;
     const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
-
-    // Check if these repos are in user's starred list
-    const starredIds = await fetchUserStarredIds(token);
 
     // Transform GitHub API response to our Repository type
     const repositories = repos.map((repo) => ({
@@ -393,6 +429,7 @@ export async function searchStarredRepositories(
   page = 1,
   perPage = 30,
   allStarredRepos?: Repository[],
+  sortBy: StarredSearchSortOption = 'updated',
   signal?: AbortSignal
 ): Promise<{
   repositories: Repository[];
@@ -411,7 +448,8 @@ export async function searchStarredRepositories(
       starredRepos = allStarredRepos;
     } else {
       // Fetch all starred repos - this is expensive but necessary for accurate client-side search
-      starredRepos = await fetchStarredRepositories(token, 1, 100); // Get up to 100 for now
+      const result = await fetchAllStarredRepositories(token);
+      starredRepos = result.repositories;
     }
 
     // Check for abort after async work
@@ -434,11 +472,25 @@ export async function searchStarredRepositories(
       return searchIn.includes(queryLower);
     });
 
+    // Sort results based on sortBy option
+    const sortedRepos = [...filteredRepos].sort((a, b) => {
+      switch (sortBy) {
+        case 'stars':
+          return b.stargazers_count - a.stargazers_count;
+        case 'created':
+          // Sort by starred_at (when the user starred the repo)
+          return new Date(b.starred_at!).getTime() - new Date(a.starred_at!).getTime();
+        case 'updated':
+        default:
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }
+    });
+
     // Client-side pagination
-    const totalCount = filteredRepos.length;
+    const totalCount = sortedRepos.length;
     const startIndex = (page - 1) * perPage;
     const endIndex = startIndex + perPage;
-    const paginatedRepos = filteredRepos.slice(startIndex, endIndex);
+    const paginatedRepos = sortedRepos.slice(startIndex, endIndex);
 
     return {
       repositories: paginatedRepos,
@@ -452,37 +504,6 @@ export async function searchStarredRepositories(
     }
     logger.error('Failed to search starred repositories:', error);
     throw error;
-  }
-}
-
-/**
- * Fetch IDs of all user's starred repositories (for checking if searched repos are starred)
- * This is a lightweight call that only gets IDs
- * @param token - GitHub access token
- */
-async function fetchUserStarredIds(token: string): Promise<Set<number>> {
-  try {
-    const url = new URL(`${GITHUB_API_BASE}/user/starred`);
-    url.searchParams.append('per_page', '100'); // Get first 100 starred repos
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    });
-
-    if (!response.ok) {
-      return new Set();
-    }
-
-    const repos: Array<{ id: number; name?: string }> = await response.json();
-    const starredIds = new Set(repos.map((repo) => repo.id));
-
-    return starredIds;
-  } catch {
-    return new Set();
   }
 }
 

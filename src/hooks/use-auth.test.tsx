@@ -1,8 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './use-auth';
 import { AuthProvider } from '../components/AuthProvider';
 import '../test/mocks/supabase';
+
+// Helper to create a test QueryClient
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 describe('useAuth', () => {
   it('should throw error when used outside AuthProvider', () => {
@@ -17,8 +26,11 @@ describe('useAuth', () => {
   });
 
   it('should return auth context when used within AuthProvider', () => {
+    const queryClient = createTestQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>{children}</AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>{children}</AuthProvider>
+      </QueryClientProvider>
     );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -31,8 +43,11 @@ describe('useAuth', () => {
   });
 
   it('should provide signInWithGitHub function', () => {
+    const queryClient = createTestQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>{children}</AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>{children}</AuthProvider>
+      </QueryClientProvider>
     );
 
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -41,8 +56,11 @@ describe('useAuth', () => {
   });
 
   it('should provide signOut function', () => {
+    const queryClient = createTestQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>{children}</AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>{children}</AuthProvider>
+      </QueryClientProvider>
     );
 
     const { result } = renderHook(() => useAuth(), { wrapper });

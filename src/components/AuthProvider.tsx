@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import type { User } from '../types';
 import { AuthContext, type AuthContextType } from '../contexts/auth-context';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { getErrorMessage } from '../utils/error';
-import { clearStoredAccessToken, storeAccessToken } from '../services/github-token';
+import {
+  clearStoredAccessToken,
+  storeAccessToken,
+  getStoredAccessToken,
+} from '../services/github-token';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -32,6 +37,7 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +45,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ? mapSupabaseUserToUser(nextSession.user) : null;
-    setProviderToken(nextSession?.provider_token ?? null);
+
+    // Use provider_token if available, otherwise fall back to stored token
+    // (Supabase drops provider_token on session refresh)
+    const token = nextSession?.provider_token ?? getStoredAccessToken();
+    setProviderToken(token);
     setUser(nextUser);
 
     // Store GitHub token for later use when Supabase session refresh loses it
@@ -126,16 +136,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    // Clear stored GitHub access token
-    clearStoredAccessToken();
-
     const { error } = await supabase.auth.signOut();
 
     if (error) {
       logger.error('Error signing out:', error);
       throw error;
     }
-  }, []);
+
+    // Only clear after sign-out succeeds to avoid data loss on failure
+    clearStoredAccessToken();
+    queryClient.clear();
+  }, [queryClient]);
 
   const value: AuthContextType = useMemo(
     () => ({

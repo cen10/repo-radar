@@ -1,6 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/use-auth';
-import { LoadingSpinner, ArrowRightOnRectangleIcon, ExclamationCircleIcon } from './icons';
+import {
+  LoadingSpinner,
+  ArrowRightOnRectangleIcon,
+  ExclamationCircleIcon,
+  QuestionMarkCircleIcon,
+} from './icons';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 
@@ -48,7 +53,10 @@ export function Header() {
   const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const signOutButtonRef = useRef<HTMLButtonElement>(null);
+  const helpButtonRef = useRef<HTMLButtonElement>(null);
+  const helpPanelRef = useRef<HTMLDivElement>(null);
 
   // Focus button after error state is set
   useEffect(() => {
@@ -56,6 +64,41 @@ export function Header() {
       signOutButtonRef.current?.focus();
     }
   }, [signOutError]);
+
+  // Handle Escape key to close help panel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isHelpOpen) {
+        setIsHelpOpen(false);
+        helpButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isHelpOpen]);
+
+  // Close help panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isHelpOpen &&
+        helpPanelRef.current &&
+        helpButtonRef.current &&
+        !helpPanelRef.current.contains(event.target as Node) &&
+        !helpButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsHelpOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isHelpOpen]);
+
+  const toggleHelp = useCallback(() => {
+    setIsHelpOpen((prev) => !prev);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -95,6 +138,38 @@ export function Header() {
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900">{user.name || user.login}</p>
                 <p className="text-xs text-gray-500">@{user.login}</p>
+              </div>
+            </div>
+
+            {/* Help button */}
+            <div className="relative">
+              <button
+                ref={helpButtonRef}
+                onClick={toggleHelp}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
+                aria-label="Help"
+                aria-expanded={isHelpOpen}
+                aria-controls="help-panel"
+              >
+                <QuestionMarkCircleIcon className="h-5 w-5" />
+              </button>
+
+              {/* Sliding help panel */}
+              <div
+                ref={helpPanelRef}
+                id="help-panel"
+                role="region"
+                aria-label="Help information"
+                className={`absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 transition-all duration-200 ease-out origin-top-right ${
+                  isHelpOpen
+                    ? 'opacity-100 scale-100 translate-y-0'
+                    : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+                }`}
+              >
+                <p className="text-sm text-gray-700">
+                  Not seeing your latest changes from GitHub? Try refreshing the page to sync your
+                  starred repositories.
+                </p>
               </div>
             </div>
 

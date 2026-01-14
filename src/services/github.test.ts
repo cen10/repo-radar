@@ -20,6 +20,60 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
+// Helper to create mock GitHub API starred repo response (star+json format)
+interface MockStarredRepoOptions {
+  id?: number;
+  name?: string;
+  description?: string;
+  stargazers_count?: number;
+  open_issues_count?: number;
+  language?: string;
+  topics?: string[];
+  starred_at?: string;
+}
+
+const createMockStarredRepo = (options: MockStarredRepoOptions = {}) => ({
+  starred_at: options.starred_at ?? '2024-01-15T10:00:00Z',
+  repo: {
+    id: options.id ?? 1,
+    name: options.name ?? 'test-repo',
+    full_name: `user/${options.name ?? 'test-repo'}`,
+    owner: {
+      login: 'user',
+      avatar_url: 'https://example.com/avatar.jpg',
+    },
+    description: options.description ?? 'Test repository',
+    html_url: `https://github.com/user/${options.name ?? 'test-repo'}`,
+    stargazers_count: options.stargazers_count ?? 100,
+    open_issues_count: options.open_issues_count ?? 5,
+    language: options.language ?? 'TypeScript',
+    topics: options.topics ?? ['testing'],
+    updated_at: '2024-01-01T00:00:00Z',
+    pushed_at: '2024-01-01T00:00:00Z',
+    created_at: '2023-01-01T00:00:00Z',
+  },
+});
+
+// Helper to create mock GitHub API search result item
+const createMockSearchResultItem = (options: MockStarredRepoOptions = {}) => ({
+  id: options.id ?? 1,
+  name: options.name ?? 'test-repo',
+  full_name: `user/${options.name ?? 'test-repo'}`,
+  owner: {
+    login: 'user',
+    avatar_url: 'https://example.com/avatar.jpg',
+  },
+  description: options.description ?? 'Test repository',
+  html_url: `https://github.com/user/${options.name ?? 'test-repo'}`,
+  stargazers_count: options.stargazers_count ?? 100,
+  open_issues_count: options.open_issues_count ?? 5,
+  language: options.language ?? 'TypeScript',
+  topics: options.topics ?? ['testing'],
+  updated_at: '2024-01-01T00:00:00Z',
+  pushed_at: '2024-01-01T00:00:00Z',
+  created_at: '2023-01-01T00:00:00Z',
+});
+
 describe('GitHub API Service', () => {
   const testToken = 'test-github-token';
 
@@ -33,30 +87,9 @@ describe('GitHub API Service', () => {
 
   describe('fetchStarredRepositories', () => {
     it('should fetch starred repositories successfully', async () => {
-      const mockRepos = [
-        {
-          id: 1,
-          name: 'test-repo',
-          full_name: 'user/test-repo',
-          owner: {
-            login: 'user',
-            avatar_url: 'https://example.com/avatar.jpg',
-          },
-          description: 'Test repository',
-          html_url: 'https://github.com/user/test-repo',
-          stargazers_count: 100,
-          open_issues_count: 5,
-          language: 'TypeScript',
-          topics: ['testing'],
-          updated_at: '2024-01-01T00:00:00Z',
-          pushed_at: '2024-01-01T00:00:00Z',
-          created_at: '2023-01-01T00:00:00Z',
-        },
-      ];
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockRepos,
+        json: async () => [createMockStarredRepo()],
         headers: new Headers(),
       });
 
@@ -67,7 +100,7 @@ describe('GitHub API Service', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer test-github-token',
-            Accept: 'application/vnd.github.v3+json',
+            Accept: 'application/vnd.github.star+json',
           }),
         })
       );
@@ -77,6 +110,7 @@ describe('GitHub API Service', () => {
         id: 1,
         name: 'test-repo',
         full_name: 'user/test-repo',
+        starred_at: '2024-01-15T10:00:00Z',
         metrics: expect.objectContaining({
           stars_growth_rate: expect.any(Number),
           is_trending: expect.any(Boolean),
@@ -131,43 +165,20 @@ describe('GitHub API Service', () => {
 
   describe('fetchAllStarredRepositories', () => {
     it('should fetch all starred repositories across multiple pages', async () => {
-      const mockRepo1 = {
-        id: 1,
+      const mockRepo1 = createMockStarredRepo({
         name: 'repo-1',
-        full_name: 'user/repo-1',
-        owner: {
-          login: 'user',
-          avatar_url: 'https://example.com/avatar.jpg',
-        },
         description: 'First repository',
-        html_url: 'https://github.com/user/repo-1',
-        stargazers_count: 100,
-        open_issues_count: 5,
-        language: 'TypeScript',
-        topics: ['testing'],
-        updated_at: '2024-01-01T00:00:00Z',
-        pushed_at: '2024-01-01T00:00:00Z',
-        created_at: '2023-01-01T00:00:00Z',
-      };
+        starred_at: '2024-01-10T10:00:00Z',
+      });
 
-      const mockRepo2 = {
+      const mockRepo2 = createMockStarredRepo({
         id: 2,
         name: 'repo-2',
-        full_name: 'user/repo-2',
-        owner: {
-          login: 'user',
-          avatar_url: 'https://example.com/avatar.jpg',
-        },
         description: 'Second repository',
-        html_url: 'https://github.com/user/repo-2',
         stargazers_count: 200,
-        open_issues_count: 10,
         language: 'JavaScript',
         topics: ['backend'],
-        updated_at: '2024-01-02T00:00:00Z',
-        pushed_at: '2024-01-02T00:00:00Z',
-        created_at: '2023-01-02T00:00:00Z',
-      };
+      });
 
       // Mock fetchStarredRepoCount call (first call with per_page=1)
       // Mock with Link header indicating 150 total repos (last page is 150 with per_page=1)
@@ -215,8 +226,6 @@ describe('GitHub API Service', () => {
       // Should return all repositories (100 + 1 = 101)
       expect(result.repositories).toHaveLength(101);
       expect(result.totalFetched).toBe(101);
-      expect(result.totalStarred).toBe(150); // Based on Link header: 150 total repos
-      expect(result.isLimited).toBe(false);
       // Results should be sorted by star count (repo-2 has 200 stars, repo-1 has 100)
       // repo-2 (1 item) should be first, followed by repo-1 items (100 items)
       expect(result.repositories[0]).toMatchObject({
@@ -230,24 +239,14 @@ describe('GitHub API Service', () => {
     });
 
     it('should handle single page of starred repositories', async () => {
-      const mockRepo = {
-        id: 1,
+      const mockRepo = createMockStarredRepo({
         name: 'single-repo',
-        full_name: 'user/single-repo',
-        owner: {
-          login: 'user',
-          avatar_url: 'https://example.com/avatar.jpg',
-        },
         description: 'Only repository',
-        html_url: 'https://github.com/user/single-repo',
         stargazers_count: 50,
-        open_issues_count: 2,
         language: 'Python',
         topics: ['ai'],
-        updated_at: '2024-01-01T00:00:00Z',
-        pushed_at: '2024-01-01T00:00:00Z',
-        created_at: '2023-01-01T00:00:00Z',
-      };
+        starred_at: '2024-01-10T10:00:00Z',
+      });
 
       // Mock fetchStarredRepoCount call (first call with per_page=1) - single page scenario
       mockFetch
@@ -269,67 +268,10 @@ describe('GitHub API Service', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(result.repositories).toHaveLength(1);
       expect(result.totalFetched).toBe(1);
-      expect(result.totalStarred).toBe(1);
-      expect(result.isLimited).toBe(false);
       expect(result.repositories[0]).toMatchObject({
         id: 1,
         name: 'single-repo',
       });
-    });
-
-    it('should respect repository limit and indicate when limit is reached', async () => {
-      const mockRepo = {
-        id: 1,
-        name: 'test-repo',
-        full_name: 'user/test-repo',
-        owner: {
-          login: 'user',
-          avatar_url: 'https://example.com/avatar.jpg',
-        },
-        description: 'Test repository',
-        html_url: 'https://github.com/user/test-repo',
-        stargazers_count: 100,
-        open_issues_count: 5,
-        language: 'TypeScript',
-        topics: ['testing'],
-        updated_at: '2024-01-01T00:00:00Z',
-        pushed_at: '2024-01-01T00:00:00Z',
-        created_at: '2023-01-01T00:00:00Z',
-      };
-
-      // Mock the initial count request (fetchStarredRepoCount which is called by fetchAllStarredRepositories):
-      // return a Link header showing last page=300 at per_page=1 => 300 total repos.
-      // The next two mocks simulate pages 1 and 2 with 100 repos each; page 3 isn't fetched
-      // because the test caps maxRepos at 150.
-      const linkHeader = '<https://api.github.com/user/starred?page=300&per_page=1>; rel="last"';
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [mockRepo], // Single item for count calculation
-          headers: new Headers({ Link: linkHeader }),
-        })
-        // Mock parallel calls for page 1 and page 2 (only fetching 2 pages for 150 limit)
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => Array(100).fill(mockRepo), // Page 1: 100 repos
-          headers: new Headers(),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => Array(100).fill(mockRepo), // Page 2: 100 repos
-          headers: new Headers(),
-        });
-
-      const result = await fetchAllStarredRepositories(testToken, 150); // Custom limit
-
-      // Should have made three API calls: 1 for count + 2 for parallel fetching (limited)
-      expect(mockFetch).toHaveBeenCalledTimes(3);
-
-      // Should return exactly the limit amount (trimmed from 200 fetched to 150 limit)
-      expect(result.repositories).toHaveLength(150);
-      expect(result.totalFetched).toBe(150);
-      expect(result.totalStarred).toBe(300); // Based on Link header: 3 pages * 100 per page
-      expect(result.isLimited).toBe(true);
     });
 
     it('should throw error when authentication fails', async () => {
@@ -347,51 +289,45 @@ describe('GitHub API Service', () => {
   });
 
   describe('searchRepositories', () => {
+    // AbortController for tests - signal is required in production
+    const createSignal = () => new AbortController().signal;
+
     it('should search repositories with fuzzy match', async () => {
       const mockSearchResults = {
         items: [
-          {
+          createMockSearchResultItem({
             id: 2,
             name: 'typescript',
-            full_name: 'microsoft/typescript',
-            owner: {
-              login: 'microsoft',
-              avatar_url: 'https://example.com/ms.jpg',
-            },
             description: 'TypeScript language',
-            html_url: 'https://github.com/microsoft/typescript',
             stargazers_count: 90000,
             open_issues_count: 5000,
-            language: 'TypeScript',
             topics: ['typescript', 'javascript'],
-            updated_at: '2024-01-01T00:00:00Z',
-            pushed_at: '2024-01-01T00:00:00Z',
-            created_at: '2014-01-01T00:00:00Z',
-          },
+          }),
         ],
         total_count: 50000,
       };
 
-      // Mock for search
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockSearchResults,
         headers: new Headers(),
       });
 
-      // Mock for fetchUserStarredIds
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-        headers: new Headers(),
-      });
-
-      const result = await searchRepositories(testToken, 'typescript');
+      const starredIds = new Set<number>();
+      const result = await searchRepositories(
+        testToken,
+        'typescript',
+        1,
+        30,
+        'updated',
+        createSignal(),
+        starredIds
+      );
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.pathname).toBe('/search/repositories');
       expect(url.searchParams.get('q')).toBe('typescript');
-      expect(url.searchParams.get('sort')).toBe('stars');
+      expect(url.searchParams.get('sort')).toBe('updated');
 
       expect(result.repositories).toHaveLength(1);
       expect(result.repositories[0].name).toBe('typescript');
@@ -406,13 +342,16 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-        headers: new Headers(),
-      });
-
-      await searchRepositories(testToken, '"typescript"');
+      const starredIds = new Set<number>();
+      await searchRepositories(
+        testToken,
+        '"typescript"',
+        1,
+        30,
+        'updated',
+        createSignal(),
+        starredIds
+      );
 
       const url = new URL(mockFetch.mock.calls[0][0]);
       expect(url.searchParams.get('q')).toBe('typescript in:name');
@@ -421,42 +360,32 @@ describe('GitHub API Service', () => {
     it('should mark repositories as starred if user has them starred', async () => {
       const mockSearchResults = {
         items: [
-          {
+          createMockSearchResultItem({
             id: 123,
-            name: 'test-repo',
-            full_name: 'user/test-repo',
-            owner: { login: 'user', avatar_url: 'https://example.com/avatar.jpg' },
             description: 'Test',
-            html_url: 'https://github.com/user/test-repo',
-            stargazers_count: 100,
-            open_issues_count: 5,
-            language: 'TypeScript',
             topics: [],
-            updated_at: '2024-01-01T00:00:00Z',
-            pushed_at: '2024-01-01T00:00:00Z',
-            created_at: '2023-01-01T00:00:00Z',
-          },
+          }),
         ],
         total_count: 1,
       };
 
-      const mockStarredRepos = [{ id: 123, name: 'test-repo', full_name: 'user/test-repo' }];
-
-      // Mock search results
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockSearchResults,
         headers: new Headers(),
       });
 
-      // Mock starred repos check
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockStarredRepos,
-        headers: new Headers(),
-      });
-
-      const result = await searchRepositories(testToken, 'test');
+      // Pass starredIds with the repo ID to mark it as starred
+      const starredIds = new Set<number>([123]);
+      const result = await searchRepositories(
+        testToken,
+        'test',
+        1,
+        30,
+        'updated',
+        createSignal(),
+        starredIds
+      );
 
       expect(result.repositories[0].is_starred).toBe(true);
     });
@@ -469,7 +398,10 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(searchRepositories(testToken, '')).rejects.toThrow('Invalid search query');
+      const starredIds = new Set<number>();
+      await expect(
+        searchRepositories(testToken, '', 1, 30, 'updated', createSignal(), starredIds)
+      ).rejects.toThrow('Invalid search query');
     });
   });
 

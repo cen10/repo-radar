@@ -42,3 +42,26 @@ export function clearPendingUnstar(repoId: number): void {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 }
+
+/**
+ * Mark pending unstars as is_starred: false instead of hiding them.
+ * Use this in "Explore All" view where we want to show unstarred repos
+ * but need to override stale GitHub API data.
+ */
+export function applyPendingUnstarStatus(repos: Repository[]): Repository[] {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return repos;
+
+  const pending: PendingUnstar[] = JSON.parse(stored);
+  const now = Date.now();
+
+  const validEntries = pending.filter((entry) => now - entry.timestamp < MAX_AGE_MS);
+
+  if (validEntries.length !== pending.length) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(validEntries));
+  }
+
+  const pendingIds = new Set(validEntries.map((entry) => entry.id));
+
+  return repos.map((repo) => (pendingIds.has(repo.id) ? { ...repo, is_starred: false } : repo));
+}
