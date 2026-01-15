@@ -285,6 +285,13 @@ describe('formatters', () => {
       expect(formatGrowthRate(0.254)).toBe('+25%');
     });
 
+    it('displays small values that round to zero without sign', () => {
+      expect(formatGrowthRate(0.004)).toBe('0%');
+      expect(formatGrowthRate(-0.004)).toBe('0%');
+      expect(formatGrowthRate(0.0049)).toBe('0%');
+      expect(formatGrowthRate(-0.0049)).toBe('0%');
+    });
+
     it('returns absolute gain when rate is null and absoluteGain provided', () => {
       expect(formatGrowthRate(null, 0, 50)).toBe('+50 stars');
       expect(formatGrowthRate(null, 0, 100)).toBe('+100 stars');

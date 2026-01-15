@@ -119,12 +119,16 @@ export function formatGrowthRate(
 
   const percentage = rate * 100;
   const formatted = percentage.toFixed(decimals);
+
+  // Handle values that round to zero (including "-0")
+  if (parseFloat(formatted) === 0) {
+    return '0%';
+  }
+
   if (rate > 0) {
     return `+${formatted}%`;
-  } else if (rate < 0) {
-    return `${formatted}%`; // Negative sign is already included
   } else {
-    return '0%';
+    return `${formatted}%`; // Negative sign is already included
   }
 }
 
