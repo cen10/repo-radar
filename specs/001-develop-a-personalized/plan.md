@@ -92,7 +92,7 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 **Target Platform**: Progressive Web App, responsive design, mobile-first
 **Project Type**: web - frontend React SPA + serverless backend functions
 **Performance Goals**: < 3 second initial load, < 200ms interaction response, 60 FPS animations
-**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, requires `public_repo` OAuth scope for star/unstar
+**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, minimal OAuth scopes (`read:user`, optionally `user:email`)
 **Scale/Scope**: Support up to 500 starred repos per user with efficient tag filtering, paginated at 100 items per view
 
 ## Constitution Check
@@ -201,8 +201,8 @@ tests/
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context**:
    - Supabase Row Level Security for multi-tenant data
-   - GitHub App vs OAuth App trade-offs (need `public_repo` scope for star/unstar)
-   - GitHub API star/unstar endpoints and rate limit implications
+   - GitHub App vs OAuth App trade-offs for read-only access
+   - GitHub API rate limit implications for read-only operations
    - Serverless function scheduling strategies
    - Chart.js vs alternatives for time-series visualization
    - Optimal caching strategy for GitHub API responses
@@ -211,7 +211,7 @@ tests/
 2. **Generate and dispatch research agents**:
    ```
    Task: "Research Supabase RLS patterns for user-specific data isolation"
-   Task: "Research GitHub API star/unstar endpoints and OAuth scopes needed"
+   Task: "Research minimal OAuth scopes for read-only GitHub API access"
    Task: "Find best practices for GitHub API rate limit management"
    Task: "Research serverless cron patterns on Vercel/Netlify"
    Task: "Evaluate Chart.js performance with 500+ data points"
@@ -239,7 +239,6 @@ tests/
    - POST /api/auth/github - OAuth flow
    - GET /api/user/repos - Fetch starred repositories
    - GET /api/repos/:id/metrics - Get repository metrics
-   - PUT /api/repos/:id/star - Star/unstar repository (syncs with GitHub)
    - GET /api/radars - Get user's radars
    - POST /api/radars - Create new radar
    - PUT /api/radars/:id - Update radar (rename)
@@ -251,14 +250,12 @@ tests/
 3. **Generate contract tests** from contracts:
    - Auth flow contract tests
    - Data sync contract tests
-   - Star/unstar GitHub API integration tests
    - Radar CRUD contract tests
    - Radar-repo assignment tests
 
 4. **Extract test scenarios** from user stories:
    - Dashboard loads with starred repos
    - Rapid growth repos highlighted
-   - Star/unstar syncs with GitHub
    - Radar creation, rename, and deletion works
    - Add/remove repos from radars works
    - Radar view displays correct repos

@@ -98,7 +98,7 @@ As a GitHub user who stars repositories to track interesting projects, I want a 
 - **FR-009**: Users MUST be able to add repositories to radars, with a maximum of 25 repos per radar and 50 total repos across all radars
 - **FR-010**: Users MUST be able to remove repositories from radars and delete radars entirely
 - **FR-011**: System MUST provide a clean list view as the primary interface with sidebar navigation
-- **FR-012**: Each repository in the list MUST show name, owner, key metrics, radar icon, and star toggle
+- **FR-012**: Each repository in the list MUST show name, owner, key metrics, and radar icon
 - **FR-013**: System MUST provide expandable details showing comprehensive trend summaries
 - **FR-014**: System MUST refresh data once per hour for new star counts, releases and issues. Provide a “refresh now” button to update a specific repo on demand without waiting for the next scheduled refresh.
 - **FR-015**: All interactions MUST be keyboard accessible and screen reader compatible

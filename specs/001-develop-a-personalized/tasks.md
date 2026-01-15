@@ -254,7 +254,7 @@ _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 **Solution**: Three-tier test structure:
 
 - [ ] T092 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
-- [ ] T093 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, star/unstar) to integration tests, keep only Dashboard-specific unit logic
+- [ ] T093 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, radar actions) to integration tests, keep only Dashboard-specific unit logic
 - [ ] T094 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
 - [ ] T095 Update test documentation in CLAUDE.md with new test tier guidelines
 

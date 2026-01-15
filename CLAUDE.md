@@ -156,7 +156,7 @@ Apply this pattern in any test file that uses the logger or tests components tha
 
 ### React Query Cache Invalidation Testing
 
-When testing actions that modify data and should invalidate caches (e.g., star/unstar, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
+When testing actions that modify data and should invalidate caches (e.g., radar add/remove, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
 
 ```typescript
 // Create queryClient outside render so you can spy on it

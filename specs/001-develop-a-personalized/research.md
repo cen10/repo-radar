@@ -11,17 +11,29 @@ This document consolidates technical research findings for implementing a GitHub
 
 ### 1. GitHub Authentication Strategy
 
-**Decision**: GitHub OAuth App
+**Decision**: GitHub OAuth App with minimal scopes (read-only)
 **Rationale**:
 - Simpler setup than GitHub App (no webhook infrastructure needed)
 - Sufficient for user authentication and accessing public + starred repos
 - OAuth flow well-supported by Supabase Auth
 - Lower operational complexity aligns with MVP approach
+- Minimal permissions build user trust (no write access to repos)
+
+**OAuth Scopes**:
+- `read:user` - Required for profile info (avatar, username)
+- `user:email` - Optional, for notifications and account management
+- Note: `public_repo` scope is NOT required since the app is read-only
+
+**Design Decision**: Star/unstar functionality is intentionally excluded from the app. Users manage their GitHub stars directly on GitHub. This allows us to use minimal OAuth scopes, which:
+- Reduces "scary permissions" during OAuth consent
+- Lowers security surface area
+- Increases user trust and OAuth approval rates
 
 **Alternatives Considered**:
 - GitHub App: More complex setup, better for organization-wide access
 - Personal Access Tokens: Poor UX, security concerns
 - Basic Auth: Deprecated by GitHub
+- `public_repo` scope for star/unstar: Rejected to minimize permissions
 
 ### 2. Supabase Row Level Security (RLS) Pattern
 

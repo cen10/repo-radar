@@ -140,7 +140,7 @@ All repository cards share the same visual design across My Stars, Explore, and 
 
 ```
 ┌─────────────────────────────────────────┐
-│  owner/repo-name               ◎    ★   │
+│  owner/repo-name                     ◎  │
 │  Repository description text here       │
 │                                         │
 │  ⭐ 1.2k (+2.5% this month)             │
@@ -156,12 +156,13 @@ All repository cards share the same visual design across My Stars, Explore, and 
 **Elements (additive to current design):**
 - Repository full name (owner/repo-name)
 - Radar icon (◎ or ◉) — *new*
-- Star icon (☆ or ★)
 - Description
 - Star count with growth rate percentage
 - Open issues count
 - Fork count and primary language
 - Topics/tags (up to 3, with "+N more" indicator)
+
+*Note: Star/unstar functionality is not available in-app. Users manage stars directly on GitHub. The app is read-only for GitHub data.*
 
 ### Icon States
 
@@ -171,19 +172,13 @@ All repository cards share the same visual design across My Stars, Explore, and 
 | Not on any radar | ◎ | Outline only, muted color |
 | On 1+ radars | ◉ | Filled, accent color |
 
-**Star icon:**
-| State | Icon | Appearance |
-|-------|------|------------|
-| Not starred | ☆ | Outline only |
-| Starred | ★ | Filled, yellow/gold |
-
 ### Radar Icon Animation
 
 When a user adds a repo to a radar, the icon animates with a single radar sweep (a line rotating 360° around the concentric circles) before settling into the filled state. This reinforces the "radar" metaphor and provides satisfying feedback. This animation is part of the MVP.
 
 ### Card Click Behavior
 
-Clicking anywhere on a card (except the radar or star icons) navigates to the repository detail page within the app. This behavior is consistent across all views.
+Clicking anywhere on a card (except the radar icon) navigates to the repository detail page within the app. This behavior is consistent across all views.
 
 ---
 
@@ -403,7 +398,6 @@ Every repository has a detail page, accessible by clicking a repo card from any 
 **For all repos:**
 - Full repository information (name, description, owner, language, license)
 - Link to GitHub (external)
-- Star/unstar action
 - Add to radar action
 - Basic stats (stars, forks, watchers, open issues count)
 
@@ -549,7 +543,7 @@ When data is significantly stale (> 24 hours), the timestamp is highlighted with
 
 ### Optimistic Updates
 
-For user actions within the app (starring/unstarring, adding to radar), the UI updates immediately without waiting for server confirmation. This provides instant feedback while the actual API call happens in the background.
+For user actions within the app (adding to radar, removing from radar), the UI updates immediately without waiting for server confirmation. This provides instant feedback while the actual API call happens in the background.
 
 If the API call fails, the UI reverts and shows an error toast.
 
@@ -713,4 +707,4 @@ The following items are out of scope for this document but may be addressed in f
 | Shared component | RepositoryList used for all views with different props |
 | Detail page | Canonical regardless of entry point; metrics shown only for repos on radar |
 | Data freshness | "Last updated" timestamp + manual refresh button (↻) |
-| Optimistic updates | UI updates immediately for user actions (star, radar add) |
+| Optimistic updates | UI updates immediately for user actions (radar add/remove) |
