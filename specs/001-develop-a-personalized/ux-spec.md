@@ -423,6 +423,138 @@ Every repository has a detail page, accessible by clicking a repo card from any 
 
 ---
 
+## Metric Data Freshness
+
+Metrics are collected via daily snapshots. When a repo is newly added to a radar, there's a period before full trend data is available. The UI should communicate this clearly.
+
+### Data Availability Timeline
+
+| Timing | What's Available | What's Missing |
+|--------|------------------|----------------|
+| Immediately | Current stats (stars, forks, issues), detailed issue info, recent commits/releases | Growth trends, sparklines |
+| After 24 hours | Daily change (+X stars today) | Weekly trends |
+| After 7 days | Full weekly metrics, sparklines | Nothing |
+
+### UI Treatment by State
+
+**State 1: Just Added (No Snapshots Yet)**
+
+All current stats are available immediately via GitHub API. Only trend data requires collection.
+
+```
+┌─────────────────────────────────────────┐
+│  ⭐ 12,450 stars                        │
+│  📈 Trend data available in ~24 hours   │
+└─────────────────────────────────────────┘
+```
+
+**State 2: Partial Data (< 7 days)**
+
+Show available metrics with a qualifier indicating incomplete data.
+
+```
+┌─────────────────────────────────────────┐
+│  ⭐ 12,450 stars                        │
+│  📈 +2.3% (3 of 7 days)  ⓘ             │
+└─────────────────────────────────────────┘
+
+Tooltip: "Based on 3 days of data. Full 7-day trend available in 4 days."
+```
+
+For sparkline charts: show partial data with a label like "Last 3 days" rather than hiding the chart entirely.
+
+**State 3: Full Data (≥ 7 days)**
+
+Display metrics normally with no qualifiers.
+
+```
+┌─────────────────────────────────────────┐
+│  ⭐ 12,450 stars                        │
+│  📈 +5.2% this week                     │
+└─────────────────────────────────────────┘
+```
+
+### Implementation Notes
+
+Each metric value should carry metadata about data completeness:
+
+```typescript
+interface MetricValue {
+  value: number;
+  daysOfData: number;
+  requiredDays: number;  // e.g., 7 for weekly metrics
+  isComplete: boolean;   // daysOfData >= requiredDays
+}
+```
+
+---
+
+## Data Freshness UI
+
+Since GitHub data is cached to respect API rate limits, the UI must communicate data freshness clearly and provide manual refresh options.
+
+### Last Updated Timestamp
+
+All views that display repository data should show when the data was last fetched. This appears in two locations:
+
+**1. Page Header (for list views)**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  My Stars          Last updated: 2 hours ago   ↻  🔍 ⌘K   │
+└────────────────────────────────────────────────────────────┘
+```
+
+**2. Repository Detail Page**
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  facebook/react                                            │
+│  A declarative, efficient JavaScript library...            │
+│                                                            │
+│  Last updated: 5 minutes ago   ↻ Refresh                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Manual Refresh Button
+
+The refresh button (↻) allows users to force-fetch the latest data from GitHub. This uses the user's personal rate limit allocation.
+
+**States:**
+
+| State | Appearance | Behavior |
+|-------|------------|----------|
+| Default | ↻ icon, clickable | Clicking fetches fresh data |
+| Loading | Spinning ↻ icon | Button disabled during fetch |
+| Rate Limited | ↻ icon, muted, with tooltip | "Rate limit reached. Try again in X minutes." |
+
+**Placement:**
+- List views: In the page header, next to the "Last updated" timestamp
+- Detail page: Below the repository title section
+- Individual cards: Not included (would be too noisy; use page-level refresh)
+
+### Freshness Indicators
+
+For list views, the "Last updated" timestamp uses relative time formatting:
+
+| Age | Display |
+|-----|---------|
+| < 1 minute | "Just now" |
+| 1-59 minutes | "X minutes ago" |
+| 1-23 hours | "X hours ago" |
+| 1-6 days | "X days ago" |
+| 7+ days | "Last updated: [date]" |
+
+When data is significantly stale (> 24 hours), the timestamp is highlighted with a subtle warning color to encourage refresh.
+
+### Optimistic Updates
+
+For user actions within the app (starring/unstarring, adding to radar), the UI updates immediately without waiting for server confirmation. This provides instant feedback while the actual API call happens in the background.
+
+If the API call fails, the UI reverts and shows an error toast.
+
+---
+
 ## Radar Views
 
 ### Radar Page
@@ -580,3 +712,5 @@ The following items are out of scope for this document but may be addressed in f
 | Search (My Stars, Radars) | Collapsible with ⌘K shortcut |
 | Shared component | RepositoryList used for all views with different props |
 | Detail page | Canonical regardless of entry point; metrics shown only for repos on radar |
+| Data freshness | "Last updated" timestamp + manual refresh button (↻) |
+| Optimistic updates | UI updates immediately for user actions (star, radar add) |

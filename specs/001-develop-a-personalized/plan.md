@@ -69,7 +69,7 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 
 ### 🏍️ Slice 4: Trend Detection (4-5 days)
 **Value**: Spot trending repos automatically
-- Start collecting historical data (hourly snapshots)
+- Start collecting historical data (daily snapshots)
 - 7-day trend calculation
 - "Trending" section highlighting rapid growth
 - Simple sparkline charts
@@ -306,7 +306,7 @@ tests/
 
 **Slice 4 Tasks (Trend Detection)**:
 - Historical data schema
-- Cron job for hourly snapshots
+- Cron job for daily snapshots
 - Trend calculation utilities
 - Sparkline chart component
 - Trending repos section

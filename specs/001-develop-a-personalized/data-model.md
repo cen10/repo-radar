@@ -18,6 +18,7 @@ erDiagram
     Repository ||--o{ StarMetric : tracks
     Repository ||--o{ Release : has
     Repository ||--o{ IssueMetric : measures
+    Repository ||--o| RepoCache : caches
 
     User {
         uuid id PK
@@ -85,6 +86,14 @@ erDiagram
         int total_count
         float velocity
         timestamp recorded_at
+    }
+
+    RepoCache {
+        bigint github_repo_id PK
+        jsonb cached_data
+        string etag
+        timestamp fetched_at
+        timestamp expires_at
     }
 ```
 
@@ -161,7 +170,7 @@ interface StarMetric {
 - `star_count`: Non-negative integer
 - `growth_rate`: Calculated as `(current - previous) / previous * 100`
 - `is_spike`: True if star_count >= 100 AND growth_rate >= 25% AND daily_change >= 50
-- One record per repository per hour (deduped)
+- One record per repository per day (deduped)
 
 ### Release
 
@@ -208,7 +217,33 @@ interface IssueMetric {
 - All counts are non-negative integers
 - `total_count` = `open_count` + `closed_count`
 - `velocity`: Calculated from last 7 days of closed issues
-- One record per repository per hour
+- One record per repository per day
+
+### RepoCache
+
+Server-side cache for GitHub API responses, shared across all users.
+
+```typescript
+interface RepoCache {
+  github_repo_id: number; // GitHub's numeric repository ID (PK)
+  cached_data: object; // Full GitHub API response (repo details, issues, etc.)
+  etag?: string; // GitHub ETag for conditional requests
+  fetched_at: Date; // When this data was fetched
+  expires_at: Date; // When this cache entry should be considered stale
+}
+```
+
+**Validation Rules**:
+- `github_repo_id`: Required, unique (primary key)
+- `cached_data`: Required, valid JSON object
+- `etag`: Optional, used for conditional GitHub API requests
+- `expires_at`: Typically `fetched_at + 1 hour` for detail pages, `fetched_at + 24 hours` for list data
+
+**Design Notes**:
+- This is a shared cache - all users benefit from cached data for popular repos
+- The daily sync job updates cache entries for all repos on at least one radar
+- Manual refresh bypasses the cache and updates it with fresh data
+- ETags enable conditional requests (304 Not Modified) to minimize rate limit usage
 
 ### Radar
 
@@ -295,6 +330,9 @@ CREATE INDEX idx_radar_repos_github_id ON radar_repos(github_repo_id);
 
 -- Releases
 CREATE INDEX idx_releases_repo_published ON releases(repository_id, published_at DESC);
+
+-- Cache
+CREATE INDEX idx_repo_cache_expires ON repo_cache(expires_at);
 ```
 
 ## Row Level Security Policies
@@ -331,16 +369,26 @@ CREATE POLICY "Authenticated users see metrics" ON star_metrics
       AND auth.role() = 'authenticated'
     )
   );
+
+-- Cache is readable by all authenticated users, writable by service role only
+ALTER TABLE repo_cache ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users read cache" ON repo_cache
+  FOR SELECT USING (auth.role() = 'authenticated');
+-- Note: INSERT/UPDATE/DELETE handled by service role (bypasses RLS)
 ```
 
 ## Data Retention
 
-- **StarMetric**: Keep hourly for 7 days, daily for 90 days
-- **IssueMetric**: Keep hourly for 7 days, daily for 90 days
+- **StarMetric**: Daily snapshots, keep for 90 days
+- **IssueMetric**: Daily snapshots, keep for 90 days
 - **Release**: Keep indefinitely (low volume)
 - **User**: Soft delete immediately, hard delete after 30 days
 - **Radar**: Delete with user account (cascade to RadarRepo)
 - **RadarRepo**: Delete when radar is deleted or when explicitly removed
+- **Repository**: Keep for 90-day grace period after last radar reference is removed, then delete with associated metrics
+- **RepoCache**: Entries expire based on `expires_at`; stale entries cleaned up by scheduled job (keep expired entries for 7 days as fallback for rate-limited scenarios)
+
+**Rationale for daily snapshots**: Hourly collection doesn't scale well with GitHub API rate limits (5,000 req/hour authenticated). Daily snapshots allow tracking tens of thousands of repos within limits, while still providing meaningful day-over-day and weekly trend data. Can add tiered hourly collection for "hot" repos in the future if needed.
 
 ## Migration Strategy
 
@@ -350,8 +398,9 @@ Initial schema creation with versioned migrations:
 -- 001_create_radars.sql (includes radars and radar_repos tables)
 -- 002_create_repositories.sql
 -- 003_create_metrics.sql
--- 004_create_indexes.sql
--- 005_enable_rls.sql
+-- 004_create_repo_cache.sql
+-- 005_create_indexes.sql
+-- 006_enable_rls.sql
 ```
 
 Each migration is idempotent and includes rollback procedures.

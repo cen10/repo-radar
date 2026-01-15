@@ -71,7 +71,7 @@ CREATE POLICY "Users can only see their own data" ON repositories
 **Decision**: Vercel Cron Jobs with Supabase Edge Functions fallback
 **Rationale**:
 - Vercel Cron Jobs are simple to configure in vercel.json
-- Free tier allows hourly updates (sufficient for MVP)
+- Free tier allows daily updates (sufficient for MVP; hourly would exceed GitHub API rate limits at scale)
 - Supabase Edge Functions as backup for on-demand refreshes
 - No additional infrastructure needed
 
@@ -110,29 +110,67 @@ CREATE POLICY "Users can only see their own data" ON repositories
 - D3.js: Overly complex for simple time-series
 - Victory: Performance issues with large datasets
 
-### 6. React Query Caching Strategy
+### 6. Multi-Tier Caching Strategy
 
-**Decision**: Stale-while-revalidate with optimistic updates
-**Rationale**:
-- Shows cached data immediately (better perceived performance)
-- Background refetch keeps data fresh
-- Optimistic updates for follow/unfollow actions
-- Aligns with 3-second load time requirement
+**Decision**: Three-tier caching with transparency and manual refresh
 
-**Configuration**:
+GitHub API rate limits (5,000 req/hour per user) and the inability to receive push notifications for repos we don't own necessitate a caching strategy that balances freshness with scalability.
+
+**Industry Research**: Products like Star History, GitTrends, npm-stat, and financial data providers (Yahoo Finance, TradingView) all use similar patterns:
+- Free tiers show delayed/cached data (1-24 hours)
+- Paid tiers offer fresher data (5-30 minutes)
+- All show "last updated" timestamps for transparency
+- Manual refresh buttons let users force fresh fetches
+
+**Architecture**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Tier 1: TanStack Query (Client)                            │
+│  └── In-memory + localStorage persistence                   │
+│  └── 1-hour staleTime for repo data                        │
+│  └── Optimistic updates for user actions                   │
+├─────────────────────────────────────────────────────────────┤
+│  Tier 2: Supabase Cache (Server)                            │
+│  └── Shared across all users                               │
+│  └── Reduces GitHub API calls dramatically                 │
+│  └── Updated by daily sync job                             │
+├─────────────────────────────────────────────────────────────┤
+│  Tier 3: GitHub API (Source of Truth)                       │
+│  └── Fetched on cache miss                                 │
+│  └── Manual refresh uses user's rate limit                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Freshness Guarantees**:
+| Data Source | Max Staleness | Notes |
+|-------------|---------------|-------|
+| Daily sync | 24 hours | Background job for all tracked repos |
+| User actions in app | Instant | Optimistic updates |
+| Manual refresh | Real-time | Uses user's rate limit |
+
+**Client Configuration (TanStack Query)**:
 ```typescript
 {
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  cacheTime: 10 * 60 * 1000, // 10 minutes
-  refetchOnWindowFocus: true,
-  refetchInterval: 60 * 60 * 1000 // 1 hour
+  staleTime: 60 * 60 * 1000, // 1 hour
+  gcTime: 24 * 60 * 60 * 1000, // 24 hours
+  refetchOnWindowFocus: false, // Don't waste API calls
 }
 ```
 
+**UX Requirements**:
+- Always show "Last updated: X" timestamp
+- Provide manual refresh button (↻)
+- Optimistic UI for star/unstar and radar actions
+
+**Future (Paid Tier)**:
+- 15-minute staleTime
+- Priority in background refresh queue
+- More frequent sync (every 6 hours)
+
 **Alternatives Considered**:
-- No caching: Poor performance
-- Redux + RTK Query: Unnecessary complexity
-- SWR: Less mature ecosystem
+- Real-time for all users: Not possible without webhooks (requires repo access)
+- No caching: Would hit rate limits quickly
+- Polling every 5 minutes: Wasteful, still not "real-time"
 
 ### 7. Mobile-First Responsive Strategy
 

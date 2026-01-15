@@ -78,7 +78,7 @@ npm run format:check # Check formatting
 - GitHub API rate limit: 5000 req/hour authenticated
 - Data retention: 90 days
 - Pagination: 100 repos per page
-- Hourly data refresh cycle
+- Daily data refresh cycle (hourly doesn't scale with GitHub API limits)
 
 ## Performance Debugging
 
