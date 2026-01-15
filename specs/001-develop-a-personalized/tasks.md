@@ -137,14 +137,13 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [ ] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
 - [ ] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
 
-## Phase 3.12: Supabase Schema (T039-T042b)
+## Phase 3.12: Supabase Schema (T039-T042a)
 
-- [ ] T039 Create Supabase migration for radars table in `supabase/migrations/001_create_radars.sql`
-- [ ] T040 Create Supabase migration for radar_repos table with RLS policies
-- [ ] T041 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
-- [ ] T042 Create radar service functions in `src/services/radar.ts` (CRUD operations)
-- [ ] T042a Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
-- [ ] T042b Create cache service in `src/services/cache.ts` for server-side caching with ETags
+- [ ] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
+- [ ] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
+- [ ] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
+- [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
+- [ ] T042a Create cache service in `src/services/cache.ts` for server-side caching with ETags
 
 ## Phase 3.13: Radar UI Components (T043-T049)
 
@@ -337,9 +336,9 @@ graph TD
 
 ---
 
-**Total Tasks**: 84
+**Total Tasks**: 83
 **Slice 1 (MVP)**: 20 tasks
 **Slice 2 (Live Metrics)**: 14 tasks (includes caching config)
-**Slice 3 (Navigation & Radar)**: 25 tasks (includes cache migration)
+**Slice 3 (Navigation & Radar)**: 24 tasks (includes cache migration)
 **Slice 4 (Trend Detection)**: 18 tasks
 **Slice 5 (Full Analytics)**: 18 tasks
