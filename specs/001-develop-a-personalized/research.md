@@ -172,7 +172,7 @@ GitHub API rate limits (5,000 req/hour per user) and the inability to receive pu
 **UX Requirements**:
 - Always show "Last updated: X" timestamp
 - Provide manual refresh button (↻)
-- Optimistic UI for star/unstar and radar actions
+- Optimistic UI for radar actions (add/remove repos)
 
 **Future (Paid Tier)**:
 - 15-minute staleTime
