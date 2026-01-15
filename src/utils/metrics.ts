@@ -25,6 +25,12 @@ export const HOT_REPO_MIN_STARS_GAINED = 50;
  */
 export function calculateGrowthRate(current: number, previous: number): number | null {
   if (previous === 0) {
+    // Can't calculate a percentage from zero - it's mathematically undefined.
+    // Example: 0 → 100 stars is infinite % growth, not 0% or 100%.
+    //
+    // In practice, isHotRepo() requires 100+ total stars AND 50+ stars gained - so this
+    // edge case is filtered out before display. This null return is a safeguard
+    // in case growth rate is shown in other contexts without those filters.
     return null;
   }
   return (current - previous) / previous;
