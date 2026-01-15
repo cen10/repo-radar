@@ -21,8 +21,10 @@ This document consolidates technical research findings for implementing a GitHub
 
 **OAuth Scopes**:
 - `read:user` - Required for profile info (avatar, username)
-- `user:email` - Optional, for notifications and account management
+- `user:email` - Required for Supabase Auth (see note below)
 - Note: `public_repo` scope is NOT required since the app is read-only
+
+**Why `user:email` is required**: Supabase Auth requires an email from OAuth providers. Without `user:email`, GitHub only returns email if the user has it set to public. Many developers keep their email private, which causes authentication to fail. This is a [known Supabase limitation](https://github.com/supabase/gotrue/issues/214). The `user:email` scope ensures we can authenticate users regardless of their GitHub privacy settings.
 
 **Design Decision**: Star/unstar functionality is intentionally excluded from the app. Users manage their GitHub stars directly on GitHub. This allows us to use minimal OAuth scopes, which:
 - Reduces "scary permissions" during OAuth consent

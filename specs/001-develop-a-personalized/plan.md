@@ -92,7 +92,7 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 **Target Platform**: Progressive Web App, responsive design, mobile-first
 **Project Type**: web - frontend React SPA + serverless backend functions
 **Performance Goals**: < 3 second initial load, < 200ms interaction response, 60 FPS animations
-**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, minimal OAuth scopes (`read:user`, optionally `user:email`)
+**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, minimal OAuth scopes (`read:user`, `user:email`)
 **Scale/Scope**: Support up to 500 starred repos per user with efficient tag filtering, paginated at 100 items per view
 
 ## Constitution Check
