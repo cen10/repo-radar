@@ -83,17 +83,37 @@ export function formatCompactNumber(value: number): string {
 /**
  * Format a growth rate as a percentage string with sign
  *
- * @param rate - Growth rate as decimal (0.25 = 25%)
+ * @param rate - Growth rate as decimal (0.25 = 25%), or null if no baseline
  * @param decimals - Number of decimal places (default: 0)
+ * @param absoluteGain - Absolute stars gained, used when rate is null
  * @returns Formatted percentage string with sign (e.g., "+25%", "-10%")
  *
+ * Note: When rate is null (no baseline to calculate from), we display the absolute
+ * gain instead. In practice, this branch is unlikely to execute for "hot" repos
+ * because isHotRepo() requires minimum thresholds (100+ stars, 50+ gained) that
+ * filter out repos with no history. This exists as a safeguard for edge cases
+ * or if the growth rate is displayed in other contexts without those filters.
+ *
  * @example
- * formatGrowthRate(0.25)     // returns "+25%"
- * formatGrowthRate(-0.1)     // returns "-10%"
- * formatGrowthRate(0)        // returns "0%"
- * formatGrowthRate(0.256, 1) // returns "+25.6%"
+ * formatGrowthRate(0.25)           // returns "+25%"
+ * formatGrowthRate(-0.1)           // returns "-10%"
+ * formatGrowthRate(0)              // returns "0%"
+ * formatGrowthRate(0.256, 1)       // returns "+25.6%"
+ * formatGrowthRate(null, 0, 50)    // returns "+50 stars"
  */
-export function formatGrowthRate(rate: number, decimals: number = 0): string {
+export function formatGrowthRate(
+  rate: number | null,
+  decimals: number = 0,
+  absoluteGain?: number
+): string {
+  // No baseline to calculate percentage - show absolute gain instead
+  if (rate === null) {
+    if (absoluteGain !== undefined) {
+      return absoluteGain >= 0 ? `+${absoluteGain} stars` : `${absoluteGain} stars`;
+    }
+    return 'New';
+  }
+
   const percentage = rate * 100;
   const formatted = percentage.toFixed(decimals);
   if (rate > 0) {

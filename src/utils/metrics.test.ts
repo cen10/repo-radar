@@ -25,9 +25,9 @@ describe('metrics utilities', () => {
       expect(calculateGrowthRate(100, 100)).toBe(0);
     });
 
-    it('returns 0 when previous is 0 (avoids division by zero)', () => {
-      expect(calculateGrowthRate(100, 0)).toBe(0);
-      expect(calculateGrowthRate(0, 0)).toBe(0);
+    it('returns null when previous is 0 (no baseline to calculate from)', () => {
+      expect(calculateGrowthRate(100, 0)).toBeNull();
+      expect(calculateGrowthRate(0, 0)).toBeNull();
     });
 
     it('handles small decimal changes', () => {

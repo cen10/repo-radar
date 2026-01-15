@@ -16,16 +16,16 @@ export const HOT_REPO_MIN_STARS_GAINED = 50;
  *
  * @param current - Current value (e.g., today's star count)
  * @param previous - Previous value (e.g., yesterday's star count)
- * @returns Growth rate as decimal. Returns 0 if previous is 0 to avoid division by zero.
+ * @returns Growth rate as decimal, or null if previous is 0 (can't calculate percentage from zero baseline)
  *
  * @example
  * calculateGrowthRate(125, 100) // returns 0.25 (25% growth)
  * calculateGrowthRate(80, 100)  // returns -0.2 (20% decline)
- * calculateGrowthRate(100, 0)   // returns 0 (no previous data)
+ * calculateGrowthRate(100, 0)   // returns null (no baseline to calculate from)
  */
-export function calculateGrowthRate(current: number, previous: number): number {
+export function calculateGrowthRate(current: number, previous: number): number | null {
   if (previous === 0) {
-    return 0;
+    return null;
   }
   return (current - previous) / previous;
 }

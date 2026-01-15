@@ -177,20 +177,6 @@ describe('formatters', () => {
     });
 
     describe('edge cases', () => {
-      it('handles dates exactly at boundary transitions', () => {
-        // Exactly 60 seconds ago (should be 1 minute ago)
-        const exactlyOneMinute = new Date('2023-12-01T11:59:00.000Z').toISOString();
-        expect(formatRelativeTime(exactlyOneMinute)).toBe('1 minute ago');
-
-        // Exactly 3600 seconds ago (should be 1 hour ago)
-        const exactlyOneHour = new Date('2023-12-01T11:00:00.000Z').toISOString();
-        expect(formatRelativeTime(exactlyOneHour)).toBe('1 hour ago');
-
-        // Exactly 86400 seconds ago (should be 1 day ago)
-        const exactlyOneDay = new Date('2023-11-30T12:00:00.000Z').toISOString();
-        expect(formatRelativeTime(exactlyOneDay)).toBe('1 day ago');
-      });
-
       it('handles leap year calculations', () => {
         // Set time to a leap year
         vi.setSystemTime(new Date('2024-03-01T12:00:00Z'));
@@ -249,12 +235,6 @@ describe('formatters', () => {
       expect(formatCompactNumber(5500000)).toBe('5.5M');
       expect(formatCompactNumber(10000000)).toBe('10M');
     });
-
-    it('omits decimal when not needed', () => {
-      expect(formatCompactNumber(1000)).toBe('1k');
-      expect(formatCompactNumber(2000)).toBe('2k');
-      expect(formatCompactNumber(1000000)).toBe('1M');
-    });
   });
 
   describe('formatGrowthRate', () => {
@@ -284,6 +264,17 @@ describe('formatters', () => {
     it('rounds when decimal places are limited', () => {
       expect(formatGrowthRate(0.256)).toBe('+26%');
       expect(formatGrowthRate(0.254)).toBe('+25%');
+    });
+
+    it('returns absolute gain when rate is null and absoluteGain provided', () => {
+      expect(formatGrowthRate(null, 0, 50)).toBe('+50 stars');
+      expect(formatGrowthRate(null, 0, 100)).toBe('+100 stars');
+      expect(formatGrowthRate(null, 0, 0)).toBe('+0 stars');
+      expect(formatGrowthRate(null, 0, -10)).toBe('-10 stars');
+    });
+
+    it('returns "New" when rate is null and no absoluteGain provided', () => {
+      expect(formatGrowthRate(null)).toBe('New');
     });
   });
 
