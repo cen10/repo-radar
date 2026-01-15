@@ -106,11 +106,13 @@ _Goal: Add current metrics and growth indicators_
 - [ ] T024 [P] Create date formatting utilities in `src/utils/formatters.ts`
 - [ ] T025 [P] Create sorting utilities in `src/utils/sort.ts`
 
-## Phase 3.9: Enhanced API (T026-T028)
+## Phase 3.9: Enhanced API & Caching (T026-T028b)
 
 - [ ] T026 Update `api/starred.ts` to fetch repository issues and releases
 - [ ] T027 Create `api/metrics.ts` endpoint to calculate growth rates
 - [ ] T028 Update `src/services/github.ts` to use enhanced endpoints
+- [ ] T028a Configure TanStack Query with caching settings in `src/services/queryClient.ts` (1hr staleTime, 24hr gcTime)
+- [ ] T028b Create `src/utils/formatters.ts` with relative time formatting for "Last updated" display
 
 ## Phase 3.10: UI Updates (T029-T032)
 
@@ -121,110 +123,128 @@ _Goal: Add current metrics and growth indicators_
 
 ---
 
-# MVP SLICE 3: Personal Tracking (T033-T046)
+# MVP SLICE 3: Navigation & Radar Feature (T033-T055)
 
-_Goal: Follow/unfollow with persistence_
+_Goal: Sidebar navigation, radar collections, and repository detail pages_
+_See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
-## Phase 3.11: Database Setup (T033-T036)
+## Phase 3.11: Layout & Navigation (T033-T038)
 
-- [ ] T033 Create Supabase migrations in `supabase/migrations/001_initial_schema.sql`
-- [ ] T034 Set up Row Level Security policies for user_preferences table
-- [ ] T035 [P] Create database types in `src/types/database.ts`
-- [ ] T036 Create Supabase service functions in `src/services/database.ts`
+- [ ] T033 Create Sidebar component in `src/components/Sidebar.tsx` with My Stars, Explore nav items
+- [ ] T034 Create SidebarRadarList component for displaying user's radars with counts
+- [ ] T035 Create MobileDrawer component with hamburger menu trigger
+- [ ] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content
+- [ ] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
+- [ ] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
 
-## Phase 3.12: Preference Management (T037-T040)
+## Phase 3.12: Supabase Schema (T039-T042a)
 
-- [ ] T037 Create `api/preferences.ts` endpoint for managing follow/unfollow
-- [ ] T038 Create usePreferences hook in `src/hooks/usePreferences.ts`
-- [ ] T039 Add follow/unfollow toggle to RepoCard component
-- [ ] T040 Create preference state management in Dashboard
+- [ ] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
+- [ ] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
+- [ ] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
+- [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
+- [ ] T042a Create cache service in `src/services/cache.ts` for server-side caching with ETags
 
-## Phase 3.13: Filtering & Views (T041-T044)
+## Phase 3.13: Radar UI Components (T043-T049)
 
-- [ ] T041 Create FilterBar component in `src/components/FilterBar.tsx`
-- [ ] T042 Add "All" vs "Following" filter logic to Dashboard
-- [ ] T043 [P] Create EmptyState component in `src/components/EmptyState.tsx`
-- [ ] T044 Implement pagination logic in useRepositories hook
+- [ ] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
+- [ ] T044 Create RadarDropdown component for desktop "Add to Radar" interaction
+- [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction
+- [ ] T046 Add radar icon to RepoCard with filled/outline states
+- [ ] T047 Create radar sweep animation CSS/component for add-to-radar feedback
+- [ ] T048 Create CreateRadarModal component for creating new radars from sidebar
+- [ ] T049 Create RadarContextMenu component with Rename/Delete actions
 
-## Phase 3.14: Testing Slice 3 (T045-T046)
+## Phase 3.14: Radar Page & Detail Page (T050-T053)
 
-- [ ] T045 [P] Write integration tests for preference persistence in `tests/integration/preferences.test.ts`
-- [ ] T046 [P] Write E2E test for follow/unfollow flow in `tests/e2e/tracking.spec.ts`
+- [ ] T050 Create RadarPage component in `src/pages/RadarPage.tsx` with header and repo list
+- [ ] T051 Create RepoDetailPage component in `src/pages/RepoDetailPage.tsx`
+- [ ] T052 Update RepoCard click behavior to navigate to internal detail page
+- [ ] T053 [P] Create EmptyState components for empty radar, no stars, no search results
+
+## Phase 3.15: Search & Polish (T054-T055)
+
+- [ ] T054 Create CollapsibleSearch component with ⌘K shortcut support
+- [ ] T055 Add limit handling UI (disabled states, tooltips for 5 radars/25 repos/50 total limits)
 
 ---
 
-# MVP SLICE 4: Trend Detection (T047-T062)
+# MVP SLICE 4: Trend Detection (T056-T071)
 
 _Goal: Historical tracking and trend visualization_
 
-## Phase 3.15: Historical Data Schema (T047-T050)
+## Phase 3.16: Historical Data Schema (T056-T059)
 
-- [ ] T047 Create migration for star_metrics table in `supabase/migrations/002_metrics.sql`
-- [ ] T048 Create migration for issue_metrics table
-- [ ] T049 [P] Update database types for metrics entities
-- [ ] T050 Create metrics service in `src/services/metrics.ts`
+- [ ] T056 Create migration for star_metrics table in `supabase/migrations/002_metrics.sql`
+- [ ] T057 Create migration for issue_metrics table
+- [ ] T058 [P] Update database types for metrics entities
+- [ ] T059 Create metrics service in `src/services/metrics.ts`
 
-## Phase 3.16: Data Collection (T051-T054)
+## Phase 3.17: Data Collection (T060-T065)
 
-- [ ] T051 Create `api/sync.ts` serverless function for data collection
-- [ ] T052 Configure Vercel cron job in `vercel.json` for hourly sync
-- [ ] T053 Create sync status endpoint in `api/sync-status.ts`
-- [ ] T054 Add sync status indicator to Dashboard
+- [ ] T060 Create `api/sync.ts` serverless function for data collection
+- [ ] T061 Configure Vercel cron job in `vercel.json` for daily sync
+- [ ] T062 Create sync status endpoint in `api/sync-status.ts`
+- [ ] T063 Add sync status indicator to Dashboard
+- [ ] T064 Add GitHub API rate limit tracking to API calls (log X-RateLimit headers)
+- [ ] T065 Create rate limit alert system using Resend Free Tier (email at 75% and 90% thresholds)
 
-## Phase 3.17: Trend Calculations (T055-T057)
+_Note: Resend Free Tier provides 100 emails/day. Can migrate to Supabase Edge Functions + email provider later if needed._
 
-- [ ] T055 [P] Create trend calculation utilities in `src/utils/trends.ts`
-- [ ] T056 Update metrics service to fetch historical data
-- [ ] T057 Create useTrends hook in `src/hooks/useTrends.ts`
+## Phase 3.18: Trend Calculations (T066-T068)
 
-## Phase 3.18: Sparkline Charts (T058-T062)
+- [ ] T066 [P] Create trend calculation utilities in `src/utils/trends.ts`
+- [ ] T067 Update metrics service to fetch historical data
+- [ ] T068 Create useTrends hook in `src/hooks/useTrends.ts`
 
-- [ ] T058 Install chart library: `npm install react-sparklines`
-- [ ] T059 [P] Create SparklineChart component in `src/components/charts/SparklineChart.tsx`
-- [ ] T060 Add sparklines to RepoCard component
-- [ ] T061 Create TrendingSection component in `src/components/TrendingSection.tsx`
-- [ ] T062 Add sort by growth rate option to Dashboard
+## Phase 3.19: Sparkline Charts (T069-T073)
+
+- [ ] T069 Install chart library: `npm install react-sparklines`
+- [ ] T070 [P] Create SparklineChart component in `src/components/charts/SparklineChart.tsx`
+- [ ] T071 Add sparklines to RepoCard component
+- [ ] T072 Create TrendingSection component in `src/components/TrendingSection.tsx`
+- [ ] T073 Add sort by growth rate option to RepositoryList
 
 ---
 
-# MVP SLICE 5: Full Analytics (T063-T080)
+# MVP SLICE 5: Full Analytics (T074-T091)
 
 _Goal: Detailed analytics and complete features_
 
-## Phase 3.19: Full Charts (T063-T067)
+## Phase 3.20: Full Charts (T074-T078)
 
-- [ ] T063 Install Chart.js: `npm install chart.js react-chartjs-2`
-- [ ] T064 [P] Create LineChart component in `src/components/charts/LineChart.tsx`
-- [ ] T065 [P] Create BarChart component in `src/components/charts/BarChart.tsx`
-- [ ] T066 Create MetricsModal component in `src/components/MetricsModal.tsx`
-- [ ] T067 Add "View Details" action to RepoCard
+- [ ] T074 Install Chart.js: `npm install chart.js react-chartjs-2`
+- [ ] T075 [P] Create LineChart component in `src/components/charts/LineChart.tsx`
+- [ ] T076 [P] Create BarChart component in `src/components/charts/BarChart.tsx`
+- [ ] T077 Create MetricsModal component in `src/components/MetricsModal.tsx`
+- [ ] T078 Add "View Details" action to RepoCard
 
-## Phase 3.20: Advanced Metrics (T068-T071)
+## Phase 3.21: Advanced Metrics (T079-T082)
 
-- [ ] T068 Create `api/repos/[id]/metrics.ts` for detailed metrics
-- [ ] T069 Add release timeline to MetricsModal
-- [ ] T070 Calculate and display issue velocity
-- [ ] T071 Create useDetailedMetrics hook
+- [ ] T079 Create `api/repos/[id]/metrics.ts` for detailed metrics
+- [ ] T080 Add release timeline to MetricsModal
+- [ ] T081 Calculate and display issue velocity
+- [ ] T082 Create useDetailedMetrics hook
 
-## Phase 3.21: Data Export (T072-T074)
+## Phase 3.22: Data Export (T083-T085)
 
-- [ ] T072 [P] Create CSV export utility in `src/utils/export.ts`
-- [ ] T073 Add export button to Dashboard
-- [ ] T074 Create `api/export.ts` endpoint for data export
+- [ ] T083 [P] Create CSV export utility in `src/utils/export.ts`
+- [ ] T084 Add export button to radar views
+- [ ] T085 Create `api/export.ts` endpoint for data export
 
-## Phase 3.22: Account Management (T075-T077)
+## Phase 3.23: Account Management (T086-T088)
 
-- [ ] T075 Create AccountSettings page in `src/pages/AccountSettings.tsx`
-- [ ] T076 Create `api/user/delete.ts` endpoint for account deletion
-- [ ] T077 Implement soft delete with 30-day recovery window
+- [ ] T086 Create AccountSettings page in `src/pages/AccountSettings.tsx`
+- [ ] T087 Create `api/user/delete.ts` endpoint for account deletion
+- [ ] T088 Implement soft delete with 30-day recovery window
 
-## Phase 3.23: PWA & Polish (T078-T080)
+## Phase 3.24: PWA & Polish (T089-T091)
 
-- [ ] T078 [P] Create PWA manifest in `public/manifest.json`
-- [ ] T079 [P] Add service worker for offline support
-- [ ] T080 Performance optimization: implement virtual scrolling for large lists
+- [ ] T089 [P] Create PWA manifest in `public/manifest.json`
+- [ ] T090 [P] Add service worker for offline support
+- [ ] T091 Performance optimization: implement virtual scrolling for large lists
 
-## Phase 3.24 Test Architecture Restructuring (T081-T084)
+## Phase 3.25: Test Architecture Restructuring (T092-T095)
 
 _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 
@@ -232,10 +252,10 @@ _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 
 **Solution**: Three-tier test structure:
 
-- [ ] T081 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
-- [ ] T082 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, star/unstar) to integration tests, keep only Dashboard-specific unit logic
-- [ ] T083 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
-- [ ] T084 Update test documentation in CLAUDE.md with new test tier guidelines
+- [ ] T092 Create integration test directory structure in `src/__integration__/` or `tests/integration/`
+- [ ] T093 Refactor `Dashboard.test.tsx`: Extract interaction tests (search, filter, radar actions) to integration tests, keep only Dashboard-specific unit logic
+- [ ] T094 Refactor `RepositoryList.test.tsx`: Extract interaction tests to integration tests
+- [ ] T095 Update test documentation in CLAUDE.md with new test tier guidelines
 
 **Test tiers after refactor**:
 
@@ -316,6 +336,9 @@ graph TD
 
 ---
 
-**Total Tasks**: 80
-**Slice 1 (MVP)**: 20 tasks (~3-4 days)
-**Full Implementation**: 80 tasks (~18-20 days)
+**Total Tasks**: 83
+**Slice 1 (MVP)**: 20 tasks
+**Slice 2 (Live Metrics)**: 14 tasks (includes caching config)
+**Slice 3 (Navigation & Radar)**: 24 tasks (includes cache migration)
+**Slice 4 (Trend Detection)**: 18 tasks
+**Slice 5 (Full Analytics)**: 18 tasks

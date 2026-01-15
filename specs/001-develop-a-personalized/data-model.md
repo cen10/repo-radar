@@ -11,12 +11,14 @@ This document defines the data entities, relationships, and validation rules for
 
 ```mermaid
 erDiagram
-    User ||--o{ UserPreference : has
+    User ||--o{ Radar : owns
+    Radar ||--o{ RadarRepo : contains
+    RadarRepo }o--|| Repository : references
     User ||--o{ Repository : stars
     Repository ||--o{ StarMetric : tracks
     Repository ||--o{ Release : has
     Repository ||--o{ IssueMetric : measures
-    UserPreference }o--|| Repository : references
+    Repository ||--o| RepoCache : caches
 
     User {
         uuid id PK
@@ -27,6 +29,21 @@ erDiagram
         timestamp last_sync
         timestamp created_at
         timestamp deleted_at
+    }
+
+    Radar {
+        uuid id PK
+        uuid user_id FK
+        string name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    RadarRepo {
+        uuid id PK
+        uuid radar_id FK
+        bigint github_repo_id
+        timestamp added_at
     }
 
     Repository {
@@ -71,14 +88,12 @@ erDiagram
         timestamp recorded_at
     }
 
-    UserPreference {
-        uuid id PK
-        uuid user_id FK
-        uuid repository_id FK
-        boolean is_following
-        int display_order
-        timestamp created_at
-        timestamp updated_at
+    RepoCache {
+        bigint github_repo_id PK
+        jsonb cached_data
+        string etag
+        timestamp fetched_at
+        timestamp expires_at
     }
 ```
 
@@ -155,7 +170,7 @@ interface StarMetric {
 - `star_count`: Non-negative integer
 - `growth_rate`: Calculated as `(current - previous) / previous * 100`
 - `is_spike`: True if star_count >= 100 AND growth_rate >= 25% AND daily_change >= 50
-- One record per repository per hour (deduped)
+- One record per repository per day (deduped)
 
 ### Release
 
@@ -202,29 +217,75 @@ interface IssueMetric {
 - All counts are non-negative integers
 - `total_count` = `open_count` + `closed_count`
 - `velocity`: Calculated from last 7 days of closed issues
-- One record per repository per hour
+- One record per repository per day
 
-### UserPreference
+### RepoCache
 
-User-specific repository preferences (follow/unfollow).
+Server-side cache for GitHub API responses, shared across all users.
 
 ```typescript
-interface UserPreference {
+interface RepoCache {
+  github_repo_id: number; // GitHub's numeric repository ID (PK)
+  cached_data: object; // Full GitHub API response (repo details, issues, etc.)
+  etag?: string; // GitHub ETag for conditional requests
+  fetched_at: Date; // When this data was fetched
+  expires_at: Date; // When this cache entry should be considered stale
+}
+```
+
+**Validation Rules**:
+- `github_repo_id`: Required, unique (primary key)
+- `cached_data`: Required, valid JSON object
+- `etag`: Optional, used for conditional GitHub API requests
+- `expires_at`: Typically `fetched_at + 1 hour` for detail pages, `fetched_at + 24 hours` for list data
+
+**Design Notes**:
+- This is a shared cache - all users benefit from cached data for popular repos
+- The daily sync job updates cache entries for all repos on at least one radar
+- Manual refresh bypasses the cache and updates it with fresh data
+- ETags enable conditional requests (304 Not Modified) to minimize rate limit usage
+
+### Radar
+
+A user-created collection for organizing repositories to actively monitor.
+
+```typescript
+interface Radar {
   id: string; // UUID
-  user_id: string; // FK to User
-  repository_id: string; // FK to Repository
-  is_following: boolean;
-  display_order?: number; // Custom sort order
-  notification_enabled: boolean;
+  user_id: string; // FK to User (via Supabase auth.uid())
+  name: string; // User-defined name for the radar
   created_at: Date;
   updated_at: Date;
 }
 ```
 
 **Validation Rules**:
-- Unique constraint on `(user_id, repository_id)`
-- `is_following`: Default true for newly starred repos
-- `display_order`: Optional, for custom sorting
+- `name`: Required, 1-50 characters
+- Maximum 5 radars per user (enforced at application level)
+- `user_id`: Maps to Supabase auth.uid()
+
+### RadarRepo
+
+The association between a radar and a repository.
+
+```typescript
+interface RadarRepo {
+  id: string; // UUID
+  radar_id: string; // FK to Radar
+  github_repo_id: number; // GitHub's numeric repository ID (stable across renames)
+  added_at: Date;
+}
+```
+
+**Validation Rules**:
+- Unique constraint on `(radar_id, github_repo_id)`
+- Maximum 25 repos per radar (enforced at application level)
+- Maximum 50 total repos across all user's radars (enforced at application level)
+- A repository can belong to multiple radars (same user or different users)
+
+**Design Notes**:
+- Uses GitHub's numeric `id` rather than a local Repository UUID to avoid needing to sync all repos to our database
+- Repository metadata is fetched from GitHub API on-demand, not stored locally (except for repos on radars where we track metrics)
 
 ## State Transitions
 
@@ -262,21 +323,36 @@ CREATE INDEX idx_star_metrics_repo_time ON star_metrics(repository_id, recorded_
 CREATE INDEX idx_star_metrics_spike ON star_metrics(is_spike) WHERE is_spike = true;
 CREATE INDEX idx_issue_metrics_repo_time ON issue_metrics(repository_id, recorded_at DESC);
 
--- User preferences
-CREATE UNIQUE INDEX idx_user_prefs_unique ON user_preferences(user_id, repository_id);
-CREATE INDEX idx_user_prefs_following ON user_preferences(user_id, is_following);
+-- Radars
+CREATE INDEX idx_radars_user ON radars(user_id);
+CREATE UNIQUE INDEX idx_radar_repos_unique ON radar_repos(radar_id, github_repo_id);
+CREATE INDEX idx_radar_repos_github_id ON radar_repos(github_repo_id);
 
 -- Releases
 CREATE INDEX idx_releases_repo_published ON releases(repository_id, published_at DESC);
+
+-- Cache
+CREATE INDEX idx_repo_cache_expires ON repo_cache(expires_at);
 ```
 
 ## Row Level Security Policies
 
 ```sql
--- Users can only see their own data
-ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users manage own preferences" ON user_preferences
+-- Users can only manage their own radars
+ALTER TABLE radars ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own radars" ON radars
   FOR ALL USING (auth.uid() = user_id);
+
+-- Users can only manage repos in their own radars
+ALTER TABLE radar_repos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own radar repos" ON radar_repos
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM radars
+      WHERE radars.id = radar_repos.radar_id
+      AND radars.user_id = auth.uid()
+    )
+  );
 
 -- Public repository data is visible to all authenticated users
 ALTER TABLE repositories ENABLE ROW LEVEL SECURITY;
@@ -293,27 +369,42 @@ CREATE POLICY "Authenticated users see metrics" ON star_metrics
       AND auth.role() = 'authenticated'
     )
   );
+
+-- Cache is readable by all authenticated users, writable by service role only
+ALTER TABLE repo_cache ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users read cache" ON repo_cache
+  FOR SELECT USING (auth.role() = 'authenticated');
+-- Note: INSERT/UPDATE/DELETE handled by service role (bypasses RLS)
 ```
 
 ## Data Retention
 
-- **StarMetric**: Keep hourly for 7 days, daily for 90 days
-- **IssueMetric**: Keep hourly for 7 days, daily for 90 days
+- **StarMetric**: Daily snapshots, keep for 90 days
+- **IssueMetric**: Daily snapshots, keep for 90 days
 - **Release**: Keep indefinitely (low volume)
 - **User**: Soft delete immediately, hard delete after 30 days
-- **UserPreference**: Delete with user account
+- **Radar**: Delete with user account (cascade to RadarRepo)
+- **RadarRepo**: Delete when radar is deleted or when explicitly removed
+- **Repository**: Keep for 90-day grace period after last radar reference is removed, then delete with associated metrics
+- **RepoCache**: Entries expire based on `expires_at`; stale entries cleaned up by scheduled job (keep expired entries for 7 days as fallback for rate-limited scenarios)
+
+**Rationale for daily snapshots**: Hourly collection doesn't scale well with GitHub API rate limits (5,000 req/hour authenticated). Daily snapshots allow tracking tens of thousands of repos within limits, while still providing meaningful day-over-day and weekly trend data. Can add tiered hourly collection for "hot" repos in the future if needed.
 
 ## Migration Strategy
 
 Initial schema creation with versioned migrations:
 
 ```sql
--- 001_create_users.sql
+-- 001_create_radars.sql (includes radars and radar_repos tables)
 -- 002_create_repositories.sql
 -- 003_create_metrics.sql
--- 004_create_preferences.sql
+-- 004_create_repo_cache.sql
 -- 005_create_indexes.sql
 -- 006_enable_rls.sql
 ```
 
 Each migration is idempotent and includes rollback procedures.
+
+## Related Documents
+
+- **[ux-spec.md](./ux-spec.md)**: UX design specification detailing how radars are presented and managed in the UI

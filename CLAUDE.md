@@ -78,7 +78,7 @@ npm run format:check # Check formatting
 - GitHub API rate limit: 5000 req/hour authenticated
 - Data retention: 90 days
 - Pagination: 100 repos per page
-- Hourly data refresh cycle
+- Daily data refresh cycle (hourly doesn't scale with GitHub API limits)
 
 ## Performance Debugging
 
@@ -156,7 +156,7 @@ Apply this pattern in any test file that uses the logger or tests components tha
 
 ### React Query Cache Invalidation Testing
 
-When testing actions that modify data and should invalidate caches (e.g., star/unstar, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
+When testing actions that modify data and should invalidate caches (e.g., radar add/remove, create/delete), always verify that ALL relevant query caches are invalidated. Missing cache invalidations cause stale UI state.
 
 ```typescript
 // Create queryClient outside render so you can spy on it

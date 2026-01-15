@@ -29,7 +29,13 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Build a personalized GitHub repository momentum dashboard that consolidates star growth, release activity, and issue volume across starred repositories. The dashboard enables developers to spot trending projects and make informed decisions about tool adoption. Features direct GitHub star management with custom tagging system for organization. Technical approach uses React with Vite, TanStack Query for data fetching, Supabase for persistence, and serverless functions for periodic GitHub API syncing.
+Build a personalized GitHub repository momentum dashboard that consolidates star growth, release activity, and issue volume across starred repositories. The dashboard enables developers to spot trending projects and make informed decisions about tool adoption. Features direct GitHub star management with a "radar" system for organizing repositories to actively monitor. Technical approach uses React with Vite, TanStack Query for data fetching, Supabase for persistence, and serverless functions for periodic GitHub API syncing.
+
+**Key UX Decisions** (see [ux-spec.md](./ux-spec.md) for details):
+- Sidebar navigation with My Stars, Explore, and user-created Radars
+- Radars are named collections (max 5 per user, 25 repos per radar, 50 total)
+- Repository detail pages at `/repo/{github-id}`
+- Collapsible search with ⌘K shortcut on My Stars and Radar views
 
 ## MVP Slices - Iterative Value Delivery
 
@@ -49,18 +55,21 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 - Manual refresh button
 - Last updated timestamp
 
-### 🚲 Slice 3: Star Management & Tags (3-4 days)
-**Value**: Organize and manage your starred repos
-- Star/unstar repos directly from the app (syncs with GitHub)
-- Custom tag system for organizing repos (e.g., "JavaScript", "Learning", "Want to contribute")
-- Tag management UI (create, edit, delete, assign to repos)
-- Filter views: "All Stars", by tag, or untagged
-- Store tag preferences in Supabase
-- Basic empty states and pagination
+### 🚲 Slice 3: Navigation & Radar Feature (4-5 days)
+**Value**: Organize repos you want to actively monitor
+- Sidebar navigation with My Stars, Explore, and Radars
+- Responsive layout (collapsible sidebar, mobile drawer)
+- Radar CRUD: create, rename, delete radars (max 5)
+- Add/remove repos to radars (max 25 per radar, 50 total)
+- Radar dropdown on cards (desktop) / bottom sheet (mobile)
+- Repository detail page at `/repo/{github-id}`
+- Collapsible search with ⌘K on My Stars and Radar views
+- Radar icon animation (sweep effect)
+- Store radar data in Supabase with RLS
 
 ### 🏍️ Slice 4: Trend Detection (4-5 days)
 **Value**: Spot trending repos automatically
-- Start collecting historical data (hourly snapshots)
+- Start collecting historical data (daily snapshots)
 - 7-day trend calculation
 - "Trending" section highlighting rapid growth
 - Simple sparkline charts
@@ -83,7 +92,7 @@ Build a personalized GitHub repository momentum dashboard that consolidates star
 **Target Platform**: Progressive Web App, responsive design, mobile-first
 **Project Type**: web - frontend React SPA + serverless backend functions
 **Performance Goals**: < 3 second initial load, < 200ms interaction response, 60 FPS animations
-**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, requires `public_repo` OAuth scope for star/unstar
+**Constraints**: GitHub API rate limits (5000 req/hour authenticated), 90-day data retention, minimal OAuth scopes (`read:user`, `user:email`)
 **Scale/Scope**: Support up to 500 starred repos per user with efficient tag filtering, paginated at 100 items per view
 
 ## Constitution Check
@@ -192,8 +201,8 @@ tests/
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context**:
    - Supabase Row Level Security for multi-tenant data
-   - GitHub App vs OAuth App trade-offs (need `public_repo` scope for star/unstar)
-   - GitHub API star/unstar endpoints and rate limit implications
+   - GitHub App vs OAuth App trade-offs for read-only access
+   - GitHub API rate limit implications for read-only operations
    - Serverless function scheduling strategies
    - Chart.js vs alternatives for time-series visualization
    - Optimal caching strategy for GitHub API responses
@@ -202,7 +211,7 @@ tests/
 2. **Generate and dispatch research agents**:
    ```
    Task: "Research Supabase RLS patterns for user-specific data isolation"
-   Task: "Research GitHub API star/unstar endpoints and OAuth scopes needed"
+   Task: "Research minimal OAuth scopes for read-only GitHub API access"
    Task: "Find best practices for GitHub API rate limit management"
    Task: "Research serverless cron patterns on Vercel/Netlify"
    Task: "Evaluate Chart.js performance with 500+ data points"
@@ -218,10 +227,10 @@ tests/
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
-   - User (GitHub auth, preferences)
+   - User (GitHub auth)
    - Repository (GitHub data, metrics, star status)
-   - RepoTag (user-defined tags for organizing repos)
-   - RepoTagging (many-to-many relationship between repos and tags)
+   - Radar (user-created collections for monitoring)
+   - RadarRepo (many-to-many relationship between radars and repos)
    - StarMetric (time-series star counts)
    - Release (version history)
    - IssueMetric (issue statistics)
@@ -230,28 +239,27 @@ tests/
    - POST /api/auth/github - OAuth flow
    - GET /api/user/repos - Fetch starred repositories
    - GET /api/repos/:id/metrics - Get repository metrics
-   - PUT /api/repos/:id/star - Star/unstar repository (syncs with GitHub)
-   - GET /api/user/tags - Get user's custom tags
-   - POST /api/user/tags - Create new tag
-   - PUT /api/user/tags/:id - Update tag
-   - DELETE /api/user/tags/:id - Delete tag
-   - PUT /api/repos/:id/tags - Assign/remove tags from repository
+   - GET /api/radars - Get user's radars
+   - POST /api/radars - Create new radar
+   - PUT /api/radars/:id - Update radar (rename)
+   - DELETE /api/radars/:id - Delete radar
+   - POST /api/radars/:id/repos - Add repo to radar
+   - DELETE /api/radars/:id/repos/:repoId - Remove repo from radar
    - POST /api/sync/trigger - Manual refresh trigger
 
 3. **Generate contract tests** from contracts:
    - Auth flow contract tests
    - Data sync contract tests
-   - Star/unstar GitHub API integration tests
-   - Tag management contract tests
-   - Repo-tag assignment tests
+   - Radar CRUD contract tests
+   - Radar-repo assignment tests
 
 4. **Extract test scenarios** from user stories:
    - Dashboard loads with starred repos
    - Rapid growth repos highlighted
-   - Star/unstar syncs with GitHub
-   - Tag creation and assignment works
-   - Filter by tags displays correct repos
-   - Detail view expands correctly
+   - Radar creation, rename, and deletion works
+   - Add/remove repos from radars works
+   - Radar view displays correct repos
+   - Detail page shows repo info and radar membership
 
 5. **Update CLAUDE.md incrementally**
 
@@ -278,20 +286,24 @@ tests/
 - Refresh functionality
 - Loading states and error handling
 
-**Slice 3 Tasks (Star Management & Tags)**:
-- GitHub star/unstar API integration
-- Supabase schema for tags and repo-tag relationships
-- Tag management API endpoints (CRUD)
-- Tag assignment/removal for repositories
-- Tag management UI components
-- Filter controls (All Stars, by tag, untagged)
-- Star/unstar button in RepoCard with GitHub sync
-- Confirmation dialogs for destructive actions
-- Empty state components and pagination
+**Slice 3 Tasks (Navigation & Radar Feature)**:
+- Sidebar component with responsive behavior
+- Mobile drawer/hamburger menu
+- Route structure (/stars, /explore, /radar/:id, /repo/:id)
+- Supabase schema for radars and radar_repos
+- Radar CRUD operations (create, rename, delete)
+- Add/remove repos to radars
+- Radar dropdown component (desktop)
+- Bottom sheet component (mobile)
+- Repository detail page
+- Collapsible search with ⌘K shortcut
+- Radar icon with sweep animation
+- Empty states for radars
+- Limit handling UI (5 radars, 25 repos, 50 total)
 
 **Slice 4 Tasks (Trend Detection)**:
 - Historical data schema
-- Cron job for hourly snapshots
+- Cron job for daily snapshots
 - Trend calculation utilities
 - Sparkline chart component
 - Trending repos section
