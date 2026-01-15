@@ -235,6 +235,25 @@ describe('formatters', () => {
       expect(formatCompactNumber(5500000)).toBe('5.5M');
       expect(formatCompactNumber(10000000)).toBe('10M');
     });
+
+    it('handles negative numbers under 1000', () => {
+      expect(formatCompactNumber(-1)).toBe('-1');
+      expect(formatCompactNumber(-500)).toBe('-500');
+      expect(formatCompactNumber(-999)).toBe('-999');
+    });
+
+    it('handles negative thousands', () => {
+      expect(formatCompactNumber(-1000)).toBe('-1k');
+      expect(formatCompactNumber(-5000)).toBe('-5k');
+      expect(formatCompactNumber(-1234)).toBe('-1.2k');
+      expect(formatCompactNumber(-99999)).toBe('-100k');
+    });
+
+    it('handles negative millions', () => {
+      expect(formatCompactNumber(-1000000)).toBe('-1M');
+      expect(formatCompactNumber(-1234567)).toBe('-1.2M');
+      expect(formatCompactNumber(-5500000)).toBe('-5.5M');
+    });
   });
 
   describe('formatGrowthRate', () => {

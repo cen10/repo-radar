@@ -67,16 +67,19 @@ export function formatRelativeTime(dateString: string): string {
  * formatCompactNumber(500)     // returns "500"
  */
 export function formatCompactNumber(value: number): string {
-  if (value < 1000) {
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (absValue < 1000) {
     return value.toString();
-  } else if (value < 1000000) {
-    const thousands = value / 1000;
+  } else if (absValue < 1000000) {
+    const thousands = absValue / 1000;
     const rounded = Math.round(thousands * 10) / 10;
-    return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}k`;
+    return `${sign}${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}k`;
   } else {
-    const millions = value / 1000000;
+    const millions = absValue / 1000000;
     const rounded = Math.round(millions * 10) / 10;
-    return `${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}M`;
+    return `${sign}${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}M`;
   }
 }
 
