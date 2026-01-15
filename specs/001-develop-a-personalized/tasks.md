@@ -75,19 +75,19 @@ _Goal: Basic dashboard showing starred repositories_
 
 - [x] T012 Create Login page component in `src/pages/Login.tsx` with GitHub OAuth button
 - [x] T013 Create Header component in `src/components/Header.tsx` with user info and logout
-- [ ] T014 Create RepoCard component in `src/components/RepoCard.tsx` to display repository info
-- [ ] T015 Create Dashboard page in `src/pages/Dashboard.tsx` with repository list
+- [x] T014 Create RepoCard component in `src/components/RepoCard.tsx` to display repository info
+- [x] T015 Create Dashboard page in `src/pages/Dashboard.tsx` with repository list
 - [ ] T016 [P] Create Loading component in `src/components/Loading.tsx` for loading states
 
 ## Phase 3.5: API Integration (T017-T019)
 
-- [ ] T017 Create GitHub service in `src/services/github.ts` to fetch starred repositories
+- [x] T017 Create GitHub service in `src/services/github.ts` to fetch starred repositories
 - [ ] T018 Create serverless function in `api/starred.ts` to proxy GitHub API calls
-- [ ] T019 Set up React Query hooks in `src/hooks/useRepositories.ts` for data fetching
+- [x] T019 Set up React Query hooks in `src/hooks/useRepositories.ts` for data fetching
 
 ## Phase 3.6: Routing & Polish (T020)
 
-- [ ] T020 Configure React Router in `src/App.tsx` with Login and Dashboard routes
+- [x] T020 Configure React Router in `src/App.tsx` with Login and Dashboard routes
 
 ---
 
