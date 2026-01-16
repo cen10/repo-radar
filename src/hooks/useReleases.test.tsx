@@ -158,7 +158,7 @@ describe('useReleases', () => {
     expect(github.fetchRepositoryReleases).not.toHaveBeenCalled();
   });
 
-  it('always fetches 10 releases', async () => {
+  it('calls fetchRepositoryReleases with correct params', async () => {
     vi.mocked(github.fetchRepositoryReleases).mockResolvedValue([]);
 
     renderHook(() => useReleases({ token: TEST_TOKEN, owner: 'owner', repo: 'repo' }), {
@@ -166,7 +166,7 @@ describe('useReleases', () => {
     });
 
     await waitFor(() => {
-      expect(github.fetchRepositoryReleases).toHaveBeenCalledWith(TEST_TOKEN, 'owner', 'repo', 10);
+      expect(github.fetchRepositoryReleases).toHaveBeenCalledWith(TEST_TOKEN, 'owner', 'repo');
     });
   });
 

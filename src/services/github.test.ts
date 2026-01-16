@@ -539,17 +539,17 @@ describe('GitHub API Service', () => {
       });
     });
 
-    it('should handle custom perPage parameter', async () => {
+    it('should always fetch 10 releases', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => [],
         headers: new Headers(),
       });
 
-      await fetchRepositoryReleases(testToken, 'owner', 'repo', 5);
+      await fetchRepositoryReleases(testToken, 'owner', 'repo');
 
       const url = new URL(mockFetch.mock.calls[0][0]);
-      expect(url.searchParams.get('per_page')).toBe('5');
+      expect(url.searchParams.get('per_page')).toBe('10');
     });
 
     it('should handle 401 authentication error', async () => {

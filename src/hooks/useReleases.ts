@@ -40,7 +40,7 @@ export function useReleases({
       if (!token) {
         throw new Error('Token required');
       }
-      return fetchRepositoryReleases(token, owner, repo, 10);
+      return fetchRepositoryReleases(token, owner, repo);
     },
     enabled: enabled && !!token && !!owner && !!repo,
   });

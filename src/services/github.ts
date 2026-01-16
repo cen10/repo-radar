@@ -641,22 +641,18 @@ interface GitHubRelease {
 
 /**
  * Fetch releases for a repository (lazy-loaded on detail page)
+ * Always fetches 10 releases - callers can slice if fewer needed.
  * @param token - GitHub access token
  * @param owner - Repository owner
  * @param repo - Repository name
- * @param perPage - Number of releases to fetch (default 10)
  * @returns Array of releases, newest first
  */
 export async function fetchRepositoryReleases(
   token: string,
   owner: string,
-  repo: string,
-  perPage = 10
+  repo: string
 ): Promise<Release[]> {
-  const params = new URLSearchParams({
-    per_page: perPage.toString(),
-  });
-  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases?${params}`;
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases?per_page=10`;
 
   try {
     const response = await fetch(url, {
