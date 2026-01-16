@@ -204,35 +204,6 @@ export async function getAllRadarRepoIds(): Promise<Set<number>> {
 }
 
 /**
- * Gets a map of radar IDs for each GitHub repo ID (for repos that are in radars)
- * Returns Map<github_repo_id, radar_id[]>
- */
-export async function getRepoRadarMap(): Promise<Map<number, string[]>> {
-  const { data, error } = await supabase.from('radars').select(
-    `
-      id,
-      radar_repos(github_repo_id)
-    `
-  );
-
-  if (error) {
-    logger.error('Failed to fetch repo radar map', error);
-    throw new Error('Failed to fetch repo radar map');
-  }
-
-  const repoRadarMap = new Map<number, string[]>();
-  for (const radar of data || []) {
-    for (const repo of radar.radar_repos as unknown as { github_repo_id: number }[]) {
-      const existing = repoRadarMap.get(repo.github_repo_id) || [];
-      existing.push(radar.id);
-      repoRadarMap.set(repo.github_repo_id, existing);
-    }
-  }
-
-  return repoRadarMap;
-}
-
-/**
  * Adds a repository to a radar
  * Enforces limits: max repos per radar and max total repos
  */
