@@ -508,60 +508,6 @@ export async function searchStarredRepositories(
 }
 
 /**
- * Star a repository on GitHub
- * @param token - GitHub access token
- * @param owner - Repository owner
- * @param repo - Repository name
- */
-export async function starRepository(token: string, owner: string, repo: string): Promise<void> {
-  const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-  });
-
-  if (!response.ok && response.status !== 204) {
-    if (response.status === 404) {
-      throw new Error('Repository not found');
-    }
-    if (response.status === 403) {
-      throw new Error('Permission denied to star this repository');
-    }
-    throw new Error(`Failed to star repository: ${response.status} ${response.statusText}`);
-  }
-}
-
-/**
- * Unstar a repository on GitHub
- * @param token - GitHub access token
- * @param owner - Repository owner
- * @param repo - Repository name
- */
-export async function unstarRepository(token: string, owner: string, repo: string): Promise<void> {
-  const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-  });
-
-  if (!response.ok && response.status !== 204) {
-    if (response.status === 404) {
-      throw new Error('Repository not found or not starred');
-    }
-    if (response.status === 403) {
-      throw new Error('Permission denied to unstar this repository');
-    }
-    throw new Error(`Failed to unstar repository: ${response.status} ${response.statusText}`);
-  }
-}
-
-/**
  * Check if a repository is starred by the authenticated user
  * @param token - GitHub access token (returns false if null)
  * @param owner - Repository owner
