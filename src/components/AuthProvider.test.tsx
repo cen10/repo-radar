@@ -13,17 +13,7 @@ import {
   resetAuthMockState,
 } from '../test/mocks/supabase';
 import type { GetSessionResponse } from '../test/mocks/supabase';
-import type { logger } from '../utils/logger';
-
-// Mock the logger to silence test output
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn<typeof logger.error>(),
-    warn: vi.fn<typeof logger.warn>(),
-    info: vi.fn<typeof logger.info>(),
-    debug: vi.fn<typeof logger.debug>(),
-  },
-}));
+import { mockLogger } from '../test/mocks/logger';
 
 // Mock github-token service to control stored token behavior
 vi.mock('../services/github-token', () => ({
@@ -536,8 +526,6 @@ describe('AuthProvider', () => {
 
   describe('User mapping fallback scenarios', () => {
     it('should fall back to email when user_name is missing and log a warning', async () => {
-      const { logger } = await import('../utils/logger');
-
       const sessionWithoutUsername = {
         ...mockSession,
         user: {
@@ -567,7 +555,7 @@ describe('AuthProvider', () => {
       expect(screen.getByText(/user: johndoe@example.com/i)).toBeInTheDocument();
 
       // Should log a warning with debugging context
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         'GitHub OAuth response missing user_name, falling back to email',
         expect.objectContaining({
           userId: mockSession.user.id,
@@ -578,8 +566,6 @@ describe('AuthProvider', () => {
     });
 
     it('should fall back to email on auth state change when user_name is missing', async () => {
-      const { logger } = await import('../utils/logger');
-
       const sessionWithoutUsername = {
         ...mockSession,
         user: {
@@ -610,7 +596,7 @@ describe('AuthProvider', () => {
       });
 
       // Should log a warning
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         'GitHub OAuth response missing user_name, falling back to email',
         expect.objectContaining({
           email: 'janedoe@example.com',

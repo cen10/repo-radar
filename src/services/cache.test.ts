@@ -9,16 +9,6 @@ import {
   CACHE_CONFIG,
 } from './cache';
 
-// Mock logger
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 // Mock Supabase client
 const mockFrom = vi.fn();
 

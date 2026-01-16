@@ -10,16 +10,6 @@ import {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock logger
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 // Helper to create mock GitHub API starred repo response (star+json format)
 interface MockStarredRepoOptions {
   id?: number;

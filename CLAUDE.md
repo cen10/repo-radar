@@ -136,23 +136,22 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 
 ### Logger Mocking Pattern
 
-To prevent stderr noise in tests, always mock the logger module in test files:
+The logger is mocked globally in `src/test/setup.ts`, so tests automatically have console output silenced. No boilerplate is needed for most test files.
+
+**When you need to assert on logger calls**, import the mock:
 
 ```typescript
-import { logger } from '../utils/logger';
+import { mockLogger, resetLoggerMock } from '../test/mocks/logger';
 
-// Mock the logger to silence test output
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+beforeEach(() => {
+  resetLoggerMock(); // Start each test with clean mock
+});
+
+it('logs warning on invalid input', () => {
+  doSomething();
+  expect(mockLogger.warn).toHaveBeenCalledWith('message', expect.any(Object));
+});
 ```
-
-Apply this pattern in any test file that uses the logger or tests components that internally use the logger.
 
 ### React Query Cache Invalidation Testing
 

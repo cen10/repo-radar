@@ -6,16 +6,6 @@ import type { AuthContextType } from '../contexts/auth-context';
 
 vi.mock('../hooks/use-auth');
 
-// Mock the logger to silence test output
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 const mockUser = {
   id: '123',
   email: 'test@example.com',
