@@ -158,15 +158,15 @@ describe('useReleases', () => {
     expect(github.fetchRepositoryReleases).not.toHaveBeenCalled();
   });
 
-  it('passes custom perPage to fetch function', async () => {
+  it('always fetches 10 releases', async () => {
     vi.mocked(github.fetchRepositoryReleases).mockResolvedValue([]);
 
-    renderHook(() => useReleases({ token: TEST_TOKEN, owner: 'owner', repo: 'repo', perPage: 5 }), {
+    renderHook(() => useReleases({ token: TEST_TOKEN, owner: 'owner', repo: 'repo' }), {
       wrapper,
     });
 
     await waitFor(() => {
-      expect(github.fetchRepositoryReleases).toHaveBeenCalledWith(TEST_TOKEN, 'owner', 'repo', 5);
+      expect(github.fetchRepositoryReleases).toHaveBeenCalledWith(TEST_TOKEN, 'owner', 'repo', 10);
     });
   });
 
