@@ -16,8 +16,6 @@ interface RepositoryListProps {
   isFetchingMore: boolean;
   hasMore: boolean;
   error: Error | null;
-  onStar: (repo: Repository) => void;
-  onUnstar: (repo: Repository) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearchSubmit: (query: string) => void;
@@ -37,8 +35,6 @@ const RepositoryList = ({
   isFetchingMore,
   hasMore,
   error,
-  onStar,
-  onUnstar,
   searchQuery,
   onSearchChange,
   onSearchSubmit,
@@ -298,17 +294,7 @@ const RepositoryList = ({
           </div>
         )}
         {repositories.map((repo) => (
-          <RepoCard
-            key={repo.id}
-            repository={repo}
-            onToggleStar={() => {
-              if (repo.is_starred) {
-                onUnstar(repo);
-              } else {
-                onStar(repo);
-              }
-            }}
-          />
+          <RepoCard key={repo.id} repository={repo} />
         ))}
       </div>
 

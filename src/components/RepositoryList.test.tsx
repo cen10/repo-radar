@@ -24,21 +24,16 @@ vi.mock('../hooks/useIntersectionObserver', () => ({
 
 interface MockRepoCardProps {
   repository: Repository & { is_following?: boolean };
-  onToggleStar: () => void;
 }
 
 // Mock RepoCard component
 vi.mock('./RepoCard', () => ({
-  RepoCard: ({ repository, onToggleStar }: MockRepoCardProps) => (
+  RepoCard: ({ repository }: MockRepoCardProps) => (
     <div data-testid={`repo-card-${repository.id}`}>
       <h3>{repository.name}</h3>
       <p>{repository.description}</p>
       <span>{repository.stargazers_count} stars</span>
       <span>{repository.open_issues_count} issues</span>
-      <span>{repository.is_starred ? 'Starred' : 'Not starred'}</span>
-      {onToggleStar && (
-        <button onClick={onToggleStar}>{repository.is_starred ? 'Unstar' : 'Star'}</button>
-      )}
     </div>
   ),
 }));
@@ -70,8 +65,6 @@ const defaultProps = {
   isFetchingMore: false,
   hasMore: false,
   error: null,
-  onStar: vi.fn(),
-  onUnstar: vi.fn(),
   searchQuery: '',
   onSearchChange: vi.fn(),
   onSearchSubmit: vi.fn(),
@@ -169,62 +162,6 @@ describe('RepositoryList', () => {
       expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-3')).toBeInTheDocument();
-    });
-
-    it('passes starred state correctly to repo cards', () => {
-      const repos = [
-        createMockRepository({ id: 1, name: 'repo-1', is_starred: true }),
-        createMockRepository({ id: 2, name: 'repo-2' }),
-      ];
-
-      render(<RepositoryList {...defaultProps} repositories={repos} />);
-
-      const card1 = screen.getByTestId('repo-card-1');
-      const card2 = screen.getByTestId('repo-card-2');
-
-      expect(card1).toHaveTextContent('Starred');
-      expect(card2).toHaveTextContent('Not starred');
-    });
-
-    it('calls onStar when star button is clicked', () => {
-      const onStar = vi.fn();
-      const onUnstar = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1' })];
-
-      render(
-        <RepositoryList
-          {...defaultProps}
-          repositories={repos}
-          onStar={onStar}
-          onUnstar={onUnstar}
-        />
-      );
-
-      // Get the star button inside the repo card (exact match to avoid "My Stars" tab)
-      const starButton = screen.getByRole('button', { name: 'Star' });
-      fireEvent.click(starButton);
-
-      expect(onStar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
-    });
-
-    it('calls onUnstar when unstar button is clicked', () => {
-      const onStar = vi.fn();
-      const onUnstar = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'repo-1', is_starred: true })];
-
-      render(
-        <RepositoryList
-          {...defaultProps}
-          repositories={repos}
-          onStar={onStar}
-          onUnstar={onUnstar}
-        />
-      );
-
-      const unstarButton = screen.getByRole('button', { name: /unstar/i });
-      fireEvent.click(unstarButton);
-
-      expect(onUnstar).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
     });
   });
 
