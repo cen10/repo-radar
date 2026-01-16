@@ -14,8 +14,13 @@ export const CACHE_CONFIG = {
 // =====================================================
 
 /**
- * Fetches cached repository data if it exists and is not expired
- * Returns null if no cache exists or if cache is expired
+ * Fetches cached repository data if it exists and is not expired.
+ * Returns null if no cache exists or if cache is expired.
+ * Throws on database errors (connection issues, permission problems, etc.).
+ *
+ * @example
+ * // Recommended: treat DB errors as cache miss for resilience
+ * const cached = await getRepoCache(repoId).catch(() => null);
  */
 export async function getRepoCache(githubRepoId: number): Promise<RepoCache | null> {
   const { data, error } = await supabase
@@ -38,8 +43,13 @@ export async function getRepoCache(githubRepoId: number): Promise<RepoCache | nu
 }
 
 /**
- * Gets the ETag for a cached repository, regardless of expiration
- * Used for conditional requests even when cache is stale
+ * Gets the ETag for a cached repository, regardless of expiration.
+ * Used for conditional requests even when cache is stale.
+ * Throws on database errors.
+ *
+ * @example
+ * // Recommended: treat DB errors as cache miss for resilience
+ * const etag = await getCacheETag(repoId).catch(() => null);
  */
 export async function getCacheETag(githubRepoId: number): Promise<string | null> {
   const { data, error } = await supabase
@@ -60,7 +70,12 @@ export async function getCacheETag(githubRepoId: number): Promise<string | null>
 }
 
 /**
- * Checks if a valid (non-expired) cache entry exists for a repository
+ * Checks if a valid (non-expired) cache entry exists for a repository.
+ * Throws on database errors.
+ *
+ * @example
+ * // Recommended: treat DB errors as "not valid" for resilience
+ * const isValid = await isCacheValid(repoId).catch(() => false);
  */
 export async function isCacheValid(githubRepoId: number): Promise<boolean> {
   const { count, error } = await supabase
