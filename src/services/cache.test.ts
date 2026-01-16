@@ -33,8 +33,17 @@ vi.mock('./supabase', () => ({
  * Builds the chain from inside out based on method names.
  *
  * @example
+ * // This call:
  * mockQueryChain(['select', 'eq', 'single'], { data: mockCache, error: null });
- * mockQueryChain(['upsert', 'select', 'single'], { data: mockCache, error: null });
+ *
+ * // Builds this structure:
+ * // mockFrom.mockReturnValue({
+ * //   select: fn → {
+ * //     eq: fn → {
+ * //       single: fn → resolves to { data: mockCache, error: null }
+ * //     }
+ * //   }
+ * // });
  */
 function mockQueryChain(methods: string[], result: unknown) {
   let chain: Record<string, unknown> = {};
