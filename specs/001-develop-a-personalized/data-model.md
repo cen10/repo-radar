@@ -117,6 +117,7 @@ interface User {
 ```
 
 **Validation Rules**:
+
 - `github_username`: Required, unique, alphanumeric with hyphens
 - `github_id`: Required, unique, numeric string
 - `email`: Optional, valid email format if provided
@@ -143,6 +144,7 @@ interface Repository {
 ```
 
 **Validation Rules**:
+
 - `github_id`: Required, unique
 - `name`: Required, valid GitHub repo name
 - `owner`: Required, valid GitHub username
@@ -167,6 +169,7 @@ interface StarMetric {
 ```
 
 **Validation Rules**:
+
 - `star_count`: Non-negative integer
 - `growth_rate`: Calculated as `(current - previous) / previous * 100`
 - `is_spike`: True if star_count >= 100 AND growth_rate >= 25% AND daily_change >= 50
@@ -192,6 +195,7 @@ interface Release {
 ```
 
 **Validation Rules**:
+
 - `version`: Semantic versioning format preferred
 - `tag_name`: Required, matches GitHub tag
 - Unique constraint on `(repository_id, github_id)`
@@ -214,6 +218,7 @@ interface IssueMetric {
 ```
 
 **Validation Rules**:
+
 - All counts are non-negative integers
 - `total_count` = `open_count` + `closed_count`
 - `velocity`: Calculated from last 7 days of closed issues
@@ -221,25 +226,44 @@ interface IssueMetric {
 
 ### RepoCache
 
-Server-side cache for GitHub API responses, shared across all users.
+Server-side cache for GitHub Repository API responses, shared across all users.
 
 ```typescript
 interface RepoCache {
   github_repo_id: number; // GitHub's numeric repository ID (PK)
-  cached_data: object; // Full GitHub API response (repo details, issues, etc.)
+  cached_data: object; // Response from GET /repos/{owner}/{repo} endpoint
   etag?: string; // GitHub ETag for conditional requests
   fetched_at: Date; // When this data was fetched
   expires_at: Date; // When this cache entry should be considered stale
 }
 ```
 
+**What's Cached**:
+
+The `cached_data` field stores the response from the GitHub Repository endpoint (`GET /repos/{owner}/{repo}`) only. This includes:
+
+- Basic info: name, full_name, description, owner, language, topics
+- Metrics: stargazers_count, forks_count, open_issues_count, watchers_count
+- Metadata: created_at, updated_at, pushed_at, default_branch, license
+- URLs: html_url, clone_url, ssh_url, etc.
+
+**Not cached** (fetched on-demand without caching):
+
+- Issues list (`GET /repos/{owner}/{repo}/issues`)
+- Releases list (`GET /repos/{owner}/{repo}/releases`)
+- Contributors, commits, pull requests, etc.
+
+**Why only one endpoint?** Each GitHub endpoint returns its own ETag. Since we store one ETag per repo, we can only use conditional requests correctly for one endpoint. The repository endpoint contains the most frequently accessed data (stars, description, etc.), making it the best candidate.
+
 **Validation Rules**:
+
 - `github_repo_id`: Required, unique (primary key)
-- `cached_data`: Required, valid JSON object
-- `etag`: Optional, used for conditional GitHub API requests
-- `expires_at`: Typically `fetched_at + 1 hour` for detail pages, `fetched_at + 24 hours` for list data
+- `cached_data`: Required, valid JSON object matching GitHub repo response schema
+- `etag`: Optional, used for conditional GitHub API requests (If-None-Match header)
+- `expires_at`: Default is `fetched_at + 24 hours` for list/dashboard views
 
 **Design Notes**:
+
 - This is a shared cache - all users benefit from cached data for popular repos
 - The daily sync job updates cache entries for all repos on at least one radar
 - Manual refresh bypasses the cache and updates it with fresh data
@@ -260,6 +284,7 @@ interface Radar {
 ```
 
 **Validation Rules**:
+
 - `name`: Required, 1-50 characters
 - Maximum 5 radars per user (enforced at application level)
 - `user_id`: Maps to Supabase auth.uid()
@@ -278,12 +303,14 @@ interface RadarRepo {
 ```
 
 **Validation Rules**:
+
 - Unique constraint on `(radar_id, github_repo_id)`
 - Maximum 25 repos per radar (enforced at application level)
 - Maximum 50 total repos across all user's radars (enforced at application level)
 - A repository can belong to multiple radars (same user or different users)
 
 **Design Notes**:
+
 - Uses GitHub's numeric `id` rather than a local Repository UUID to avoid needing to sync all repos to our database
 - Repository metadata is fetched from GitHub API on-demand, not stored locally (except for repos on radars where we track metrics)
 

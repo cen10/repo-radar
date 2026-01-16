@@ -70,8 +70,9 @@ CREATE POLICY "Users can only see their own data" ON repositories
 - Show stale data with freshness indicators during rate limiting
 
 **Implementation Strategy**:
-- Store ETags with cached responses
-- Use GitHub's conditional request headers
+- Cache the GitHub Repository endpoint (`GET /repos/{owner}/{repo}`) response with its ETag
+- Use GitHub's conditional request headers (If-None-Match) to avoid rate limit hits on unchanged repos
+- Fetch issues/releases on-demand without caching (separate endpoints have separate ETags)
 - Implement exponential backoff on 429 responses
 - Display last-updated timestamps prominently
 
