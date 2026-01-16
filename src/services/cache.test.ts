@@ -28,6 +28,31 @@ vi.mock('./supabase', () => ({
   },
 }));
 
+/**
+ * Factory to create mock Supabase query chains.
+ * Builds the chain from inside out based on method names.
+ *
+ * @example
+ * mockQueryChain(['select', 'eq', 'single'], { data: mockCache, error: null });
+ * mockQueryChain(['upsert', 'select', 'single'], { data: mockCache, error: null });
+ */
+function mockQueryChain(methods: string[], result: unknown) {
+  let chain: Record<string, unknown> = {};
+
+  for (let i = methods.length - 1; i >= 0; i--) {
+    const methodName = methods[i];
+    const isLast = i === methods.length - 1;
+
+    if (isLast) {
+      chain = { [methodName]: vi.fn().mockResolvedValue(result) };
+    } else {
+      chain = { [methodName]: vi.fn().mockReturnValue(chain) };
+    }
+  }
+
+  mockFrom.mockReturnValue(chain);
+}
+
 // Factory function for mock cache entries
 function createMockCacheEntry(
   overrides: Partial<{
@@ -59,16 +84,7 @@ describe('Cache Service', () => {
   describe('getRepoCache', () => {
     it('should return cached data when valid cache exists', async () => {
       const mockCache = createMockCacheEntry();
-
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockCache, error: null }),
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt', 'single'], { data: mockCache, error: null });
 
       const result = await getRepoCache(12345);
 
@@ -80,18 +96,7 @@ describe('Cache Service', () => {
     });
 
     it('should return null when no cache exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: null,
-                error: { code: 'PGRST116' },
-              }),
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt', 'single'], { data: null, error: { code: 'PGRST116' } });
 
       const result = await getRepoCache(12345);
       expect(result).toBeNull();
@@ -99,35 +104,16 @@ describe('Cache Service', () => {
 
     it('should return null when cache is expired', async () => {
       // The query filters by expires_at > now, so expired entries return PGRST116
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: null,
-                error: { code: 'PGRST116' },
-              }),
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt', 'single'], { data: null, error: { code: 'PGRST116' } });
 
       const result = await getRepoCache(12345);
       expect(result).toBeNull();
     });
 
     it('should throw error on database failure', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: null,
-                error: { message: 'Database error' },
-              }),
-            }),
-          }),
-        }),
+      mockQueryChain(['select', 'eq', 'gt', 'single'], {
+        data: null,
+        error: { message: 'Database error' },
       });
 
       await expect(getRepoCache(12345)).rejects.toThrow('Failed to fetch repo cache');
@@ -136,63 +122,30 @@ describe('Cache Service', () => {
 
   describe('getCacheETag', () => {
     it('should return ETag when cache exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { etag: '"abc123"' },
-              error: null,
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'single'], { data: { etag: '"abc123"' }, error: null });
 
       const result = await getCacheETag(12345);
       expect(result).toBe('"abc123"');
     });
 
     it('should return null when no cache exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { code: 'PGRST116' },
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'single'], { data: null, error: { code: 'PGRST116' } });
 
       const result = await getCacheETag(12345);
       expect(result).toBeNull();
     });
 
     it('should return null when ETag is not set', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { etag: null },
-              error: null,
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'single'], { data: { etag: null }, error: null });
 
       const result = await getCacheETag(12345);
       expect(result).toBeNull();
     });
 
     it('should throw error on database failure', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' },
-            }),
-          }),
-        }),
+      mockQueryChain(['select', 'eq', 'single'], {
+        data: null,
+        error: { message: 'Database error' },
       });
 
       await expect(getCacheETag(12345)).rejects.toThrow('Failed to fetch cache ETag');
@@ -201,55 +154,28 @@ describe('Cache Service', () => {
 
   describe('isCacheValid', () => {
     it('should return true when valid cache exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockResolvedValue({ count: 1, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt'], { count: 1, error: null });
 
       const result = await isCacheValid(12345);
       expect(result).toBe(true);
     });
 
     it('should return false when no cache exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockResolvedValue({ count: 0, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt'], { count: 0, error: null });
 
       const result = await isCacheValid(12345);
       expect(result).toBe(false);
     });
 
     it('should return false when count is null', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockResolvedValue({ count: null, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt'], { count: null, error: null });
 
       const result = await isCacheValid(12345);
       expect(result).toBe(false);
     });
 
     it('should throw error on database failure', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockResolvedValue({
-              count: null,
-              error: { message: 'Database error' },
-            }),
-          }),
-        }),
-      });
+      mockQueryChain(['select', 'eq', 'gt'], { count: null, error: { message: 'Database error' } });
 
       await expect(isCacheValid(12345)).rejects.toThrow('Failed to check cache validity');
     });
@@ -258,14 +184,7 @@ describe('Cache Service', () => {
   describe('setRepoCache', () => {
     it('should create a new cache entry', async () => {
       const mockCache = createMockCacheEntry();
-
-      mockFrom.mockReturnValue({
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockCache, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['upsert', 'select', 'single'], { data: mockCache, error: null });
 
       const result = await setRepoCache(12345, { name: 'test-repo' }, '"abc123"');
 
@@ -275,14 +194,7 @@ describe('Cache Service', () => {
 
     it('should handle null ETag', async () => {
       const mockCache = createMockCacheEntry({ etag: null });
-
-      mockFrom.mockReturnValue({
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockCache, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['upsert', 'select', 'single'], { data: mockCache, error: null });
 
       const result = await setRepoCache(12345, { name: 'test-repo' });
 
@@ -290,15 +202,9 @@ describe('Cache Service', () => {
     });
 
     it('should throw error on database failure', async () => {
-      mockFrom.mockReturnValue({
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' },
-            }),
-          }),
-        }),
+      mockQueryChain(['upsert', 'select', 'single'], {
+        data: null,
+        error: { message: 'Database error' },
       });
 
       await expect(setRepoCache(12345, { name: 'test-repo' })).rejects.toThrow(
@@ -334,15 +240,9 @@ describe('Cache Service', () => {
 
   describe('cleanupExpiredCache', () => {
     it('should delete expired entries and return count', async () => {
-      mockFrom.mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          lt: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({
-              data: [{ github_repo_id: 111 }, { github_repo_id: 222 }, { github_repo_id: 333 }],
-              error: null,
-            }),
-          }),
-        }),
+      mockQueryChain(['delete', 'lt', 'select'], {
+        data: [{ github_repo_id: 111 }, { github_repo_id: 222 }, { github_repo_id: 333 }],
+        error: null,
       });
 
       const result = await cleanupExpiredCache();
@@ -352,41 +252,23 @@ describe('Cache Service', () => {
     });
 
     it('should return 0 when no entries to clean up', async () => {
-      mockFrom.mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          lt: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['delete', 'lt', 'select'], { data: [], error: null });
 
       const result = await cleanupExpiredCache();
       expect(result).toBe(0);
     });
 
     it('should return 0 when data is null', async () => {
-      mockFrom.mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          lt: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-      });
+      mockQueryChain(['delete', 'lt', 'select'], { data: null, error: null });
 
       const result = await cleanupExpiredCache();
       expect(result).toBe(0);
     });
 
     it('should throw error on database failure', async () => {
-      mockFrom.mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          lt: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' },
-            }),
-          }),
-        }),
+      mockQueryChain(['delete', 'lt', 'select'], {
+        data: null,
+        error: { message: 'Database error' },
       });
 
       await expect(cleanupExpiredCache()).rejects.toThrow('Failed to cleanup expired cache');
