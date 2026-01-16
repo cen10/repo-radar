@@ -4,6 +4,7 @@ import {
   fetchStarredRepositories,
   searchRepositories,
   fetchRateLimit,
+  fetchRepositoryReleases,
 } from './github';
 
 // Mock fetch globally
@@ -51,6 +52,33 @@ const createMockStarredRepo = (options: MockStarredRepoOptions = {}) => ({
     updated_at: '2024-01-01T00:00:00Z',
     pushed_at: '2024-01-01T00:00:00Z',
     created_at: '2023-01-01T00:00:00Z',
+  },
+});
+
+// Helper to create mock GitHub API release
+interface MockReleaseOptions {
+  id?: number;
+  tag_name?: string;
+  name?: string | null;
+  body?: string | null;
+  published_at?: string | null;
+  prerelease?: boolean;
+  draft?: boolean;
+}
+
+const createMockRelease = (options: MockReleaseOptions = {}) => ({
+  id: options.id ?? 1,
+  tag_name: options.tag_name ?? 'v1.0.0',
+  name: options.name ?? 'Version 1.0.0',
+  body: options.body ?? 'Release notes',
+  html_url: 'https://github.com/owner/repo/releases/tag/v1.0.0',
+  published_at: options.published_at ?? '2024-01-15T10:00:00Z',
+  created_at: '2024-01-15T09:00:00Z',
+  prerelease: options.prerelease ?? false,
+  draft: options.draft ?? false,
+  author: {
+    login: 'releaser',
+    avatar_url: 'https://example.com/avatar.jpg',
   },
 });
 
@@ -471,6 +499,138 @@ describe('GitHub API Service', () => {
       });
 
       await expect(fetchRateLimit(testToken)).rejects.toThrow('Failed to fetch rate limit');
+    });
+  });
+
+  describe('fetchRepositoryReleases', () => {
+    it('should fetch releases successfully', async () => {
+      const mockReleases = [
+        createMockRelease({ id: 1, tag_name: 'v1.2.0', name: 'Version 1.2.0' }),
+        createMockRelease({ id: 2, tag_name: 'v1.1.0', name: 'Version 1.1.0' }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockReleases,
+        headers: new Headers(),
+      });
+
+      const result = await fetchRepositoryReleases(testToken, 'owner', 'repo');
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('https://api.github.com/repos/owner/repo/releases'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-github-token',
+          }),
+        })
+      );
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        id: 1,
+        tag_name: 'v1.2.0',
+        name: 'Version 1.2.0',
+        prerelease: false,
+        draft: false,
+        author: expect.objectContaining({
+          login: 'releaser',
+        }),
+      });
+    });
+
+    it('should handle custom perPage parameter', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+        headers: new Headers(),
+      });
+
+      await fetchRepositoryReleases(testToken, 'owner', 'repo', 5);
+
+      const url = new URL(mockFetch.mock.calls[0][0]);
+      expect(url.searchParams.get('per_page')).toBe('5');
+    });
+
+    it('should handle 401 authentication error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: new Headers(),
+      });
+
+      await expect(fetchRepositoryReleases(testToken, 'owner', 'repo')).rejects.toThrow(
+        'GitHub authentication failed. Please sign in again.'
+      );
+    });
+
+    it('should handle rate limit exceeded error', async () => {
+      const resetTime = Math.floor(Date.now() / 1000) + 3600;
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        headers: new Headers({
+          'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': resetTime.toString(),
+        }),
+      });
+
+      await expect(fetchRepositoryReleases(testToken, 'owner', 'repo')).rejects.toThrow(
+        /GitHub API rate limit exceeded/
+      );
+    });
+
+    it('should return empty array for 404 (repo not found or no releases)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        headers: new Headers(),
+      });
+
+      const result = await fetchRepositoryReleases(testToken, 'owner', 'nonexistent');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle releases with null author', async () => {
+      const releaseWithNullAuthor = {
+        ...createMockRelease(),
+        author: null,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [releaseWithNullAuthor],
+        headers: new Headers(),
+      });
+
+      const result = await fetchRepositoryReleases(testToken, 'owner', 'repo');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBeNull();
+    });
+
+    it('should handle prerelease and draft releases', async () => {
+      const mockReleases = [
+        createMockRelease({ id: 1, tag_name: 'v2.0.0-beta', prerelease: true }),
+        createMockRelease({ id: 2, tag_name: 'v1.9.0', draft: true }),
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockReleases,
+        headers: new Headers(),
+      });
+
+      const result = await fetchRepositoryReleases(testToken, 'owner', 'repo');
+
+      expect(result[0].prerelease).toBe(true);
+      expect(result[0].draft).toBe(false);
+      expect(result[1].prerelease).toBe(false);
+      expect(result[1].draft).toBe(true);
     });
   });
 });
