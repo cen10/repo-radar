@@ -97,13 +97,13 @@ _Goal: Add current metrics and growth indicators_
 
 ## Phase 3.7: Enhanced Types (T021-T022)
 
-- [ ] T021 [P] Extend Repository type in `src/types/index.ts` with metrics fields
-- [ ] T022 [P] Create MetricsData type for growth calculations
+- [x] T021 [P] Extend Repository type in `src/types/index.ts` with metrics fields
+- [x] T022 [P] Create MetricsData type for growth calculations _(implemented as `RepositoryMetrics` interface)_
 
 ## Phase 3.8: Metrics Utilities (T023-T025)
 
 - [ ] T023 [P] Create metrics calculation utilities in `src/utils/metrics.ts`
-- [ ] T024 [P] Create date formatting utilities in `src/utils/formatters.ts`
+- [x] T024 [P] Create date formatting utilities in `src/utils/formatters.ts` _(implemented in `src/utils/relativeTime.ts`)_
 - [ ] T025 [P] Create sorting utilities in `src/utils/sort.ts`
 
 ## Phase 3.9: Enhanced API & Caching (T026-T028b)
@@ -111,8 +111,8 @@ _Goal: Add current metrics and growth indicators_
 - [ ] T026 Update `api/starred.ts` to fetch repository issues and releases
 - [ ] T027 Create `api/metrics.ts` endpoint to calculate growth rates
 - [ ] T028 Update `src/services/github.ts` to use enhanced endpoints
-- [ ] T028a Configure TanStack Query with caching settings in `src/services/queryClient.ts` (1hr staleTime, 24hr gcTime)
-- [ ] T028b Create `src/utils/formatters.ts` with relative time formatting for "Last updated" display
+- [x] T028a Configure TanStack Query with caching settings in `src/services/queryClient.ts` (1hr staleTime, 24hr gcTime) _(configured in `src/App.tsx` with 5min staleTime, 30min gcTime)_
+- [x] T028b Create `src/utils/formatters.ts` with relative time formatting for "Last updated" display _(implemented in `src/utils/relativeTime.ts`)_
 
 ## Phase 3.10: UI Updates (T029-T032)
 
@@ -139,9 +139,10 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
 ## Phase 3.12: Supabase Schema (T039-T042a)
 
-- [ ] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
-- [ ] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
-- [ ] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
+- [x] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
+- [ ] T039a Apply migrations to Supabase instance via CLI (`supabase db push`) or dashboard
+- [x] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
+- [x] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
 - [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
 - [ ] T042a Create cache service in `src/services/cache.ts` for server-side caching with ETags
 
