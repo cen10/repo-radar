@@ -11,12 +11,12 @@ export const RADAR_LIMITS = {
 
 // Error types for limit violations
 export class RadarLimitError extends Error {
-  constructor(
-    message: string,
-    public readonly limitType: 'radars' | 'repos_per_radar' | 'total_repos'
-  ) {
+  readonly limitType: 'radars' | 'repos_per_radar' | 'total_repos';
+
+  constructor(message: string, limitType: 'radars' | 'repos_per_radar' | 'total_repos') {
     super(message);
     this.name = 'RadarLimitError';
+    this.limitType = limitType;
   }
 }
 
