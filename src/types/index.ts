@@ -36,3 +36,19 @@ export interface RepositoryMetrics {
   last_release_date?: string | null;
   is_trending?: boolean;
 }
+
+export interface Release {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  html_url: string;
+  published_at: string | null;
+  created_at: string;
+  prerelease: boolean;
+  draft: boolean;
+  author: {
+    login: string;
+    avatar_url: string;
+  } | null;
+}
