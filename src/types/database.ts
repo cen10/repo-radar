@@ -56,6 +56,29 @@ export interface Database {
           },
         ];
       };
+      repo_cache: {
+        Row: {
+          github_repo_id: number;
+          cached_data: unknown;
+          etag: string | null;
+          fetched_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          github_repo_id: number;
+          cached_data: unknown;
+          etag?: string | null;
+          fetched_at?: string;
+          expires_at: string;
+        };
+        Update: {
+          cached_data?: unknown;
+          etag?: string | null;
+          fetched_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -77,6 +100,10 @@ export type RadarUpdate = Database['public']['Tables']['radars']['Update'];
 export type RadarRepo = Database['public']['Tables']['radar_repos']['Row'];
 export type RadarRepoInsert = Database['public']['Tables']['radar_repos']['Insert'];
 // No RadarRepoUpdate - these rows are added/removed, not updated
+
+export type RepoCache = Database['public']['Tables']['repo_cache']['Row'];
+export type RepoCacheInsert = Database['public']['Tables']['repo_cache']['Insert'];
+export type RepoCacheUpdate = Database['public']['Tables']['repo_cache']['Update'];
 
 // Extended types for UI consumption (with computed counts)
 export interface RadarWithCount extends Radar {

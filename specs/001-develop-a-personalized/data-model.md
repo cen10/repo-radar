@@ -221,29 +221,45 @@ interface IssueMetric {
 
 ### RepoCache
 
-Server-side cache for GitHub API responses, shared across all users.
+Server-side cache for GitHub Repository API responses, shared across all users.
 
 ```typescript
 interface RepoCache {
   github_repo_id: number; // GitHub's numeric repository ID (PK)
-  cached_data: object; // Full GitHub API response (repo details, issues, etc.)
+  cached_data: object; // Response from GET /repos/{owner}/{repo} endpoint
   etag?: string; // GitHub ETag for conditional requests
   fetched_at: Date; // When this data was fetched
   expires_at: Date; // When this cache entry should be considered stale
 }
 ```
 
+**What's Cached**:
+
+The `cached_data` field stores the response from the GitHub Repository endpoint (`GET /repos/{owner}/{repo}`) only. This includes:
+- Basic info: name, full_name, description, owner, language, topics
+- Metrics: stargazers_count, forks_count, open_issues_count, watchers_count
+- Metadata: created_at, updated_at, pushed_at, default_branch, license
+- URLs: html_url, clone_url, ssh_url, etc.
+
+**Not cached** (fetched on-demand without caching):
+- Issues list (`GET /repos/{owner}/{repo}/issues`)
+- Releases list (`GET /repos/{owner}/{repo}/releases`)
+- Contributors, commits, pull requests, etc.
+
+**Why only one endpoint?** Each GitHub endpoint returns its own ETag. Since we store one ETag per repo, we can only use conditional requests correctly for one endpoint. The repository endpoint contains the most frequently accessed data (stars, description, etc.), making it the best candidate.
+
 **Validation Rules**:
 - `github_repo_id`: Required, unique (primary key)
-- `cached_data`: Required, valid JSON object
-- `etag`: Optional, used for conditional GitHub API requests
-- `expires_at`: Typically `fetched_at + 1 hour` for detail pages, `fetched_at + 24 hours` for list data
+- `cached_data`: Required, valid JSON object matching GitHub repo response schema
+- `etag`: Optional, used for conditional GitHub API requests (If-None-Match header)
+- `expires_at`: Default is `fetched_at + 24 hours` for list/dashboard views
 
 **Design Notes**:
 - This is a shared cache - all users benefit from cached data for popular repos
 - The daily sync job updates cache entries for all repos on at least one radar
 - Manual refresh bypasses the cache and updates it with fresh data
 - ETags enable conditional requests (304 Not Modified) to minimize rate limit usage
+- See [docs/etags.md](/docs/etags.md) for detailed ETag documentation
 
 ### Radar
 
