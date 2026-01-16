@@ -1,4 +1,4 @@
-import type { Repository } from '../types';
+import type { Release, Repository } from '../types';
 import { logger } from '../utils/logger';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -621,4 +621,87 @@ export async function fetchRateLimit(token: string): Promise<{
     limit: core.limit,
     reset: new Date(core.reset * 1000),
   };
+}
+
+interface GitHubRelease {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  html_url: string;
+  published_at: string | null;
+  created_at: string;
+  prerelease: boolean;
+  draft: boolean;
+  author: {
+    login: string;
+    avatar_url: string;
+  } | null;
+}
+
+/**
+ * Fetch releases for a repository (lazy-loaded on detail page)
+ * Always fetches 10 releases - callers can slice if fewer needed.
+ * @param token - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns Array of releases, newest first
+ */
+export async function fetchRepositoryReleases(
+  token: string,
+  owner: string,
+  repo: string
+): Promise<Release[]> {
+  const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/releases?per_page=10`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('GitHub authentication failed. Please sign in again.');
+      }
+      if (response.status === 403) {
+        const remaining = response.headers.get('x-ratelimit-remaining');
+        if (remaining === '0') {
+          const resetTime = response.headers.get('x-ratelimit-reset');
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
+          throw new Error(
+            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
+          );
+        }
+        throw new Error('GitHub API access forbidden. Please check your permissions.');
+      }
+      if (response.status === 404) {
+        // Repository not found or no releases - return empty array
+        return [];
+      }
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data: GitHubRelease[] = await response.json();
+
+    // Transform GitHub API response to our Release type
+    return data.map((release) => ({
+      id: release.id,
+      tag_name: release.tag_name,
+      name: release.name,
+      body: release.body,
+      html_url: release.html_url,
+      published_at: release.published_at,
+      created_at: release.created_at,
+      prerelease: release.prerelease,
+      draft: release.draft,
+      author: release.author,
+    }));
+  } catch (error) {
+    logger.error('Failed to fetch repository releases:', error);
+    throw error;
+  }
 }

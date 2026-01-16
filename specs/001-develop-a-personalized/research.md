@@ -83,6 +83,8 @@ CREATE POLICY "Users can only see their own data" ON repositories
 
 ### 4. Serverless Function Scheduling
 
+> **Implementation Note (2025-01-16)**: Serverless has been deferred to Slice 4. Slices 1-3 use client-side GitHub API calls with TanStack Query + Supabase caching. The research below remains valid for when serverless is implemented. See [docs/serverless-decision.md](/docs/serverless-decision.md).
+
 **Decision**: Vercel Cron Jobs with Supabase Edge Functions fallback
 **Rationale**:
 - Vercel Cron Jobs are simple to configure in vercel.json
@@ -126,6 +128,8 @@ CREATE POLICY "Users can only see their own data" ON repositories
 - Victory: Performance issues with large datasets
 
 ### 6. Multi-Tier Caching Strategy
+
+> **Implementation Note (2025-01-16)**: With serverless deferred, Tier 2 (Supabase Cache) is currently accessed client-side via T042's `cache.ts` service. The shared cache still works, but ETags are less effective since each user's browser makes independent conditional requests. Full ETag benefits (304 responses shared across users) require serverless in Slice 4.
 
 **Decision**: Three-tier caching with transparency and manual refresh
 
