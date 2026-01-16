@@ -131,8 +131,13 @@ export async function setRepoCache(
 }
 
 /**
- * Updates the fetched_at timestamp and extends expiration without changing data
- * Used when a 304 Not Modified response confirms cached data is still valid
+ * Updates the fetched_at timestamp and extends expiration without changing data.
+ * Used when a 304 Not Modified response confirms cached data is still valid.
+ * Throws on database errors.
+ *
+ * @example
+ * // Recommended: silently ignore failures (cache is still valid, just not extended)
+ * await refreshCacheTimestamp(repoId).catch(() => {});
  */
 export async function refreshCacheTimestamp(githubRepoId: number): Promise<void> {
   const now = new Date();
