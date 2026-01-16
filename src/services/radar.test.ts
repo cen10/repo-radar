@@ -10,7 +10,6 @@ import {
   removeRepoFromRadar,
   getAllRadarRepoIds,
   getRadarsContainingRepo,
-  RadarLimitError,
   RADAR_LIMITS,
 } from './radar';
 
@@ -203,7 +202,7 @@ describe('Radar Service', () => {
       await expect(createRadar(longName)).rejects.toThrow('Radar name cannot exceed 50 characters');
     });
 
-    it('should throw RadarLimitError when user has max radars', async () => {
+    it('should throw error when user has max radars', async () => {
       // Mock count check (5 existing radars - at limit)
       mockFrom.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
@@ -214,9 +213,7 @@ describe('Radar Service', () => {
         }),
       });
 
-      const error = await createRadar('New Radar').catch((e) => e);
-      expect(error).toBeInstanceOf(RadarLimitError);
-      expect(error.message).toMatch(/can only have 5 radars/i);
+      await expect(createRadar('New Radar')).rejects.toThrow(/can only have 5 radars/i);
     });
 
     it('should throw error when not authenticated', async () => {
@@ -376,7 +373,7 @@ describe('Radar Service', () => {
       });
     });
 
-    it('should throw RadarLimitError when radar has max repos', async () => {
+    it('should throw error when radar has max repos', async () => {
       // Mock radar repo count check (at limit)
       mockFrom.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
@@ -387,12 +384,12 @@ describe('Radar Service', () => {
         }),
       });
 
-      const error = await addRepoToRadar('radar-1', 12345).catch((e) => e);
-      expect(error).toBeInstanceOf(RadarLimitError);
-      expect(error.message).toMatch(/already has 25 repositories/i);
+      await expect(addRepoToRadar('radar-1', 12345)).rejects.toThrow(
+        /already has 25 repositories/i
+      );
     });
 
-    it('should throw RadarLimitError when user has max total repos', async () => {
+    it('should throw error when user has max total repos', async () => {
       // Mock radar repo count check (under limit)
       mockFrom.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
@@ -408,9 +405,7 @@ describe('Radar Service', () => {
         }),
       });
 
-      const error = await addRepoToRadar('radar-1', 12345).catch((e) => e);
-      expect(error).toBeInstanceOf(RadarLimitError);
-      expect(error.message).toMatch(/limit of 50 total/i);
+      await expect(addRepoToRadar('radar-1', 12345)).rejects.toThrow(/limit of 50 total/i);
     });
 
     it('should throw error when repo already in radar', async () => {

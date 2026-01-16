@@ -9,17 +9,6 @@ export const RADAR_LIMITS = {
   MAX_TOTAL_REPOS: 50,
 } as const;
 
-// Error types for limit violations
-export class RadarLimitError extends Error {
-  readonly limitType: 'radars' | 'repos_per_radar' | 'total_repos';
-
-  constructor(message: string, limitType: 'radars' | 'repos_per_radar' | 'total_repos') {
-    super(message);
-    this.name = 'RadarLimitError';
-    this.limitType = limitType;
-  }
-}
-
 // =====================================================
 // RADAR CRUD OPERATIONS
 // =====================================================
@@ -102,9 +91,8 @@ export async function createRadar(name: string): Promise<Radar> {
   }
 
   if (count !== null && count >= RADAR_LIMITS.MAX_RADARS_PER_USER) {
-    throw new RadarLimitError(
-      `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`,
-      'radars'
+    throw new Error(
+      `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`
     );
   }
 
@@ -269,9 +257,8 @@ export async function addRepoToRadar(radarId: string, githubRepoId: number): Pro
   }
 
   if (radarRepoCount !== null && radarRepoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) {
-    throw new RadarLimitError(
-      `This radar already has ${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repositories. Remove some to add more.`,
-      'repos_per_radar'
+    throw new Error(
+      `This radar already has ${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repositories. Remove some to add more.`
     );
   }
 
@@ -293,9 +280,8 @@ export async function addRepoToRadar(radarId: string, githubRepoId: number): Pro
   }, 0);
 
   if (totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS) {
-    throw new RadarLimitError(
-      `You've reached the limit of ${RADAR_LIMITS.MAX_TOTAL_REPOS} total repositories across all radars.`,
-      'total_repos'
+    throw new Error(
+      `You've reached the limit of ${RADAR_LIMITS.MAX_TOTAL_REPOS} total repositories across all radars.`
     );
   }
 
