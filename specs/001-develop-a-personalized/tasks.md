@@ -144,7 +144,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [x] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
 - [x] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
 - [x] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
-- [x] T042a Create cache service in `src/services/cache.ts` for server-side caching with ETags
+- [x] T042a Create cache service in `src/services/cache.ts` for persistent Supabase caching with ETags
 
 ## Phase 3.13: Radar UI Components (T043-T049)
 
