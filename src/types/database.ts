@@ -26,6 +26,15 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'radars_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       radar_repos: {
         Row: {
@@ -46,6 +55,15 @@ export interface Database {
           github_repo_id?: number;
           added_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'radar_repos_radar_id_fkey';
+            columns: ['radar_id'];
+            isOneToOne: false;
+            referencedRelation: 'radars';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
