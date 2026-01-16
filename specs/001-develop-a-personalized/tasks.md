@@ -110,7 +110,7 @@ _Goal: Add current metrics and growth indicators_
 
 _Note: Serverless deferred to Slice 4. See [docs/serverless-decision.md](/docs/serverless-decision.md) for rationale._
 
-- [ ] T026 Add `fetchRepositoryReleases()` to `src/services/github.ts` for lazy-loading releases on detail page _(adapted from serverless; uses client-side GitHub API + T042's cache service)_
+- [x] T026 Add `fetchRepositoryReleases()` to `src/services/github.ts` for lazy-loading releases on detail page _(implemented with `useReleases` hook; TanStack Query handles caching)_
 - [x] T027 ~~Create `api/metrics.ts` endpoint~~ _Deferred to Slice 4: Real growth rates require historical data from background sync. Using mock growth rates for now._
 - [x] T028 ~~Update `src/services/github.ts` to use enhanced endpoints~~ _Skipped: No serverless endpoints; client-side GitHub calls continue as-is_
 - [x] T028a Configure TanStack Query with caching settings in `src/services/queryClient.ts` (1hr staleTime, 24hr gcTime) _(configured in `src/App.tsx` with 5min staleTime, 30min gcTime)_
