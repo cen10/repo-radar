@@ -75,7 +75,6 @@ CREATE POLICY "Users can only see their own data" ON repositories
 - Fetch issues/releases on-demand without caching (separate endpoints have separate ETags)
 - Implement exponential backoff on 429 responses
 - Display last-updated timestamps prominently
-- See [docs/etags.md](/docs/etags.md) for detailed implementation
 
 **Alternatives Considered**:
 - Aggressive caching only: Poor data freshness
