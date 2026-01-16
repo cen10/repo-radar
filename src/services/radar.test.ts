@@ -40,6 +40,44 @@ vi.mock('./supabase', () => ({
 
 const mockUser = { id: 'user-123', email: 'test@example.com' };
 
+// Factory functions to reduce repetition
+function createMockRadar(
+  overrides: Partial<{
+    id: string;
+    user_id: string;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    radar_repos: { count: number }[];
+  }> = {}
+) {
+  return {
+    id: 'radar-1',
+    user_id: 'user-123',
+    name: 'My Radar',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+function createMockRadarRepo(
+  overrides: Partial<{
+    id: string;
+    radar_id: string;
+    github_repo_id: number;
+    added_at: string;
+  }> = {}
+) {
+  return {
+    id: 'repo-1',
+    radar_id: 'radar-1',
+    github_repo_id: 12345,
+    added_at: '2024-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
 describe('Radar Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -49,22 +87,8 @@ describe('Radar Service', () => {
   describe('getRadars', () => {
     it('should fetch all radars with repo counts', async () => {
       const mockRadars = [
-        {
-          id: 'radar-1',
-          user_id: 'user-123',
-          name: 'My Radar',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          radar_repos: [{ count: 3 }],
-        },
-        {
-          id: 'radar-2',
-          user_id: 'user-123',
-          name: 'Another Radar',
-          created_at: '2024-01-02T00:00:00Z',
-          updated_at: '2024-01-02T00:00:00Z',
-          radar_repos: [{ count: 0 }],
-        },
+        createMockRadar({ radar_repos: [{ count: 3 }] }),
+        createMockRadar({ id: 'radar-2', name: 'Another Radar', radar_repos: [{ count: 0 }] }),
       ];
 
       mockFrom.mockReturnValue({
@@ -77,16 +101,8 @@ describe('Radar Service', () => {
 
       expect(mockFrom).toHaveBeenCalledWith('radars');
       expect(result).toHaveLength(2);
-      expect(result[0]).toMatchObject({
-        id: 'radar-1',
-        name: 'My Radar',
-        repo_count: 3,
-      });
-      expect(result[1]).toMatchObject({
-        id: 'radar-2',
-        name: 'Another Radar',
-        repo_count: 0,
-      });
+      expect(result[0]).toMatchObject({ id: 'radar-1', name: 'My Radar', repo_count: 3 });
+      expect(result[1]).toMatchObject({ id: 'radar-2', name: 'Another Radar', repo_count: 0 });
     });
 
     it('should handle empty radars list', async () => {
@@ -116,18 +132,10 @@ describe('Radar Service', () => {
 
   describe('getRadar', () => {
     it('should fetch a single radar by ID', async () => {
-      const mockRadar = {
-        id: 'radar-1',
-        user_id: 'user-123',
-        name: 'My Radar',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-      };
-
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockRadar, error: null }),
+            single: vi.fn().mockResolvedValue({ data: createMockRadar(), error: null }),
           }),
         }),
       });
@@ -135,10 +143,7 @@ describe('Radar Service', () => {
       const result = await getRadar('radar-1');
 
       expect(mockFrom).toHaveBeenCalledWith('radars');
-      expect(result).toMatchObject({
-        id: 'radar-1',
-        name: 'My Radar',
-      });
+      expect(result).toMatchObject({ id: 'radar-1', name: 'My Radar' });
     });
 
     it('should return null when radar not found', async () => {
@@ -160,14 +165,6 @@ describe('Radar Service', () => {
 
   describe('createRadar', () => {
     it('should create a new radar', async () => {
-      const mockRadar = {
-        id: 'new-radar',
-        user_id: 'user-123',
-        name: 'New Radar',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z',
-      };
-
       // Mock count check (0 existing radars)
       mockFrom.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
@@ -179,17 +176,17 @@ describe('Radar Service', () => {
       mockFrom.mockReturnValueOnce({
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockRadar, error: null }),
+            single: vi.fn().mockResolvedValue({
+              data: createMockRadar({ id: 'new-radar', name: 'New Radar' }),
+              error: null,
+            }),
           }),
         }),
       });
 
       const result = await createRadar('New Radar');
 
-      expect(result).toMatchObject({
-        id: 'new-radar',
-        name: 'New Radar',
-      });
+      expect(result).toMatchObject({ id: 'new-radar', name: 'New Radar' });
     });
 
     it('should throw error when name is empty', async () => {
@@ -225,19 +222,14 @@ describe('Radar Service', () => {
 
   describe('updateRadar', () => {
     it('should update radar name', async () => {
-      const mockRadar = {
-        id: 'radar-1',
-        user_id: 'user-123',
-        name: 'Updated Name',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-02T00:00:00Z',
-      };
-
       mockFrom.mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockRadar, error: null }),
+              single: vi.fn().mockResolvedValue({
+                data: createMockRadar({ name: 'Updated Name' }),
+                error: null,
+              }),
             }),
           }),
         }),
@@ -245,10 +237,7 @@ describe('Radar Service', () => {
 
       const result = await updateRadar('radar-1', 'Updated Name');
 
-      expect(result).toMatchObject({
-        id: 'radar-1',
-        name: 'Updated Name',
-      });
+      expect(result).toMatchObject({ id: 'radar-1', name: 'Updated Name' });
     });
 
     it('should throw error when radar not found', async () => {
@@ -302,18 +291,8 @@ describe('Radar Service', () => {
   describe('getRadarRepos', () => {
     it('should fetch repos in a radar', async () => {
       const mockRepos = [
-        {
-          id: 'repo-1',
-          radar_id: 'radar-1',
-          github_repo_id: 12345,
-          added_at: '2024-01-01T00:00:00Z',
-        },
-        {
-          id: 'repo-2',
-          radar_id: 'radar-1',
-          github_repo_id: 67890,
-          added_at: '2024-01-02T00:00:00Z',
-        },
+        createMockRadarRepo(),
+        createMockRadarRepo({ id: 'repo-2', github_repo_id: 67890 }),
       ];
 
       mockFrom.mockReturnValue({
@@ -334,13 +313,6 @@ describe('Radar Service', () => {
 
   describe('addRepoToRadar', () => {
     it('should add a repo to a radar', async () => {
-      const mockRadarRepo = {
-        id: 'repo-1',
-        radar_id: 'radar-1',
-        github_repo_id: 12345,
-        added_at: '2024-01-01T00:00:00Z',
-      };
-
       // Mock radar repo count check (0 repos in radar)
       mockFrom.mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
@@ -360,17 +332,14 @@ describe('Radar Service', () => {
       mockFrom.mockReturnValueOnce({
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockRadarRepo, error: null }),
+            single: vi.fn().mockResolvedValue({ data: createMockRadarRepo(), error: null }),
           }),
         }),
       });
 
       const result = await addRepoToRadar('radar-1', 12345);
 
-      expect(result).toMatchObject({
-        radar_id: 'radar-1',
-        github_repo_id: 12345,
-      });
+      expect(result).toMatchObject({ radar_id: 'radar-1', github_repo_id: 12345 });
     });
 
     it('should throw error when radar has max repos', async () => {
