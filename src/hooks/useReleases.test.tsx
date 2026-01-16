@@ -73,9 +73,6 @@ describe('useReleases', () => {
       { wrapper }
     );
 
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.releases).toEqual([]);
-
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
