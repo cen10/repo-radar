@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS radar_repos (
 -- Index for looking up which radars contain a specific repo
 CREATE INDEX IF NOT EXISTS idx_radar_repos_github_id ON radar_repos(github_repo_id);
 
--- Index for fetching repos in a radar (covered by the unique constraint, but explicit for clarity)
-CREATE INDEX IF NOT EXISTS idx_radar_repos_radar_id ON radar_repos(radar_id);
+-- Note: No separate index on radar_id needed - the unique constraint on
+-- (radar_id, github_repo_id) already provides an index usable for radar_id queries
 
 -- =====================================================
 -- ROW LEVEL SECURITY
@@ -106,22 +106,7 @@ CREATE POLICY "Users can add repos to own radars"
         )
     );
 
-CREATE POLICY "Users can update repos in own radars"
-    ON radar_repos FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM radars
-            WHERE radars.id = radar_repos.radar_id
-            AND radars.user_id = auth.uid()
-        )
-    )
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM radars
-            WHERE radars.id = radar_repos.radar_id
-            AND radars.user_id = auth.uid()
-        )
-    );
+-- Note: No UPDATE policy - radar_repos are added/removed, not modified
 
 CREATE POLICY "Users can remove repos from own radars"
     ON radar_repos FOR DELETE
