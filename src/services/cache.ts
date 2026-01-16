@@ -97,8 +97,13 @@ export async function isCacheValid(githubRepoId: number): Promise<boolean> {
 // =====================================================
 
 /**
- * Stores or updates cached repository data
- * Uses upsert to handle both new entries and updates
+ * Stores or updates cached repository data.
+ * Uses upsert to handle both new entries and updates.
+ * Throws on database errors.
+ *
+ * @example
+ * // Recommended: ignore failures (caller already has the fresh data)
+ * await setRepoCache(repoId, freshData, etag).catch(() => {});
  */
 export async function setRepoCache(
   githubRepoId: number,
@@ -136,7 +141,7 @@ export async function setRepoCache(
  * Throws on database errors.
  *
  * @example
- * // Recommended: silently ignore failures (cache is still valid, just not extended)
+ * // Recommended: ignore failures (cache is still valid, just not extended)
  * await refreshCacheTimestamp(repoId).catch(() => {});
  */
 export async function refreshCacheTimestamp(githubRepoId: number): Promise<void> {
@@ -162,8 +167,13 @@ export async function refreshCacheTimestamp(githubRepoId: number): Promise<void>
 // =====================================================
 
 /**
- * Removes cache entries that have been expired for longer than CLEANUP_AFTER_DAYS
- * Returns the number of entries deleted
+ * Removes cache entries that have been expired for longer than CLEANUP_AFTER_DAYS.
+ * Returns the number of entries deleted.
+ * Throws on database errors.
+ *
+ * @example
+ * // Recommended: ignore failures (stale entries will be cleaned up next run)
+ * await cleanupExpiredCache().catch(() => {});
  */
 export async function cleanupExpiredCache(): Promise<number> {
   const cutoffDate = new Date();
