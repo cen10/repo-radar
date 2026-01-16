@@ -13,16 +13,6 @@ import {
   RADAR_LIMITS,
 } from './radar';
 
-// Mock logger
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 // Mock Supabase client
 const mockFrom = vi.fn();
 const mockAuth = {

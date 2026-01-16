@@ -6,17 +6,7 @@ import {
   getValidGitHubToken,
   GitHubReauthRequiredError,
 } from './github-token';
-import { logger } from '../utils/logger';
-
-// Mock the logger to silence test output
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+import { mockLogger } from '../test/mocks/logger';
 
 describe('github-token service', () => {
   const ACCESS_TOKEN_KEY = 'github_access_token';
@@ -45,7 +35,7 @@ describe('github-token service', () => {
 
       storeAccessToken('test-token');
 
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         'Failed to store access token in localStorage',
         expect.any(Error)
       );
@@ -69,7 +59,7 @@ describe('github-token service', () => {
       });
 
       expect(getStoredAccessToken()).toBeNull();
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         'Failed to retrieve access token from localStorage',
         expect.any(Error)
       );
@@ -91,7 +81,7 @@ describe('github-token service', () => {
 
       clearStoredAccessToken();
 
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         'Failed to clear access token from localStorage',
         expect.any(Error)
       );
@@ -116,7 +106,9 @@ describe('github-token service', () => {
 
       getValidGitHubToken(null);
 
-      expect(logger.info).toHaveBeenCalledWith('provider_token is null, using stored access token');
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'provider_token is null, using stored access token'
+      );
     });
 
     it('throws GitHubReauthRequiredError if no provider_token and no stored access token', () => {

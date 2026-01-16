@@ -5,17 +5,7 @@ import {
   formatGrowthRate,
   formatShortDate,
 } from './formatters';
-import { logger } from './logger';
-
-// Mock the logger to silence test output
-vi.mock('./logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
+import { mockLogger } from '../test/mocks/logger';
 
 describe('formatters', () => {
   describe('formatRelativeTime', () => {
@@ -127,7 +117,7 @@ describe('formatters', () => {
         const result = formatRelativeTime('invalid-date');
 
         expect(result).toBe('Invalid date');
-        expect(logger.warn).toHaveBeenCalledWith(
+        expect(mockLogger.warn).toHaveBeenCalledWith(
           'Invalid date string provided to formatRelativeTime',
           {
             dateString: 'invalid-date',
@@ -140,7 +130,7 @@ describe('formatters', () => {
         const result = formatRelativeTime('');
 
         expect(result).toBe('Invalid date');
-        expect(logger.warn).toHaveBeenCalledWith(
+        expect(mockLogger.warn).toHaveBeenCalledWith(
           'Invalid date string provided to formatRelativeTime',
           {
             dateString: '',
@@ -154,7 +144,7 @@ describe('formatters', () => {
         const result = formatRelativeTime(futureDate);
 
         expect(result).toBe('Invalid date');
-        expect(logger.warn).toHaveBeenCalledWith('Future date provided to formatRelativeTime', {
+        expect(mockLogger.warn).toHaveBeenCalledWith('Future date provided to formatRelativeTime', {
           dateString: futureDate,
           date: futureDate,
           now: '2023-12-01T12:00:00.000Z',
@@ -166,7 +156,7 @@ describe('formatters', () => {
         const result = formatRelativeTime('2023-13-45T25:70:80Z');
 
         expect(result).toBe('Invalid date');
-        expect(logger.warn).toHaveBeenCalledWith(
+        expect(mockLogger.warn).toHaveBeenCalledWith(
           'Invalid date string provided to formatRelativeTime',
           {
             dateString: '2023-13-45T25:70:80Z',
@@ -316,10 +306,13 @@ describe('formatters', () => {
       const result = formatShortDate('invalid-date');
 
       expect(result).toBe('Invalid date');
-      expect(logger.warn).toHaveBeenCalledWith('Invalid date string provided to formatShortDate', {
-        dateString: 'invalid-date',
-        context: 'formatShortDate',
-      });
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Invalid date string provided to formatShortDate',
+        {
+          dateString: 'invalid-date',
+          context: 'formatShortDate',
+        }
+      );
     });
 
     it('handles empty strings', () => {
@@ -327,7 +320,7 @@ describe('formatters', () => {
       const result = formatShortDate('');
 
       expect(result).toBe('Invalid date');
-      expect(logger.warn).toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalled();
     });
   });
 });
