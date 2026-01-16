@@ -77,12 +77,12 @@ _Goal: Basic dashboard showing starred repositories_
 - [x] T013 Create Header component in `src/components/Header.tsx` with user info and logout
 - [x] T014 Create RepoCard component in `src/components/RepoCard.tsx` to display repository info
 - [x] T015 Create Dashboard page in `src/pages/Dashboard.tsx` with repository list
-- [ ] T016 [P] Create Loading component in `src/components/Loading.tsx` for loading states
+- [x] T016 [P] ~~Create Loading component~~ _Skipped: existing approach with inline loading states works fine_
 
 ## Phase 3.5: API Integration (T017-T019)
 
 - [x] T017 Create GitHub service in `src/services/github.ts` to fetch starred repositories
-- [ ] T018 Create serverless function in `api/starred.ts` to proxy GitHub API calls
+- [x] T018 ~~Create serverless function in `api/starred.ts`~~ _Skipped: client-side GitHub API calls work well, serverless proxy adds unnecessary complexity_
 - [x] T019 Set up React Query hooks in `src/hooks/useRepositories.ts` for data fetching
 
 ## Phase 3.6: Routing & Polish (T020)
@@ -102,15 +102,17 @@ _Goal: Add current metrics and growth indicators_
 
 ## Phase 3.8: Metrics Utilities (T023-T025)
 
-- [ ] T023 [P] Create metrics calculation utilities in `src/utils/metrics.ts`
+- [x] T023 [P] Create metrics calculation utilities in `src/utils/metrics.ts` _(implemented: calculateGrowthRate, calculateStarsGained, isHotRepo)_
 - [x] T024 [P] Create date formatting utilities in `src/utils/formatters.ts` _(implemented in `src/utils/relativeTime.ts`)_
-- [ ] T025 [P] Create sorting utilities in `src/utils/sort.ts`
+- [x] T025 [P] Create sorting utilities in `src/utils/sort.ts` _(implemented: sortByStars, sortByName, sortByGrowthRate, sortByUpdated)_
 
 ## Phase 3.9: Enhanced API & Caching (T026-T028b)
 
-- [ ] T026 Update `api/starred.ts` to fetch repository issues and releases
-- [ ] T027 Create `api/metrics.ts` endpoint to calculate growth rates
-- [ ] T028 Update `src/services/github.ts` to use enhanced endpoints
+_Note: Serverless deferred to Slice 4. See [docs/serverless-decision.md](/docs/serverless-decision.md) for rationale._
+
+- [ ] T026 Add `fetchRepositoryReleases()` to `src/services/github.ts` for lazy-loading releases on detail page _(adapted from serverless; uses client-side GitHub API + T042's cache service)_
+- [x] T027 ~~Create `api/metrics.ts` endpoint~~ _Deferred to Slice 4: Real growth rates require historical data from background sync. Using mock growth rates for now._
+- [x] T028 ~~Update `src/services/github.ts` to use enhanced endpoints~~ _Skipped: No serverless endpoints; client-side GitHub calls continue as-is_
 - [x] T028a Configure TanStack Query with caching settings in `src/services/queryClient.ts` (1hr staleTime, 24hr gcTime) _(configured in `src/App.tsx` with 5min staleTime, 30min gcTime)_
 - [x] T028b Create `src/utils/formatters.ts` with relative time formatting for "Last updated" display _(implemented in `src/utils/relativeTime.ts`)_
 
@@ -143,8 +145,8 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [ ] T039a Apply migrations to Supabase instance via CLI (`supabase db push`) or dashboard
 - [x] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
 - [x] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
-- [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
-- [ ] T042a Create cache service in `src/services/cache.ts` for server-side caching with ETags
+- [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql` _(in progress on separate branch)_
+- [ ] T042a Create cache service in `src/services/cache.ts` for client-side caching with ETags _(in progress on separate branch; adapted from "server-side" to client-side per serverless deferral)_
 
 ## Phase 3.13: Radar UI Components (T043-T049)
 

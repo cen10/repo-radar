@@ -31,6 +31,26 @@
 ## Summary
 Build a personalized GitHub repository momentum dashboard that consolidates star growth, release activity, and issue volume across starred repositories. The dashboard enables developers to spot trending projects and make informed decisions about tool adoption. Features direct GitHub star management with a "radar" system for organizing repositories to actively monitor. Technical approach uses React with Vite, TanStack Query for data fetching, Supabase for persistence, and serverless functions for periodic GitHub API syncing.
 
+## Architecture Decision: Serverless Deferred
+
+**Decision Date**: 2025-01-16
+**Status**: Serverless deferred to Slice 4
+
+Slices 1-3 use **client-side GitHub API calls** instead of serverless functions. This decision was made after completing T018 (serverless proxy) was deemed unnecessary complexity for the current feature set.
+
+**What this means:**
+- Browser calls GitHub API directly using user's OAuth token
+- TanStack Query provides in-session caching
+- T042's `repo_cache` table + `cache.ts` provide persistent caching with ETags (client-side)
+- Mock growth rates until Slice 4 (real rates require historical data from background sync)
+
+**When serverless becomes necessary (Slice 4):**
+- Background cron jobs for daily data collection (can't run in browser)
+- Historical star snapshots for real growth rate calculations
+- Server-side cache service using Supabase service role key
+
+See [docs/serverless-decision.md](/docs/serverless-decision.md) for full rationale.
+
 **Key UX Decisions** (see [ux-spec.md](./ux-spec.md) for details):
 - Sidebar navigation with My Stars, Explore, and user-created Radars
 - Radars are named collections (max 5 per user, 25 repos per radar, 50 total)
