@@ -1,5 +1,12 @@
 import { supabase } from './supabase';
-import type { Radar, RadarRepo, RadarWithCount, RadarInsert } from '../types/database';
+import type {
+  Radar,
+  RadarRepo,
+  RadarWithCount,
+  RadarInsert,
+  RadarWithRepoCountResponse,
+  RadarWithRepoIdsResponse,
+} from '../types/database';
 import { logger } from '../utils/logger';
 
 // Limit constants
@@ -33,9 +40,10 @@ export async function getRadars(): Promise<RadarWithCount[]> {
   }
 
   // Transform the response to include repo_count
-  return (data || []).map((radar) => ({
+  const radars = data as RadarWithRepoCountResponse[] | null;
+  return (radars || []).map((radar) => ({
     ...radar,
-    repo_count: (radar.radar_repos as unknown as { count: number }[])?.[0]?.count ?? 0,
+    repo_count: radar.radar_repos?.[0]?.count ?? 0,
   }));
 }
 
@@ -194,8 +202,9 @@ export async function getAllRadarRepoIds(): Promise<Set<number>> {
   }
 
   const repoIds = new Set<number>();
-  for (const radar of data || []) {
-    for (const repo of radar.radar_repos as unknown as { github_repo_id: number }[]) {
+  const radars = data as RadarWithRepoIdsResponse[] | null;
+  for (const radar of radars || []) {
+    for (const repo of radar.radar_repos) {
       repoIds.add(repo.github_repo_id);
     }
   }
@@ -245,8 +254,9 @@ export async function addRepoToRadar(radarId: string, githubRepoId: number): Pro
     throw new Error('Failed to add repo to radar');
   }
 
-  const totalRepos = (allRadars || []).reduce((sum, radar) => {
-    const count = (radar.radar_repos as unknown as { count: number }[])?.[0]?.count ?? 0;
+  const radarsWithCounts = allRadars as RadarWithRepoCountResponse[] | null;
+  const totalRepos = (radarsWithCounts || []).reduce((sum, radar) => {
+    const count = radar.radar_repos?.[0]?.count ?? 0;
     return sum + count;
   }, 0);
 

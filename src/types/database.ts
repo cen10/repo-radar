@@ -82,3 +82,12 @@ export type RadarRepoInsert = Database['public']['Tables']['radar_repos']['Inser
 export interface RadarWithCount extends Radar {
   repo_count: number;
 }
+
+// Response types for Supabase relational queries
+export type RadarWithRepoCountResponse = Radar & {
+  radar_repos: { count: number }[];
+};
+
+export type RadarWithRepoIdsResponse = {
+  radar_repos: { github_repo_id: number }[];
+};
