@@ -10,11 +10,13 @@
 CREATE TABLE IF NOT EXISTS radars (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
+    name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    -- Validation: name must be 1-50 characters (enforced by VARCHAR(50))
+    -- Validation: name must be 1-50 characters
+    -- Length enforced here as safety net; app validates first for friendly errors
+    CONSTRAINT radars_name_length CHECK (char_length(name) BETWEEN 1 AND 50),
     CONSTRAINT radars_name_not_empty CHECK (LENGTH(TRIM(name)) > 0)
 );
 
