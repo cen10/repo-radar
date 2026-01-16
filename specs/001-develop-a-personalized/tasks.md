@@ -140,6 +140,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 ## Phase 3.12: Supabase Schema (T039-T042a)
 
 - [x] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
+- [ ] T039a Apply migrations to Supabase instance via CLI (`supabase db push`) or dashboard
 - [x] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
 - [x] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
 - [ ] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
