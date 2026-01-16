@@ -295,14 +295,6 @@ export async function removeRepoFromRadar(radarId: string, githubRepoId: number)
 }
 
 /**
- * Checks if a repository is in any of the user's radars
- */
-export async function isRepoInAnyRadar(githubRepoId: number): Promise<boolean> {
-  const repoIds = await getAllRadarRepoIds();
-  return repoIds.has(githubRepoId);
-}
-
-/**
  * Gets the radar IDs that contain a specific repository
  */
 export async function getRadarsContainingRepo(githubRepoId: number): Promise<string[]> {
