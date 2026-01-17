@@ -44,7 +44,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
-            aria-label={`${name} by ${owner.login}${isHot ? ', trending' : ''}`}
+            aria-label={`${name} by ${owner.login}${isHot ? ', trending' : ''}${is_starred ? ', starred' : ''}`}
           >
             <span aria-hidden="true">{name}</span>
           </a>

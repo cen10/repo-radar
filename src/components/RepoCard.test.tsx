@@ -167,6 +167,22 @@ describe('RepoCard', () => {
 
       expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
     });
+
+    it('includes starred in card link aria-label when starred', () => {
+      const repo = createMockRepository({ is_starred: true });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/starred/i);
+    });
+
+    it('does not include starred in card link aria-label when not starred', () => {
+      const repo = createMockRepository({ is_starred: false });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).not.toHaveAccessibleName(/starred/i);
+    });
   });
 
   describe('Metrics display', () => {
