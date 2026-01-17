@@ -234,6 +234,7 @@ export async function fetchStarredRepositories(
       is_starred: true, // These are all starred repos by definition
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
+        stars_gained: calculateStarsGained(repo),
         issues_growth_rate: 0, // Would need historical data
         is_trending: isTrending(repo),
       },
@@ -257,11 +258,40 @@ function calculateGrowthRate(repo: GitHubStarredRepo): number {
 
   if (!recentlyUpdated) return 0;
 
-  // Mock calculation based on star count (higher stars = slower growth typically)
+  // Mock calculation based on star count
   // Returns decimal format: 0.05 = 5% growth
+  // Some repos get higher growth rates to trigger "hot" badge (needs 25%+)
+  // Use repo.id % 3 for consistent "hot candidate" selection across metrics
+  const isHotCandidate = repo.stargazers_count >= 100 && repo.id % 3 === 0;
+  if (isHotCandidate) {
+    // 25-50% growth for hot candidates
+    return parseFloat((0.25 + Math.random() * 0.25).toFixed(3));
+  }
   const baseRatePercent = Math.max(1, 20 - Math.log10(repo.stargazers_count + 1) * 3);
   const ratePercent = baseRatePercent * (0.5 + Math.random());
   return parseFloat((ratePercent / 100).toFixed(3)); // Convert to decimal
+}
+
+/**
+ * Mock stars gained calculation
+ * In production, this would come from historical snapshot comparison
+ */
+function calculateStarsGained(repo: GitHubStarredRepo): number {
+  const recentlyUpdated =
+    new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  if (!recentlyUpdated) return 0;
+
+  // Mock: higher star repos gain more absolute stars
+  // For "hot" badge: need 50+ gained, so make some repos qualify
+  // Use consistent randomness based on repo id so growth rate and stars gained align
+  const isHotCandidate = repo.stargazers_count >= 100 && repo.id % 3 === 0;
+  if (isHotCandidate) {
+    // 50-150 stars gained for hot candidates
+    return 50 + Math.floor(Math.random() * 100);
+  }
+  const baseGain = Math.floor(repo.stargazers_count * 0.005 * Math.random());
+  return Math.max(0, baseGain + Math.floor(Math.random() * 20));
 }
 
 /**
@@ -395,6 +425,7 @@ export async function searchRepositories(
       is_starred: starredIds.has(repo.id), // Simple boolean check
       metrics: {
         stars_growth_rate: calculateGrowthRate(repo),
+        stars_gained: calculateStarsGained(repo),
         issues_growth_rate: 0,
         is_trending: isTrending(repo),
       },
