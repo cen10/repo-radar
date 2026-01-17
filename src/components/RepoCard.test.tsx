@@ -154,19 +154,17 @@ describe('RepoCard', () => {
   });
 
   describe('Star indicator', () => {
-    it('displays filled star icon when repository is starred', () => {
+    it('displays star icon when repository is starred', () => {
       const repo = createMockRepository({ is_starred: true });
       render(<RepoCard repository={repo} />);
 
       expect(screen.getByLabelText('Starred')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Not starred')).not.toBeInTheDocument();
     });
 
-    it('displays outline star icon when repository is not starred', () => {
+    it('does not display star icon when repository is not starred', () => {
       const repo = createMockRepository({ is_starred: false });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByLabelText('Not starred')).toBeInTheDocument();
       expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
     });
   });

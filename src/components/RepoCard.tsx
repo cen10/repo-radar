@@ -1,4 +1,3 @@
-import { StarIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
 
@@ -52,11 +51,12 @@ export function RepoCard({ repository }: RepoCardProps) {
             by {owner.login}
           </span>
         </h3>
-        {/* Star indicator (visual only) */}
-        {is_starred ? (
-          <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0" aria-label="Starred" />
-        ) : (
-          <StarIcon className="h-5 w-5 text-gray-400 shrink-0" aria-label="Not starred" />
+        {/* Star indicator (visual only, shown only for starred repos) */}
+        {is_starred && (
+          <StarIconSolid
+            className="h-5 w-5 text-yellow-500 shrink-0 self-start"
+            aria-label="Starred"
+          />
         )}
       </div>
 
