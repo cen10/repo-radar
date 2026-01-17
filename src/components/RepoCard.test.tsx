@@ -172,20 +172,20 @@ describe('RepoCard', () => {
   describe('Metrics display', () => {
     it('displays growth rate for stars', () => {
       const repo = createMockRepository({
-        metrics: { stars_growth_rate: 15.5 },
+        metrics: { stars_growth_rate: 0.155 }, // Decimal: 0.155 = 15.5%
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/\+15.5% this month/)).toBeInTheDocument();
+      expect(screen.getByText(/\+15\.5%/)).toBeInTheDocument();
     });
 
     it('displays negative growth rate for stars', () => {
       const repo = createMockRepository({
-        metrics: { stars_growth_rate: -5.2 },
+        metrics: { stars_growth_rate: -0.052 }, // Decimal: -0.052 = -5.2%
       });
       render(<RepoCard repository={repo} />);
 
-      const growthElement = screen.getByText(/-5.2% this month/);
+      const growthElement = screen.getByText(/-5\.2%/);
       expect(growthElement).toBeInTheDocument();
     });
 
@@ -202,14 +202,14 @@ describe('RepoCard', () => {
 
       render(<RepoCard repository={repository} />);
 
-      // Should show clean star count without extra zero
-      expect(screen.getByText(/Stars: 148\.0k$/)).toBeInTheDocument();
+      // Should show clean star count (formatCompactNumber returns "148k" for 148018)
+      expect(screen.getByText(/Stars: 148k$/)).toBeInTheDocument();
 
       // Should NOT contain the malformed version with extra zero
-      expect(screen.queryByText(/148\.0k0/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/148k0/)).not.toBeInTheDocument();
 
       // Should not show growth rate for zero growth
-      expect(screen.queryByText(/0\.0% this month/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/0%/)).not.toBeInTheDocument();
     });
 
     it('handles repository without metrics', () => {
@@ -217,6 +217,55 @@ describe('RepoCard', () => {
       render(<RepoCard repository={repo} />);
 
       expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('HotBadge integration', () => {
+    it('displays hot badge when all criteria are met', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3, // 30%
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText('Hot')).toBeInTheDocument();
+    });
+
+    it('does not display hot badge when criteria not met', () => {
+      const repo = createMockRepository({
+        stargazers_count: 50, // Below 100 threshold
+        metrics: {
+          stars_growth_rate: 0.3,
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('does not display hot badge when metrics undefined', () => {
+      const repo = createMockRepository({ metrics: undefined });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('does not display hot badge when stars_gained is missing', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3,
+          // stars_gained not provided, defaults to 0
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
 });

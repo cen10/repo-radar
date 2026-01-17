@@ -1,16 +1,10 @@
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
+import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
+import { HotBadge } from './HotBadge';
 
 interface RepoCardProps {
   repository: Repository;
-}
-
-// Format star count for display (e.g., 1234 -> 1.2k)
-function formatStarCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`;
-  }
-  return count.toString();
 }
 
 export function RepoCard({ repository }: RepoCardProps) {
@@ -34,6 +28,16 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
+      {/* Hot badge overlay */}
+      {metrics && (
+        <HotBadge
+          stars={stargazers_count}
+          growthRate={metrics.stars_growth_rate ?? 0}
+          starsGained={metrics.stars_gained ?? 0}
+          className="absolute top-3 right-16 z-[5]"
+        />
+      )}
+
       {/* Header with owner avatar, stretched link, and star indicator */}
       <div className="flex items-center space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
@@ -91,14 +95,16 @@ export function RepoCard({ repository }: RepoCardProps) {
       <div className="space-y-1.5 text-sm text-gray-600">
         {/* Row 1: Stars with growth */}
         <p>
-          Stars: {formatStarCount(stargazers_count)}
-          {metrics?.stars_growth_rate ? (
-            <span className={metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'}>
-              {' '}
-              ({metrics.stars_growth_rate > 0 && '+'}
-              {metrics.stars_growth_rate.toFixed(1)}% this month)
+          Stars: {formatCompactNumber(stargazers_count)}
+          {metrics?.stars_growth_rate !== undefined && metrics.stars_growth_rate !== 0 && (
+            <span
+              className={`ml-1 font-medium ${
+                metrics.stars_growth_rate > 0 ? 'text-green-700' : 'text-red-700'
+              }`}
+            >
+              ({formatGrowthRate(metrics.stars_growth_rate, 1)})
             </span>
-          ) : null}
+          )}
         </p>
 
         {/* Row 2: Open issues */}
