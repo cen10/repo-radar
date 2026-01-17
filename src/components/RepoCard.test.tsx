@@ -91,7 +91,7 @@ describe('RepoCard', () => {
     });
     render(<RepoCard repository={repo} />);
 
-    expect(screen.getByRole('group', { name: /labels: testing, react/i })).toBeInTheDocument();
+    expect(screen.getByText(/labels: testing, react/i)).toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
   });
 

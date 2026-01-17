@@ -44,20 +44,18 @@ export function RepoCard({ repository }: RepoCardProps) {
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
-        <h3 className="flex-1 text-lg font-semibold text-gray-900">
+        <div className="flex-1">
           <a
             href={html_url}
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
-            aria-label={`${name} by ${owner.login}${isHot ? ', trending' : ''}${is_starred ? ', starred' : ''} (opens in new tab)`}
           >
-            <span aria-hidden="true">{name}</span>
+            <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+            <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
+            <span className="sr-only">{`${isHot ? ', trending' : ''}${is_starred ? ', starred' : ''}, opens in new tab`}</span>
           </a>
-          <span className="block text-sm text-gray-500 font-normal" aria-hidden="true">
-            by {owner.login}
-          </span>
-        </h3>
+        </div>
         {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}
         {metrics && (
           <HotBadge
@@ -85,11 +83,8 @@ export function RepoCard({ repository }: RepoCardProps) {
 
       {/* Topics */}
       {topics?.length > 0 && (
-        <div
-          className="flex flex-wrap gap-2 mb-4"
-          role="group"
-          aria-label={topicsLabel ?? undefined}
-        >
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="sr-only">{topicsLabel}</span>
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
@@ -107,10 +102,9 @@ export function RepoCard({ repository }: RepoCardProps) {
         </div>
       )}
 
-      {/* Metrics - Three rows */}
-      <div className="space-y-1.5 text-sm text-gray-600">
-        {/* Row 1: Stars with growth */}
-        <p>
+      {/* Metrics */}
+      <ul className="space-y-1.5 text-sm text-gray-600 list-none p-0 m-0">
+        <li>
           Stars: {formatCompactNumber(stargazers_count)}
           {metrics?.stars_growth_rate !== undefined && metrics.stars_growth_rate !== 0 && (
             <span
@@ -121,14 +115,10 @@ export function RepoCard({ repository }: RepoCardProps) {
               ({formatGrowthRate(metrics.stars_growth_rate, 1)})
             </span>
           )}
-        </p>
-
-        {/* Row 2: Open issues */}
-        <p>Open issues: {open_issues_count.toLocaleString()}</p>
-
-        {/* Row 3: Primary language */}
-        {language && <p>Primary language: {language}</p>}
-      </div>
+        </li>
+        <li>Open issues: {open_issues_count.toLocaleString()}</li>
+        {language && <li>Primary language: {language}</li>}
+      </ul>
     </article>
   );
 }
