@@ -132,6 +132,7 @@ describe('RepoCard', () => {
     expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveAccessibleName(/opens in new tab/i);
   });
 
   it('link is reachable via keyboard navigation', async () => {
@@ -309,7 +310,7 @@ describe('RepoCard', () => {
       render(<RepoCard repository={repo} />);
 
       const link = screen.getByRole('link');
-      expect(link).toHaveAccessibleName(/awesome-repo by octocat$/i);
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat.*opens in new tab/i);
       expect(link).not.toHaveAccessibleName(/trending/i);
     });
   });
