@@ -267,5 +267,34 @@ describe('RepoCard', () => {
 
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
+
+    it('includes trending in card link aria-label when hot', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3,
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat, trending/i);
+    });
+
+    it('does not include trending in card link aria-label when not hot', () => {
+      const repo = createMockRepository({
+        stargazers_count: 50,
+        metrics: {
+          stars_growth_rate: 0.1,
+          stars_gained: 10,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat$/i);
+      expect(link).not.toHaveAccessibleName(/trending/i);
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
+import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 
 interface RepoCardProps {
@@ -26,6 +27,12 @@ export function RepoCard({ repository }: RepoCardProps) {
       ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
       : null;
 
+  const isHot = isHotRepo(
+    stargazers_count,
+    metrics?.stars_growth_rate ?? 0,
+    metrics?.stars_gained ?? 0
+  );
+
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
@@ -37,7 +44,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
-            aria-label={`${name} by ${owner.login}`}
+            aria-label={`${name} by ${owner.login}${isHot ? ', trending' : ''}`}
           >
             <span aria-hidden="true">{name}</span>
           </a>
