@@ -48,11 +48,18 @@ describe('HotBadge', () => {
   });
 
   describe('accessibility', () => {
-    it('has accessible label for screen readers', () => {
+    it('has accessible label with criteria for screen readers', () => {
       render(<HotBadge stars={200} growthRate={0.3} starsGained={60} />);
 
       const badge = screen.getByRole('status');
-      expect(badge).toHaveAccessibleName(/trending/i);
+      expect(badge).toHaveAccessibleName(/trending.*25%.*growth.*50.*new stars/i);
+    });
+
+    it('is keyboard focusable', () => {
+      render(<HotBadge stars={200} growthRate={0.3} starsGained={60} />);
+
+      const badge = screen.getByRole('status');
+      expect(badge).toHaveAttribute('tabIndex', '0');
     });
 
     it('hides emoji from screen readers with aria-hidden', () => {
