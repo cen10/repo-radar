@@ -27,11 +27,10 @@ export function RepoCard({ repository }: RepoCardProps) {
       ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
       : null;
 
-  const isHot = isHotRepo(
-    stargazers_count,
-    metrics?.stars_growth_rate ?? 0,
-    metrics?.stars_gained ?? 0
-  );
+  const starsGrowthRate = metrics?.stars_growth_rate;
+  const starsGained = metrics?.stars_gained ?? 0;
+
+  const isHot = isHotRepo(stargazers_count, starsGrowthRate ?? 0, starsGained);
 
   // Truncate description to match visual line-clamp-2 (~150 chars)
   const truncatedDescription =
@@ -60,8 +59,8 @@ export function RepoCard({ repository }: RepoCardProps) {
         {metrics && (
           <HotBadge
             stars={stargazers_count}
-            growthRate={metrics.stars_growth_rate ?? 0}
-            starsGained={metrics.stars_gained ?? 0}
+            growthRate={starsGrowthRate ?? 0}
+            starsGained={starsGained}
             className="shrink-0 z-[2] mt-0.5"
           />
         )}
@@ -106,13 +105,13 @@ export function RepoCard({ repository }: RepoCardProps) {
       <ul className="space-y-1.5 text-sm text-gray-600 list-none p-0 m-0">
         <li>
           Stars: {formatCompactNumber(stargazers_count)}
-          {metrics?.stars_growth_rate !== undefined && metrics.stars_growth_rate !== 0 && (
+          {starsGrowthRate !== undefined && starsGrowthRate !== 0 && (
             <span
               className={`ml-1 font-medium ${
-                metrics.stars_growth_rate > 0 ? 'text-green-700' : 'text-red-700'
+                starsGrowthRate > 0 ? 'text-green-700' : 'text-red-700'
               }`}
             >
-              ({formatGrowthRate(metrics.stars_growth_rate, 1)})
+              ({formatGrowthRate(starsGrowthRate, 1)})
             </span>
           )}
         </li>
