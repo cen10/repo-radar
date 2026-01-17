@@ -62,11 +62,12 @@ describe('HotBadge', () => {
       expect(badge).toHaveAttribute('tabIndex', '0');
     });
 
-    it('hides emoji from screen readers with aria-hidden', () => {
+    it('hides fire icon from screen readers with aria-hidden', () => {
       render(<HotBadge stars={200} growthRate={0.3} starsGained={60} />);
 
-      const emoji = screen.getByText('🔥');
-      expect(emoji).toHaveAttribute('aria-hidden', 'true');
+      const badge = screen.getByRole('status');
+      const icon = badge.querySelector('svg');
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
     });
   });
 

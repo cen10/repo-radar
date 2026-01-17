@@ -62,7 +62,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             stars={stargazers_count}
             growthRate={metrics.stars_growth_rate ?? 0}
             starsGained={metrics.stars_gained ?? 0}
-            className="shrink-0 z-[2]"
+            className="shrink-0 z-[2] mt-0.5"
           />
         )}
         {/* Star indicator (visual only, shown only for starred repos) */}
