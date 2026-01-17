@@ -13,13 +13,25 @@ export function HotBadge({ stars, growthRate, starsGained, className = '' }: Hot
   }
 
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 ${className}`}
-      role="status"
-      aria-label="This repository is trending"
-    >
-      <span aria-hidden="true">🔥</span>
-      <span className="ml-1">Hot</span>
+    <span className={`group relative ${className}`}>
+      <span
+        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 cursor-default"
+        role="status"
+        aria-label="This repository is trending"
+      >
+        <span aria-hidden="true">🔥</span>
+        <span className="ml-1">Hot</span>
+      </span>
+      {/* Tooltip */}
+      <span
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 z-50"
+        role="tooltip"
+        aria-hidden="true"
+      >
+        25%+ growth · 50+ new stars
+        {/* Arrow */}
+        <span className="absolute left-1/2 -translate-x-1/2 bottom-full border-4 border-transparent border-b-gray-900" />
+      </span>
     </span>
   );
 }

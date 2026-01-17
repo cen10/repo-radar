@@ -67,8 +67,19 @@ describe('HotBadge', () => {
     it('applies custom className when provided', () => {
       render(<HotBadge stars={200} growthRate={0.3} starsGained={60} className="custom-class" />);
 
+      // className is applied to the wrapper element (parent of the badge)
       const badge = screen.getByRole('status');
-      expect(badge).toHaveClass('custom-class');
+      expect(badge.parentElement).toHaveClass('custom-class');
+    });
+  });
+
+  describe('tooltip', () => {
+    it('has tooltip text explaining hot criteria', () => {
+      render(<HotBadge stars={200} growthRate={0.3} starsGained={60} />);
+
+      // Tooltip is aria-hidden (decorative), query by text content
+      expect(screen.getByText(/25%\+ growth/)).toBeInTheDocument();
+      expect(screen.getByText(/50\+ new stars/)).toBeInTheDocument();
     });
   });
 });
