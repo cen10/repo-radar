@@ -258,8 +258,10 @@ function calculateGrowthRate(repo: GitHubStarredRepo): number {
   if (!recentlyUpdated) return 0;
 
   // Mock calculation based on star count (higher stars = slower growth typically)
-  const baseRate = Math.max(1, 20 - Math.log10(repo.stargazers_count + 1) * 3);
-  return parseFloat((baseRate * (0.5 + Math.random())).toFixed(1));
+  // Returns decimal format: 0.05 = 5% growth
+  const baseRatePercent = Math.max(1, 20 - Math.log10(repo.stargazers_count + 1) * 3);
+  const ratePercent = baseRatePercent * (0.5 + Math.random());
+  return parseFloat((ratePercent / 100).toFixed(3)); // Convert to decimal
 }
 
 /**

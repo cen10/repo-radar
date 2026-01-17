@@ -196,8 +196,8 @@ describe('Dashboard', () => {
       pushed_at: '2024-01-15T10:30:00Z',
       created_at: '2013-05-24T16:15:54Z',
       metrics: {
-        stars_growth_rate: 12.5,
-        issues_growth_rate: -3.2,
+        stars_growth_rate: 0.125, // Decimal: 12.5%
+        issues_growth_rate: -0.032,
         is_trending: true,
       },
       is_following: false,
@@ -221,8 +221,8 @@ describe('Dashboard', () => {
       pushed_at: '2024-01-14T08:45:00Z',
       created_at: '2014-06-17T15:28:39Z',
       metrics: {
-        stars_growth_rate: 8.1,
-        issues_growth_rate: 2.4,
+        stars_growth_rate: 0.081, // Decimal: 8.1%
+        issues_growth_rate: 0.024,
         is_trending: false,
       },
       is_following: false,
