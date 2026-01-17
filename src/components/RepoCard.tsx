@@ -28,17 +28,7 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
-      {/* Hot badge overlay */}
-      {metrics && (
-        <HotBadge
-          stars={stargazers_count}
-          growthRate={metrics.stars_growth_rate ?? 0}
-          starsGained={metrics.stars_gained ?? 0}
-          className="absolute top-3 right-16 z-[5]"
-        />
-      )}
-
-      {/* Header with owner avatar, stretched link, and star indicator */}
+      {/* Header with owner avatar, stretched link, badges, and star indicator */}
       <div className="flex items-center space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
         <h3 className="flex-1 text-lg font-semibold text-gray-900">
@@ -55,6 +45,15 @@ export function RepoCard({ repository }: RepoCardProps) {
             by {owner.login}
           </span>
         </h3>
+        {/* Hot badge */}
+        {metrics && (
+          <HotBadge
+            stars={stargazers_count}
+            growthRate={metrics.stars_growth_rate ?? 0}
+            starsGained={metrics.stars_gained ?? 0}
+            className="shrink-0 self-start"
+          />
+        )}
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
           <StarIconSolid
