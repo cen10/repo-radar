@@ -45,13 +45,13 @@ export function RepoCard({ repository }: RepoCardProps) {
             by {owner.login}
           </span>
         </h3>
-        {/* Hot badge */}
+        {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}
         {metrics && (
           <HotBadge
             stars={stargazers_count}
             growthRate={metrics.stars_growth_rate ?? 0}
             starsGained={metrics.stars_gained ?? 0}
-            className="shrink-0 self-start"
+            className="shrink-0 self-start z-[2]"
           />
         )}
         {/* Star indicator (visual only, shown only for starred repos) */}
