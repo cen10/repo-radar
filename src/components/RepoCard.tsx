@@ -42,7 +42,7 @@ export function RepoCard({ repository }: RepoCardProps) {
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
-      <div className="flex items-center space-x-3 mb-3">
+      <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
         <h3 className="flex-1 text-lg font-semibold text-gray-900">
           <a
@@ -64,15 +64,12 @@ export function RepoCard({ repository }: RepoCardProps) {
             stars={stargazers_count}
             growthRate={metrics.stars_growth_rate ?? 0}
             starsGained={metrics.stars_gained ?? 0}
-            className="shrink-0 self-start z-[2]"
+            className="shrink-0 z-[2]"
           />
         )}
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
-          <StarIconSolid
-            className="h-5 w-5 text-yellow-500 shrink-0 self-start"
-            aria-label="Starred"
-          />
+          <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" aria-label="Starred" />
         )}
       </div>
 
