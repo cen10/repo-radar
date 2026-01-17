@@ -1,3 +1,5 @@
+import { StarIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
 
 interface RepoCardProps {
@@ -23,6 +25,7 @@ export function RepoCard({ repository }: RepoCardProps) {
     language,
     topics,
     metrics,
+    is_starred,
   } = repository;
 
   const topicsLabel =
@@ -32,10 +35,10 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
-      {/* Header with owner avatar and stretched link */}
+      {/* Header with owner avatar, stretched link, and star indicator */}
       <div className="flex items-center space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="flex-1 text-lg font-semibold text-gray-900">
           <a
             href={html_url}
             target="_blank"
@@ -49,6 +52,12 @@ export function RepoCard({ repository }: RepoCardProps) {
             by {owner.login}
           </span>
         </h3>
+        {/* Star indicator (visual only) */}
+        {is_starred ? (
+          <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0" aria-label="Starred" />
+        ) : (
+          <StarIcon className="h-5 w-5 text-gray-400 shrink-0" aria-label="Not starred" />
+        )}
       </div>
 
       {/* Description */}
