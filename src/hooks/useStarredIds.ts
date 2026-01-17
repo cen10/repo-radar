@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useMemo, useRef, useSyncExternalStore } from 'react';
 import type { Repository } from '../types';
 
 interface AllStarredData {
@@ -15,14 +15,12 @@ interface UseStarredIdsOptions {
 
 interface UseStarredIdsReturn {
   starredIds: Set<number>;
-  addRepoToStarredCache: (repo: Repository) => void;
-  removeRepoFromStarredCache: (repo: Repository) => void;
 }
 
 /**
- * Hook for reading and optimistically updating the starred repositories cache.
+ * Hook for reading the starred repositories cache.
  *
- * Does NOT fetch data - just reads from and manipulates the cache used by
+ * Does NOT fetch data - just reads from the cache used by
  * useAllStarredRepositories. The actual fetch only happens when that hook
  * is enabled (e.g., when sorting by "Most Stars").
  *
@@ -60,46 +58,7 @@ export function useStarredIds({ token }: UseStarredIdsOptions): UseStarredIdsRet
     }
   );
 
-  const addRepoToStarredCache = useCallback(
-    (repo: Repository) => {
-      queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
-        if (!old) return old;
-        // Add repo if not already present
-        if (old.repositories.some((r) => r.id === repo.id)) return old;
-        return {
-          ...old,
-          repositories: [
-            {
-              ...repo,
-              is_starred: true,
-              starred_at: new Date().toISOString(),
-            },
-            ...old.repositories,
-          ],
-          totalStarred: old.totalStarred + 1,
-        };
-      });
-    },
-    [queryClient, queryKey]
-  );
-
-  const removeRepoFromStarredCache = useCallback(
-    (repo: Repository) => {
-      queryClient.setQueryData<AllStarredData>(queryKey, (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          repositories: old.repositories.filter((r) => r.id !== repo.id),
-          totalStarred: Math.max(0, old.totalStarred - 1),
-        };
-      });
-    },
-    [queryClient, queryKey]
-  );
-
   return {
     starredIds,
-    addRepoToStarredCache,
-    removeRepoFromStarredCache,
   };
 }

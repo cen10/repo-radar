@@ -39,33 +39,9 @@ describe('RepoCard', () => {
     vi.setSystemTime(new Date('2024-01-16T10:30:00Z'));
   });
 
-  it('displays star button in starred state when repository is starred', () => {
-    const repo = createMockRepository({
-      is_starred: true,
-    });
-    const onToggleStar = vi.fn();
-    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-    const starButton = screen.getByRole('button', { name: /unstar awesome-repo repository/i });
-    expect(starButton).toBeInTheDocument();
-    expect(starButton).toHaveTextContent('Starred');
-  });
-
-  it('displays star button in unstarred state when repository is not starred', () => {
-    const repo = createMockRepository({
-      is_starred: false,
-    });
-    const onToggleStar = vi.fn();
-    render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
-
-    const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-    expect(starButton).toBeInTheDocument();
-    expect(starButton).toHaveTextContent('Star');
-  });
-
   it('renders repository basic information correctly', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText('awesome-repo')).toBeInTheDocument();
     expect(screen.getByText('by octocat')).toBeInTheDocument();
@@ -76,35 +52,35 @@ describe('RepoCard', () => {
 
   it('displays star count with proper formatting', () => {
     const repo = createMockRepository({ stargazers_count: 1234 });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText(/Stars: 1.2k/)).toBeInTheDocument();
   });
 
   it('displays star count without formatting for small numbers', () => {
     const repo = createMockRepository({ stargazers_count: 567 });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText(/Stars: 567/)).toBeInTheDocument();
   });
 
   it('displays issue count correctly', () => {
     const repo = createMockRepository({ open_issues_count: 42 });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText(/Open issues: 42/)).toBeInTheDocument();
   });
 
   it('displays primary language when present', () => {
     const repo = createMockRepository({ language: 'JavaScript' });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText(/primary language: javascript/i)).toBeInTheDocument();
   });
 
   it('omits language row when repository has no language', () => {
     const repo = createMockRepository({ language: null });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.queryByText(/primary language/i)).not.toBeInTheDocument();
   });
@@ -113,7 +89,7 @@ describe('RepoCard', () => {
     const repo = createMockRepository({
       topics: ['testing', 'react'],
     });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByRole('group', { name: /labels: testing, react/i })).toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
@@ -123,7 +99,7 @@ describe('RepoCard', () => {
     const repo = createMockRepository({
       topics: ['topic1', 'topic2', 'topic3', 'topic4', 'topic5'],
     });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.getByText('topic1')).toBeInTheDocument();
     expect(screen.getByText('topic2')).toBeInTheDocument();
@@ -135,7 +111,7 @@ describe('RepoCard', () => {
 
   it('handles repository without topics', () => {
     const repo = createMockRepository({ topics: [] });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.queryByText(/topic/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
@@ -143,14 +119,14 @@ describe('RepoCard', () => {
 
   it('handles repository without description', () => {
     const repo = createMockRepository({ description: null });
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
   it('configures repository link to open in new tab securely', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
     expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
@@ -161,7 +137,7 @@ describe('RepoCard', () => {
   it('link is reachable via keyboard navigation', async () => {
     const user = userEvent.setup();
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     await user.tab();
 
@@ -171,23 +147,25 @@ describe('RepoCard', () => {
 
   it('renders as an article element for semantic structure', () => {
     const repo = createMockRepository();
-    render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+    render(<RepoCard repository={repo} />);
 
     const article = screen.getByRole('article');
     expect(article).toBeInTheDocument();
   });
 
-  describe('Star functionality', () => {
-    it('calls onToggleStar when star button is clicked', async () => {
-      const user = userEvent.setup();
+  describe('Star indicator', () => {
+    it('displays star icon when repository is starred', () => {
+      const repo = createMockRepository({ is_starred: true });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.getByLabelText('Starred')).toBeInTheDocument();
+    });
+
+    it('does not display star icon when repository is not starred', () => {
       const repo = createMockRepository({ is_starred: false });
-      const onToggleStar = vi.fn();
-      render(<RepoCard repository={repo} onToggleStar={onToggleStar} />);
+      render(<RepoCard repository={repo} />);
 
-      const starButton = screen.getByRole('button', { name: /star awesome-repo repository/i });
-      await user.click(starButton);
-
-      expect(onToggleStar).toHaveBeenCalledWith(repo);
+      expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
     });
   });
 
@@ -196,7 +174,7 @@ describe('RepoCard', () => {
       const repo = createMockRepository({
         metrics: { stars_growth_rate: 15.5 },
       });
-      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+      render(<RepoCard repository={repo} />);
 
       expect(screen.getByText(/\+15.5% this month/)).toBeInTheDocument();
     });
@@ -205,7 +183,7 @@ describe('RepoCard', () => {
       const repo = createMockRepository({
         metrics: { stars_growth_rate: -5.2 },
       });
-      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+      render(<RepoCard repository={repo} />);
 
       const growthElement = screen.getByText(/-5.2% this month/);
       expect(growthElement).toBeInTheDocument();
@@ -222,7 +200,7 @@ describe('RepoCard', () => {
         },
       });
 
-      render(<RepoCard repository={repository} onToggleStar={vi.fn()} />);
+      render(<RepoCard repository={repository} />);
 
       // Should show clean star count without extra zero
       expect(screen.getByText(/Stars: 148\.0k$/)).toBeInTheDocument();
@@ -236,7 +214,7 @@ describe('RepoCard', () => {
 
     it('handles repository without metrics', () => {
       const repo = createMockRepository({ metrics: undefined });
-      render(<RepoCard repository={repo} onToggleStar={vi.fn()} />);
+      render(<RepoCard repository={repo} />);
 
       expect(screen.queryByText(/%/)).not.toBeInTheDocument();
     });
