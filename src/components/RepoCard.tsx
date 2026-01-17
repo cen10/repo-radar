@@ -74,7 +74,14 @@ export function RepoCard({ repository }: RepoCardProps) {
       </div>
 
       {/* Description */}
-      {truncatedDescription && <p className="text-gray-700 text-sm mb-4">{truncatedDescription}</p>}
+      {truncatedDescription && (
+        <p className="text-gray-700 text-sm mb-4">
+          {truncatedDescription}
+          {description && description.length > 150 && (
+            <span className="sr-only">(description truncated)</span>
+          )}
+        </p>
+      )}
 
       {/* Topics */}
       {topics?.length > 0 && (
