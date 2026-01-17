@@ -21,7 +21,9 @@ export function HotBadge({ stars, growthRate, starsGained, className = '' }: Hot
         tabIndex={0}
       >
         <span aria-hidden="true">🔥</span>
-        <span className="ml-1">Hot</span>
+        <span className="ml-1" aria-hidden="true">
+          Hot
+        </span>
       </span>
       {/* Tooltip - visible on hover or focus */}
       <span
