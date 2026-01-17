@@ -124,6 +124,26 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
+  it('truncates long descriptions at 150 characters', () => {
+    const longDescription =
+      'This is a very long description that exceeds 150 characters. It goes on and on with lots of details about what the repository does and why it is useful for developers.';
+    const repo = createMockRepository({ description: longDescription });
+    render(<RepoCard repository={repo} />);
+
+    // Should be truncated with ellipsis
+    expect(screen.getByText(/\.\.\.$/)).toBeInTheDocument();
+    // Should not contain the full text
+    expect(screen.queryByText(longDescription)).not.toBeInTheDocument();
+  });
+
+  it('does not truncate short descriptions', () => {
+    const shortDescription = 'A short description under 150 chars.';
+    const repo = createMockRepository({ description: shortDescription });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.getByText(shortDescription)).toBeInTheDocument();
+  });
+
   it('configures repository link to open in new tab securely', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);

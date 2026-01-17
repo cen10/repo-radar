@@ -33,6 +33,12 @@ export function RepoCard({ repository }: RepoCardProps) {
     metrics?.stars_gained ?? 0
   );
 
+  // Truncate description to match visual line-clamp-2 (~150 chars)
+  const truncatedDescription =
+    description && description.length > 150
+      ? `${description.slice(0, 150).trim()}...`
+      : description;
+
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
@@ -71,7 +77,7 @@ export function RepoCard({ repository }: RepoCardProps) {
       </div>
 
       {/* Description */}
-      {description && <p className="text-gray-700 text-sm mb-4 line-clamp-2">{description}</p>}
+      {truncatedDescription && <p className="text-gray-700 text-sm mb-4">{truncatedDescription}</p>}
 
       {/* Topics */}
       {topics?.length > 0 && (
