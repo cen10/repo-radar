@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './components/AuthProvider';
@@ -42,7 +42,6 @@ function App() {
               <Header />
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/dashboard" element={<Navigate to="/stars" replace />} />
                 <Route path="/stars" element={<StarsPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/radar/:id" element={<RadarPage />} />
