@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import {
+  StarIcon as StarIconSolid,
+  GlobeAltIcon as GlobeAltIconSolid,
+} from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
@@ -20,7 +23,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/stars', label: 'My Stars', icon: StarIcon, activeIcon: StarIconSolid },
-  { to: '/explore', label: 'Explore', icon: GlobeAltIcon, activeIcon: GlobeAltIcon },
+  { to: '/explore', label: 'Explore', icon: GlobeAltIcon, activeIcon: GlobeAltIconSolid },
 ];
 
 interface NavContentProps {
