@@ -134,7 +134,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [ ] T034 Create SidebarRadarList component for displaying user's radars with counts
 - [ ] T035 Create MobileDrawer component with hamburger menu trigger
 - [ ] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content
-- [ ] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
+- [x] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
 - [ ] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
 
 ## Phase 3.12: Supabase Schema (T039-T042a)
