@@ -102,7 +102,7 @@ describe('Home', () => {
       </BrowserRouter>
     );
 
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    expect(mockNavigate).toHaveBeenCalledWith('/stars');
   });
 
   it('sign in button triggers GitHub OAuth flow', async () => {

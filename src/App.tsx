@@ -1,9 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './components/AuthProvider';
 import { Header } from './components/Header';
-import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import StarsPage from './pages/StarsPage';
 import ExplorePage from './pages/ExplorePage';
@@ -43,7 +42,7 @@ function App() {
               <Header />
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Navigate to="/stars" replace />} />
                 <Route path="/stars" element={<StarsPage />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/radar/:id" element={<RadarPage />} />

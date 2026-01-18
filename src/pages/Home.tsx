@@ -21,7 +21,7 @@ const Home = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      void navigate('/dashboard');
+      void navigate('/stars');
     }
   }, [user, loading, navigate]);
 

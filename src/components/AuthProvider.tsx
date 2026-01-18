@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider: 'github',
       options: {
         scopes: 'read:user user:email public_repo',
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${window.location.origin}/stars`,
       },
     });
 
