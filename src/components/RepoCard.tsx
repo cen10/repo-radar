@@ -52,7 +52,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           >
             <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
-            <span className="sr-only">{`${isHot ? ', trending' : ''}${is_starred ? ', starred' : ''}, opens in new tab`}</span>
+            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}, opens in new tab`}</span>
           </a>
         </div>
         {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}

@@ -52,7 +52,7 @@ describe('HotBadge', () => {
       render(<HotBadge stars={200} growthRate={0.3} starsGained={60} />);
 
       const badge = screen.getByRole('status');
-      expect(badge).toHaveAccessibleName(/trending.*25%.*growth.*50.*new stars/i);
+      expect(badge).toHaveAccessibleName(/hot.*25%.*growth.*50.*new stars/i);
     });
 
     it('is keyboard focusable', () => {

@@ -322,7 +322,7 @@ describe('RepoCard', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
 
-    it('includes trending in card link aria-label when hot', () => {
+    it('includes hot in card link aria-label when hot', () => {
       const repo = createMockRepository({
         stargazers_count: 200,
         metrics: {
@@ -333,10 +333,10 @@ describe('RepoCard', () => {
       render(<RepoCard repository={repo} />);
 
       const link = screen.getByRole('link');
-      expect(link).toHaveAccessibleName(/awesome-repo by octocat, trending/i);
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat, hot/i);
     });
 
-    it('does not include trending in card link aria-label when not hot', () => {
+    it('does not include hot in card link aria-label when not hot', () => {
       const repo = createMockRepository({
         stargazers_count: 50,
         metrics: {
@@ -348,7 +348,7 @@ describe('RepoCard', () => {
 
       const link = screen.getByRole('link');
       expect(link).toHaveAccessibleName(/awesome-repo by octocat.*opens in new tab/i);
-      expect(link).not.toHaveAccessibleName(/trending/i);
+      expect(link).not.toHaveAccessibleName(/hot,/i);
     });
   });
 });
