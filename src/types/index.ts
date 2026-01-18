@@ -30,7 +30,8 @@ export interface Repository {
 }
 
 export interface RepositoryMetrics {
-  stars_growth_rate?: number;
+  stars_growth_rate?: number; // Decimal format: 0.25 = 25%
+  stars_gained?: number; // Absolute stars gained in period
   issues_growth_rate?: number;
   releases_count?: number;
   last_release_date?: string | null;

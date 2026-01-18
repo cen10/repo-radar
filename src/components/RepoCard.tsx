@@ -1,16 +1,11 @@
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
+import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
+import { isHotRepo } from '../utils/metrics';
+import { HotBadge } from './HotBadge';
 
 interface RepoCardProps {
   repository: Repository;
-}
-
-// Format star count for display (e.g., 1234 -> 1.2k)
-function formatStarCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`;
-  }
-  return count.toString();
 }
 
 export function RepoCard({ repository }: RepoCardProps) {
@@ -32,44 +27,63 @@ export function RepoCard({ repository }: RepoCardProps) {
       ? `Labels: ${topics.slice(0, 3).join(', ')}${topics.length > 3 ? `, plus ${topics.length - 3} more` : ''}`
       : null;
 
+  const starsGrowthRate = metrics?.stars_growth_rate;
+  const starsGained = metrics?.stars_gained ?? 0;
+
+  const isHot = isHotRepo(stargazers_count, starsGrowthRate ?? 0, starsGained);
+
+  // Truncate description to match visual line-clamp-2 (~150 chars)
+  const truncatedDescription =
+    description && description.length > 150
+      ? `${description.slice(0, 150).trim()}...`
+      : description;
+
   return (
     <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
-      {/* Header with owner avatar, stretched link, and star indicator */}
-      <div className="flex items-center space-x-3 mb-3">
+      {/* Header with owner avatar, stretched link, badges, and star indicator */}
+      <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
-        <h3 className="flex-1 text-lg font-semibold text-gray-900">
+        <div className="flex-1">
           <a
             href={html_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
-            aria-label={`${name} by ${owner.login}`}
+            className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
-            <span aria-hidden="true">{name}</span>
+            <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+            <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
+            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}, opens in new tab`}</span>
           </a>
-          <span className="block text-sm text-gray-500 font-normal" aria-hidden="true">
-            by {owner.login}
-          </span>
-        </h3>
+        </div>
+        {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}
+        {metrics && (
+          <HotBadge
+            stars={stargazers_count}
+            growthRate={starsGrowthRate ?? 0}
+            starsGained={starsGained}
+            className="shrink-0 z-2 mt-0.5"
+          />
+        )}
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
-          <StarIconSolid
-            className="h-5 w-5 text-yellow-500 shrink-0 self-start"
-            aria-label="Starred"
-          />
+          <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" aria-label="Starred" />
         )}
       </div>
 
       {/* Description */}
-      {description && <p className="text-gray-700 text-sm mb-4 line-clamp-2">{description}</p>}
+      {truncatedDescription && (
+        <p className="text-gray-700 text-sm mb-4">
+          {truncatedDescription}
+          {description && description.length > 150 && (
+            <span className="sr-only">(description truncated)</span>
+          )}
+        </p>
+      )}
 
       {/* Topics */}
       {topics?.length > 0 && (
-        <div
-          className="flex flex-wrap gap-2 mb-4"
-          role="group"
-          aria-label={topicsLabel ?? undefined}
-        >
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="sr-only">{topicsLabel}</span>
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
@@ -87,26 +101,23 @@ export function RepoCard({ repository }: RepoCardProps) {
         </div>
       )}
 
-      {/* Metrics - Three rows */}
-      <div className="space-y-1.5 text-sm text-gray-600">
-        {/* Row 1: Stars with growth */}
-        <p>
-          Stars: {formatStarCount(stargazers_count)}
-          {metrics?.stars_growth_rate ? (
-            <span className={metrics.stars_growth_rate > 0 ? 'text-green-600' : 'text-red-600'}>
-              {' '}
-              ({metrics.stars_growth_rate > 0 && '+'}
-              {metrics.stars_growth_rate.toFixed(1)}% this month)
+      {/* Metrics */}
+      <ul className="space-y-1.5 text-sm text-gray-600 list-none p-0 m-0">
+        <li>
+          Stars: {formatCompactNumber(stargazers_count)}
+          {starsGrowthRate !== undefined && starsGrowthRate !== 0 && (
+            <span
+              className={`ml-1 font-medium ${
+                starsGrowthRate > 0 ? 'text-green-700' : 'text-red-700'
+              }`}
+            >
+              ({formatGrowthRate(starsGrowthRate, 1)})
             </span>
-          ) : null}
-        </p>
-
-        {/* Row 2: Open issues */}
-        <p>Open issues: {open_issues_count.toLocaleString()}</p>
-
-        {/* Row 3: Primary language */}
-        {language && <p>Primary language: {language}</p>}
-      </div>
+          )}
+        </li>
+        <li>Open issues: {open_issues_count.toLocaleString()}</li>
+        {language && <li>Primary language: {language}</li>}
+      </ul>
     </article>
   );
 }

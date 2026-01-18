@@ -136,6 +136,47 @@ describe('GitHub API Service', () => {
       });
     });
 
+    it('should return growth rate in decimal format (not percentage)', async () => {
+      // Mock a recently updated repo to ensure non-zero growth rate
+      const recentDate = new Date().toISOString();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({
+          'x-ratelimit-remaining': '4999',
+          'x-ratelimit-limit': '5000',
+        }),
+        json: async () => [
+          {
+            repo: {
+              id: 1,
+              name: 'active-repo',
+              full_name: 'user/active-repo',
+              owner: { login: 'user', avatar_url: 'https://example.com/avatar.png' },
+              description: 'An active repo',
+              html_url: 'https://github.com/user/active-repo',
+              stargazers_count: 1000,
+              open_issues_count: 10,
+              language: 'TypeScript',
+              topics: [],
+              updated_at: recentDate,
+              pushed_at: recentDate,
+              created_at: '2020-01-01T00:00:00Z',
+            },
+            starred_at: recentDate,
+          },
+        ],
+      });
+
+      const result = await fetchStarredRepositories(testToken);
+      const growthRate = result[0].metrics?.stars_growth_rate ?? 0;
+
+      // Growth rate should be in decimal format: 0.25 = 25%, not 25
+      // Reasonable range is -1 to 1 (-100% to +100%)
+      expect(growthRate).toBeGreaterThanOrEqual(-1);
+      expect(growthRate).toBeLessThanOrEqual(1);
+    });
+
     it('should handle 401 authentication error', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,

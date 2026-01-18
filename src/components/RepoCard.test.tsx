@@ -91,7 +91,7 @@ describe('RepoCard', () => {
     });
     render(<RepoCard repository={repo} />);
 
-    expect(screen.getByRole('group', { name: /labels: testing, react/i })).toBeInTheDocument();
+    expect(screen.getByText(/labels: testing, react/i)).toBeInTheDocument();
     expect(screen.queryByText(/more/i)).not.toBeInTheDocument();
   });
 
@@ -124,6 +124,43 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/this is an awesome repository/i)).not.toBeInTheDocument();
   });
 
+  it('truncates long descriptions at 150 characters', () => {
+    const longDescription =
+      'This is a very long description that exceeds 150 characters. It goes on and on with lots of details about what the repository does and why it is useful for developers.';
+    const repo = createMockRepository({ description: longDescription });
+    render(<RepoCard repository={repo} />);
+
+    // Should be truncated with ellipsis
+    expect(screen.getByText(/\.\.\.$/)).toBeInTheDocument();
+    // Should not contain the full text
+    expect(screen.queryByText(longDescription)).not.toBeInTheDocument();
+  });
+
+  it('does not truncate short descriptions', () => {
+    const shortDescription = 'A short description under 150 chars.';
+    const repo = createMockRepository({ description: shortDescription });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.getByText(shortDescription)).toBeInTheDocument();
+  });
+
+  it('includes sr-only truncation indicator for long descriptions', () => {
+    const longDescription =
+      'This is a very long description that exceeds 150 characters. It goes on and on with lots of details about what the repository does and why it is useful for developers.';
+    const repo = createMockRepository({ description: longDescription });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.getByText(/description truncated/i)).toBeInTheDocument();
+  });
+
+  it('does not include truncation indicator for short descriptions', () => {
+    const shortDescription = 'A short description under 150 chars.';
+    const repo = createMockRepository({ description: shortDescription });
+    render(<RepoCard repository={repo} />);
+
+    expect(screen.queryByText(/description truncated/i)).not.toBeInTheDocument();
+  });
+
   it('configures repository link to open in new tab securely', () => {
     const repo = createMockRepository();
     render(<RepoCard repository={repo} />);
@@ -132,6 +169,7 @@ describe('RepoCard', () => {
     expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link).toHaveAccessibleName(/opens in new tab/i);
   });
 
   it('link is reachable via keyboard navigation', async () => {
@@ -167,25 +205,41 @@ describe('RepoCard', () => {
 
       expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
     });
+
+    it('includes starred in card link aria-label when starred', () => {
+      const repo = createMockRepository({ is_starred: true });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/starred/i);
+    });
+
+    it('does not include starred in card link aria-label when not starred', () => {
+      const repo = createMockRepository({ is_starred: false });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).not.toHaveAccessibleName(/starred/i);
+    });
   });
 
   describe('Metrics display', () => {
     it('displays growth rate for stars', () => {
       const repo = createMockRepository({
-        metrics: { stars_growth_rate: 15.5 },
+        metrics: { stars_growth_rate: 0.155 }, // Decimal: 0.155 = 15.5%
       });
       render(<RepoCard repository={repo} />);
 
-      expect(screen.getByText(/\+15.5% this month/)).toBeInTheDocument();
+      expect(screen.getByText(/\+15\.5%/)).toBeInTheDocument();
     });
 
     it('displays negative growth rate for stars', () => {
       const repo = createMockRepository({
-        metrics: { stars_growth_rate: -5.2 },
+        metrics: { stars_growth_rate: -0.052 }, // Decimal: -0.052 = -5.2%
       });
       render(<RepoCard repository={repo} />);
 
-      const growthElement = screen.getByText(/-5.2% this month/);
+      const growthElement = screen.getByText(/-5\.2%/);
       expect(growthElement).toBeInTheDocument();
     });
 
@@ -202,14 +256,14 @@ describe('RepoCard', () => {
 
       render(<RepoCard repository={repository} />);
 
-      // Should show clean star count without extra zero
-      expect(screen.getByText(/Stars: 148\.0k$/)).toBeInTheDocument();
+      // Should show clean star count (formatCompactNumber returns "148k" for 148018)
+      expect(screen.getByText(/Stars: 148k$/)).toBeInTheDocument();
 
       // Should NOT contain the malformed version with extra zero
-      expect(screen.queryByText(/148\.0k0/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/148k0/)).not.toBeInTheDocument();
 
       // Should not show growth rate for zero growth
-      expect(screen.queryByText(/0\.0% this month/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/0%/)).not.toBeInTheDocument();
     });
 
     it('handles repository without metrics', () => {
@@ -217,6 +271,84 @@ describe('RepoCard', () => {
       render(<RepoCard repository={repo} />);
 
       expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('HotBadge integration', () => {
+    it('displays hot badge when all criteria are met', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3, // 30%
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText('Hot')).toBeInTheDocument();
+    });
+
+    it('does not display hot badge when criteria not met', () => {
+      const repo = createMockRepository({
+        stargazers_count: 50, // Below 100 threshold
+        metrics: {
+          stars_growth_rate: 0.3,
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('does not display hot badge when metrics undefined', () => {
+      const repo = createMockRepository({ metrics: undefined });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('does not display hot badge when stars_gained is missing', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3,
+          // stars_gained not provided, defaults to 0
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('includes hot in card link aria-label when hot', () => {
+      const repo = createMockRepository({
+        stargazers_count: 200,
+        metrics: {
+          stars_growth_rate: 0.3,
+          stars_gained: 60,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat, hot/i);
+    });
+
+    it('does not include hot in card link aria-label when not hot', () => {
+      const repo = createMockRepository({
+        stargazers_count: 50,
+        metrics: {
+          stars_growth_rate: 0.1,
+          stars_gained: 10,
+        },
+      });
+      render(<RepoCard repository={repo} />);
+
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat.*opens in new tab/i);
+      expect(link).not.toHaveAccessibleName(/hot,/i);
     });
   });
 });
