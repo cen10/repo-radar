@@ -179,7 +179,7 @@ describe('Sidebar', () => {
       );
 
       const nav = screen.getByRole('navigation');
-      const divider = nav.querySelector('[aria-hidden="true"]');
+      const divider = nav.querySelector('div[aria-hidden="true"]');
       const radarList = screen.getByTestId('radar-list');
 
       // Both should be in the nav, with divider before radar list
