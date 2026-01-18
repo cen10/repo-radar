@@ -32,35 +32,30 @@ interface NavContentProps {
 function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
   return (
     <div className="flex-1 p-4 space-y-1">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const ActiveIcon = item.activeIcon;
-
-        return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onLinkClick}
-            title={collapsed ? item.label : undefined}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-              } ${collapsed ? 'justify-center' : ''}`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive ? (
-                  <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                ) : (
-                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                )}
-                {!collapsed && <span>{item.label}</span>}
-              </>
-            )}
-          </NavLink>
-        );
-      })}
+      {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
+        <NavLink
+          key={to}
+          to={to}
+          onClick={onLinkClick}
+          title={collapsed ? label : undefined}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
+            } ${collapsed ? 'justify-center' : ''}`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive ? (
+                <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+              ) : (
+                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+              )}
+              {!collapsed && <span>{label}</span>}
+            </>
+          )}
+        </NavLink>
+      ))}
 
       {children && (
         <>
