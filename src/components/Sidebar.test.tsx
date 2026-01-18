@@ -8,6 +8,12 @@ const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
   return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
 };
 
+// Default props for tests - Sidebar requires isOpen and onClose
+const defaultProps = {
+  isOpen: false,
+  onClose: vi.fn(),
+};
+
 describe('Sidebar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -15,21 +21,21 @@ describe('Sidebar', () => {
 
   describe('Navigation', () => {
     it('renders My Stars and Explore nav items', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       expect(screen.getByRole('link', { name: /my stars/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /explore/i })).toBeInTheDocument();
     });
 
     it('links point to correct routes', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       expect(screen.getByRole('link', { name: /my stars/i })).toHaveAttribute('href', '/stars');
       expect(screen.getByRole('link', { name: /explore/i })).toHaveAttribute('href', '/explore');
     });
 
     it('highlights active route with aria-current', () => {
-      renderWithRouter(<Sidebar />, { route: '/stars' });
+      renderWithRouter(<Sidebar {...defaultProps} />, { route: '/stars' });
 
       const starsLink = screen.getByRole('link', { name: /my stars/i });
       expect(starsLink).toHaveAttribute('aria-current', 'page');
@@ -41,13 +47,13 @@ describe('Sidebar', () => {
 
   describe('Collapse behavior', () => {
     it('renders collapse toggle button', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
     });
 
     it('toggles collapse state on button click', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       const collapseBtn = screen.getByRole('button', { name: /collapse sidebar/i });
       expect(collapseBtn).toHaveAttribute('aria-expanded', 'true');
@@ -59,7 +65,7 @@ describe('Sidebar', () => {
     });
 
     it('hides text labels when collapsed', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       // Initially visible
       expect(screen.getByText(/my stars/i)).toBeVisible();
@@ -72,7 +78,7 @@ describe('Sidebar', () => {
     });
 
     it('shows tooltips on links when collapsed', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
 
@@ -83,14 +89,14 @@ describe('Sidebar', () => {
 
   describe('Mobile drawer', () => {
     it('renders backdrop when isOpen is true', () => {
-      const { container } = renderWithRouter(<Sidebar isOpen onClose={() => {}} />);
+      const { container } = renderWithRouter(<Sidebar isOpen={true} onClose={() => {}} />);
 
       const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
       expect(backdrop).toBeInTheDocument();
     });
 
     it('does not render backdrop when isOpen is false', () => {
-      const { container } = renderWithRouter(<Sidebar isOpen={false} />);
+      const { container } = renderWithRouter(<Sidebar {...defaultProps} />);
 
       const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
       expect(backdrop).not.toBeInTheDocument();
@@ -98,7 +104,7 @@ describe('Sidebar', () => {
 
     it('calls onClose when backdrop is clicked', () => {
       const onClose = vi.fn();
-      const { container } = renderWithRouter(<Sidebar isOpen onClose={onClose} />);
+      const { container } = renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
 
       const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
       fireEvent.click(backdrop!);
@@ -108,7 +114,7 @@ describe('Sidebar', () => {
 
     it('calls onClose when Escape is pressed', () => {
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen onClose={onClose} />);
+      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 
@@ -127,13 +133,13 @@ describe('Sidebar', () => {
 
   describe('Accessibility', () => {
     it('has accessible navigation landmark', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       expect(screen.getByRole('navigation', { name: /main navigation/i })).toBeInTheDocument();
     });
 
     it('nav items are keyboard focusable', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       const starsLink = screen.getByRole('link', { name: /my stars/i });
       const exploreLink = screen.getByRole('link', { name: /explore/i });
@@ -144,7 +150,7 @@ describe('Sidebar', () => {
     });
 
     it('icons are hidden from screen readers', () => {
-      renderWithRouter(<Sidebar />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       const nav = screen.getByRole('navigation');
       const icons = nav.querySelectorAll('svg');
@@ -158,7 +164,7 @@ describe('Sidebar', () => {
   describe('Children slot', () => {
     it('renders children in radars section', () => {
       renderWithRouter(
-        <Sidebar>
+        <Sidebar {...defaultProps}>
           <div data-testid="radar-list">Radars content</div>
         </Sidebar>
       );
@@ -168,7 +174,7 @@ describe('Sidebar', () => {
 
     it('renders children after divider', () => {
       renderWithRouter(
-        <Sidebar>
+        <Sidebar {...defaultProps}>
           <div data-testid="radar-list">Radars</div>
         </Sidebar>
       );

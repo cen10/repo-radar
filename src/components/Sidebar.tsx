@@ -6,8 +6,8 @@ import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/
 
 interface SidebarProps {
   children?: React.ReactNode;
-  isOpen?: boolean;
-  onClose?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface NavItem {
@@ -22,14 +22,14 @@ const navItems: NavItem[] = [
   { to: '/explore', label: 'Explore', icon: GlobeAltIcon, activeIcon: GlobeAltIcon },
 ];
 
-export function Sidebar({ children, isOpen = false, onClose }: SidebarProps) {
+export function Sidebar({ children, isOpen, onClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
   // Escape key closes drawer
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen && onClose) {
+      if (event.key === 'Escape' && isOpen) {
         onClose();
       }
     };
