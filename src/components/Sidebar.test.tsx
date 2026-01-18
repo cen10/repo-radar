@@ -182,9 +182,8 @@ describe('Sidebar', () => {
       const divider = nav.querySelector('div[aria-hidden="true"]');
       const radarList = screen.getByTestId('radar-list');
 
-      // Both should be in the nav, with divider before radar list
-      expect(nav).toContainElement(divider);
-      expect(nav).toContainElement(radarList);
+      expect(divider).toBeInTheDocument();
+      expect(divider!.compareDocumentPosition(radarList)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     });
   });
 });
