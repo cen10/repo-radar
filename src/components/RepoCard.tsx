@@ -48,7 +48,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             href={html_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-[1]"
+            className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
             <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
@@ -61,7 +61,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             stars={stargazers_count}
             growthRate={starsGrowthRate ?? 0}
             starsGained={starsGained}
-            className="shrink-0 z-[2] mt-0.5"
+            className="shrink-0 z-2 mt-0.5"
           />
         )}
         {/* Star indicator (visual only, shown only for starred repos) */}
