@@ -5,6 +5,10 @@ import { AuthProvider } from './components/AuthProvider';
 import { Header } from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
+import StarsPage from './pages/StarsPage';
+import ExplorePage from './pages/ExplorePage';
+import RadarPage from './pages/RadarPage';
+import RepoDetailPage from './pages/RepoDetailPage';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
 import { logger } from './utils/logger';
 
@@ -40,6 +44,10 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/stars" element={<StarsPage />} />
+                <Route path="/explore" element={<ExplorePage />} />
+                <Route path="/radar/:id" element={<RadarPage />} />
+                <Route path="/repo/:id" element={<RepoDetailPage />} />
               </Routes>
             </div>
           </AuthProvider>
