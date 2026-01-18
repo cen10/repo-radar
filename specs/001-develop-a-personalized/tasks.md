@@ -118,10 +118,8 @@ _Note: Serverless deferred to Slice 4. See [docs/serverless-decision.md](/docs/s
 
 ## Phase 3.10: UI Updates (T029-T032)
 
-- [ ] T029 Update RepoCard to display metrics with growth indicators
-- [ ] T030 Add refresh button to Header component
-- [ ] T031 Add last updated timestamp to Dashboard
-- [ ] T032 [P] Create HotBadge component in `src/components/HotBadge.tsx` for trending repos
+- [x] T029 Update RepoCard to display metrics with growth indicators
+- [x] T032 [P] Create HotBadge component in `src/components/HotBadge.tsx` for trending repos
 
 ---
 
@@ -142,7 +140,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 ## Phase 3.12: Supabase Schema (T039-T042a)
 
 - [x] T039 Create Supabase migration `supabase/migrations/001_create_radars.sql` with both `radars` and `radar_repos` tables, indexes, and RLS policies (see data-model.md for schemas)
-- [ ] T039a Apply migrations to Supabase instance via CLI (`supabase db push`) or dashboard
+- [x] T039a Apply migrations to Supabase instance via CLI (`supabase db push`) or dashboard
 - [x] T040 Update database types in `src/types/database.ts` with Radar and RadarRepo interfaces
 - [x] T041 Create radar service functions in `src/services/radar.ts` (CRUD operations, enforce limits: 5 radars, 25 repos/radar, 50 total)
 - [x] T042 Create Supabase migration for repo_cache table in `supabase/migrations/004_create_repo_cache.sql`
@@ -158,11 +156,13 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [ ] T048 Create CreateRadarModal component for creating new radars from sidebar
 - [ ] T049 Create RadarContextMenu component with Rename/Delete actions
 
-## Phase 3.14: Radar Page & Detail Page (T050-T053)
+## Phase 3.14: Radar Page & Detail Page (T050-T053, T030-T031)
 
 - [ ] T050 Create RadarPage component in `src/pages/RadarPage.tsx` with header and repo list
 - [ ] T051 Create RepoDetailPage component in `src/pages/RepoDetailPage.tsx`
 - [ ] T052 Update RepoCard click behavior to navigate to internal detail page
+- [ ] T030 Add refresh button to detail page
+- [ ] T031 Add last updated timestamp to detail page
 - [ ] T053 [P] Create EmptyState components for empty radar, no stars, no search results
 
 ## Phase 3.15: Search & Polish (T054-T055)
