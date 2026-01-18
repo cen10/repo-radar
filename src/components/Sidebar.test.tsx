@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 
@@ -89,25 +90,23 @@ describe('Sidebar', () => {
 
   describe('Mobile drawer', () => {
     it('renders backdrop when isOpen is true', () => {
-      const { container } = renderWithRouter(<Sidebar isOpen={true} onClose={() => {}} />);
+      renderWithRouter(<Sidebar isOpen={true} onClose={() => {}} />);
 
-      const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
-      expect(backdrop).toBeInTheDocument();
+      expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
     });
 
     it('does not render backdrop when isOpen is false', () => {
-      const { container } = renderWithRouter(<Sidebar {...defaultProps} />);
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
-      const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
-      expect(backdrop).not.toBeInTheDocument();
+      expect(screen.queryByTestId('sidebar-backdrop')).not.toBeInTheDocument();
     });
 
-    it('calls onClose when backdrop is clicked', () => {
+    it('calls onClose when backdrop is clicked', async () => {
+      const user = userEvent.setup();
       const onClose = vi.fn();
-      const { container } = renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
+      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
 
-      const backdrop = container.querySelector('[data-testid="sidebar-backdrop"]');
-      fireEvent.click(backdrop!);
+      await user.click(screen.getByTestId('sidebar-backdrop'));
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
