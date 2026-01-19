@@ -111,6 +111,7 @@ describe('useRadars', () => {
     rerender();
 
     expect(result.current.radars).toHaveLength(1);
+    // Still 1 call, not 2 - data came from cache
     expect(radar.getRadars).toHaveBeenCalledTimes(1);
   });
 
