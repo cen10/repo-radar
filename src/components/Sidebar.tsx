@@ -63,9 +63,7 @@ interface NavContentProps {
 
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div
-      className={`flex-1 space-y-1 pt-8 pb-4 overflow-hidden pl-2 ${collapsed ? 'pr-2' : 'pr-4'}`}
-    >
+    <div className="flex-1 space-y-1 pt-8 pb-4 overflow-hidden px-2">
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
@@ -163,20 +161,22 @@ interface DesktopSidebarProps {
 
 function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSidebarProps) {
   return (
-    <aside
+    <div
       className={`
-        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200
-        transition-all duration-300 ease-in-out motion-reduce:transition-none z-40
+        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] z-40
+        transition-all duration-300 ease-in-out motion-reduce:transition-none
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
       {onToggleCollapsed && (
         <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
       )}
-      <nav aria-label="Main navigation" className="flex flex-col h-full">
-        {children}
-      </nav>
-    </aside>
+      <aside className="h-full bg-white border-r border-gray-200 overflow-hidden">
+        <nav aria-label="Main navigation" className="flex flex-col h-full">
+          {children}
+        </nav>
+      </aside>
+    </div>
   );
 }
 
