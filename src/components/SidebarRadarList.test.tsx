@@ -292,7 +292,7 @@ describe('SidebarRadarList', () => {
       expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
     });
 
-    it('tooltips have keyboard accessibility classes', async () => {
+    it('tooltips show on hover and keyboard focus', async () => {
       const mockRadars = [createMockRadar({ name: 'Accessible Radar' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
@@ -301,7 +301,8 @@ describe('SidebarRadarList', () => {
       await screen.findByRole('link');
 
       const tooltip = screen.getByRole('tooltip', { hidden: true });
-      expect(tooltip.className).toContain('group-focus-within:opacity-100');
+      expect(tooltip.className).toContain('group-hover:opacity-100');
+      expect(tooltip.className).toContain('group-has-focus-visible:opacity-100');
     });
   });
 

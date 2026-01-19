@@ -128,15 +128,16 @@ describe('Sidebar', () => {
       expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
     });
 
-    it('tooltips have focus-visible classes for keyboard accessibility', () => {
+    it('tooltips show on hover and keyboard focus', () => {
       renderWithRouter(
         <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
       );
 
       const tooltips = screen.getAllByRole('tooltip', { hidden: true });
       tooltips.forEach((tooltip) => {
-        // Check that tooltip has the group-focus-within class for keyboard accessibility
-        expect(tooltip.className).toContain('group-focus-within:opacity-100');
+        // Check that tooltip shows on hover and keyboard focus (focus-visible)
+        expect(tooltip.className).toContain('group-hover:opacity-100');
+        expect(tooltip.className).toContain('group-has-focus-visible:opacity-100');
       });
     });
   });

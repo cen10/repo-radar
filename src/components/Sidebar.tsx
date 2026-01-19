@@ -22,7 +22,7 @@ export function SidebarTooltip({ label, show, children }: SidebarTooltipProps) {
       {children}
       {show && (
         <span
-          className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-50"
+          className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50"
           role="tooltip"
           aria-hidden="true"
         >
@@ -63,14 +63,14 @@ interface NavContentProps {
 
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div className="flex-1 space-y-1 pt-8 pb-4 overflow-hidden px-2">
+    <div className="flex-1 space-y-1 pt-8 pb-4 px-2">
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-r-lg transition-colors overflow-hidden border-l-4 ${
+              `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden border-l-4 ${
                 isActive
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-gray-700 hover:border-gray-300'
@@ -166,14 +166,14 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
     <div
       className={`
         hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] z-40
-        transition-all duration-300 ease-in-out motion-reduce:transition-none
+        transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
       {onToggleCollapsed && (
         <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
       )}
-      <aside className="h-full bg-white border-r border-gray-200 overflow-hidden">
+      <aside className="h-full bg-white border-r border-gray-200 overflow-visible">
         <nav aria-label="Main navigation" className="flex flex-col h-full">
           {children}
         </nav>
