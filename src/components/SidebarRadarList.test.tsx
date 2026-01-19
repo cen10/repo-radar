@@ -253,9 +253,10 @@ describe('SidebarRadarList', () => {
       // Wait for content to load
       await screen.findByRole('link');
 
-      // Create button text span has w-0 when collapsed
+      // Create button text span has w-0 when collapsed (second span, first is icon wrapper)
       const createButton = screen.getByRole('button', { name: /new radar/i });
-      const textSpan = createButton.querySelector('span');
+      const spans = createButton.querySelectorAll('span');
+      const textSpan = spans[1];
       expect(textSpan?.className).toContain('w-0');
       expect(textSpan?.className).toContain('overflow-hidden');
     });

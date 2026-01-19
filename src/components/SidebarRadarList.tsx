@@ -63,7 +63,7 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-4 ${
+          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-4 outline-none ${
             hideText ? '' : 'overflow-hidden'
           } ${
             isActive
@@ -74,12 +74,14 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
       >
         {({ isActive }) => (
           <>
-            {/* Radar icon */}
-            {isActive ? (
-              <RadarIconSolid className="h-5 w-5 shrink-0" />
-            ) : (
-              <RadarIcon className="h-5 w-5 shrink-0 text-gray-400" />
-            )}
+            {/* Focus ring on icon wrapper for centered appearance */}
+            <span className="shrink-0 p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2">
+              {isActive ? (
+                <RadarIconSolid className="h-5 w-5" />
+              ) : (
+                <RadarIcon className="h-5 w-5 text-gray-400" />
+              )}
+            </span>
             {/* Name and count shown when expanded */}
             {!hideText && (
               <>
@@ -219,11 +221,13 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
               ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
               : undefined
           }
-          className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors ${
+          className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors outline-none ${
             disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
           }`}
         >
-          <PlusIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span className="shrink-0 p-1 -m-1 rounded-lg group-focus-visible:ring-2 group-focus-visible:ring-indigo-600 group-focus-visible:ring-offset-2">
+            <PlusIcon className="h-5 w-5" aria-hidden="true" />
+          </span>
           <span
             className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
               hideText ? 'w-0' : 'w-auto'

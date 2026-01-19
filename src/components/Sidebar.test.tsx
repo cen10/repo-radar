@@ -96,7 +96,9 @@ describe('Sidebar', () => {
       const navLinks = nav.querySelectorAll('a');
 
       navLinks.forEach((link) => {
-        const labelSpan = link.querySelector('span');
+        // Get the second span (label text), first span is the icon wrapper
+        const spans = link.querySelectorAll('span');
+        const labelSpan = spans[1];
         expect(labelSpan).toBeInTheDocument();
         // Text should have w-0 to hide when collapsed
         expect(labelSpan?.className).toContain('w-0');

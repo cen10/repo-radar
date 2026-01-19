@@ -70,7 +70,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden border-l-4 ${
+              `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden border-l-4 outline-none ${
                 isActive
                   ? 'border-indigo-600 text-indigo-700'
                   : 'border-transparent text-gray-700 hover:border-gray-300'
@@ -79,11 +79,14 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
           >
             {({ isActive }) => (
               <>
-                {isActive ? (
-                  <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                ) : (
-                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                )}
+                {/* Focus ring on icon wrapper for centered appearance */}
+                <span className="shrink-0 p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2">
+                  {isActive ? (
+                    <ActiveIcon className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </span>
                 <span
                   className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
                     hideText ? 'w-0' : 'w-auto'
