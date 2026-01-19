@@ -169,7 +169,7 @@ function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
 
 interface DesktopSidebarProps {
   isCollapsed: boolean;
-  onToggleCollapsed?: () => void;
+  onToggleCollapsed: () => void;
   children: React.ReactNode;
 }
 
@@ -182,9 +182,7 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
-      {onToggleCollapsed && (
-        <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
-      )}
+      <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
       <aside className="bg-white border-r border-b border-gray-200 rounded-br-lg overflow-visible">
         <nav aria-label="Main navigation" className="flex flex-col">
           {children}
@@ -198,8 +196,8 @@ interface SidebarProps {
   children?: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapsed?: () => void;
+  isCollapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 /**
@@ -213,7 +211,7 @@ export function Sidebar({
   children,
   isOpen,
   onClose,
-  isCollapsed = false,
+  isCollapsed,
   onToggleCollapsed,
 }: SidebarProps) {
   const [hideText, setHideText] = useState(isCollapsed);

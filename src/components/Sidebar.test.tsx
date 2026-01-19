@@ -9,10 +9,12 @@ const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
   return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
 };
 
-// Default props for tests - Sidebar requires isOpen and onClose
+// Default props for tests - Sidebar requires isOpen, onClose, isCollapsed, and onToggleCollapsed
 const defaultProps = {
   isOpen: false,
   onClose: vi.fn(),
+  isCollapsed: false,
+  onToggleCollapsed: vi.fn(),
 };
 
 describe('Sidebar', () => {
@@ -47,29 +49,15 @@ describe('Sidebar', () => {
   });
 
   describe('Collapse behavior', () => {
-    const collapsibleProps = {
-      ...defaultProps,
-      isCollapsed: false,
-      onToggleCollapsed: vi.fn(),
-    };
-
-    it('renders collapse toggle button when onToggleCollapsed provided', () => {
-      renderWithRouter(<Sidebar {...collapsibleProps} />);
+    it('renders collapse toggle button', () => {
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
     });
 
-    it('does not render collapse button without onToggleCollapsed', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
-
-      expect(screen.queryByRole('button', { name: /collapse sidebar/i })).not.toBeInTheDocument();
-    });
-
     it('calls onToggleCollapsed on button click', () => {
       const onToggle = vi.fn();
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={false} onToggleCollapsed={onToggle} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} onToggleCollapsed={onToggle} />);
 
       const collapseBtn = screen.getByRole('button', { name: /collapse sidebar/i });
       fireEvent.click(collapseBtn);
@@ -78,18 +66,14 @@ describe('Sidebar', () => {
     });
 
     it('shows expand button when collapsed', () => {
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
       const expandBtn = screen.getByRole('button', { name: /expand sidebar/i });
       expect(expandBtn).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('collapses text to zero width when collapsed', () => {
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
       // Text spans transition to w-0 when collapsed
       const nav = screen.getByRole('navigation');
@@ -107,9 +91,7 @@ describe('Sidebar', () => {
     });
 
     it('shows tooltips on links when collapsed', () => {
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
       // CSS tooltips should be rendered with role="tooltip"
       const tooltips = screen.getAllByRole('tooltip', { hidden: true });
@@ -122,18 +104,14 @@ describe('Sidebar', () => {
     });
 
     it('does not show tooltips when expanded', () => {
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={false} onToggleCollapsed={vi.fn()} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} />);
 
       // No tooltip elements should exist when expanded
       expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
     });
 
     it('tooltips show on hover and keyboard focus', () => {
-      renderWithRouter(
-        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
-      );
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
       const tooltips = screen.getAllByRole('tooltip', { hidden: true });
       tooltips.forEach((tooltip) => {
@@ -146,7 +124,7 @@ describe('Sidebar', () => {
 
   describe('Mobile drawer', () => {
     it('renders backdrop when isOpen is true', () => {
-      renderWithRouter(<Sidebar isOpen={true} onClose={() => {}} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} />);
 
       expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
     });
@@ -160,7 +138,7 @@ describe('Sidebar', () => {
     it('calls onClose when backdrop is clicked', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} onClose={onClose} />);
 
       await user.click(screen.getByTestId('sidebar-backdrop'));
 
@@ -169,7 +147,7 @@ describe('Sidebar', () => {
 
     it('calls onClose when Escape is pressed', () => {
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 
@@ -178,7 +156,7 @@ describe('Sidebar', () => {
 
     it('does not call onClose on Escape when drawer is closed', () => {
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={false} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 
