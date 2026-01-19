@@ -86,20 +86,21 @@ describe('Sidebar', () => {
       expect(expandBtn).toHaveAttribute('aria-expanded', 'false');
     });
 
-    it('hides text labels when collapsed', () => {
+    it('collapses text to zero width when collapsed', () => {
       renderWithRouter(
         <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
       );
 
-      // The visible label spans should not be in the document
-      // (tooltip text is still present but visually hidden)
+      // Text spans transition to w-0 when collapsed
       const nav = screen.getByRole('navigation');
       const navLinks = nav.querySelectorAll('a');
 
       navLinks.forEach((link) => {
-        // The link should not contain a span with text (collapsed shows only icon)
         const labelSpan = link.querySelector('span');
-        expect(labelSpan).not.toBeInTheDocument();
+        expect(labelSpan).toBeInTheDocument();
+        // Text should have w-0 to hide when collapsed
+        expect(labelSpan?.className).toContain('w-0');
+        expect(labelSpan?.className).toContain('overflow-hidden');
       });
     });
 
@@ -112,9 +113,10 @@ describe('Sidebar', () => {
       const tooltips = screen.getAllByRole('tooltip', { hidden: true });
       expect(tooltips.length).toBeGreaterThanOrEqual(2); // My Stars and Explore
 
-      // Verify tooltip content
-      expect(screen.getByText('My Stars')).toBeInTheDocument();
-      expect(screen.getByText('Explore')).toBeInTheDocument();
+      // Verify tooltip content (tooltips have the label text)
+      const tooltipTexts = tooltips.map((t) => t.textContent);
+      expect(tooltipTexts).toContain('My Stars');
+      expect(tooltipTexts).toContain('Explore');
     });
 
     it('does not show tooltips when expanded', () => {

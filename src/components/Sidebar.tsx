@@ -8,7 +8,6 @@ import {
 } from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
-// Delay showing content when expanding to sync with sidebar animation
 const SIDEBAR_ANIMATION_DURATION = 300;
 
 interface SidebarTooltipProps {
@@ -57,21 +56,21 @@ const navItems: NavItem[] = [
 
 interface NavContentProps {
   collapsed: boolean;
-  showContent: boolean;
+  hideText: boolean;
   onLinkClick: () => void;
   children?: React.ReactNode;
 }
 
-function NavContent({ collapsed, showContent, onLinkClick, children }: NavContentProps) {
+function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div className={`flex-1 space-y-1 py-4 ${collapsed ? 'px-2' : 'px-4'}`}>
+    <div className={`flex-1 space-y-1 py-4 overflow-hidden pl-2 ${collapsed ? 'pr-2' : 'pr-4'}`}>
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
                 isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
               }`
             }
@@ -83,7 +82,13 @@ function NavContent({ collapsed, showContent, onLinkClick, children }: NavConten
                 ) : (
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                 )}
-                {showContent && <span>{label}</span>}
+                <span
+                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                    hideText ? 'w-0' : 'w-auto'
+                  }`}
+                >
+                  {label}
+                </span>
               </>
             )}
           </NavLink>
@@ -183,30 +188,30 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapsed,
 }: SidebarProps) {
-  // Delay showing content when expanding to prevent text reflow during animation
-  const [showContent, setShowContent] = useState(!isCollapsed);
+  // Delay hiding text when collapsing so it slides out with the panel
+  const [hideText, setHideText] = useState(isCollapsed);
 
   useEffect(() => {
     if (isCollapsed) {
-      // Collapsing: immediately hide content
-      setShowContent(false);
-    } else {
-      // Expanding: delay showing content until animation completes
-      const timer = setTimeout(() => setShowContent(true), SIDEBAR_ANIMATION_DURATION);
+      // Collapsing: delay w-0 until animation completes so text slides out
+      const timer = setTimeout(() => setHideText(true), SIDEBAR_ANIMATION_DURATION);
       return () => clearTimeout(timer);
+    } else {
+      // Expanding: immediately show text so it slides in
+      setHideText(false);
     }
   }, [isCollapsed]);
 
   return (
     <>
       <MobileDrawer isOpen={isOpen} onClose={onClose}>
-        <NavContent collapsed={false} showContent={true} onLinkClick={onClose}>
+        <NavContent collapsed={false} hideText={false} onLinkClick={onClose}>
           {children}
         </NavContent>
       </MobileDrawer>
 
       <DesktopSidebar isCollapsed={isCollapsed}>
-        <NavContent collapsed={isCollapsed} showContent={showContent} onLinkClick={onClose}>
+        <NavContent collapsed={isCollapsed} hideText={hideText} onLinkClick={onClose}>
           {children}
         </NavContent>
         {onToggleCollapsed && (

@@ -138,7 +138,7 @@ describe('SidebarRadarList', () => {
       expect(screen.getByText(/\(3\/5\)/)).toBeInTheDocument();
     });
 
-    it('hides header when collapsed', async () => {
+    it('collapses header to zero width when collapsed', async () => {
       const mockRadars = [createMockRadar()];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
@@ -147,8 +147,10 @@ describe('SidebarRadarList', () => {
       // Wait for content to load
       await screen.findByRole('link');
 
-      // Header should not be visible
-      expect(screen.queryByText(/my radars/i)).not.toBeInTheDocument();
+      // Header text spans have w-0 when collapsed
+      const headerText = screen.getByText(/my radars/i);
+      expect(headerText.className).toContain('w-0');
+      expect(headerText.className).toContain('overflow-hidden');
     });
   });
 
@@ -158,7 +160,7 @@ describe('SidebarRadarList', () => {
 
       renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
-      expect(await screen.findByText(/create your first radar/i)).toBeInTheDocument();
+      expect(await screen.findByText(/no radars yet/i)).toBeInTheDocument();
     });
 
     it('shows create button in empty state', async () => {
@@ -169,7 +171,7 @@ describe('SidebarRadarList', () => {
       expect(await screen.findByRole('button', { name: /create radar/i })).toBeInTheDocument();
     });
 
-    it('hides empty state when collapsed', async () => {
+    it('collapses empty state text to zero width when collapsed', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
 
       renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
@@ -179,9 +181,10 @@ describe('SidebarRadarList', () => {
         expect(screen.queryByTestId('radar-list-loading')).not.toBeInTheDocument();
       });
 
-      // Empty state should be hidden when collapsed
-      expect(screen.queryByText(/create your first radar/i)).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /create radar/i })).not.toBeInTheDocument();
+      // Empty state text has w-0 when collapsed
+      const emptyText = screen.getByText(/no radars yet/i);
+      expect(emptyText.className).toContain('w-0');
+      expect(emptyText.className).toContain('overflow-hidden');
     });
   });
 
@@ -273,7 +276,7 @@ describe('SidebarRadarList', () => {
       expect(createButton).toHaveAttribute('title', expect.stringMatching(/limit/i));
     });
 
-    it('hides create button when collapsed', async () => {
+    it('collapses create button text to zero width when collapsed', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([createMockRadar()]);
 
       renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
@@ -281,25 +284,29 @@ describe('SidebarRadarList', () => {
       // Wait for content to load
       await screen.findByRole('link');
 
-      // Create button should not be visible
-      expect(screen.queryByRole('button', { name: /new radar/i })).not.toBeInTheDocument();
+      // Create button text span has w-0 when collapsed
+      const createButton = screen.getByRole('button', { name: /new radar/i });
+      const textSpan = createButton.querySelector('span');
+      expect(textSpan?.className).toContain('w-0');
+      expect(textSpan?.className).toContain('overflow-hidden');
     });
   });
 
   describe('Collapsed mode', () => {
-    it('shows only icons when collapsed', async () => {
+    it('collapses radar text to zero width when collapsed', async () => {
       const mockRadars = [createMockRadar({ name: 'Collapsed Radar' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
       renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
 
       // Wait for link to appear
-      await screen.findByRole('link');
+      const link = await screen.findByRole('link');
 
-      // Name text in span should not be visible (but tooltip text is)
-      const radarList = screen.getByTestId('radar-list');
-      const nameSpan = radarList.querySelector('.truncate');
-      expect(nameSpan).not.toBeInTheDocument();
+      // Text spans have w-0 when collapsed
+      const nameSpan = link.querySelector('.truncate');
+      expect(nameSpan).toBeInTheDocument();
+      expect(nameSpan?.className).toContain('w-0');
+      expect(nameSpan?.className).toContain('overflow-hidden');
 
       // CSS tooltip should be rendered with role="tooltip"
       const tooltip = screen.getByRole('tooltip', { hidden: true });

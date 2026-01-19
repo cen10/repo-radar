@@ -69,7 +69,7 @@ function AppLayout() {
         </Sidebar>
       )}
       <main
-        className={`pt-16 ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`pt-16 transition-[padding] duration-300 ease-in-out ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
       >
         <Routes>
           <Route path="/" element={<Home />} />

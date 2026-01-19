@@ -6,7 +6,6 @@ import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip } from './Sidebar';
 
-// Delay showing content when expanding to sync with sidebar animation
 const SIDEBAR_ANIMATION_DURATION = 300;
 
 // Radar icon - concentric circles representing radar
@@ -36,29 +35,37 @@ interface SidebarRadarListProps {
 interface RadarNavItemProps {
   radar: RadarWithCount;
   collapsed: boolean;
-  showContent: boolean;
+  hideText: boolean;
   onLinkClick: () => void;
 }
 
-function RadarNavItem({ radar, collapsed, showContent, onLinkClick }: RadarNavItemProps) {
+function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemProps) {
   return (
     <SidebarTooltip label={radar.name} show={collapsed}>
       <NavLink
         to={`/radar/${radar.id}`}
         onClick={onLinkClick}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+          `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
             isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
           }`
         }
       >
         <RadarIcon className="h-5 w-5 shrink-0" />
-        {showContent && (
-          <>
-            <span className="flex-1 truncate">{radar.name}</span>
-            <span className="text-gray-400 text-xs">{radar.repo_count}</span>
-          </>
-        )}
+        <span
+          className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 ${
+            hideText ? 'w-0' : 'w-auto'
+          }`}
+        >
+          {radar.name}
+        </span>
+        <span
+          className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+            hideText ? 'w-0' : 'w-auto'
+          }`}
+        >
+          {radar.repo_count}
+        </span>
       </NavLink>
     </SidebarTooltip>
   );
@@ -97,20 +104,28 @@ function ErrorState({ onRetry }: ErrorStateProps) {
 }
 
 interface EmptyStateProps {
+  hideText: boolean;
   onCreateRadar: () => void;
 }
 
-function EmptyState({ onCreateRadar }: EmptyStateProps) {
+function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
+  // pl-11 = 44px (12px nav padding + 20px icon + 12px gap) to align with nav text
   return (
-    <div className="px-3 py-4 text-center">
-      <p className="text-sm text-gray-500 mb-3">
-        Create your first radar to start tracking repo metrics.
+    <div className="pl-11 pr-3 py-4">
+      <p
+        className={`text-sm text-gray-500 mb-3 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          hideText ? 'w-0' : 'w-auto'
+        }`}
+      >
+        No radars yet.
       </p>
       <button
         onClick={onCreateRadar}
-        className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+        className={`inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          hideText ? 'w-0' : 'w-auto'
+        }`}
       >
-        <PlusIcon className="h-4 w-4" aria-hidden="true" />
+        <PlusIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
         Create Radar
       </button>
     </div>
@@ -118,11 +133,13 @@ function EmptyState({ onCreateRadar }: EmptyStateProps) {
 }
 
 interface CreateButtonProps {
+  hideText: boolean;
   onClick: () => void;
   disabled: boolean;
 }
 
-function CreateButton({ onClick, disabled }: CreateButtonProps) {
+function CreateButton({ hideText, onClick, disabled }: CreateButtonProps) {
+  // pl-11 = 44px to align "New Radar" text with nav item text (icon width + gap)
   return (
     <button
       onClick={onClick}
@@ -132,19 +149,38 @@ function CreateButton({ onClick, disabled }: CreateButtonProps) {
           ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
           : undefined
       }
-      className={`flex items-center gap-2 w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+      className={`flex items-center gap-3 w-full pl-11 pr-3 py-2 text-sm font-medium rounded-lg transition-colors ${
         disabled
           ? 'text-gray-400 cursor-not-allowed'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       }`}
     >
-      <PlusIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-      <span>New Radar</span>
+      <span
+        className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          hideText ? 'w-0' : 'w-auto'
+        }`}
+      >
+        New Radar
+      </span>
     </button>
   );
 }
 
 export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: SidebarRadarListProps) {
+  // Delay hiding text when collapsing so it slides out with the panel
+  const [hideText, setHideText] = useState(collapsed);
+
+  useEffect(() => {
+    if (collapsed) {
+      // Collapsing: delay w-0 until animation completes so text slides out
+      const timer = setTimeout(() => setHideText(true), SIDEBAR_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
+    } else {
+      // Expanding: immediately show text so it slides in
+      setHideText(false);
+    }
+  }, [collapsed]);
+
   const {
     data: radars = [],
     isLoading,
@@ -154,20 +190,6 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
     queryKey: ['radars'],
     queryFn: getRadars,
   });
-
-  // Delay showing content when expanding to prevent text reflow during animation
-  const [showContent, setShowContent] = useState(!collapsed);
-
-  useEffect(() => {
-    if (collapsed) {
-      // Collapsing: immediately hide content
-      setShowContent(false);
-    } else {
-      // Expanding: delay showing content until animation completes
-      const timer = setTimeout(() => setShowContent(true), SIDEBAR_ANIMATION_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [collapsed]);
 
   const isAtLimit = radars.length >= RADAR_LIMITS.MAX_RADARS_PER_USER;
 
@@ -193,7 +215,7 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
   if (radars.length === 0) {
     return (
       <div data-testid="radar-list">
-        {showContent && <EmptyState onCreateRadar={onCreateRadar} />}
+        <EmptyState hideText={hideText} onCreateRadar={onCreateRadar} />
       </div>
     );
   }
@@ -202,16 +224,22 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
   return (
     <div data-testid="radar-list" className="space-y-1">
       {/* Section header */}
-      {showContent && (
-        <div className="px-3 py-2">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            My Radars
-          </span>
-          <span className="text-xs text-gray-400 ml-1">
-            ({radars.length}/{RADAR_LIMITS.MAX_RADARS_PER_USER})
-          </span>
-        </div>
-      )}
+      <div className="pl-11 pr-3 py-2">
+        <span
+          className={`text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 inline-block ${
+            hideText ? 'w-0' : 'w-auto'
+          }`}
+        >
+          My Radars
+        </span>
+        <span
+          className={`text-xs text-gray-400 ml-1 whitespace-nowrap overflow-hidden transition-all duration-300 inline-block ${
+            hideText ? 'w-0' : 'w-auto'
+          }`}
+        >
+          ({radars.length}/{RADAR_LIMITS.MAX_RADARS_PER_USER})
+        </span>
+      </div>
 
       {/* Radar list */}
       {radars.map((radar) => (
@@ -219,13 +247,13 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
           key={radar.id}
           radar={radar}
           collapsed={collapsed}
-          showContent={showContent}
+          hideText={hideText}
           onLinkClick={onLinkClick}
         />
       ))}
 
       {/* Create button */}
-      {showContent && <CreateButton onClick={onCreateRadar} disabled={isAtLimit} />}
+      <CreateButton hideText={hideText} onClick={onCreateRadar} disabled={isAtLimit} />
     </div>
   );
 }
