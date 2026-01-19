@@ -75,16 +75,15 @@ describe('Sidebar', () => {
     it('collapses text to zero width when collapsed', () => {
       renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
-      // Text spans transition to w-0 when collapsed
+      // Testing CSS classes is an implementation detail, but jsdom doesn't compute
+      // actual dimensions. This is a pragmatic proxy for "text is visually hidden."
       const nav = screen.getByRole('navigation');
       const navLinks = nav.querySelectorAll('a');
 
       navLinks.forEach((link) => {
-        // Get the second span (label text), first span is the icon wrapper
         const spans = link.querySelectorAll('span');
-        const labelSpan = spans[1];
+        const labelSpan = spans[1]; // second span is text, first is icon wrapper
         expect(labelSpan).toBeInTheDocument();
-        // Text should have w-0 to hide when collapsed
         expect(labelSpan?.className).toContain('w-0');
         expect(labelSpan?.className).toContain('overflow-hidden');
       });

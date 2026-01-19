@@ -150,7 +150,8 @@ describe('SidebarRadarList', () => {
         expect(screen.queryByTestId('radar-list-loading')).not.toBeInTheDocument();
       });
 
-      // Empty state text has w-0 when collapsed
+      // Testing CSS classes is an implementation detail, but jsdom doesn't compute
+      // actual dimensions. This is a pragmatic proxy for "text is visually hidden."
       const emptyText = screen.getByText(/no radars yet/i);
       expect(emptyText.className).toContain('w-0');
       expect(emptyText.className).toContain('overflow-hidden');
@@ -254,10 +255,11 @@ describe('SidebarRadarList', () => {
       // Wait for content to load
       await screen.findByRole('link');
 
-      // Create button text span has w-0 when collapsed (second span, first is icon wrapper)
+      // Testing CSS classes is an implementation detail, but jsdom doesn't compute
+      // actual dimensions. This is a pragmatic proxy for "text is visually hidden."
       const createButton = screen.getByRole('button', { name: /new radar/i });
       const spans = createButton.querySelectorAll('span');
-      const textSpan = spans[1];
+      const textSpan = spans[1]; // second span is text, first is icon wrapper
       expect(textSpan?.className).toContain('w-0');
       expect(textSpan?.className).toContain('overflow-hidden');
     });
