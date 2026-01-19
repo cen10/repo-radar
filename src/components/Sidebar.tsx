@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -7,6 +8,9 @@ import {
 } from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
+// Delay showing content when expanding to sync with sidebar animation
+const SIDEBAR_ANIMATION_DURATION = 300;
+
 interface SidebarTooltipProps {
   label: string;
   show: boolean;
@@ -14,22 +18,20 @@ interface SidebarTooltipProps {
 }
 
 export function SidebarTooltip({ label, show, children }: SidebarTooltipProps) {
-  if (!show) {
-    return <>{children}</>;
-  }
-
   return (
-    <span className="group relative">
+    <div className="group relative">
       {children}
-      <span
-        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-50"
-        role="tooltip"
-        aria-hidden="true"
-      >
-        {label}
-        <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
-      </span>
-    </span>
+      {show && (
+        <span
+          className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-50"
+          role="tooltip"
+          aria-hidden="true"
+        >
+          {label}
+          <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -55,13 +57,14 @@ const navItems: NavItem[] = [
 
 interface NavContentProps {
   collapsed: boolean;
+  showContent: boolean;
   onLinkClick: () => void;
   children?: React.ReactNode;
 }
 
-function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
+function NavContent({ collapsed, showContent, onLinkClick, children }: NavContentProps) {
   return (
-    <div className="flex-1 p-4 space-y-1">
+    <div className={`flex-1 space-y-1 py-4 ${collapsed ? 'px-2' : 'px-4'}`}>
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
@@ -70,7 +73,7 @@ function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                 isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-              } ${collapsed ? 'justify-center' : ''}`
+              }`
             }
           >
             {({ isActive }) => (
@@ -80,7 +83,7 @@ function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
                 ) : (
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                 )}
-                {!collapsed && <span>{label}</span>}
+                {showContent && <span>{label}</span>}
               </>
             )}
           </NavLink>
@@ -180,16 +183,30 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapsed,
 }: SidebarProps) {
+  // Delay showing content when expanding to prevent text reflow during animation
+  const [showContent, setShowContent] = useState(!isCollapsed);
+
+  useEffect(() => {
+    if (isCollapsed) {
+      // Collapsing: immediately hide content
+      setShowContent(false);
+    } else {
+      // Expanding: delay showing content until animation completes
+      const timer = setTimeout(() => setShowContent(true), SIDEBAR_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [isCollapsed]);
+
   return (
     <>
       <MobileDrawer isOpen={isOpen} onClose={onClose}>
-        <NavContent collapsed={false} onLinkClick={onClose}>
+        <NavContent collapsed={false} showContent={true} onLinkClick={onClose}>
           {children}
         </NavContent>
       </MobileDrawer>
 
       <DesktopSidebar isCollapsed={isCollapsed}>
-        <NavContent collapsed={isCollapsed} onLinkClick={onClose}>
+        <NavContent collapsed={isCollapsed} showContent={showContent} onLinkClick={onClose}>
           {children}
         </NavContent>
         {onToggleCollapsed && (

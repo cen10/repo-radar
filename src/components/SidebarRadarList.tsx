@@ -1,9 +1,13 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip } from './Sidebar';
+
+// Delay showing content when expanding to sync with sidebar animation
+const SIDEBAR_ANIMATION_DURATION = 300;
 
 // Radar icon - concentric circles representing radar
 function RadarIcon({ className }: { className?: string }) {
@@ -32,10 +36,11 @@ interface SidebarRadarListProps {
 interface RadarNavItemProps {
   radar: RadarWithCount;
   collapsed: boolean;
+  showContent: boolean;
   onLinkClick: () => void;
 }
 
-function RadarNavItem({ radar, collapsed, onLinkClick }: RadarNavItemProps) {
+function RadarNavItem({ radar, collapsed, showContent, onLinkClick }: RadarNavItemProps) {
   return (
     <SidebarTooltip label={radar.name} show={collapsed}>
       <NavLink
@@ -44,11 +49,11 @@ function RadarNavItem({ radar, collapsed, onLinkClick }: RadarNavItemProps) {
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
             isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-          } ${collapsed ? 'justify-center' : ''}`
+          }`
         }
       >
         <RadarIcon className="h-5 w-5 shrink-0" />
-        {!collapsed && (
+        {showContent && (
           <>
             <span className="flex-1 truncate">{radar.name}</span>
             <span className="text-gray-400 text-xs">{radar.repo_count}</span>
@@ -150,6 +155,20 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
     queryFn: getRadars,
   });
 
+  // Delay showing content when expanding to prevent text reflow during animation
+  const [showContent, setShowContent] = useState(!collapsed);
+
+  useEffect(() => {
+    if (collapsed) {
+      // Collapsing: immediately hide content
+      setShowContent(false);
+    } else {
+      // Expanding: delay showing content until animation completes
+      const timer = setTimeout(() => setShowContent(true), SIDEBAR_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [collapsed]);
+
   const isAtLimit = radars.length >= RADAR_LIMITS.MAX_RADARS_PER_USER;
 
   // Loading state
@@ -174,7 +193,7 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
   if (radars.length === 0) {
     return (
       <div data-testid="radar-list">
-        {!collapsed && <EmptyState onCreateRadar={onCreateRadar} />}
+        {showContent && <EmptyState onCreateRadar={onCreateRadar} />}
       </div>
     );
   }
@@ -183,7 +202,7 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
   return (
     <div data-testid="radar-list" className="space-y-1">
       {/* Section header */}
-      {!collapsed && (
+      {showContent && (
         <div className="px-3 py-2">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
             My Radars
@@ -200,12 +219,13 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
           key={radar.id}
           radar={radar}
           collapsed={collapsed}
+          showContent={showContent}
           onLinkClick={onLinkClick}
         />
       ))}
 
       {/* Create button */}
-      {!collapsed && <CreateButton onClick={onCreateRadar} disabled={isAtLimit} />}
+      {showContent && <CreateButton onClick={onCreateRadar} disabled={isAtLimit} />}
     </div>
   );
 }
