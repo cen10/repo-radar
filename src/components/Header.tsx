@@ -146,7 +146,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <img
                   src={user.avatar_url}
                   alt={`${user.name || user.login}'s avatar`}
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 rounded-full shrink-0"
                 />
               )}
               <div className="hidden sm:block">
