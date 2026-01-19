@@ -268,6 +268,19 @@ _Goal: Separate unit, integration, and E2E tests for clearer responsibilities_
 
 ---
 
+## Phase 3.26: Keyboard Navigation (T096)
+
+_Goal: Add keyboard shortcuts for power users to quickly navigate the app_
+
+- [ ] T096 Add keyboard shortcuts for sidebar navigation
+  - `s` or `1` → Jump to My Stars
+  - `e` or `2` → Jump to Explore
+  - `3`-`9` → Jump to Radar 1-7 (e.g., pressing `3` goes to first radar, `4` to second radar)
+  - Consider using a keyboard shortcut hook or library
+  - Show shortcut hints in tooltips when sidebar is collapsed
+
+---
+
 ## Parallel Execution Examples
 
 ### Batch 1: Initial Setup (can run together)
@@ -339,7 +352,7 @@ graph TD
 
 ---
 
-**Total Tasks**: 83
+**Total Tasks**: 84
 **Slice 1 (MVP)**: 20 tasks
 **Slice 2 (Live Metrics)**: 14 tasks (includes caching config)
 **Slice 3 (Navigation & Radar)**: 24 tasks (includes cache migration)
