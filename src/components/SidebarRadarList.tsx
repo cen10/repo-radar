@@ -63,9 +63,9 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-4 outline-none ${
-            hideText ? '' : 'overflow-hidden'
-          } ${
+          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-4 ${
+            collapsed ? 'outline-none' : 'rounded'
+          } ${hideText ? '' : 'overflow-hidden'} ${
             isActive
               ? 'border-indigo-600 text-indigo-700'
               : 'border-transparent text-gray-700 hover:border-gray-300'
@@ -74,8 +74,14 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
       >
         {({ isActive }) => (
           <>
-            {/* Focus ring on icon wrapper for centered appearance */}
-            <span className="shrink-0 p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2">
+            {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+            <span
+              className={`shrink-0 ${
+                collapsed
+                  ? 'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2'
+                  : ''
+              }`}
+            >
               {isActive ? (
                 <RadarIconSolid className="h-5 w-5" />
               ) : (
@@ -221,11 +227,17 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
               ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
               : undefined
           }
-          className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors outline-none ${
-            disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors ${
+            collapsed ? 'outline-none' : 'rounded'
+          } ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
         >
-          <span className="shrink-0 p-1 -m-1 rounded-lg group-focus-visible:ring-2 group-focus-visible:ring-indigo-600 group-focus-visible:ring-offset-2">
+          <span
+            className={`shrink-0 ${
+              collapsed
+                ? 'p-1 -m-1 rounded-lg group-focus-visible:ring-2 group-focus-visible:ring-indigo-600 group-focus-visible:ring-offset-2'
+                : ''
+            }`}
+          >
             <PlusIcon className="h-5 w-5" aria-hidden="true" />
           </span>
           <span
