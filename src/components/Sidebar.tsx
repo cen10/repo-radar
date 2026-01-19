@@ -14,20 +14,29 @@ interface SidebarTooltipProps {
   label: string;
   show: boolean;
   children: React.ReactNode;
+  position?: 'right' | 'bottom';
 }
 
-export function SidebarTooltip({ label, show, children }: SidebarTooltipProps) {
+export function SidebarTooltip({ label, show, children, position = 'right' }: SidebarTooltipProps) {
+  const positionClasses =
+    position === 'right' ? 'left-full top-1/2 -translate-y-1/2 ml-2' : 'top-full left-0 mt-1';
+
+  const arrowClasses =
+    position === 'right'
+      ? 'absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900'
+      : 'absolute bottom-full left-[22px] border-4 border-transparent border-b-gray-900';
+
   return (
     <div className="group relative">
       {children}
       {show && (
         <span
-          className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50"
+          className={`pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50 ${positionClasses}`}
           role="tooltip"
           aria-hidden="true"
         >
           {label}
-          <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+          <span className={arrowClasses} />
         </span>
       )}
     </div>
@@ -63,7 +72,7 @@ interface NavContentProps {
 
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div className="flex-1 space-y-1 pt-8 pb-4 px-2">
+    <div className="space-y-1 pt-8 pb-4 px-2">
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
@@ -176,7 +185,7 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
   return (
     <div
       className={`
-        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] z-40
+        hidden lg:block fixed left-0 top-16 z-40
         transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
@@ -184,8 +193,8 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
       {onToggleCollapsed && (
         <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
       )}
-      <aside className="h-full bg-white border-r border-gray-200 overflow-visible">
-        <nav aria-label="Main navigation" className="flex flex-col h-full">
+      <aside className="bg-white border-r border-b border-gray-200 rounded-br-lg overflow-visible">
+        <nav aria-label="Main navigation" className="flex flex-col">
           {children}
         </nav>
       </aside>

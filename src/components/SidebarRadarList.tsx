@@ -55,9 +55,15 @@ interface RadarNavItemProps {
   onLinkClick: () => void;
 }
 
+// Approximate characters that fit in 2 lines of the sidebar (for tooltip detection)
+const MAX_RADAR_NAME_LENGTH = 40;
+
 function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemProps) {
+  // Show tooltip if name might be truncated (longer than ~2 lines)
+  const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
+
   return (
-    <SidebarTooltip label={radar.name} show={collapsed}>
+    <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
       <NavLink
         to={`/radar/${radar.id}`}
         onClick={onLinkClick}
@@ -91,10 +97,7 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
             {/* Name and count shown when expanded */}
             {!hideText && (
               <>
-                <span
-                  aria-hidden="true"
-                  className="flex-1 truncate whitespace-nowrap overflow-hidden"
-                >
+                <span aria-hidden="true" className="flex-1 line-clamp-2 overflow-hidden">
                   {radar.name}
                 </span>
                 <span
@@ -213,8 +216,16 @@ interface CreateButtonProps {
 }
 
 function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonProps) {
+  // Show limit message when disabled, otherwise show "New Radar" when collapsed
+  const tooltipLabel = disabled
+    ? `Radar limit reached (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete one to create more.`
+    : 'New Radar';
+  const showTooltip = disabled || collapsed;
+  // Position tooltip to right when collapsed, below when expanded (disabled)
+  const tooltipPosition = collapsed ? 'right' : 'bottom';
+
   return (
-    <SidebarTooltip label="New Radar" show={collapsed}>
+    <SidebarTooltip label={tooltipLabel} show={showTooltip} position={tooltipPosition}>
       {/* Hover background on wrapper so margin for alignment doesn't offset the highlight */}
       <div
         className={`ml-[3.5px] rounded-lg transition-colors ${disabled ? '' : 'hover:bg-gray-100'}`}
@@ -222,11 +233,6 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
         <button
           onClick={onClick}
           disabled={disabled}
-          title={
-            disabled
-              ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
-              : undefined
-          }
           className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors ${
             collapsed ? 'outline-none' : 'rounded'
           } ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}

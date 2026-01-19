@@ -239,10 +239,11 @@ describe('SidebarRadarList', () => {
 
       renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
-      const createButton = await screen.findByRole('button', {
-        name: /new radar/i,
-      });
-      expect(createButton).toHaveAttribute('title', expect.stringMatching(/limit/i));
+      await screen.findByRole('button', { name: /new radar/i });
+
+      // CSS tooltip shows limit message when disabled
+      const tooltip = screen.getByRole('tooltip', { hidden: true });
+      expect(tooltip).toHaveTextContent(/limit/i);
     });
 
     it('collapses create button text to zero width when collapsed', async () => {
@@ -283,16 +284,30 @@ describe('SidebarRadarList', () => {
       expect(tooltips[1]).toHaveTextContent('New Radar');
     });
 
-    it('does not show tooltips when expanded', async () => {
-      const mockRadars = [createMockRadar({ name: 'Expanded Radar' })];
+    it('does not show tooltip for short names when expanded', async () => {
+      const mockRadars = [createMockRadar({ name: 'Short Name' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
       renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={false} />);
 
       await screen.findByRole('link');
 
-      // No tooltip elements should exist when expanded
+      // No tooltip for radar (short name), but create button never has tooltip when expanded
       expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('shows tooltip for long names when expanded', async () => {
+      const longName = 'This is a very long radar name that exceeds forty characters';
+      const mockRadars = [createMockRadar({ name: longName })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={false} />);
+
+      await screen.findByRole('link');
+
+      // Tooltip should show for truncated name
+      const tooltip = screen.getByRole('tooltip', { hidden: true });
+      expect(tooltip).toHaveTextContent(longName);
     });
 
     it('tooltips show on hover and keyboard focus', async () => {

@@ -222,4 +222,36 @@ describe('Header', () => {
 
     expect(signOutButton).toHaveFocus();
   });
+
+  describe('Mobile menu button', () => {
+    it('renders hamburger menu button when onMenuToggle is provided', () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+
+      render(<Header onMenuToggle={() => {}} />);
+
+      expect(screen.getByRole('button', { name: /open navigation menu/i })).toBeInTheDocument();
+    });
+
+    it('does not render hamburger menu button when onMenuToggle is not provided', () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+
+      render(<Header />);
+
+      expect(
+        screen.queryByRole('button', { name: /open navigation menu/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('calls onMenuToggle when hamburger button is clicked', () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+      const onMenuToggle = vi.fn();
+
+      render(<Header onMenuToggle={onMenuToggle} />);
+
+      const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
+      fireEvent.click(menuButton);
+
+      expect(onMenuToggle).toHaveBeenCalledTimes(1);
+    });
+  });
 });
