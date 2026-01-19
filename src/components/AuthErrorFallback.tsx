@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
-import { ExclamationCircleIcon, ArrowPathIcon, LoadingSpinner } from './icons';
+import { LoadingSpinner } from './icons';
+import { ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 export function AuthErrorFallback({ error: _error, resetErrorBoundary }: FallbackProps) {
   const [isRetrying, setIsRetrying] = useState(false);

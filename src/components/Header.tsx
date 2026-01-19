@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/use-auth';
+import { LoadingSpinner } from './icons';
 import {
-  LoadingSpinner,
   ArrowRightOnRectangleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
   Bars3Icon,
-} from './icons';
+} from '@heroicons/react/24/outline';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 
