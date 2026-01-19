@@ -275,9 +275,11 @@ describe('SidebarRadarList', () => {
       const nameSpan = link.querySelector('.truncate');
       expect(nameSpan).not.toBeInTheDocument();
 
-      // CSS tooltip should be rendered with role="tooltip"
-      const tooltip = screen.getByRole('tooltip', { hidden: true });
-      expect(tooltip).toHaveTextContent('Collapsed Radar');
+      // CSS tooltips should be rendered with role="tooltip" (one for radar, one for create button)
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      expect(tooltips.length).toBe(2);
+      expect(tooltips[0]).toHaveTextContent('Collapsed Radar');
+      expect(tooltips[1]).toHaveTextContent('New Radar');
     });
 
     it('does not show tooltips when expanded', async () => {
@@ -300,9 +302,11 @@ describe('SidebarRadarList', () => {
 
       await screen.findByRole('link');
 
-      const tooltip = screen.getByRole('tooltip', { hidden: true });
-      expect(tooltip.className).toContain('group-hover:opacity-100');
-      expect(tooltip.className).toContain('group-has-focus-visible:opacity-100');
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      tooltips.forEach((tooltip) => {
+        expect(tooltip.className).toContain('group-hover:opacity-100');
+        expect(tooltip.className).toContain('group-has-focus-visible:opacity-100');
+      });
     });
   });
 

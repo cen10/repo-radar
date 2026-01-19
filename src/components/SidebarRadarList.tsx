@@ -198,36 +198,39 @@ function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
 }
 
 interface CreateButtonProps {
+  collapsed: boolean;
   hideText: boolean;
   onClick: () => void;
   disabled: boolean;
 }
 
-function CreateButton({ hideText, onClick, disabled }: CreateButtonProps) {
+function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonProps) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={
-        disabled
-          ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
-          : undefined
-      }
-      className={`flex items-center gap-3 w-full ml-[3.5px] px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-        disabled
-          ? 'text-gray-400 cursor-not-allowed'
-          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-      }`}
-    >
-      <PlusIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-      <span
-        className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-          hideText ? 'w-0' : 'w-auto'
+    <SidebarTooltip label="New Radar" show={collapsed}>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        title={
+          disabled
+            ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
+            : undefined
+        }
+        className={`flex items-center gap-3 w-full ml-[3.5px] px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+          disabled
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
         }`}
       >
-        New Radar
-      </span>
-    </button>
+        <PlusIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+        <span
+          className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+            hideText ? 'w-0' : 'w-auto'
+          }`}
+        >
+          New Radar
+        </span>
+      </button>
+    </SidebarTooltip>
   );
 }
 
@@ -300,7 +303,12 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
       ))}
 
       {/* Create button */}
-      <CreateButton hideText={hideText} onClick={onCreateRadar} disabled={isAtLimit} />
+      <CreateButton
+        collapsed={collapsed}
+        hideText={hideText}
+        onClick={onCreateRadar}
+        disabled={isAtLimit}
+      />
     </div>
   );
 }
