@@ -63,16 +63,18 @@ interface NavContentProps {
 
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div className={`flex-1 space-y-1 py-4 overflow-hidden pl-2 ${collapsed ? 'pr-2' : 'pr-4'}`}>
+    <div
+      className={`flex-1 space-y-1 pt-8 pb-4 overflow-hidden pl-2 ${collapsed ? 'pr-2' : 'pr-4'}`}
+    >
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
-                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-              }`
+              `flex items-center py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
+                hideText ? 'justify-center px-2' : 'gap-3 px-3'
+              } ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'}`
             }
           >
             {({ isActive }) => (
@@ -114,14 +116,14 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
   return (
     <button
       onClick={onToggle}
-      className="flex items-center justify-center w-full p-4 border-t border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+      className="absolute right-0 translate-x-1/2 top-2 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 transition-colors"
       aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       aria-expanded={!isCollapsed}
     >
       {isCollapsed ? (
-        <ChevronDoubleRightIcon className="h-5 w-5" aria-hidden="true" />
+        <ChevronDoubleRightIcon className="h-3 w-3" aria-hidden="true" />
       ) : (
-        <ChevronDoubleLeftIcon className="h-5 w-5" aria-hidden="true" />
+        <ChevronDoubleLeftIcon className="h-3 w-3" aria-hidden="true" />
       )}
     </button>
   );
@@ -155,10 +157,11 @@ function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
 
 interface DesktopSidebarProps {
   isCollapsed: boolean;
+  onToggleCollapsed?: () => void;
   children: React.ReactNode;
 }
 
-function DesktopSidebar({ isCollapsed, children }: DesktopSidebarProps) {
+function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSidebarProps) {
   return (
     <aside
       className={`
@@ -167,6 +170,9 @@ function DesktopSidebar({ isCollapsed, children }: DesktopSidebarProps) {
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
+      {onToggleCollapsed && (
+        <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
+      )}
       <nav aria-label="Main navigation" className="flex flex-col h-full">
         {children}
       </nav>
@@ -210,13 +216,10 @@ export function Sidebar({
         </NavContent>
       </MobileDrawer>
 
-      <DesktopSidebar isCollapsed={isCollapsed}>
+      <DesktopSidebar isCollapsed={isCollapsed} onToggleCollapsed={onToggleCollapsed}>
         <NavContent collapsed={isCollapsed} hideText={hideText} onLinkClick={onClose}>
           {children}
         </NavContent>
-        {onToggleCollapsed && (
-          <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
-        )}
       </DesktopSidebar>
     </>
   );
