@@ -192,6 +192,9 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
   // Position tooltip to right when collapsed, below when expanded (disabled)
   const tooltipPosition = collapsed ? 'right' : 'bottom';
 
+  // Provide accessible label explaining why button is disabled
+  const ariaLabel = disabled ? `New Radar (limit reached, delete one to create more)` : undefined;
+
   return (
     <SidebarTooltip label={tooltipLabel} show={showTooltip} position={tooltipPosition}>
       {/* Hover background on wrapper so margin for alignment doesn't offset the highlight */}
@@ -201,6 +204,7 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
         <button
           onClick={onClick}
           disabled={disabled}
+          aria-label={ariaLabel}
           className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors ${
             collapsed ? 'outline-none' : 'rounded'
           } ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
