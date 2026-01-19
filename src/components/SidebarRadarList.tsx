@@ -9,7 +9,7 @@ import { LoadingSpinner } from './icons';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
 
-// Radar icon - concentric circles representing radar
+// Radar icon - concentric circles representing radar (outline version)
 function RadarIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -23,6 +23,21 @@ function RadarIcon({ className }: { className?: string }) {
       <circle cx="12" cy="12" r="3" />
       <circle cx="12" cy="12" r="6" />
       <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+// Radar icon - filled version for active state (bullseye pattern)
+// Radii are 0.75 larger than outline version to account for stroke width
+function RadarIconSolid({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      {/* Layered circles: purple -> white -> purple -> white -> purple (center) */}
+      <circle cx="12" cy="12" r="9.75" />
+      <circle cx="12" cy="12" r="8.25" fill="white" />
+      <circle cx="12" cy="12" r="6.75" />
+      <circle cx="12" cy="12" r="5.25" fill="white" />
+      <circle cx="12" cy="12" r="3.75" />
     </svg>
   );
 }
@@ -53,23 +68,31 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
           }`
         }
       >
-        <RadarIcon className="h-5 w-5 shrink-0" />
-        <span
-          aria-hidden="true"
-          className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-            hideText ? 'w-0' : 'w-auto'
-          }`}
-        >
-          {radar.name}
-        </span>
-        <span
-          aria-hidden="true"
-          className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-            hideText ? 'w-0' : 'w-auto'
-          }`}
-        >
-          {radar.repo_count}
-        </span>
+        {({ isActive }) => (
+          <>
+            {isActive ? (
+              <RadarIconSolid className="h-5 w-5 shrink-0" />
+            ) : (
+              <RadarIcon className="h-5 w-5 shrink-0" />
+            )}
+            <span
+              aria-hidden="true"
+              className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+                hideText ? 'w-0' : 'w-auto'
+              }`}
+            >
+              {radar.name}
+            </span>
+            <span
+              aria-hidden="true"
+              className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+                hideText ? 'w-0' : 'w-auto'
+              }`}
+            >
+              {radar.repo_count}
+            </span>
+          </>
+        )}
       </NavLink>
     </SidebarTooltip>
   );
