@@ -122,3 +122,22 @@ export function QuestionMarkCircleIcon({ className = 'w-5 h-5' }: { className?: 
     </svg>
   );
 }
+
+export function Bars3Icon({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+      />
+    </svg>
+  );
+}

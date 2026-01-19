@@ -5,6 +5,7 @@ import {
   ArrowRightOnRectangleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
+  Bars3Icon,
 } from './icons';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
@@ -49,7 +50,11 @@ function ErrorBanner({ message }: { message: string }) {
   );
 }
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -120,9 +125,18 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {onMenuToggle && (
+              <button
+                onClick={onMenuToggle}
+                className="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                aria-label="Open navigation menu"
+              >
+                <Bars3Icon className="h-6 w-6" />
+              </button>
+            )}
             <h1 className="text-xl font-semibold text-gray-900">Repo Radar</h1>
           </div>
 

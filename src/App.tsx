@@ -1,8 +1,11 @@
+import { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './components/AuthProvider';
 import { Header } from './components/Header';
+import { Sidebar } from './components/Sidebar';
+import { SidebarRadarList } from './components/SidebarRadarList';
 import Home from './pages/Home';
 import StarsPage from './pages/StarsPage';
 import ExplorePage from './pages/ExplorePage';
@@ -10,6 +13,7 @@ import RadarPage from './pages/RadarPage';
 import RepoDetailPage from './pages/RepoDetailPage';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
 import { logger } from './utils/logger';
+import { useAuth } from './hooks/use-auth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +25,51 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function AppLayout() {
+  const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const handleMenuToggle = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
+
+  const handleSidebarClose = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  const handleCreateRadar = useCallback(() => {
+    // TODO: Open create radar modal (T048)
+    logger.info('Create radar clicked - modal to be implemented in T048');
+  }, []);
+
+  // Only show sidebar for authenticated users
+  const showSidebar = !!user;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header onMenuToggle={showSidebar ? handleMenuToggle : undefined} />
+      {showSidebar && (
+        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose}>
+          <SidebarRadarList
+            collapsed={false}
+            onLinkClick={handleSidebarClose}
+            onCreateRadar={handleCreateRadar}
+          />
+        </Sidebar>
+      )}
+      <main className={`pt-16 ${showSidebar ? 'lg:pl-64' : ''}`}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/stars" element={<StarsPage />} />
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/radar/:id" element={<RadarPage />} />
+          <Route path="/repo/:id" element={<RepoDetailPage />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -38,16 +87,7 @@ function App() {
       >
         <BrowserRouter>
           <AuthProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/stars" element={<StarsPage />} />
-                <Route path="/explore" element={<ExplorePage />} />
-                <Route path="/radar/:id" element={<RadarPage />} />
-                <Route path="/repo/:id" element={<RepoDetailPage />} />
-              </Routes>
-            </div>
+            <AppLayout />
           </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>
