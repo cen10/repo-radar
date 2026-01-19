@@ -10,16 +10,6 @@ vi.mock('../services/radar', () => ({
   getRadars: vi.fn(),
 }));
 
-// Mock the logger to silence test output
-vi.mock('../utils/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 // Helper to create a test QueryClient
 const createTestQueryClient = () =>
   new QueryClient({
