@@ -228,7 +228,6 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
 }
 
 export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: SidebarRadarListProps) {
-  // Delay hiding text when collapsing so it slides out with the panel
   const [hideText, setHideText] = useState(collapsed);
 
   useEffect(() => {
