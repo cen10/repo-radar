@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
+import { SidebarTooltip } from './Sidebar';
 
 // Radar icon - concentric circles representing radar
 function RadarIcon({ className }: { className?: string }) {
@@ -36,24 +37,25 @@ interface RadarNavItemProps {
 
 function RadarNavItem({ radar, collapsed, onLinkClick }: RadarNavItemProps) {
   return (
-    <NavLink
-      to={`/radar/${radar.id}`}
-      onClick={onLinkClick}
-      title={collapsed ? radar.name : undefined}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-          isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-        } ${collapsed ? 'justify-center' : ''}`
-      }
-    >
-      <RadarIcon className="h-5 w-5 shrink-0" />
-      {!collapsed && (
-        <>
-          <span className="flex-1 truncate">{radar.name}</span>
-          <span className="text-gray-400 text-xs">{radar.repo_count}</span>
-        </>
-      )}
-    </NavLink>
+    <SidebarTooltip label={radar.name} show={collapsed}>
+      <NavLink
+        to={`/radar/${radar.id}`}
+        onClick={onLinkClick}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+            isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
+          } ${collapsed ? 'justify-center' : ''}`
+        }
+      >
+        <RadarIcon className="h-5 w-5 shrink-0" />
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate">{radar.name}</span>
+            <span className="text-gray-400 text-xs">{radar.repo_count}</span>
+          </>
+        )}
+      </NavLink>
+    </SidebarTooltip>
   );
 }
 

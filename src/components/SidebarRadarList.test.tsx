@@ -294,13 +294,40 @@ describe('SidebarRadarList', () => {
       renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
 
       // Wait for link to appear
-      const link = await screen.findByRole('link');
+      await screen.findByRole('link');
 
-      // Name text should not be visible
-      expect(screen.queryByText('Collapsed Radar')).not.toBeInTheDocument();
+      // Name text in span should not be visible (but tooltip text is)
+      const radarList = screen.getByTestId('radar-list');
+      const nameSpan = radarList.querySelector('.truncate');
+      expect(nameSpan).not.toBeInTheDocument();
 
-      // Link should have tooltip
-      expect(link).toHaveAttribute('title', 'Collapsed Radar');
+      // CSS tooltip should be rendered with role="tooltip"
+      const tooltip = screen.getByRole('tooltip', { hidden: true });
+      expect(tooltip).toHaveTextContent('Collapsed Radar');
+    });
+
+    it('does not show tooltips when expanded', async () => {
+      const mockRadars = [createMockRadar({ name: 'Expanded Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={false} />);
+
+      await screen.findByRole('link');
+
+      // No tooltip elements should exist when expanded
+      expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('tooltips have keyboard accessibility classes', async () => {
+      const mockRadars = [createMockRadar({ name: 'Accessible Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+
+      await screen.findByRole('link');
+
+      const tooltip = screen.getByRole('tooltip', { hidden: true });
+      expect(tooltip.className).toContain('group-focus-within:opacity-100');
     });
   });
 

@@ -91,8 +91,16 @@ describe('Sidebar', () => {
         <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
       );
 
-      // Text should be hidden when collapsed
-      expect(screen.queryByText(/my stars/i)).not.toBeInTheDocument();
+      // The visible label spans should not be in the document
+      // (tooltip text is still present but visually hidden)
+      const nav = screen.getByRole('navigation');
+      const navLinks = nav.querySelectorAll('a');
+
+      navLinks.forEach((link) => {
+        // The link should not contain a span with text (collapsed shows only icon)
+        const labelSpan = link.querySelector('span');
+        expect(labelSpan).not.toBeInTheDocument();
+      });
     });
 
     it('shows tooltips on links when collapsed', () => {
@@ -100,8 +108,34 @@ describe('Sidebar', () => {
         <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
       );
 
-      const starsLink = screen.getByRole('link', { name: /my stars/i });
-      expect(starsLink).toHaveAttribute('title', 'My Stars');
+      // CSS tooltips should be rendered with role="tooltip"
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      expect(tooltips.length).toBeGreaterThanOrEqual(2); // My Stars and Explore
+
+      // Verify tooltip content
+      expect(screen.getByText('My Stars')).toBeInTheDocument();
+      expect(screen.getByText('Explore')).toBeInTheDocument();
+    });
+
+    it('does not show tooltips when expanded', () => {
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={false} onToggleCollapsed={vi.fn()} />
+      );
+
+      // No tooltip elements should exist when expanded
+      expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('tooltips have focus-visible classes for keyboard accessibility', () => {
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
+      );
+
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      tooltips.forEach((tooltip) => {
+        // Check that tooltip has the group-focus-within class for keyboard accessibility
+        expect(tooltip.className).toContain('group-focus-within:opacity-100');
+      });
     });
   });
 

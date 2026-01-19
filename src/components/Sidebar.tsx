@@ -7,6 +7,32 @@ import {
 } from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
+interface SidebarTooltipProps {
+  label: string;
+  show: boolean;
+  children: React.ReactNode;
+}
+
+export function SidebarTooltip({ label, show, children }: SidebarTooltipProps) {
+  if (!show) {
+    return <>{children}</>;
+  }
+
+  return (
+    <span className="group relative">
+      {children}
+      <span
+        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-50"
+        role="tooltip"
+        aria-hidden="true"
+      >
+        {label}
+        <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+      </span>
+    </span>
+  );
+}
+
 interface SidebarProps {
   children?: React.ReactNode;
   isOpen: boolean;
@@ -37,28 +63,28 @@ function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
   return (
     <div className="flex-1 p-4 space-y-1">
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          onClick={onLinkClick}
-          title={collapsed ? label : undefined}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-            } ${collapsed ? 'justify-center' : ''}`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              {isActive ? (
-                <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              ) : (
-                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              )}
-              {!collapsed && <span>{label}</span>}
-            </>
-          )}
-        </NavLink>
+        <SidebarTooltip key={to} label={label} show={collapsed}>
+          <NavLink
+            to={to}
+            onClick={onLinkClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
+              } ${collapsed ? 'justify-center' : ''}`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive ? (
+                  <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                ) : (
+                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                )}
+                {!collapsed && <span>{label}</span>}
+              </>
+            )}
+          </NavLink>
+        </SidebarTooltip>
       ))}
 
       {children && (
