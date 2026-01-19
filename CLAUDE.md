@@ -66,6 +66,29 @@ npm run format:check # Check formatting
 - Mobile-first responsive design
 - Soft delete with 30-day recovery window
 
+## State Management Architecture
+
+**TanStack Query is used exclusively for server state** (remote data that needs caching). It wraps two data sources:
+
+```
+Component → TanStack Query hook → Service function → Data source
+              (caching layer)       (API call)
+```
+
+| Hook | Data Source | Service |
+|------|-------------|---------|
+| `useRadars` | Supabase (PostgreSQL) | `services/radar.ts` |
+| `useAllStarredRepositories` | GitHub API | `services/github.ts` |
+| `usePaginatedStarredRepositories` | GitHub API | `services/github.ts` |
+| `useReleases` | GitHub API | `services/github.ts` |
+| `useInfiniteSearch` | GitHub API | `services/github.ts` |
+
+**For local/UI state**, use React primitives:
+- `useState` for component state
+- `useContext` (e.g., `AuthContext`) for shared client state
+
+**Not used**: TanStack Query for local-only state. Keep server state and client state separate.
+
 ## Performance Targets
 
 - Initial load: < 3 seconds
