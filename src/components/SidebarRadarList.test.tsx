@@ -123,37 +123,6 @@ describe('SidebarRadarList', () => {
     });
   });
 
-  describe('Section header', () => {
-    it('shows radar count in header', async () => {
-      const mockRadars = [
-        createMockRadar({ id: 'r1' }),
-        createMockRadar({ id: 'r2' }),
-        createMockRadar({ id: 'r3' }),
-      ];
-      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
-
-      renderWithProviders(<SidebarRadarList {...defaultProps} />);
-
-      expect(await screen.findByText(/my radars/i)).toBeInTheDocument();
-      expect(screen.getByText(/\(3\/5\)/)).toBeInTheDocument();
-    });
-
-    it('collapses header to zero width when collapsed', async () => {
-      const mockRadars = [createMockRadar()];
-      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
-
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
-
-      // Wait for content to load
-      await screen.findByRole('link');
-
-      // Header text spans have w-0 when collapsed
-      const headerText = screen.getByText(/my radars/i);
-      expect(headerText.className).toContain('w-0');
-      expect(headerText.className).toContain('overflow-hidden');
-    });
-  });
-
   describe('Empty state', () => {
     it('renders empty state when no radars', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
@@ -293,7 +262,7 @@ describe('SidebarRadarList', () => {
   });
 
   describe('Collapsed mode', () => {
-    it('collapses radar text to zero width when collapsed', async () => {
+    it('hides radar text when collapsed', async () => {
       const mockRadars = [createMockRadar({ name: 'Collapsed Radar' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
@@ -302,11 +271,9 @@ describe('SidebarRadarList', () => {
       // Wait for link to appear
       const link = await screen.findByRole('link');
 
-      // Text spans have w-0 when collapsed
+      // Text spans are not rendered when collapsed (for proper centering)
       const nameSpan = link.querySelector('.truncate');
-      expect(nameSpan).toBeInTheDocument();
-      expect(nameSpan?.className).toContain('w-0');
-      expect(nameSpan?.className).toContain('overflow-hidden');
+      expect(nameSpan).not.toBeInTheDocument();
 
       // CSS tooltip should be rendered with role="tooltip"
       const tooltip = screen.getByRole('tooltip', { hidden: true });

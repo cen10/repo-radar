@@ -27,6 +27,21 @@ function RadarIcon({ className }: { className?: string }) {
   );
 }
 
+// Radar icon - filled version for active state (bullseye pattern)
+// Radii are 0.75 larger than outline version to account for stroke width
+function RadarIconSolid({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      {/* Layered circles: colored -> white -> colored -> white -> colored (center) */}
+      <circle cx="12" cy="12" r="9.75" />
+      <circle cx="12" cy="12" r="8.25" fill="white" />
+      <circle cx="12" cy="12" r="6.75" />
+      <circle cx="12" cy="12" r="5.25" fill="white" />
+      <circle cx="12" cy="12" r="3.75" />
+    </svg>
+  );
+}
+
 interface SidebarRadarListProps {
   collapsed: boolean;
   onLinkClick: () => void;
@@ -35,13 +50,13 @@ interface SidebarRadarListProps {
 
 interface RadarNavItemProps {
   radar: RadarWithCount;
+  index: number;
   collapsed: boolean;
   hideText: boolean;
   onLinkClick: () => void;
 }
 
-function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemProps) {
-  // pl-11 = 44px (12px padding + 20px icon + 12px gap) to indent as if icon was present
+function RadarNavItem({ radar, index, collapsed, hideText, onLinkClick }: RadarNavItemProps) {
   return (
     <SidebarTooltip label={radar.name} show={collapsed}>
       <NavLink
@@ -49,27 +64,49 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `flex items-center gap-3 pl-11 pr-3 py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
-            isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
+          `flex items-center gap-3 py-2 text-sm font-medium rounded-r-lg transition-colors border-l-4 ${
+            hideText ? 'justify-center' : 'px-3 overflow-hidden'
+          } ${
+            isActive
+              ? 'border-indigo-600 text-indigo-700'
+              : 'border-transparent text-gray-700 hover:border-gray-300'
           }`
         }
       >
-        <span
-          aria-hidden="true"
-          className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-            hideText ? 'w-0' : 'w-auto'
-          }`}
-        >
-          {radar.name}
-        </span>
-        <span
-          aria-hidden="true"
-          className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-            hideText ? 'w-0' : 'w-auto'
-          }`}
-        >
-          {radar.repo_count}
-        </span>
+        {({ isActive }) => (
+          <>
+            {/* Icon + number (collapsed) or just icon (expanded) */}
+            <span className="flex items-center gap-0.5 shrink-0">
+              {isActive ? (
+                <RadarIconSolid className="h-5 w-5 shrink-0" />
+              ) : (
+                <RadarIcon className="h-5 w-5 shrink-0 text-gray-400" />
+              )}
+              {hideText && (
+                <span aria-hidden="true" className="font-semibold text-gray-500 text-xs">
+                  {index + 1}
+                </span>
+              )}
+            </span>
+            {/* Name and count shown when expanded */}
+            {!hideText && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="flex-1 truncate whitespace-nowrap overflow-hidden"
+                >
+                  {radar.name}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="text-gray-400 text-xs shrink-0 whitespace-nowrap"
+                >
+                  {radar.repo_count}
+                </span>
+              </>
+            )}
+          </>
+        )}
       </NavLink>
     </SidebarTooltip>
   );
@@ -259,26 +296,12 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
   // Normal state with radars
   return (
     <div data-testid="radar-list" className="space-y-1">
-      {/* Section header */}
-      <div className="flex items-center gap-3 px-3 py-2 overflow-hidden">
-        <RadarIcon className="h-5 w-5 shrink-0 text-gray-500" />
-        <span
-          className={`text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-            hideText ? 'w-0' : 'w-auto'
-          } inline-flex items-center`}
-        >
-          My Radars
-          <span className="font-normal normal-case tracking-normal text-gray-400 ml-1">
-            ({radars.length}/{RADAR_LIMITS.MAX_RADARS_PER_USER})
-          </span>
-        </span>
-      </div>
-
       {/* Radar list */}
-      {radars.map((radar) => (
+      {radars.map((radar, index) => (
         <RadarNavItem
           key={radar.id}
           radar={radar}
+          index={index}
           collapsed={collapsed}
           hideText={hideText}
           onLinkClick={onLinkClick}
