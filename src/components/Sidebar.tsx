@@ -43,14 +43,6 @@ export function SidebarTooltip({ label, show, children, position = 'right' }: Si
   );
 }
 
-interface SidebarProps {
-  children?: React.ReactNode;
-  isOpen: boolean;
-  onClose: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapsed?: () => void;
-}
-
 interface NavItem {
   to: string;
   label: string;
@@ -200,6 +192,14 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
       </aside>
     </div>
   );
+}
+
+interface SidebarProps {
+  children?: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
 /**
