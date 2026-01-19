@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip } from './Sidebar';
+import { LoadingSpinner } from './icons';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
 
@@ -45,6 +46,7 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
       <NavLink
         to={`/radar/${radar.id}`}
         onClick={onLinkClick}
+        aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
           `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors overflow-hidden ${
             isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
@@ -53,14 +55,16 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
       >
         <RadarIcon className="h-5 w-5 shrink-0" />
         <span
-          className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          aria-hidden="true"
+          className={`flex-1 truncate whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
             hideText ? 'w-0' : 'w-auto'
           }`}
         >
           {radar.name}
         </span>
         <span
-          className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          aria-hidden="true"
+          className={`text-gray-400 text-xs shrink-0 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
             hideText ? 'w-0' : 'w-auto'
           }`}
         >
@@ -73,9 +77,17 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
 
 function LoadingSkeleton() {
   return (
-    <div data-testid="radar-list-loading" className="space-y-2">
+    <div
+      data-testid="radar-list-loading"
+      className="space-y-2"
+      aria-busy="true"
+      aria-label="Loading radars"
+    >
       {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2 animate-pulse">
+        <div
+          key={i}
+          className="flex items-center gap-3 px-3 py-2 animate-pulse motion-reduce:animate-none"
+        >
           <div className="h-5 w-5 bg-gray-200 rounded-full shrink-0" />
           <div className="flex-1 h-4 bg-gray-200 rounded" />
           <div className="h-4 w-6 bg-gray-200 rounded" />
@@ -89,15 +101,39 @@ interface ErrorStateProps {
   onRetry: () => void;
 }
 
+const MINIMUM_LOADING_DISPLAY_MS = 600;
+
 function ErrorState({ onRetry }: ErrorStateProps) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    // Minimum display time for loading state to give users confidence
+    setTimeout(() => {
+      onRetry();
+    }, MINIMUM_LOADING_DISPLAY_MS);
+  };
+
   return (
-    <div className="px-3 py-4 text-center">
+    <div className="px-3 py-4 text-center" role="alert">
       <p className="text-sm text-gray-500 mb-2">Failed to load radars</p>
       <button
-        onClick={onRetry}
-        className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+        onClick={handleRetry}
+        disabled={isRetrying}
+        aria-busy={isRetrying}
+        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
       >
-        Retry
+        {isRetrying ? (
+          <>
+            <LoadingSpinner className="h-3 w-3" />
+            Retrying...
+          </>
+        ) : (
+          <>
+            <ArrowPathIcon className="h-3 w-3" aria-hidden="true" />
+            Retry
+          </>
+        )}
       </button>
     </div>
   );
@@ -113,7 +149,7 @@ function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
   return (
     <div className="pl-11 pr-3 py-4">
       <p
-        className={`text-sm text-gray-500 mb-3 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+        className={`text-sm text-gray-500 mb-3 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
           hideText ? 'w-0' : 'w-auto'
         }`}
       >
@@ -121,7 +157,7 @@ function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
       </p>
       <button
         onClick={onCreateRadar}
-        className={`inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
+        className={`inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
           hideText ? 'w-0' : 'w-auto'
         }`}
       >
@@ -139,7 +175,6 @@ interface CreateButtonProps {
 }
 
 function CreateButton({ hideText, onClick, disabled }: CreateButtonProps) {
-  // pl-11 = 44px to align "New Radar" text with nav item text (icon width + gap)
   return (
     <button
       onClick={onClick}
@@ -149,14 +184,15 @@ function CreateButton({ hideText, onClick, disabled }: CreateButtonProps) {
           ? `You've reached the radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER}). Delete a radar to create a new one.`
           : undefined
       }
-      className={`flex items-center gap-3 w-full pl-11 pr-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+      className={`flex items-center gap-3 w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
         disabled
           ? 'text-gray-400 cursor-not-allowed'
           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
       }`}
     >
+      <PlusIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <span
-        className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${
+        className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
           hideText ? 'w-0' : 'w-auto'
         }`}
       >
@@ -226,14 +262,14 @@ export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: Side
       {/* Section header */}
       <div className="pl-11 pr-3 py-2">
         <span
-          className={`text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 inline-block ${
+          className={`text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none inline-block ${
             hideText ? 'w-0' : 'w-auto'
           }`}
         >
           My Radars
         </span>
         <span
-          className={`text-xs text-gray-400 ml-1 whitespace-nowrap overflow-hidden transition-all duration-300 inline-block ${
+          className={`text-xs text-gray-400 ml-1 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none inline-block ${
             hideText ? 'w-0' : 'w-auto'
           }`}
         >

@@ -85,7 +85,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                 )}
                 <span
-                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
                     hideText ? 'w-0' : 'w-auto'
                   }`}
                 >
@@ -166,7 +166,7 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
     <aside
       className={`
         hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200
-        transition-all duration-300 ease-in-out z-40
+        transition-all duration-300 ease-in-out motion-reduce:transition-none z-40
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
