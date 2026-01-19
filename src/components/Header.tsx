@@ -6,6 +6,7 @@ import {
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
   Bars3Icon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
@@ -29,22 +30,42 @@ function getSignOutErrorMessage(error: unknown): string {
 }
 
 // Error banner component for displaying error messages with proper accessibility
-function ErrorBanner({ message }: { message: string }) {
+// Positioned fixed below the header, adjusting for sidebar width on desktop
+interface ErrorBannerProps {
+  message: string;
+  sidebarCollapsed?: boolean;
+  onDismiss: () => void;
+}
+
+function ErrorBanner({ message, sidebarCollapsed, onDismiss }: ErrorBannerProps) {
+  // On desktop (lg+), offset by sidebar width. Mobile has no persistent sidebar.
+  const leftClass =
+    sidebarCollapsed === undefined
+      ? 'left-0' // No sidebar (not authenticated)
+      : sidebarCollapsed
+        ? 'left-0 lg:left-16' // Collapsed sidebar (64px)
+        : 'left-0 lg:left-64'; // Expanded sidebar (256px)
+
   return (
     <div
-      className="bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8"
+      className={`fixed top-16 right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
       role="alert"
       aria-live="assertive"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-800">{message}</p>
-          </div>
+      <div className="flex items-start">
+        <div className="shrink-0">
+          <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
         </div>
+        <div className="ml-3 flex-1">
+          <p className="text-sm text-red-800">{message}</p>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="ml-3 shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-red-50"
+          aria-label="Dismiss error"
+        >
+          <XMarkIcon className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );
@@ -52,9 +73,10 @@ function ErrorBanner({ message }: { message: string }) {
 
 interface HeaderProps {
   onMenuToggle?: () => void;
+  sidebarCollapsed?: boolean;
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -211,7 +233,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </div>
       </header>
 
-      {signOutError && <ErrorBanner message={signOutError} />}
+      {signOutError && (
+        <ErrorBanner
+          message={signOutError}
+          sidebarCollapsed={sidebarCollapsed}
+          onDismiss={() => setSignOutError(null)}
+        />
+      )}
     </>
   );
 }

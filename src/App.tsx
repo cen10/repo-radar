@@ -53,7 +53,10 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onMenuToggle={showSidebar ? handleMenuToggle : undefined} />
+      <Header
+        onMenuToggle={showSidebar ? handleMenuToggle : undefined}
+        sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}
+      />
       {showSidebar && (
         <Sidebar
           isOpen={isSidebarOpen}
