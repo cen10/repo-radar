@@ -29,6 +29,7 @@ const queryClient = new QueryClient({
 function AppLayout() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleMenuToggle = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
@@ -43,6 +44,10 @@ function AppLayout() {
     logger.info('Create radar clicked - modal to be implemented in T048');
   }, []);
 
+  const handleToggleCollapsed = useCallback(() => {
+    setIsSidebarCollapsed((prev) => !prev);
+  }, []);
+
   // Only show sidebar for authenticated users
   const showSidebar = !!user;
 
@@ -50,15 +55,22 @@ function AppLayout() {
     <div className="min-h-screen bg-gray-50">
       <Header onMenuToggle={showSidebar ? handleMenuToggle : undefined} />
       {showSidebar && (
-        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose}>
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={handleSidebarClose}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapsed={handleToggleCollapsed}
+        >
           <SidebarRadarList
-            collapsed={false}
+            collapsed={isSidebarCollapsed}
             onLinkClick={handleSidebarClose}
             onCreateRadar={handleCreateRadar}
           />
         </Sidebar>
       )}
-      <main className={`pt-16 ${showSidebar ? 'lg:pl-64' : ''}`}>
+      <main
+        className={`pt-16 ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/stars" element={<StarsPage />} />

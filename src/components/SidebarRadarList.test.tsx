@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -167,6 +167,21 @@ describe('SidebarRadarList', () => {
       renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       expect(await screen.findByRole('button', { name: /create radar/i })).toBeInTheDocument();
+    });
+
+    it('hides empty state when collapsed', async () => {
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+
+      // Wait for loading to finish
+      await waitFor(() => {
+        expect(screen.queryByTestId('radar-list-loading')).not.toBeInTheDocument();
+      });
+
+      // Empty state should be hidden when collapsed
+      expect(screen.queryByText(/create your first radar/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /create radar/i })).not.toBeInTheDocument();
     });
   });
 

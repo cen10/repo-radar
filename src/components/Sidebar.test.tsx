@@ -47,41 +47,58 @@ describe('Sidebar', () => {
   });
 
   describe('Collapse behavior', () => {
-    it('renders collapse toggle button', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
+    const collapsibleProps = {
+      ...defaultProps,
+      isCollapsed: false,
+      onToggleCollapsed: vi.fn(),
+    };
+
+    it('renders collapse toggle button when onToggleCollapsed provided', () => {
+      renderWithRouter(<Sidebar {...collapsibleProps} />);
 
       expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
     });
 
-    it('toggles collapse state on button click', () => {
+    it('does not render collapse button without onToggleCollapsed', () => {
       renderWithRouter(<Sidebar {...defaultProps} />);
 
-      const collapseBtn = screen.getByRole('button', { name: /collapse sidebar/i });
-      expect(collapseBtn).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.queryByRole('button', { name: /collapse sidebar/i })).not.toBeInTheDocument();
+    });
 
+    it('calls onToggleCollapsed on button click', () => {
+      const onToggle = vi.fn();
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={false} onToggleCollapsed={onToggle} />
+      );
+
+      const collapseBtn = screen.getByRole('button', { name: /collapse sidebar/i });
       fireEvent.click(collapseBtn);
+
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows expand button when collapsed', () => {
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
+      );
 
       const expandBtn = screen.getByRole('button', { name: /expand sidebar/i });
       expect(expandBtn).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('hides text labels when collapsed', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
+      );
 
-      // Initially visible
-      expect(screen.getByText(/my stars/i)).toBeVisible();
-
-      // Collapse
-      fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
-
-      // Text should be hidden (not in document when collapsed)
+      // Text should be hidden when collapsed
       expect(screen.queryByText(/my stars/i)).not.toBeInTheDocument();
     });
 
     it('shows tooltips on links when collapsed', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+      renderWithRouter(
+        <Sidebar {...defaultProps} isCollapsed={true} onToggleCollapsed={vi.fn()} />
+      );
 
       const starsLink = screen.getByRole('link', { name: /my stars/i });
       expect(starsLink).toHaveAttribute('title', 'My Stars');

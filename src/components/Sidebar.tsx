@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -12,6 +11,8 @@ interface SidebarProps {
   children?: React.ReactNode;
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
 interface NavItem {
@@ -146,9 +147,13 @@ function DesktopSidebar({ isCollapsed, children }: DesktopSidebarProps) {
  * - MobileDrawer:   visible < 1024px (lg:hidden on Dialog)
  * - DesktopSidebar: visible ≥ 1024px (hidden lg:block on aside)
  */
-export function Sidebar({ children, isOpen, onClose }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
+export function Sidebar({
+  children,
+  isOpen,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapsed,
+}: SidebarProps) {
   return (
     <>
       <MobileDrawer isOpen={isOpen} onClose={onClose}>
@@ -161,10 +166,9 @@ export function Sidebar({ children, isOpen, onClose }: SidebarProps) {
         <NavContent collapsed={isCollapsed} onLinkClick={onClose}>
           {children}
         </NavContent>
-        <CollapseButton
-          isCollapsed={isCollapsed}
-          onToggle={() => setIsCollapsed((prev) => !prev)}
-        />
+        {onToggleCollapsed && (
+          <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
+        )}
       </DesktopSidebar>
     </>
   );
