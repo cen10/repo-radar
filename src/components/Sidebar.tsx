@@ -216,7 +216,6 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapsed,
 }: SidebarProps) {
-  // Delay hiding text when collapsing so it slides out with the panel
   const [hideText, setHideText] = useState(isCollapsed);
 
   useEffect(() => {

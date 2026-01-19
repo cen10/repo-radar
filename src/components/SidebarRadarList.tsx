@@ -151,6 +151,7 @@ function ErrorState({ onRetry }: ErrorStateProps) {
     // Minimum display time for loading state to give users confidence
     setTimeout(() => {
       onRetry();
+      setIsRetrying(false);
     }, MINIMUM_LOADING_DISPLAY_MS);
   };
 
