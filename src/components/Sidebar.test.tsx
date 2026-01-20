@@ -9,10 +9,12 @@ const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
   return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
 };
 
-// Default props for tests - Sidebar requires isOpen and onClose
+// Default props for tests - Sidebar requires isOpen, onClose, isCollapsed, and onToggleCollapsed
 const defaultProps = {
   isOpen: false,
   onClose: vi.fn(),
+  isCollapsed: false,
+  onToggleCollapsed: vi.fn(),
 };
 
 describe('Sidebar', () => {
@@ -53,44 +55,75 @@ describe('Sidebar', () => {
       expect(screen.getByRole('button', { name: /collapse sidebar/i })).toBeInTheDocument();
     });
 
-    it('toggles collapse state on button click', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
+    it('calls onToggleCollapsed on button click', () => {
+      const onToggle = vi.fn();
+      renderWithRouter(<Sidebar {...defaultProps} onToggleCollapsed={onToggle} />);
 
       const collapseBtn = screen.getByRole('button', { name: /collapse sidebar/i });
-      expect(collapseBtn).toHaveAttribute('aria-expanded', 'true');
-
       fireEvent.click(collapseBtn);
+
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows expand button when collapsed', () => {
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
       const expandBtn = screen.getByRole('button', { name: /expand sidebar/i });
       expect(expandBtn).toHaveAttribute('aria-expanded', 'false');
     });
 
-    it('hides text labels when collapsed', () => {
-      renderWithRouter(<Sidebar {...defaultProps} />);
+    it('collapses text to zero width when collapsed', () => {
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
 
-      // Initially visible
-      expect(screen.getByText(/my stars/i)).toBeVisible();
+      // Testing CSS classes is an implementation detail, but jsdom doesn't compute
+      // actual dimensions. This is a pragmatic proxy for "text is visually hidden."
+      const nav = screen.getByRole('navigation');
+      const navLinks = nav.querySelectorAll('a');
 
-      // Collapse
-      fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
-
-      // Text should be hidden (not in document when collapsed)
-      expect(screen.queryByText(/my stars/i)).not.toBeInTheDocument();
+      navLinks.forEach((link) => {
+        const spans = link.querySelectorAll('span');
+        const labelSpan = spans[1]; // second span is text, first is icon wrapper
+        expect(labelSpan).toBeInTheDocument();
+        expect(labelSpan?.className).toContain('w-0');
+        expect(labelSpan?.className).toContain('overflow-hidden');
+      });
     });
 
     it('shows tooltips on links when collapsed', () => {
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
+
+      // CSS tooltips should be rendered with role="tooltip"
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      expect(tooltips.length).toBeGreaterThanOrEqual(2); // My Stars and Explore
+
+      // Verify tooltip content (tooltips have the label text)
+      const tooltipTexts = tooltips.map((t) => t.textContent);
+      expect(tooltipTexts).toContain('My Stars');
+      expect(tooltipTexts).toContain('Explore');
+    });
+
+    it('does not show tooltips when expanded', () => {
       renderWithRouter(<Sidebar {...defaultProps} />);
 
-      fireEvent.click(screen.getByRole('button', { name: /collapse sidebar/i }));
+      // No tooltip elements should exist when expanded
+      expect(screen.queryByRole('tooltip', { hidden: true })).not.toBeInTheDocument();
+    });
 
-      const starsLink = screen.getByRole('link', { name: /my stars/i });
-      expect(starsLink).toHaveAttribute('title', 'My Stars');
+    it('tooltips show on hover and keyboard focus', () => {
+      renderWithRouter(<Sidebar {...defaultProps} isCollapsed={true} />);
+
+      const tooltips = screen.getAllByRole('tooltip', { hidden: true });
+      tooltips.forEach((tooltip) => {
+        // Check that tooltip shows on hover and keyboard focus (focus-visible)
+        expect(tooltip.className).toContain('group-hover:opacity-100');
+        expect(tooltip.className).toContain('group-has-focus-visible:opacity-100');
+      });
     });
   });
 
   describe('Mobile drawer', () => {
     it('renders backdrop when isOpen is true', () => {
-      renderWithRouter(<Sidebar isOpen={true} onClose={() => {}} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} />);
 
       expect(screen.getByTestId('sidebar-backdrop')).toBeInTheDocument();
     });
@@ -104,7 +137,7 @@ describe('Sidebar', () => {
     it('calls onClose when backdrop is clicked', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} onClose={onClose} />);
 
       await user.click(screen.getByTestId('sidebar-backdrop'));
 
@@ -113,7 +146,7 @@ describe('Sidebar', () => {
 
     it('calls onClose when Escape is pressed', () => {
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={true} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} isOpen={true} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 
@@ -122,7 +155,7 @@ describe('Sidebar', () => {
 
     it('does not call onClose on Escape when drawer is closed', () => {
       const onClose = vi.fn();
-      renderWithRouter(<Sidebar isOpen={false} onClose={onClose} />);
+      renderWithRouter(<Sidebar {...defaultProps} onClose={onClose} />);
 
       fireEvent.keyDown(document, { key: 'Escape' });
 

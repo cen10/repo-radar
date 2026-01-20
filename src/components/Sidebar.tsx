@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -8,10 +8,53 @@ import {
 } from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
-interface SidebarProps {
-  children?: React.ReactNode;
-  isOpen: boolean;
-  onClose: () => void;
+const SIDEBAR_ANIMATION_DURATION = 300;
+
+// Context for sidebar collapsed state - allows children to adapt to mobile vs desktop context
+interface SidebarContextValue {
+  collapsed: boolean;
+  hideText: boolean;
+}
+
+const SidebarContext = createContext<SidebarContextValue>({
+  collapsed: false,
+  hideText: false,
+});
+
+// eslint-disable-next-line react-refresh/only-export-components -- one-liner tightly coupled to Sidebar, minimal dev impact
+export const useSidebarContext = () => useContext(SidebarContext);
+
+interface SidebarTooltipProps {
+  label: string;
+  show: boolean;
+  children: React.ReactNode;
+  position?: 'right' | 'bottom';
+}
+
+export function SidebarTooltip({ label, show, children, position = 'right' }: SidebarTooltipProps) {
+  const positionClasses =
+    position === 'right' ? 'left-full top-1/2 -translate-y-1/2 ml-2' : 'top-full left-0 mt-1';
+
+  const arrowClasses =
+    position === 'right'
+      ? 'absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900'
+      : 'absolute bottom-full left-[22px] border-4 border-transparent border-b-gray-900';
+
+  return (
+    <div className="group relative">
+      {children}
+      {show && (
+        <span
+          className={`pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50 ${positionClasses}`}
+          role="tooltip"
+          aria-hidden="true"
+        >
+          {label}
+          <span className={arrowClasses} />
+        </span>
+      )}
+    </div>
+  );
 }
 
 interface NavItem {
@@ -28,42 +71,62 @@ const navItems: NavItem[] = [
 
 interface NavContentProps {
   collapsed: boolean;
+  hideText: boolean;
   onLinkClick: () => void;
   children?: React.ReactNode;
 }
 
-function NavContent({ collapsed, onLinkClick, children }: NavContentProps) {
+function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
-    <div className="flex-1 p-4 space-y-1">
+    <div className="space-y-1 pt-8 pb-4 px-2">
       {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          onClick={onLinkClick}
-          title={collapsed ? label : undefined}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
-            } ${collapsed ? 'justify-center' : ''}`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              {isActive ? (
-                <ActiveIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              ) : (
-                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              )}
-              {!collapsed && <span>{label}</span>}
-            </>
-          )}
-        </NavLink>
+        <SidebarTooltip key={to} label={label} show={collapsed}>
+          <NavLink
+            to={to}
+            onClick={onLinkClick}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden border-l-4 ${
+                collapsed ? 'outline-none' : 'rounded'
+              } ${
+                isActive
+                  ? 'border-indigo-600 text-indigo-700'
+                  : 'border-transparent text-gray-700 hover:border-gray-300'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+                <span
+                  className={`shrink-0 ${
+                    collapsed
+                      ? 'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2'
+                      : ''
+                  }`}
+                >
+                  {isActive ? (
+                    <ActiveIcon className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  )}
+                </span>
+                <span
+                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+                    hideText ? 'w-0' : 'w-auto'
+                  }`}
+                >
+                  {label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        </SidebarTooltip>
       ))}
 
       {children && (
         <>
           <div className="border-t border-gray-200 my-4" aria-hidden="true" />
-          {children}
+          <SidebarContext value={{ collapsed, hideText }}>{children}</SidebarContext>
         </>
       )}
     </div>
@@ -79,14 +142,14 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
   return (
     <button
       onClick={onToggle}
-      className="flex items-center justify-center w-full p-4 border-t border-gray-200 text-gray-500 hover:bg-gray-100 transition-colors"
+      className="absolute right-0 translate-x-1/2 top-2 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 transition-colors"
       aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       aria-expanded={!isCollapsed}
     >
       {isCollapsed ? (
-        <ChevronDoubleRightIcon className="h-5 w-5" aria-hidden="true" />
+        <ChevronDoubleRightIcon className="h-3 w-3" aria-hidden="true" />
       ) : (
-        <ChevronDoubleLeftIcon className="h-5 w-5" aria-hidden="true" />
+        <ChevronDoubleLeftIcon className="h-3 w-3" aria-hidden="true" />
       )}
     </button>
   );
@@ -120,23 +183,35 @@ function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
 
 interface DesktopSidebarProps {
   isCollapsed: boolean;
+  onToggleCollapsed: () => void;
   children: React.ReactNode;
 }
 
-function DesktopSidebar({ isCollapsed, children }: DesktopSidebarProps) {
+function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSidebarProps) {
   return (
-    <aside
+    <div
       className={`
-        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200
-        transition-all duration-300 ease-in-out z-40
+        hidden lg:block fixed left-0 top-16 z-40
+        transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
-      <nav aria-label="Main navigation" className="flex flex-col h-full">
-        {children}
-      </nav>
-    </aside>
+      <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
+      <aside className="bg-white border-r border-b border-gray-200 rounded-br-lg overflow-visible">
+        <nav aria-label="Main navigation" className="flex flex-col">
+          {children}
+        </nav>
+      </aside>
+    </div>
   );
+}
+
+interface SidebarProps {
+  children?: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  isCollapsed: boolean;
+  onToggleCollapsed: () => void;
 }
 
 /**
@@ -146,25 +221,38 @@ function DesktopSidebar({ isCollapsed, children }: DesktopSidebarProps) {
  * - MobileDrawer:   visible < 1024px (lg:hidden on Dialog)
  * - DesktopSidebar: visible ≥ 1024px (hidden lg:block on aside)
  */
-export function Sidebar({ children, isOpen, onClose }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function Sidebar({
+  children,
+  isOpen,
+  onClose,
+  isCollapsed,
+  onToggleCollapsed,
+}: SidebarProps) {
+  const [hideText, setHideText] = useState(isCollapsed);
+
+  useEffect(() => {
+    if (isCollapsed) {
+      // Collapsing: delay w-0 until animation completes so text slides out
+      const timer = setTimeout(() => setHideText(true), SIDEBAR_ANIMATION_DURATION);
+      return () => clearTimeout(timer);
+    } else {
+      // Expanding: immediately show text so it slides in
+      setHideText(false);
+    }
+  }, [isCollapsed]);
 
   return (
     <>
       <MobileDrawer isOpen={isOpen} onClose={onClose}>
-        <NavContent collapsed={false} onLinkClick={onClose}>
+        <NavContent collapsed={false} hideText={false} onLinkClick={onClose}>
           {children}
         </NavContent>
       </MobileDrawer>
 
-      <DesktopSidebar isCollapsed={isCollapsed}>
-        <NavContent collapsed={isCollapsed} onLinkClick={onClose}>
+      <DesktopSidebar isCollapsed={isCollapsed} onToggleCollapsed={onToggleCollapsed}>
+        <NavContent collapsed={isCollapsed} hideText={hideText} onLinkClick={onClose}>
           {children}
         </NavContent>
-        <CollapseButton
-          isCollapsed={isCollapsed}
-          onToggle={() => setIsCollapsed((prev) => !prev)}
-        />
       </DesktopSidebar>
     </>
   );

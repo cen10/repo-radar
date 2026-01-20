@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/use-auth';
+import { LoadingSpinner } from './icons';
 import {
-  LoadingSpinner,
   ArrowRightOnRectangleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
-} from './icons';
+  Bars3Icon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 
@@ -28,28 +30,53 @@ function getSignOutErrorMessage(error: unknown): string {
 }
 
 // Error banner component for displaying error messages with proper accessibility
-function ErrorBanner({ message }: { message: string }) {
+// Positioned fixed below the header, adjusting for sidebar width on desktop
+interface ErrorBannerProps {
+  message: string;
+  sidebarCollapsed?: boolean;
+  onDismiss: () => void;
+}
+
+function ErrorBanner({ message, sidebarCollapsed, onDismiss }: ErrorBannerProps) {
+  // On desktop (lg+), offset by sidebar width. Mobile has no persistent sidebar.
+  const leftClass =
+    sidebarCollapsed === undefined
+      ? 'left-0' // No sidebar (not authenticated)
+      : sidebarCollapsed
+        ? 'left-0 lg:left-16' // Collapsed sidebar (64px)
+        : 'left-0 lg:left-64'; // Expanded sidebar (256px)
+
   return (
     <div
-      className="bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8"
+      className={`fixed top-16 right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
       role="alert"
       aria-live="assertive"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-800">{message}</p>
-          </div>
+      <div className="flex items-start">
+        <div className="shrink-0">
+          <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
         </div>
+        <div className="ml-3 flex-1">
+          <p className="text-sm text-red-800">{message}</p>
+        </div>
+        <button
+          onClick={onDismiss}
+          className="ml-3 shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-red-50"
+          aria-label="Dismiss error"
+        >
+          <XMarkIcon className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );
 }
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle?: () => void;
+  sidebarCollapsed?: boolean;
+}
+
+export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -120,9 +147,18 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {onMenuToggle && (
+              <button
+                onClick={onMenuToggle}
+                className="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                aria-label="Open navigation menu"
+              >
+                <Bars3Icon className="h-6 w-6" />
+              </button>
+            )}
             <h1 className="text-xl font-semibold text-gray-900">Repo Radar</h1>
           </div>
 
@@ -132,7 +168,7 @@ export function Header() {
                 <img
                   src={user.avatar_url}
                   alt={`${user.name || user.login}'s avatar`}
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 rounded-full shrink-0"
                 />
               )}
               <div className="hidden sm:block">
@@ -197,7 +233,13 @@ export function Header() {
         </div>
       </header>
 
-      {signOutError && <ErrorBanner message={signOutError} />}
+      {signOutError && (
+        <ErrorBanner
+          message={signOutError}
+          sidebarCollapsed={sidebarCollapsed}
+          onDismiss={() => setSignOutError(null)}
+        />
+      )}
     </>
   );
 }
