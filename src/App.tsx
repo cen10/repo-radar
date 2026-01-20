@@ -52,7 +52,7 @@ function AppLayout() {
   const showSidebar = !!user;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header
         onMenuToggle={showSidebar ? handleMenuToggle : undefined}
         sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}

@@ -18,11 +18,11 @@ interface RadarNavItemProps {
   onLinkClick: () => void;
 }
 
-// Approximate characters that fit in 2 lines of the sidebar (for tooltip detection)
-const MAX_RADAR_NAME_LENGTH = 40;
+// Approximate characters that fit in one line of the sidebar (for tooltip detection)
+const MAX_RADAR_NAME_LENGTH = 20;
 
 function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemProps) {
-  // Show tooltip if name might be truncated (longer than ~2 lines)
+  // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
 
   return (
@@ -60,7 +60,7 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
             {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
             {!hideText && (
               <div className="flex items-center gap-3 shrink-0 w-[168px]">
-                <span aria-hidden="true" className="flex-1 line-clamp-2 overflow-hidden min-w-0">
+                <span aria-hidden="true" className="flex-1 truncate min-w-0">
                   {radar.name}
                 </span>
                 <span

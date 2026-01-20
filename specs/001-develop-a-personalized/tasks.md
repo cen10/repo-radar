@@ -135,6 +135,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [ ] T035 Create MobileDrawer component with hamburger menu trigger
 - [ ] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content
 - [x] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
+- [x] T037a Wire up StarsPage and ExplorePage to use RepositoryList component with data hooks (remove tab UI, each page is standalone)
 - [x] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
 
 ## Phase 3.12: Supabase Schema (T039-T042a)

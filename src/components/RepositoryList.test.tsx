@@ -49,6 +49,11 @@ const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
   ...overrides,
 });
 
+const defaultSortOptions = [
+  { value: 'updated' as const, label: 'Recently Updated' },
+  { value: 'created' as const, label: 'Recently Starred' },
+];
+
 const defaultProps = {
   repositories: [],
   isLoading: false,
@@ -60,11 +65,14 @@ const defaultProps = {
   onSearchSubmit: vi.fn(),
   isSearching: false,
   hasActiveSearch: false,
-  viewMode: 'starred' as const,
-  onViewChange: vi.fn(),
   sortBy: 'updated' as const,
   onSortChange: vi.fn(),
   onLoadMore: vi.fn(),
+  title: 'My Stars',
+  searchPlaceholder: 'Search your starred repositories...',
+  sortOptions: defaultSortOptions,
+  emptyStateMessage: 'No repositories found',
+  emptyStateHint: 'Star some repositories on GitHub to see them here',
 };
 
 describe('RepositoryList', () => {
@@ -153,6 +161,13 @@ describe('RepositoryList', () => {
       expect(screen.getByTestId('repo-card-2')).toBeInTheDocument();
       expect(screen.getByTestId('repo-card-3')).toBeInTheDocument();
     });
+
+    it('displays the provided title', () => {
+      const repos = [createMockRepository({ id: 1 })];
+      render(<RepositoryList {...defaultProps} repositories={repos} title="Custom Title" />);
+
+      expect(screen.getByRole('heading', { name: 'Custom Title' })).toBeInTheDocument();
+    });
   });
 
   describe('Search functionality', () => {
@@ -160,7 +175,7 @@ describe('RepositoryList', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
       render(<RepositoryList {...defaultProps} repositories={repos} searchQuery="test" />);
 
-      const searchInput = screen.getByPlaceholderText(/search your stars/i);
+      const searchInput = screen.getByPlaceholderText(/search your starred/i);
       expect(searchInput).toHaveValue('test');
     });
 
@@ -175,7 +190,7 @@ describe('RepositoryList', () => {
         />
       );
 
-      const searchInput = screen.getByPlaceholderText(/search your stars/i);
+      const searchInput = screen.getByPlaceholderText(/search your starred/i);
       fireEvent.change(searchInput, { target: { value: 'new search' } });
 
       expect(mockOnSearchChange).toHaveBeenCalledWith('new search');
@@ -203,58 +218,20 @@ describe('RepositoryList', () => {
     it('shows searching indicator when isSearching is true and no repos', () => {
       render(<RepositoryList {...defaultProps} repositories={[]} isSearching={true} />);
 
-      expect(screen.getByText('Searching GitHub...')).toBeInTheDocument();
+      expect(screen.getByText('Searching...')).toBeInTheDocument();
     });
 
-    it('shows different search placeholders based on active tab', () => {
+    it('uses custom search placeholder', () => {
       const repos = [createMockRepository({ id: 1, name: 'test-repo' })];
-
-      // Starred tab shows "Search your stars..."
-      const { rerender } = render(
-        <RepositoryList {...defaultProps} repositories={repos} viewMode="starred" />
-      );
-      expect(screen.getByPlaceholderText('Search your stars...')).toBeInTheDocument();
-
-      // All tab shows "Search all GitHub repositories..."
-      rerender(<RepositoryList {...defaultProps} repositories={repos} viewMode="all" />);
-      expect(screen.getByPlaceholderText('Search all GitHub repositories...')).toBeInTheDocument();
-    });
-  });
-
-  describe('Tab navigation', () => {
-    it('calls onViewChange when tab is clicked', () => {
-      const mockOnViewChange = vi.fn();
-      const repos = [createMockRepository({ id: 1 })];
-
       render(
-        <RepositoryList {...defaultProps} repositories={repos} onViewChange={mockOnViewChange} />
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          searchPlaceholder="Custom placeholder..."
+        />
       );
 
-      // Click "Explore All" tab
-      const allTab = screen.getByRole('button', { name: /explore all/i });
-      fireEvent.click(allTab);
-
-      expect(mockOnViewChange).toHaveBeenCalledWith('all');
-    });
-
-    it('shows correct active tab', () => {
-      const repos = [createMockRepository({ id: 1 })];
-
-      // Starred tab is active by default
-      const { rerender } = render(
-        <RepositoryList {...defaultProps} repositories={repos} viewMode="starred" />
-      );
-      expect(screen.getByRole('button', { name: /my stars/i })).toHaveAttribute(
-        'aria-current',
-        'page'
-      );
-
-      // All tab is active
-      rerender(<RepositoryList {...defaultProps} repositories={repos} viewMode="all" />);
-      expect(screen.getByRole('button', { name: /explore all/i })).toHaveAttribute(
-        'aria-current',
-        'page'
-      );
+      expect(screen.getByPlaceholderText('Custom placeholder...')).toBeInTheDocument();
     });
   });
 
@@ -268,12 +245,12 @@ describe('RepositoryList', () => {
       );
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'stars' } });
+      fireEvent.change(sortSelect, { target: { value: 'created' } });
 
-      expect(mockOnSortChange).toHaveBeenCalledWith('stars');
+      expect(mockOnSortChange).toHaveBeenCalledWith('created');
     });
 
-    it('shows correct sort options', () => {
+    it('shows correct sort options from props', () => {
       const repos = [createMockRepository({ id: 1 })];
 
       render(<RepositoryList {...defaultProps} repositories={repos} />);
@@ -281,16 +258,36 @@ describe('RepositoryList', () => {
       const sortSelect = screen.getByLabelText(/sort repositories/i);
       expect(sortSelect).toContainElement(screen.getByText('Recently Updated'));
       expect(sortSelect).toContainElement(screen.getByText('Recently Starred'));
-      expect(sortSelect).toContainElement(screen.getByText('Most Stars'));
     });
 
     it('shows correct sort value', () => {
       const repos = [createMockRepository({ id: 1 })];
 
-      render(<RepositoryList {...defaultProps} repositories={repos} sortBy="stars" />);
+      render(<RepositoryList {...defaultProps} repositories={repos} sortBy="created" />);
 
       const sortSelect = screen.getByLabelText(/sort repositories/i);
-      expect(sortSelect).toHaveValue('stars');
+      expect(sortSelect).toHaveValue('created');
+    });
+
+    it('renders custom sort options', () => {
+      const repos = [createMockRepository({ id: 1 })];
+      const customSortOptions = [
+        { value: 'best-match' as const, label: 'Best Match' },
+        { value: 'stars' as const, label: 'Most Stars' },
+      ];
+
+      render(
+        <RepositoryList
+          {...defaultProps}
+          repositories={repos}
+          sortOptions={customSortOptions}
+          sortBy="best-match"
+        />
+      );
+
+      const sortSelect = screen.getByLabelText(/sort repositories/i);
+      expect(sortSelect).toContainElement(screen.getByText('Best Match'));
+      expect(sortSelect).toContainElement(screen.getByText('Most Stars'));
     });
   });
 
@@ -336,35 +333,18 @@ describe('RepositoryList', () => {
     });
   });
 
-  describe('Combined functionality', () => {
-    it('calls appropriate handlers when both search and tab are changed', () => {
-      const mockOnSearchChange = vi.fn();
-      const mockOnViewChange = vi.fn();
-      const repos = [createMockRepository({ id: 1, name: 'react-app' })];
-
+  describe('Empty state customization', () => {
+    it('shows custom empty state message', () => {
       render(
         <RepositoryList
           {...defaultProps}
-          repositories={repos}
-          searchQuery="react"
-          viewMode="starred"
-          onSearchChange={mockOnSearchChange}
-          onViewChange={mockOnViewChange}
+          emptyStateMessage="Custom empty message"
+          emptyStateHint="Custom hint"
         />
       );
 
-      // Change search
-      const searchInput = screen.getByLabelText(/search your starred repositories/i);
-      fireEvent.change(searchInput, { target: { value: 'vue' } });
-      expect(mockOnSearchChange).toHaveBeenCalledWith('vue');
-
-      // Change tab
-      const allTab = screen.getByRole('button', { name: /explore all/i });
-      fireEvent.click(allTab);
-      expect(mockOnViewChange).toHaveBeenCalledWith('all');
-
-      // Repository should still be displayed
-      expect(screen.getByTestId('repo-card-1')).toBeInTheDocument();
+      expect(screen.getAllByText(/custom empty message/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/custom hint/i).length).toBeGreaterThan(0);
     });
   });
 });
