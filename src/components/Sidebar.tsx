@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
@@ -9,6 +9,20 @@ import {
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
+
+// Context for sidebar collapsed state - allows children to adapt to mobile vs desktop context
+interface SidebarContextValue {
+  collapsed: boolean;
+  hideText: boolean;
+}
+
+const SidebarContext = createContext<SidebarContextValue>({
+  collapsed: false,
+  hideText: false,
+});
+
+// eslint-disable-next-line react-refresh/only-export-components -- one-liner tightly coupled to Sidebar, minimal dev impact
+export const useSidebarContext = () => useContext(SidebarContext);
 
 interface SidebarTooltipProps {
   label: string;
@@ -112,7 +126,9 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
       {children && (
         <>
           <div className="border-t border-gray-200 my-4" aria-hidden="true" />
-          {children}
+          <SidebarContext.Provider value={{ collapsed, hideText }}>
+            {children}
+          </SidebarContext.Provider>
         </>
       )}
     </div>

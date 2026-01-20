@@ -64,11 +64,7 @@ function AppLayout() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={handleToggleCollapsed}
         >
-          <SidebarRadarList
-            collapsed={isSidebarCollapsed}
-            onLinkClick={handleSidebarClose}
-            onCreateRadar={handleCreateRadar}
-          />
+          <SidebarRadarList onLinkClick={handleSidebarClose} onCreateRadar={handleCreateRadar} />
         </Sidebar>
       )}
       <main

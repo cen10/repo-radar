@@ -1,16 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
-import { SidebarTooltip } from './Sidebar';
+import { SidebarTooltip, useSidebarContext } from './Sidebar';
 import { LoadingSpinner, RadarIcon, RadarIconSolid } from './icons';
 
-const SIDEBAR_ANIMATION_DURATION = 300;
-
 interface SidebarRadarListProps {
-  collapsed: boolean;
   onLinkClick: () => void;
   onCreateRadar: () => void;
 }
@@ -61,10 +58,10 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
                 <RadarIcon className="h-5 w-5 text-gray-400" />
               )}
             </span>
-            {/* Name and count shown when expanded */}
+            {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
             {!hideText && (
-              <>
-                <span aria-hidden="true" className="flex-1 line-clamp-2 overflow-hidden">
+              <div className="flex items-center gap-3 shrink-0 w-[168px]">
+                <span aria-hidden="true" className="flex-1 line-clamp-2 overflow-hidden min-w-0">
                   {radar.name}
                 </span>
                 <span
@@ -73,7 +70,7 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
                 >
                   {radar.repo_count}
                 </span>
-              </>
+              </div>
             )}
           </>
         )}
@@ -231,19 +228,8 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
   );
 }
 
-export function SidebarRadarList({ collapsed, onLinkClick, onCreateRadar }: SidebarRadarListProps) {
-  const [hideText, setHideText] = useState(collapsed);
-
-  useEffect(() => {
-    if (collapsed) {
-      // Collapsing: delay w-0 until animation completes so text slides out
-      const timer = setTimeout(() => setHideText(true), SIDEBAR_ANIMATION_DURATION);
-      return () => clearTimeout(timer);
-    } else {
-      // Expanding: immediately show text so it slides in
-      setHideText(false);
-    }
-  }, [collapsed]);
+export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarListProps) {
+  const { collapsed, hideText } = useSidebarContext();
 
   const {
     data: radars = [],

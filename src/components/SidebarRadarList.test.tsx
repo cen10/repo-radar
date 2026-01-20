@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidebarRadarList } from './SidebarRadarList';
 import * as radarService from '../services/radar';
+import * as Sidebar from './Sidebar';
 import type { RadarWithCount } from '../types/database';
 
 // Mock the radar service
@@ -16,6 +17,17 @@ vi.mock('../services/radar', () => ({
     MAX_TOTAL_REPOS: 50,
   },
 }));
+
+// Default sidebar context values (expanded state)
+const defaultContextValue = { collapsed: false, hideText: false };
+
+// Mock useSidebarContext - defaults to expanded state
+vi.spyOn(Sidebar, 'useSidebarContext').mockReturnValue(defaultContextValue);
+
+// Helper to set sidebar context for tests
+const setSidebarContext = (value: { collapsed: boolean; hideText: boolean }) => {
+  vi.spyOn(Sidebar, 'useSidebarContext').mockReturnValue(value);
+};
 
 // Helper to create a test QueryClient
 const createTestQueryClient = () =>
@@ -37,7 +49,6 @@ const createMockRadar = (overrides?: Partial<RadarWithCount>): RadarWithCount =>
 });
 
 const defaultProps = {
-  collapsed: false,
   onLinkClick: vi.fn(),
   onCreateRadar: vi.fn(),
 };
@@ -48,6 +59,8 @@ describe('SidebarRadarList', () => {
   beforeEach(() => {
     queryClient = createTestQueryClient();
     vi.clearAllMocks();
+    // Reset to default expanded context
+    setSidebarContext(defaultContextValue);
   });
 
   const renderWithProviders = (ui: React.ReactElement, { route = '/' } = {}) => {
@@ -142,8 +155,9 @@ describe('SidebarRadarList', () => {
 
     it('collapses empty state text to zero width when collapsed', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      setSidebarContext({ collapsed: true, hideText: true });
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       // Wait for loading to finish
       await waitFor(() => {
@@ -249,8 +263,9 @@ describe('SidebarRadarList', () => {
 
     it('collapses create button text to zero width when collapsed', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([createMockRadar()]);
+      setSidebarContext({ collapsed: true, hideText: true });
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       // Wait for content to load
       await screen.findByRole('link');
@@ -269,8 +284,9 @@ describe('SidebarRadarList', () => {
     it('hides radar text when collapsed', async () => {
       const mockRadars = [createMockRadar({ name: 'Collapsed Radar' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+      setSidebarContext({ collapsed: true, hideText: true });
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       // Wait for link to appear
       const link = await screen.findByRole('link');
@@ -290,7 +306,7 @@ describe('SidebarRadarList', () => {
       const mockRadars = [createMockRadar({ name: 'Short Name' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={false} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       await screen.findByRole('link');
 
@@ -303,7 +319,7 @@ describe('SidebarRadarList', () => {
       const mockRadars = [createMockRadar({ name: longName })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={false} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       await screen.findByRole('link');
 
@@ -315,8 +331,9 @@ describe('SidebarRadarList', () => {
     it('tooltips show on hover and keyboard focus', async () => {
       const mockRadars = [createMockRadar({ name: 'Accessible Radar' })];
       vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+      setSidebarContext({ collapsed: true, hideText: true });
 
-      renderWithProviders(<SidebarRadarList {...defaultProps} collapsed={true} />);
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
       await screen.findByRole('link');
 
