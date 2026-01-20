@@ -288,7 +288,7 @@ describe('SidebarRadarList', () => {
       const link = await screen.findByRole('link');
 
       // Text spans are not rendered when collapsed (for proper centering)
-      const nameSpan = link.querySelector('.truncate');
+      const nameSpan = link.querySelector('.line-clamp-2');
       expect(nameSpan).not.toBeInTheDocument();
 
       // CSS tooltips should be rendered with role="tooltip" (one for radar, one for create button)
