@@ -18,7 +18,6 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Clear error when user modifies input
   const handleNameChange = (value: string) => {
     setName(value);
     if (error) {
@@ -31,7 +30,6 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
 
     const trimmedName = name.trim();
 
-    // Client-side validation
     if (!trimmedName) {
       return;
     }
@@ -45,11 +43,7 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
       // Invalidate cache to refresh sidebar
       void queryClient.invalidateQueries({ queryKey: ['radars'] });
 
-      // Call success callback if provided
       onSuccess?.(radar);
-
-      // Close modal (don't reset isSubmitting here - let useEffect handle it
-      // when modal closes, so the spinner remains visible until close)
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create radar';

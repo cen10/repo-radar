@@ -84,6 +84,7 @@ function AppLayout() {
         </Routes>
       </main>
 
+      {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCreateRadarModalClose} />}
     </div>
   );
