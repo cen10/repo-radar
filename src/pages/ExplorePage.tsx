@@ -5,6 +5,8 @@ import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { LoadingSpinner } from '../components/icons';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { isGitHubAuthError } from '../utils/error';
+import { logger } from '../utils/logger';
 
 // Sort options for Explore page (GitHub search API sort options)
 type ExploreSortOption = 'best-match' | 'updated' | 'stars' | 'forks' | 'help-wanted';
@@ -18,7 +20,7 @@ const SORT_OPTIONS = [
 ];
 
 const ExplorePage = () => {
-  const { user, providerToken, loading: authLoading } = useAuth();
+  const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   // Local state
@@ -37,6 +39,14 @@ const ExplorePage = () => {
     sortBy,
     enabled: !authLoading && !!user && hasActiveSearch,
   });
+
+  // Auto-signout on GitHub auth error (invalid/expired token)
+  useEffect(() => {
+    if (isGitHubAuthError(result.error)) {
+      logger.info('GitHub token invalid, signing out user');
+      void signOut();
+    }
+  }, [result.error, signOut]);
 
   useEffect(() => {
     if (!authLoading && !user) {

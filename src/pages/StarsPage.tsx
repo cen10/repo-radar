@@ -5,6 +5,8 @@ import { usePaginatedStarredRepositories } from '../hooks/usePaginatedStarredRep
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { LoadingSpinner } from '../components/icons';
+import { isGitHubAuthError } from '../utils/error';
+import { logger } from '../utils/logger';
 
 // Sort options for Stars page (browsing supports 'updated' and 'created')
 type StarsSortOption = 'updated' | 'created';
@@ -15,7 +17,7 @@ const SORT_OPTIONS = [
 ];
 
 const StarsPage = () => {
-  const { user, providerToken, loading: authLoading } = useAuth();
+  const { user, providerToken, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   // Local state
@@ -44,6 +46,14 @@ const StarsPage = () => {
 
   // Select the appropriate result based on mode
   const result = isSearchMode ? searchResult : browseResult;
+
+  // Auto-signout on GitHub auth error (invalid/expired token)
+  useEffect(() => {
+    if (isGitHubAuthError(result.error)) {
+      logger.info('GitHub token invalid, signing out user');
+      void signOut();
+    }
+  }, [result.error, signOut]);
 
   useEffect(() => {
     if (!authLoading && !user) {

@@ -105,22 +105,12 @@ const RepositoryList = ({
     );
   }
 
-  // Error state
+  // Error state (auth errors are handled at page level with auto-signout)
   if (error) {
-    const isGitHubAuthError = error.message.includes('session has expired');
-
     return (
       <div className="text-center py-12" role="alert">
         <p className="text-red-600 mb-4">Error loading repositories</p>
         <p className="text-sm text-gray-600 mb-4">{error.message}</p>
-        {isGitHubAuthError && (
-          <a
-            href="/"
-            className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            Sign Out and Reconnect
-          </a>
-        )}
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getErrorMessage } from './error';
+import { getErrorMessage, isGitHubAuthError } from './error';
 
 describe('getErrorMessage', () => {
   const defaultMessage = 'Default error message';
@@ -42,5 +42,31 @@ describe('getErrorMessage', () => {
 
   it('returns default message when error is a boolean', () => {
     expect(getErrorMessage(false, defaultMessage)).toBe(defaultMessage);
+  });
+});
+
+describe('isGitHubAuthError', () => {
+  it('returns true for GitHub authentication failed error', () => {
+    const error = new Error('GitHub authentication failed. Please sign in again.');
+    expect(isGitHubAuthError(error)).toBe(true);
+  });
+
+  it('returns true when error message contains GitHub authentication failed', () => {
+    const error = new Error('Some prefix: GitHub authentication failed - suffix');
+    expect(isGitHubAuthError(error)).toBe(true);
+  });
+
+  it('returns false for other errors', () => {
+    const error = new Error('Network error');
+    expect(isGitHubAuthError(error)).toBe(false);
+  });
+
+  it('returns false for rate limit errors', () => {
+    const error = new Error('GitHub API rate limit exceeded');
+    expect(isGitHubAuthError(error)).toBe(false);
+  });
+
+  it('returns false for null', () => {
+    expect(isGitHubAuthError(null)).toBe(false);
   });
 });

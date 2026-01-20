@@ -10,3 +10,14 @@ export function getErrorMessage(error: unknown, defaultMessage: string): string 
   }
   return defaultMessage;
 }
+
+/**
+ * Check if an error is a GitHub authentication error (401 from GitHub API).
+ * These errors indicate the GitHub token is invalid/expired and the user
+ * should be signed out to re-authenticate.
+ */
+export function isGitHubAuthError(error: Error | null): boolean {
+  if (!error) return false;
+  // Match the error message thrown by src/services/github.ts for 401 responses
+  return error.message.includes('GitHub authentication failed');
+}
