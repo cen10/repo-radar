@@ -6,6 +6,7 @@ import { AuthProvider } from './components/AuthProvider';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { SidebarRadarList } from './components/SidebarRadarList';
+import { CreateRadarModal } from './components/CreateRadarModal';
 import Home from './pages/Home';
 import StarsPage from './pages/StarsPage';
 import ExplorePage from './pages/ExplorePage';
@@ -30,6 +31,7 @@ function AppLayout() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCreateRadarModalOpen, setIsCreateRadarModalOpen] = useState(false);
 
   const handleMenuToggle = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
@@ -40,8 +42,11 @@ function AppLayout() {
   }, []);
 
   const handleCreateRadar = useCallback(() => {
-    // TODO: Open create radar modal (T048)
-    logger.info('Create radar clicked - modal to be implemented in T048');
+    setIsCreateRadarModalOpen(true);
+  }, []);
+
+  const handleCreateRadarModalClose = useCallback(() => {
+    setIsCreateRadarModalOpen(false);
   }, []);
 
   const handleToggleCollapsed = useCallback(() => {
@@ -78,6 +83,8 @@ function AppLayout() {
           <Route path="/repo/:id" element={<RepoDetailPage />} />
         </Routes>
       </main>
+
+      {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCreateRadarModalClose} />}
     </div>
   );
 }
