@@ -61,19 +61,10 @@ const RepositoryList = ({
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
 
-  // Reset the fetching ref when isFetchingMore changes
+  // Sync ref with fetch state; also reset when sort changes to allow new fetches
   useEffect(() => {
-    if (isFetchingMore) {
-      isFetchingRef.current = true;
-    } else {
-      isFetchingRef.current = false;
-    }
-  }, [isFetchingMore]);
-
-  // Reset fetching state when sort changes
-  useEffect(() => {
-    isFetchingRef.current = false;
-  }, [sortBy]);
+    isFetchingRef.current = isFetchingMore;
+  }, [isFetchingMore, sortBy]);
 
   // Shared condition for both observer and callback
   const canLoadMore = hasMore && !isFetchingMore && !isLoading;
