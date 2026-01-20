@@ -110,7 +110,7 @@ const RepositoryList = ({
     const isGitHubAuthError = error.message.includes('session has expired');
 
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" role="alert">
         <p className="text-red-600 mb-4">Error loading repositories</p>
         <p className="text-sm text-gray-600 mb-4">{error.message}</p>
         {isGitHubAuthError && (
