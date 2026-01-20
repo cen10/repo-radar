@@ -84,7 +84,6 @@ const RepositoryListPage = ({
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-signout on GitHub auth error (invalid/expired token)
   useEffect(() => {
     if (isGitHubAuthError(result.error)) {
       logger.info('GitHub token invalid, signing out user');
@@ -93,14 +92,12 @@ const RepositoryListPage = ({
     }
   }, [result.error, signOut]);
 
-  // Redirect to home when not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       void navigate('/');
     }
   }, [user, authLoading, navigate]);
 
-  // Show loading spinner during auth check
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" role="status">
@@ -110,10 +107,8 @@ const RepositoryListPage = ({
     );
   }
 
-  // Don't render anything while redirecting
   if (!user) return null;
 
-  // Show custom pre-search UI if provided and no active search
   if (renderPreSearch && !hasActiveSearch) {
     return <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{renderPreSearch()}</div>;
   }
