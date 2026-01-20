@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  storeAccessToken,
-  getStoredAccessToken,
-  clearStoredAccessToken,
-  getValidGitHubToken,
-  GitHubReauthRequiredError,
-} from './github-token';
+import { storeAccessToken, getStoredAccessToken, clearStoredAccessToken } from './github-token';
 import { mockLogger } from '../test/mocks/logger';
 
 describe('github-token service', () => {
@@ -85,54 +79,6 @@ describe('github-token service', () => {
         'Failed to clear access token from localStorage',
         expect.any(Error)
       );
-    });
-  });
-
-  describe('getValidGitHubToken', () => {
-    it('returns provider_token if available', () => {
-      const token = getValidGitHubToken('valid-github-token');
-      expect(token).toBe('valid-github-token');
-    });
-
-    it('returns stored access token when provider_token is null', () => {
-      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
-
-      const token = getValidGitHubToken(null);
-      expect(token).toBe('stored-access-token');
-    });
-
-    it('logs info message when using stored access token', () => {
-      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
-
-      getValidGitHubToken(null);
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        'provider_token is null, using stored access token'
-      );
-    });
-
-    it('throws GitHubReauthRequiredError if no provider_token and no stored access token', () => {
-      expect(() => getValidGitHubToken(null)).toThrow(GitHubReauthRequiredError);
-      expect(() => getValidGitHubToken(null)).toThrow(
-        'No GitHub token available - re-authentication required'
-      );
-    });
-  });
-
-  describe('GitHubReauthRequiredError', () => {
-    it('is an instance of Error', () => {
-      const error = new GitHubReauthRequiredError('test message');
-      expect(error).toBeInstanceOf(Error);
-    });
-
-    it('has correct name property', () => {
-      const error = new GitHubReauthRequiredError('test message');
-      expect(error.name).toBe('GitHubReauthRequiredError');
-    });
-
-    it('has correct message', () => {
-      const error = new GitHubReauthRequiredError('custom error message');
-      expect(error.message).toBe('custom error message');
     });
   });
 });
