@@ -126,9 +126,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
       {children && (
         <>
           <div className="border-t border-gray-200 my-4" aria-hidden="true" />
-          <SidebarContext.Provider value={{ collapsed, hideText }}>
-            {children}
-          </SidebarContext.Provider>
+          <SidebarContext value={{ collapsed, hideText }}>{children}</SidebarContext>
         </>
       )}
     </div>
