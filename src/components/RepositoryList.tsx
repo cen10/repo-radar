@@ -109,7 +109,7 @@ const RepositoryList = ({
     );
   }
 
-  // Error state (auth errors are handled at page level with auto-signout)
+  // Error state
   if (error) {
     return (
       <div className="text-center py-12" role="alert">
