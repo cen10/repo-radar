@@ -81,16 +81,17 @@ const RepositoryListPage = ({
   totalStarred,
   fetchedStarredCount,
 }: RepositoryListPageProps) => {
+  const { repositories, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error } = result;
   const { user, authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isGitHubAuthError(result.error)) {
+    if (isGitHubAuthError(error)) {
       logger.info('GitHub token invalid, signing out user');
       sessionStorage.setItem('session_expired', 'true');
       void signOut();
     }
-  }, [result.error, signOut]);
+  }, [error, signOut]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -116,11 +117,11 @@ const RepositoryListPage = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
-        repositories={result.repositories}
-        isLoading={result.isLoading}
-        isFetchingMore={result.isFetchingNextPage}
-        hasMore={result.hasNextPage}
-        error={result.error}
+        repositories={repositories}
+        isLoading={isLoading}
+        isFetchingMore={isFetchingNextPage}
+        hasMore={hasNextPage}
+        error={error}
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
         onSearchSubmit={onSearchSubmit}
@@ -128,7 +129,7 @@ const RepositoryListPage = ({
         hasActiveSearch={hasActiveSearch}
         sortBy={sortBy}
         onSortChange={onSortChange}
-        onLoadMore={result.fetchNextPage}
+        onLoadMore={fetchNextPage}
         title={title}
         searchPlaceholder={searchPlaceholder}
         sortOptions={sortOptions}
