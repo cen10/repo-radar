@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -159,14 +159,10 @@ describe('SidebarRadarList', () => {
 
       renderWithProviders(<SidebarRadarList {...defaultProps} />);
 
-      // Wait for loading to finish
-      await waitFor(() => {
-        expect(screen.queryByTestId('radar-list-loading')).not.toBeInTheDocument();
-      });
-
+      // Wait for empty state to render (loading skeleton hidden when collapsed)
       // Testing CSS classes is an implementation detail, but jsdom doesn't compute
       // actual dimensions. This is a pragmatic proxy for "text is visually hidden."
-      const emptyText = screen.getByText(/no radars yet/i);
+      const emptyText = await screen.findByText(/no radars yet/i);
       expect(emptyText.className).toContain('w-0');
       expect(emptyText.className).toContain('overflow-hidden');
     });

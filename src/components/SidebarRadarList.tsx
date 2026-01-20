@@ -137,6 +137,8 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
+  // Intentionally hidden when collapsed (unlike CreateButton which shows an icon).
+  // New users benefit from seeing the expanded "No radars yet" onboarding message.
   // pl-11 = 44px (12px nav padding + 20px icon + 12px gap) to align with nav text
   return (
     <div className="pl-11 pr-3 py-4">
@@ -231,20 +233,16 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
 
   const isAtLimit = radars.length >= RADAR_LIMITS.MAX_RADARS_PER_USER;
 
-  // Loading state
+  // Loading state - hidden when collapsed since there's no meaningful display
   if (isLoading) {
-    return (
-      <div data-testid="radar-list">
-        <LoadingSkeleton />
-      </div>
-    );
+    return <div data-testid="radar-list">{!hideText && <LoadingSkeleton />}</div>;
   }
 
-  // Error state
+  // Error state - hidden when collapsed since interaction isn't possible
   if (error) {
     return (
       <div data-testid="radar-list">
-        <ErrorState onRetry={() => refetch()} isFetching={isFetching} />
+        {!hideText && <ErrorState onRetry={() => refetch()} isFetching={isFetching} />}
       </div>
     );
   }
