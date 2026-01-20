@@ -40,7 +40,7 @@ const mockUser = {
 const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
   user: mockUser,
   providerToken: 'test-github-token',
-  loading: false,
+  authLoading: false,
   connectionError: null,
   signInWithGitHub: vi.fn(),
   signOut: vi.fn(),
@@ -107,7 +107,7 @@ describe('RepositoryListPage', () => {
 
   describe('Auth loading state', () => {
     it('shows loading spinner when auth is loading', () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ loading: true, user: null }));
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ authLoading: true, user: null }));
 
       render(<RepositoryListPage {...defaultProps} />);
 
@@ -128,7 +128,7 @@ describe('RepositoryListPage', () => {
 
   describe('Auth redirect', () => {
     it('redirects to home when user is not authenticated', async () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: null, loading: false }));
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: null, authLoading: false }));
 
       render(<RepositoryListPage {...defaultProps} />);
 
@@ -146,7 +146,7 @@ describe('RepositoryListPage', () => {
     });
 
     it('renders nothing while redirecting (no user)', () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: null, loading: false }));
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: null, authLoading: false }));
 
       const { container } = render(<RepositoryListPage {...defaultProps} />);
 

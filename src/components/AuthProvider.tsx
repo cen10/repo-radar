@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getSession = useCallback(async (): Promise<boolean> => {
     try {
-      setLoading(true);
+      setAuthLoading(true);
       setConnectionError(null);
 
       const {
@@ -72,18 +72,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const message = getErrorMessage(error, 'Unknown Supabase error');
         logger.error(`Error connecting to Supabase: ${message}`, error);
         setConnectionError(CONNECTION_FAILED);
-        setLoading(false);
+        setAuthLoading(false);
         return false;
       }
 
       applySessionToState(initialSession);
-      setLoading(false);
+      setAuthLoading(false);
       return true;
     } catch (err) {
       const message = getErrorMessage(err, 'Unexpected error');
       logger.error(`Unexpected error getting session: ${message}`, err);
       setConnectionError(UNEXPECTED_ERROR);
-      setLoading(false);
+      setAuthLoading(false);
       return false;
     }
   }, [applySessionToState]);
@@ -92,14 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (_event: AuthChangeEvent, session: Session | null) => {
       try {
         applySessionToState(session);
-        setLoading(false);
+        setAuthLoading(false);
       } catch (err) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
         setProviderToken(null);
         setUser(null);
-        setLoading(false);
+        setAuthLoading(false);
       }
     },
     [applySessionToState]
@@ -152,13 +152,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       providerToken,
       user,
-      loading,
+      authLoading,
       connectionError,
       signInWithGitHub,
       signOut,
       retryAuth: getSession,
     }),
-    [providerToken, user, loading, connectionError, signInWithGitHub, signOut, getSession]
+    [providerToken, user, authLoading, connectionError, signInWithGitHub, signOut, getSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

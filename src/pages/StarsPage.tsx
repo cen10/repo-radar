@@ -14,7 +14,7 @@ const SORT_OPTIONS = [
 ];
 
 const StarsPage = () => {
-  const { providerToken, loading: authLoading, user } = useAuth();
+  const { providerToken, authLoading, user } = useAuth();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');

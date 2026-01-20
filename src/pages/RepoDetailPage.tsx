@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../components/icons';
 
 const RepoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, loading: authLoading } = useAuth();
+  const { user, authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {

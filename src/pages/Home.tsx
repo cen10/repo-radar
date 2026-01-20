@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 
 const Home = () => {
-  const { user, loading, signInWithGitHub } = useAuth();
+  const { user, authLoading, signInWithGitHub } = useAuth();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -29,20 +29,20 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!authLoading && user) {
       void navigate('/stars');
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Focus the sign-in button when the page loads
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       signInButtonRef.current?.focus();
     }
-  }, [loading, user]);
+  }, [authLoading, user]);
 
   // Show loading spinner while checking auth state to prevent flash
-  if (loading) {
+  if (authLoading) {
     return (
       <div
         className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center"

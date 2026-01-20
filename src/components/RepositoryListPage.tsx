@@ -81,7 +81,7 @@ const RepositoryListPage = ({
   totalStarred,
   fetchedStarredCount,
 }: RepositoryListPageProps) => {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, authLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
