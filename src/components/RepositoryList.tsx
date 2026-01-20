@@ -7,7 +7,7 @@ import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 
-interface SortOptionConfig {
+export interface SortOptionConfig {
   value: SortOption;
   label: string;
 }

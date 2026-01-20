@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePaginatedStarredRepositories } from '../hooks/usePaginatedStarredRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
-import RepositoryList, { type SortOption } from '../components/RepositoryList';
-import { LoadingSpinner } from '../components/icons';
-import { isGitHubAuthError } from '../utils/error';
-import { logger } from '../utils/logger';
+import RepositoryListPage from '../components/RepositoryListPage';
+import { type SortOption } from '../components/RepositoryList';
 
 // Sort options for Stars page (browsing supports 'updated' and 'created')
 type StarsSortOption = 'updated' | 'created';
@@ -17,8 +14,7 @@ const SORT_OPTIONS = [
 ];
 
 const StarsPage = () => {
-  const { user, providerToken, loading: authLoading, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { providerToken, loading: authLoading, user } = useAuth();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,29 +43,6 @@ const StarsPage = () => {
   // Select the appropriate result based on mode
   const result = isSearchMode ? searchResult : browseResult;
 
-  // Auto-signout on GitHub auth error (invalid/expired token)
-  useEffect(() => {
-    if (isGitHubAuthError(result.error)) {
-      logger.info('GitHub token invalid, signing out user');
-      sessionStorage.setItem('session_expired', 'true');
-      void signOut();
-    }
-  }, [result.error, signOut]);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      void navigate('/');
-    }
-  }, [user, authLoading, navigate]);
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const handleSearchSubmit = (query: string) => {
-    setActiveSearch(query);
-  };
-
   const handleSortChange = (newSort: SortOption) => {
     // Only allow valid sort options for stars page
     if (newSort === 'updated' || newSort === 'created') {
@@ -77,42 +50,24 @@ const StarsPage = () => {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" role="status">
-        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
-        <span className="sr-only">Loading...</span>
-      </div>
-    );
-  }
-
-  if (!user) return null;
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <RepositoryList
-        repositories={result.repositories}
-        isLoading={result.isLoading}
-        isFetchingMore={result.isFetchingNextPage}
-        hasMore={result.hasNextPage}
-        error={result.error}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onSearchSubmit={handleSearchSubmit}
-        isSearching={isSearchMode && result.isLoading}
-        hasActiveSearch={isSearchMode}
-        sortBy={sortBy}
-        onSortChange={handleSortChange}
-        onLoadMore={result.fetchNextPage}
-        title="My Stars"
-        searchPlaceholder="Search your starred repositories..."
-        sortOptions={SORT_OPTIONS}
-        emptyStateMessage="No repositories found"
-        emptyStateHint="Star some repositories on GitHub to see them here"
-        totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
-        fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
-      />
-    </div>
+    <RepositoryListPage
+      title="My Stars"
+      searchPlaceholder="Search your starred repositories..."
+      emptyStateMessage="No repositories found"
+      emptyStateHint="Star some repositories on GitHub to see them here"
+      result={result}
+      sortOptions={SORT_OPTIONS}
+      sortBy={sortBy}
+      onSortChange={handleSortChange}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      onSearchSubmit={setActiveSearch}
+      hasActiveSearch={isSearchMode}
+      isSearching={isSearchMode && result.isLoading}
+      totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
+      fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
+    />
   );
 };
 
