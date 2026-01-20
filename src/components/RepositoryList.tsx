@@ -26,12 +26,14 @@ interface RepositoryListProps {
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   onLoadMore: () => void;
-  // Customization props for standalone page usage
   title: string;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
   emptyStateMessage: string;
   emptyStateHint: string;
+  // Optional: for showing "Showing X of Y" when results are capped
+  totalStarred?: number;
+  fetchedStarredCount?: number;
 }
 
 const RepositoryList = ({
@@ -53,6 +55,8 @@ const RepositoryList = ({
   sortOptions,
   emptyStateMessage,
   emptyStateHint,
+  totalStarred,
+  fetchedStarredCount,
 }: RepositoryListProps) => {
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
@@ -244,9 +248,26 @@ const RepositoryList = ({
       {/* End of Results */}
       {!hasMore && repositories.length > 0 && !isSearching && (
         <div className="text-center py-4 text-gray-500">
-          <p>
-            {repositories.length === 1 ? '1 repository' : `${repositories.length} repositories`}
-          </p>
+          {totalStarred && fetchedStarredCount && totalStarred > fetchedStarredCount ? (
+            <>
+              <p>{`Showing ${fetchedStarredCount} of ${totalStarred} starred repositories`}</p>
+              <p className="text-sm mt-1">
+                Search results may be incomplete.{' '}
+                <a
+                  href="https://github.com/stars"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-700"
+                >
+                  View all on GitHub
+                </a>
+              </p>
+            </>
+          ) : (
+            <p>
+              {repositories.length === 1 ? '1 repository' : `${repositories.length} repositories`}
+            </p>
+          )}
         </div>
       )}
     </div>

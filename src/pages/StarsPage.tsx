@@ -109,6 +109,8 @@ const StarsPage = () => {
         sortOptions={SORT_OPTIONS}
         emptyStateMessage="No repositories found"
         emptyStateHint="Star some repositories on GitHub to see them here"
+        totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
+        fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
       />
     </div>
   );
