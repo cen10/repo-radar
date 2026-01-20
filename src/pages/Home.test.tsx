@@ -45,6 +45,7 @@ const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthCo
 describe('Home', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   it('renders the home page content', () => {
@@ -160,5 +161,31 @@ describe('Home', () => {
     // Button should be re-enabled after error
     expect(signInButton).not.toBeDisabled();
     expect(signInButton).toHaveTextContent(/sign in with github/i);
+  });
+
+  it('shows session expired message when redirected after auth error', () => {
+    sessionStorage.setItem('session_expired', 'true');
+    mockUseAuth.mockReturnValue(createMockAuthContext());
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/session has expired/i);
+  });
+
+  it('clears session expired flag from sessionStorage after showing message', () => {
+    sessionStorage.setItem('session_expired', 'true');
+    mockUseAuth.mockReturnValue(createMockAuthContext());
+
+    render(
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
+    );
+
+    expect(sessionStorage.getItem('session_expired')).toBeNull();
   });
 });

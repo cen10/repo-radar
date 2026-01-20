@@ -7,7 +7,16 @@ const Home = () => {
   const { user, loading, signInWithGitHub } = useAuth();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const signInButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Check if user was redirected here due to session expiration
+  useEffect(() => {
+    if (sessionStorage.getItem('session_expired')) {
+      setSessionExpired(true);
+      sessionStorage.removeItem('session_expired');
+    }
+  }, []);
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
@@ -84,6 +93,12 @@ const Home = () => {
             </p>
           </div>
         </div>
+
+        {sessionExpired && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg" role="alert">
+            <p className="text-amber-800">Your session has expired. Please sign in again.</p>
+          </div>
+        )}
 
         <button
           ref={signInButtonRef}

@@ -51,6 +51,7 @@ const StarsPage = () => {
   useEffect(() => {
     if (isGitHubAuthError(result.error)) {
       logger.info('GitHub token invalid, signing out user');
+      sessionStorage.setItem('session_expired', 'true');
       void signOut();
     }
   }, [result.error, signOut]);
