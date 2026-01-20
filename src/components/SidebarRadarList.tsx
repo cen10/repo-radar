@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -103,32 +102,20 @@ function LoadingSkeleton() {
 
 interface ErrorStateProps {
   onRetry: () => void;
+  isFetching: boolean;
 }
 
-const MINIMUM_LOADING_DISPLAY_MS = 600;
-
-function ErrorState({ onRetry }: ErrorStateProps) {
-  const [isRetrying, setIsRetrying] = useState(false);
-
-  const handleRetry = () => {
-    setIsRetrying(true);
-    // Minimum display time for loading state to give users confidence
-    setTimeout(() => {
-      onRetry();
-      setIsRetrying(false);
-    }, MINIMUM_LOADING_DISPLAY_MS);
-  };
-
+function ErrorState({ onRetry, isFetching }: ErrorStateProps) {
   return (
     <div className="px-3 py-4 text-center" role="alert">
       <p className="text-sm text-gray-500 mb-2">Failed to load radars</p>
       <button
-        onClick={handleRetry}
-        disabled={isRetrying}
-        aria-busy={isRetrying}
+        onClick={onRetry}
+        disabled={isFetching}
+        aria-busy={isFetching}
         className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
       >
-        {isRetrying ? (
+        {isFetching ? (
           <>
             <LoadingSpinner className="h-3 w-3" />
             Retrying...
@@ -234,6 +221,7 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
   const {
     data: radars = [],
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useQuery({
@@ -256,7 +244,7 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
   if (error) {
     return (
       <div data-testid="radar-list">
-        <ErrorState onRetry={() => refetch()} />
+        <ErrorState onRetry={() => refetch()} isFetching={isFetching} />
       </div>
     );
   }
