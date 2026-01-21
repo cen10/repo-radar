@@ -22,7 +22,6 @@ const ExplorePage = () => {
   const [activeSearch, setActiveSearch] = useState('');
   const [sortBy, setSortBy] = useState<ExploreSortOption>('best-match');
 
-  // Whether user has submitted a search
   const hasActiveSearch = activeSearch.trim().length > 0;
 
   // Hook for searching all GitHub repos
@@ -35,7 +34,6 @@ const ExplorePage = () => {
   });
 
   const handleSortChange = (newSort: SortOption) => {
-    // Only allow valid sort options for explore page
     if (
       newSort === 'best-match' ||
       newSort === 'updated' ||

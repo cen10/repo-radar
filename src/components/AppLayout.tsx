@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 
 /**
  * Inner layout component that uses auth context.
- * Separated from RootLayout so it can access useAuth.
+ * Separated from AppLayout so it can access useAuth.
  */
 function AuthenticatedLayout() {
   const { user } = useAuth();
@@ -62,12 +62,12 @@ function AuthenticatedLayout() {
 }
 
 /**
- * Root layout component for the application.
+ * App layout component that wraps all routes.
  * Provides AuthProvider context and renders the authenticated layout.
  *
  * Used as the root element in createBrowserRouter configuration.
  */
-export function RootLayout() {
+export function AppLayout() {
   return (
     <AuthProvider>
       <AuthenticatedLayout />

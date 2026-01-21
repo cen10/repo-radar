@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RootLayout } from './components/RootLayout';
+import { AppLayout } from './components/AppLayout';
 import Home from './pages/Home';
 import StarsPage from './pages/StarsPage';
 import ExplorePage from './pages/ExplorePage';
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   {
-    element: <RootLayout />,
+    element: <AppLayout />,
     children: [
       { path: '/', element: <Home /> },
       {
