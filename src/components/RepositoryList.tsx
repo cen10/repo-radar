@@ -30,7 +30,6 @@ interface RepositoryListProps {
   title: string;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
-  // Message/hint for empty states (null or []) - parent decides content
   emptyMessage: string;
   emptyHint: string;
   // Optional: for showing "Showing X of Y" when results are capped
