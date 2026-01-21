@@ -7,7 +7,7 @@ import {
   type SearchSortOption,
   type StarredSearchSortOption,
 } from '../services/github';
-import { getValidGitHubToken } from '../services/github-token';
+import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
 import { useStarredIds } from './useStarredIds';
 import { useAuth } from './useAuth';
 import { isGitHubAuthError } from '../utils/error';
@@ -51,9 +51,10 @@ interface UseInfiniteSearchReturn {
  */
 export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const { token, query, mode, sortBy, enabled } = options;
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const trimmedQuery = query.trim();
-  const shouldFetch = enabled && trimmedQuery.length > 0;
+  const hasAnyToken = !!token || !!getStoredAccessToken();
+  const shouldFetch = enabled && !!user && hasAnyToken && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
   // Get starred IDs for marking search results (used in 'all' mode)

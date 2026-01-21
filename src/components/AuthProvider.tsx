@@ -162,18 +162,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    logger.info('signOut: Starting sign out...');
-    const { error } = await supabase.auth.signOut();
+    logger.info('signOut: Starting sign out, clearing local state first...');
+    // Clear local state first to prevent race condition where queries re-run
+    // with stale localStorage token during Supabase sign-out
+    clearStoredAccessToken();
+    queryClient.clear();
 
+    const { error } = await supabase.auth.signOut();
     if (error) {
       logger.error('signOut: Error signing out:', error);
       throw error;
     }
 
-    logger.info('signOut: Sign out successful, clearing stored token and query cache');
-    // Only clear after sign-out succeeds to avoid data loss on failure
-    clearStoredAccessToken();
-    queryClient.clear();
+    logger.info('signOut: Sign out complete');
   }, [queryClient]);
 
   const value: AuthContextType = useMemo(
