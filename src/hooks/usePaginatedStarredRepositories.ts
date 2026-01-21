@@ -1,9 +1,13 @@
+import { useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   fetchStarredRepositories,
   type StarredSortOption,
   type SortDirection,
 } from '../services/github';
+import { useAuth } from './useAuth';
+import { isGitHubAuthError } from '../utils/error';
+import { logger } from '../utils/logger';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -42,6 +46,8 @@ export function usePaginatedStarredRepositories({
   sortDirection = 'desc',
   enabled,
 }: UsePaginatedStarredRepositoriesOptions): UsePaginatedStarredRepositoriesReturn {
+  const { signOut } = useAuth();
+
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
     if (!token) {
       throw new Error('Token required');
@@ -75,6 +81,25 @@ export function usePaginatedStarredRepositories({
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
+  const typedError = error as Error | null;
+
+  // Handle GitHub auth errors (expired token) by signing out
+  useEffect(() => {
+    if (typedError) {
+      logger.debug('usePaginatedStarredRepositories: Error occurred', {
+        message: typedError.message,
+        name: typedError.name,
+        isGitHubAuthError: isGitHubAuthError(typedError),
+      });
+    }
+    if (isGitHubAuthError(typedError)) {
+      logger.info('usePaginatedStarredRepositories: GitHub token invalid, signing out user', {
+        errorMessage: typedError?.message,
+      });
+      sessionStorage.setItem('session_expired', 'true');
+      void signOut();
+    }
+  }, [typedError, signOut]);
 
   return {
     repositories,
@@ -82,7 +107,7 @@ export function usePaginatedStarredRepositories({
     isFetchingNextPage,
     hasNextPage: hasNextPage ?? false,
     fetchNextPage,
-    error: error as Error | null,
+    error: typedError,
     refetch,
   };
 }

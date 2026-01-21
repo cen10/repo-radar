@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   searchRepositories,
@@ -7,6 +8,9 @@ import {
   type StarredSearchSortOption,
 } from '../services/github';
 import { useStarredIds } from './useStarredIds';
+import { useAuth } from './useAuth';
+import { isGitHubAuthError } from '../utils/error';
+import { logger } from '../utils/logger';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -48,6 +52,7 @@ interface UseInfiniteSearchReturn {
  */
 export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const { token, query, mode, sortBy, enabled } = options;
+  const { signOut } = useAuth();
   const trimmedQuery = query.trim();
   const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
@@ -143,6 +148,24 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
 
   const isLoading = isLoadingSearch || isLoadingAllStarred;
   const error = (searchError || allStarredError) as Error | null;
+
+  // Handle GitHub auth errors (expired token) by signing out
+  useEffect(() => {
+    if (error) {
+      logger.debug('useInfiniteSearch: Error occurred', {
+        message: error.message,
+        name: error.name,
+        isGitHubAuthError: isGitHubAuthError(error),
+      });
+    }
+    if (isGitHubAuthError(error)) {
+      logger.info('useInfiniteSearch: GitHub token invalid, signing out user', {
+        errorMessage: error?.message,
+      });
+      sessionStorage.setItem('session_expired', 'true');
+      void signOut();
+    }
+  }, [error, signOut]);
 
   // For starred search: expose limit info so UI can warn if results may be incomplete
   const totalStarred = allStarredData?.totalStarred ?? 0;

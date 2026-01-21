@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {
+    logger.debug('getSession: Starting session check...');
     try {
       setAuthLoading(true);
       setConnectionError(null);
@@ -76,6 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
+      logger.debug('getSession: Session retrieved', {
+        hasSession: !!initialSession,
+        userId: initialSession?.user?.id,
+        expiresAt: initialSession?.expires_at,
+      });
+
       applySessionToState(initialSession);
       setAuthLoading(false);
       return true;
@@ -89,10 +96,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySessionToState]);
 
   const handleAuthStateChange = useCallback(
-    (_event: AuthChangeEvent, session: Session | null) => {
+    (event: AuthChangeEvent, session: Session | null) => {
+      logger.debug('Auth state change event received', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        expiresAt: session?.expires_at,
+        providerToken: session?.provider_token ? 'present' : 'absent',
+      });
+
       try {
         applySessionToState(session);
         setAuthLoading(false);
+
+        // Log specific events that could cause logout
+        if (event === 'SIGNED_OUT') {
+          logger.info('User signed out via auth state change');
+        } else if (event === 'TOKEN_REFRESHED') {
+          logger.debug('Token refreshed successfully', {
+            newExpiresAt: session?.expires_at,
+          });
+        } else if (!session && event !== 'INITIAL_SESSION') {
+          logger.warn('Session became null unexpectedly', { event });
+        }
       } catch (err) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
@@ -136,13 +162,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    logger.info('signOut: Starting sign out...');
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      logger.error('Error signing out:', error);
+      logger.error('signOut: Error signing out:', error);
       throw error;
     }
 
+    logger.info('signOut: Sign out successful, clearing stored token and query cache');
     // Only clear after sign-out succeeds to avoid data loss on failure
     clearStoredAccessToken();
     queryClient.clear();
