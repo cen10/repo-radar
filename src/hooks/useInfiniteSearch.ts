@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   searchRepositories,
@@ -52,6 +53,7 @@ interface UseInfiniteSearchReturn {
 export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const { token, query, mode, sortBy, enabled } = options;
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const trimmedQuery = query.trim();
   const hasAnyToken = !!token || !!getStoredAccessToken();
   const shouldFetch = enabled && !!user && hasAnyToken && trimmedQuery.length > 0;
@@ -159,8 +161,9 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       });
       sessionStorage.setItem('session_expired', 'true');
       void signOut();
+      void navigate('/');
     }
-  }, [error, signOut]);
+  }, [error, signOut, navigate]);
 
   const totalStarred = allStarredData?.totalStarred ?? 0;
 

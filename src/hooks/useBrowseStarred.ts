@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   fetchStarredRepositories,
@@ -45,6 +46,7 @@ export function useBrowseStarred({
   enabled,
 }: UseBrowseStarredOptions): UseBrowseStarredReturn {
   const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const hasAnyToken = !!token || !!getStoredAccessToken();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
@@ -94,8 +96,9 @@ export function useBrowseStarred({
       });
       sessionStorage.setItem('session_expired', 'true');
       void signOut();
+      void navigate('/');
     }
-  }, [typedError, signOut]);
+  }, [typedError, signOut, navigate]);
 
   return {
     repositories,
