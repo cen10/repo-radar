@@ -13,7 +13,10 @@ export interface SortOptionConfig {
 }
 
 interface RepositoryListProps {
-  repositories: Repository[];
+  // null = pre-search state (user hasn't searched yet)
+  // [] = searched but no results
+  // [...repos] = has results
+  repositories: Repository[] | null;
   isLoading: boolean;
   isFetchingMore: boolean;
   hasMore: boolean;
@@ -34,8 +37,7 @@ interface RepositoryListProps {
   // Optional: for showing "Showing X of Y" when results are capped
   totalStarred?: number;
   fetchedStarredCount?: number;
-  // Optional: for pre-search state (e.g., Explore page before user searches)
-  showPreSearchState?: boolean;
+  // Optional: message for pre-search state (when repositories is null)
   preSearchMessage?: string;
   preSearchHint?: string;
 }
@@ -61,7 +63,6 @@ const RepositoryList = ({
   emptyStateHint,
   totalStarred,
   fetchedStarredCount,
-  showPreSearchState = false,
   preSearchMessage,
   preSearchHint,
 }: RepositoryListProps) => {
@@ -98,7 +99,7 @@ const RepositoryList = ({
   }, [isIntersecting, handleLoadMore]);
 
   // Loading state (show *full page* spinner only for initial load)
-  if (isLoading && repositories.length === 0 && !isSearching) {
+  if (isLoading && repositories !== null && repositories.length === 0 && !isSearching) {
     return (
       <div className="flex justify-center items-center min-h-[400px]" role="status">
         <LoadingSpinner className="h-12 w-12 text-indigo-600" />
@@ -183,7 +184,7 @@ const RepositoryList = ({
   );
 
   // Pre-search state (e.g., Explore page before user has searched)
-  if (showPreSearchState) {
+  if (repositories === null) {
     return (
       <div data-testid="repository-list">
         {controls}

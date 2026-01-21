@@ -51,7 +51,7 @@ const ExplorePage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
         title="Explore"
-        repositories={hasActiveSearch ? result.repositories : []}
+        repositories={hasActiveSearch ? result.repositories : null}
         isLoading={result.isLoading}
         isFetchingMore={result.isFetchingNextPage}
         hasMore={result.hasNextPage}
@@ -68,7 +68,6 @@ const ExplorePage = () => {
         sortOptions={SORT_OPTIONS}
         emptyStateMessage="No repositories found"
         emptyStateHint="Try a different search term"
-        showPreSearchState={!hasActiveSearch}
         preSearchMessage="Discover repositories"
         preSearchHint="Search across all of GitHub to find interesting projects"
       />
