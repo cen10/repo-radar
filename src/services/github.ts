@@ -1,8 +1,13 @@
 import type { Release, Repository } from '../types';
 import { logger } from '../utils/logger';
-import { MAX_STARRED_REPOS } from '../constants/limits';
 
 const GITHUB_API_BASE = 'https://api.github.com';
+
+/**
+ * Maximum starred repos to fetch for client-side search/sort.
+ * Limits parallel API calls to avoid rate limiting and slow performance.
+ */
+export const MAX_STARRED_REPOS = 500;
 
 interface GitHubStarredRepo {
   id: number;

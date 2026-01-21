@@ -4,7 +4,7 @@ import { RepoCard } from './RepoCard';
 import { LoadingSpinner } from './icons';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
-import { MAX_STARRED_REPOS } from '../constants/limits';
+import { MAX_STARRED_REPOS } from '../services/github';
 
 export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 
