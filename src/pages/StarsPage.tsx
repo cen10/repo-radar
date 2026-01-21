@@ -77,7 +77,6 @@ const StarsPage = () => {
         emptyMessage={emptyMessage}
         emptyHint={emptyHint}
         totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
-        fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
       />
     </div>
   );

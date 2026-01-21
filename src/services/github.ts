@@ -1,5 +1,6 @@
 import type { Release, Repository } from '../types';
 import { logger } from '../utils/logger';
+import { MAX_STARRED_REPOS } from '../constants/limits';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -86,7 +87,7 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
  */
 export async function fetchAllStarredRepositories(
   token: string,
-  maxRepos = 500
+  maxRepos = MAX_STARRED_REPOS
 ): Promise<{
   repositories: Repository[];
   totalFetched: number;

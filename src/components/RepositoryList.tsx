@@ -4,6 +4,7 @@ import { RepoCard } from './RepoCard';
 import { LoadingSpinner } from './icons';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
+import { MAX_STARRED_REPOS } from '../constants/limits';
 
 export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 
@@ -32,9 +33,8 @@ interface RepositoryListProps {
   sortOptions: SortOptionConfig[];
   emptyMessage: string;
   emptyHint: string;
-  // Optional: for showing "Showing X of Y" when results are capped
+  // Optional: total starred repos for showing "hit the cap" warning
   totalStarred?: number;
-  fetchedStarredCount?: number;
 }
 
 const RepositoryList = ({
@@ -57,7 +57,6 @@ const RepositoryList = ({
   emptyMessage,
   emptyHint,
   totalStarred,
-  fetchedStarredCount,
 }: RepositoryListProps) => {
   // Guard against duplicate fetches from rapid IntersectionObserver callbacks.
   // isFetchingMore prop won't be true until React re-renders, but the observer
@@ -248,9 +247,9 @@ const RepositoryList = ({
       {/* End of Results */}
       {!hasMore && repositories.length > 0 && !isSearching && (
         <div className="text-center py-4 text-gray-500">
-          {totalStarred && fetchedStarredCount && totalStarred > fetchedStarredCount ? (
+          {totalStarred && totalStarred > MAX_STARRED_REPOS ? (
             <>
-              <p>{`Showing ${fetchedStarredCount} of ${totalStarred} starred repositories`}</p>
+              <p>{`Showing ${MAX_STARRED_REPOS} of ${totalStarred} starred repositories`}</p>
               <p className="text-sm mt-1">
                 Search results may be incomplete.{' '}
                 <a

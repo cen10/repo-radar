@@ -38,9 +38,8 @@ interface UseInfiniteSearchReturn {
   error: Error | null;
   totalCount: number;
   refetch: () => void;
-  // For starred search: total starred repos vs how many we fetched (500 cap)
+  // For starred search: total starred repos (to warn if we hit the cap)
   totalStarred: number;
-  fetchedStarredCount: number;
 }
 
 /**
@@ -167,9 +166,8 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     }
   }, [error, signOut]);
 
-  // For starred search: expose limit info so UI can warn if results may be incomplete
+  // For starred search: expose total so UI can warn if we hit the cap
   const totalStarred = allStarredData?.totalStarred ?? 0;
-  const fetchedStarredCount = allStarredData?.totalFetched ?? 0;
 
   return {
     repositories,
@@ -181,6 +179,5 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     totalCount,
     refetch,
     totalStarred,
-    fetchedStarredCount,
   };
 }
