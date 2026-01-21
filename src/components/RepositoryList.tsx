@@ -68,10 +68,8 @@ const RepositoryList = ({
     isFetchingRef.current = isFetchingMore;
   }, [isFetchingMore, sortBy]);
 
-  // Shared condition for both observer and callback
   const canLoadMore = hasMore && !isFetchingMore && !isLoading;
 
-  // Stable callback that checks conditions before fetching
   const handleLoadMore = useCallback(() => {
     if (!isFetchingRef.current && canLoadMore) {
       isFetchingRef.current = true;
@@ -82,10 +80,9 @@ const RepositoryList = ({
   // Set up intersection observer for infinite scroll
   const { ref: loadMoreRef, isIntersecting } = useIntersectionObserver({
     enabled: canLoadMore,
-    rootMargin: '200px', // Trigger early for smooth experience
+    rootMargin: '200px',
   });
 
-  // Auto-load more when sentinel is visible
   useEffect(() => {
     if (isIntersecting) {
       handleLoadMore();

@@ -39,7 +39,6 @@ interface UseInfiniteSearchReturn {
   error: Error | null;
   totalCount: number;
   refetch: () => void;
-  // For starred search: total starred repos (to warn if we hit the cap)
   totalStarred: number;
 }
 
@@ -163,7 +162,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     }
   }, [error, signOut]);
 
-  // For starred search: expose total so UI can warn if we hit the cap
   const totalStarred = allStarredData?.totalStarred ?? 0;
 
   return {
