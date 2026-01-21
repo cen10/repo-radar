@@ -34,6 +34,10 @@ interface RepositoryListProps {
   // Optional: for showing "Showing X of Y" when results are capped
   totalStarred?: number;
   fetchedStarredCount?: number;
+  // Optional: for pre-search state (e.g., Explore page before user searches)
+  showPreSearchState?: boolean;
+  preSearchMessage?: string;
+  preSearchHint?: string;
 }
 
 const RepositoryList = ({
@@ -57,6 +61,9 @@ const RepositoryList = ({
   emptyStateHint,
   totalStarred,
   fetchedStarredCount,
+  showPreSearchState = false,
+  preSearchMessage,
+  preSearchHint,
 }: RepositoryListProps) => {
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
@@ -174,6 +181,22 @@ const RepositoryList = ({
       </div>
     </div>
   );
+
+  // Pre-search state (e.g., Explore page before user has searched)
+  if (showPreSearchState) {
+    return (
+      <div data-testid="repository-list">
+        {controls}
+        <div className="text-center py-16">
+          <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
+          {preSearchMessage && (
+            <h2 className="mt-4 text-lg font-medium text-gray-900">{preSearchMessage}</h2>
+          )}
+          {preSearchHint && <p className="mt-2 text-sm text-gray-500">{preSearchHint}</p>}
+        </div>
+      </div>
+    );
+  }
 
   // Empty state - no repositories at all
   if (repositories.length === 0 && !isLoading && !isSearching) {

@@ -1,19 +1,15 @@
-import { useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './components/AuthProvider';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
-import { SidebarRadarList } from './components/SidebarRadarList';
+import { RootLayout } from './components/RootLayout';
 import Home from './pages/Home';
 import StarsPage from './pages/StarsPage';
 import ExplorePage from './pages/ExplorePage';
 import RadarPage from './pages/RadarPage';
 import RepoDetailPage from './pages/RepoDetailPage';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
+import { requireAuth } from './utils/requireAuth';
 import { logger } from './utils/logger';
-import { useAuth } from './hooks/use-auth';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,61 +22,34 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppLayout() {
-  const { user } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const handleMenuToggle = useCallback(() => {
-    setIsSidebarOpen((prev) => !prev);
-  }, []);
-
-  const handleSidebarClose = useCallback(() => {
-    setIsSidebarOpen(false);
-  }, []);
-
-  const handleCreateRadar = useCallback(() => {
-    // TODO: Open create radar modal (T048)
-    logger.info('Create radar clicked - modal to be implemented in T048');
-  }, []);
-
-  const handleToggleCollapsed = useCallback(() => {
-    setIsSidebarCollapsed((prev) => !prev);
-  }, []);
-
-  // Only show sidebar for authenticated users
-  const showSidebar = !!user;
-
-  return (
-    <div className="min-h-screen bg-white">
-      <Header
-        onMenuToggle={showSidebar ? handleMenuToggle : undefined}
-        sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}
-      />
-      {showSidebar && (
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={handleSidebarClose}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapsed={handleToggleCollapsed}
-        >
-          <SidebarRadarList onLinkClick={handleSidebarClose} onCreateRadar={handleCreateRadar} />
-        </Sidebar>
-      )}
-      <main
-        className={`pt-16 transition-[padding] duration-300 ease-in-out ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
-      >
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/stars" element={<StarsPage />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/radar/:id" element={<RadarPage />} />
-          <Route path="/repo/:id" element={<RepoDetailPage />} />
-        </Routes>
-      </main>
-    </div>
-  );
-}
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      { path: '/', element: <Home /> },
+      {
+        path: '/stars',
+        element: <StarsPage />,
+        loader: requireAuth,
+      },
+      {
+        path: '/explore',
+        element: <ExplorePage />,
+        loader: requireAuth,
+      },
+      {
+        path: '/radar/:id',
+        element: <RadarPage />,
+        loader: requireAuth,
+      },
+      {
+        path: '/repo/:id',
+        element: <RepoDetailPage />,
+        loader: requireAuth,
+      },
+    ],
+  },
+]);
 
 function App() {
   return (
@@ -89,18 +58,9 @@ function App() {
         FallbackComponent={AuthErrorFallback}
         onError={(error, errorInfo) => {
           logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
-
-          // In production, you might want to:
-          // - Clear auth tokens if auth-related error
-          // - Send to error reporting with 'auth' tag
-          // - Track auth flow failures
         }}
       >
-        <BrowserRouter>
-          <AuthProvider>
-            <AppLayout />
-          </AuthProvider>
-        </BrowserRouter>
+        <RouterProvider router={router} />
       </ErrorBoundary>
     </QueryClientProvider>
   );

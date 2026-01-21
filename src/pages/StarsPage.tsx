@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePaginatedStarredRepositories } from '../hooks/usePaginatedStarredRepositories';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
-import RepositoryListPage from '../components/RepositoryListPage';
-import { type SortOption } from '../components/RepositoryList';
+import RepositoryList, { type SortOption } from '../components/RepositoryList';
 
 // Sort options for Stars page (browsing supports 'updated' and 'created')
 type StarsSortOption = 'updated' | 'created';
@@ -14,7 +13,7 @@ const SORT_OPTIONS = [
 ];
 
 const StarsPage = () => {
-  const { providerToken, authLoading, user } = useAuth();
+  const { providerToken } = useAuth();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +27,7 @@ const StarsPage = () => {
   const browseResult = usePaginatedStarredRepositories({
     token: providerToken,
     sortBy,
-    enabled: !authLoading && !!user && !isSearchMode,
+    enabled: !isSearchMode,
   });
 
   // Hook for searching within starred repos
@@ -37,7 +36,7 @@ const StarsPage = () => {
     query: activeSearch,
     mode: 'starred',
     sortBy,
-    enabled: !authLoading && !!user && isSearchMode,
+    enabled: isSearchMode,
   });
 
   // Select the appropriate result based on mode
@@ -51,23 +50,30 @@ const StarsPage = () => {
   };
 
   return (
-    <RepositoryListPage
-      title="My Stars"
-      searchPlaceholder="Search your starred repositories..."
-      emptyStateMessage="No repositories found"
-      emptyStateHint="Star some repositories on GitHub to see them here"
-      result={result}
-      sortOptions={SORT_OPTIONS}
-      sortBy={sortBy}
-      onSortChange={handleSortChange}
-      searchQuery={searchQuery}
-      onSearchChange={setSearchQuery}
-      onSearchSubmit={setActiveSearch}
-      hasActiveSearch={isSearchMode}
-      isSearching={isSearchMode && result.isLoading}
-      totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
-      fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
-    />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <RepositoryList
+        title="My Stars"
+        repositories={result.repositories}
+        isLoading={result.isLoading}
+        isFetchingMore={result.isFetchingNextPage}
+        hasMore={result.hasNextPage}
+        error={result.error}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={setActiveSearch}
+        isSearching={isSearchMode && result.isLoading}
+        hasActiveSearch={isSearchMode}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onLoadMore={result.fetchNextPage}
+        searchPlaceholder="Search your starred repositories..."
+        sortOptions={SORT_OPTIONS}
+        emptyStateMessage="No repositories found"
+        emptyStateHint="Star some repositories on GitHub to see them here"
+        totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
+        fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
+      />
+    </div>
   );
 };
 
