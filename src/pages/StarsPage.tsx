@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { usePaginatedStarredRepositories } from '../hooks/usePaginatedStarredRepositories';
+import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 
@@ -21,8 +21,7 @@ const StarsPage = () => {
 
   const isSearchMode = activeSearch.trim().length > 0;
 
-  // Hook for browsing starred repos (no search)
-  const browseResult = usePaginatedStarredRepositories({
+  const browseResult = useBrowseStarred({
     token: providerToken,
     sortBy,
     enabled: !isSearchMode,
@@ -45,7 +44,6 @@ const StarsPage = () => {
     }
   };
 
-  // Compute empty state message based on whether user is searching
   const emptyMessage = 'No repositories found';
   const emptyHint = isSearchMode
     ? 'Try a different search term'

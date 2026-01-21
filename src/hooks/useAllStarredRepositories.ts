@@ -21,7 +21,7 @@ interface UseAllStarredRepositoriesReturn {
  *
  * Use this when you need client-side sorting (e.g., by star count) that requires
  * the complete dataset. For paginated browsing with server-side sorting, use
- * usePaginatedStarredRepositories instead.
+ * useBrowseStarred instead.
  *
  * Note: Capped at 500 repos to limit parallel API calls. This is acceptable for
  * client-side sorting since users rarely need to sort through more than 500 repos

@@ -13,16 +13,16 @@ import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
 
-export type PaginatedSortOption = 'updated' | 'created';
+export type BrowseSortOption = 'updated' | 'created';
 
-interface UsePaginatedStarredRepositoriesOptions {
+interface UseBrowseStarredOptions {
   token: string | null;
-  sortBy: PaginatedSortOption;
+  sortBy: BrowseSortOption;
   sortDirection?: SortDirection;
   enabled: boolean;
 }
 
-interface UsePaginatedStarredRepositoriesReturn {
+interface UseBrowseStarredReturn {
   repositories: Repository[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
@@ -33,20 +33,17 @@ interface UsePaginatedStarredRepositoriesReturn {
 }
 
 /**
- * Hook for paginated browsing of starred repositories with server-side sorting.
+ * Hook for browsing starred repositories with infinite scroll.
  *
- * Supports incremental loading (infinite scroll) for 'updated' and 'created' sorts.
+ * Supports server-side sorting by 'updated' or 'created'.
  * For sorting by star count, use useAllStarredRepositories instead.
- *
- * Note: No cap on total repos - users can scroll through all their starred repos.
- * This is fine since we fetch one page at a time (no parallel API call concerns).
  */
-export function usePaginatedStarredRepositories({
+export function useBrowseStarred({
   token,
   sortBy,
   sortDirection = 'desc',
   enabled,
-}: UsePaginatedStarredRepositoriesOptions): UsePaginatedStarredRepositoriesReturn {
+}: UseBrowseStarredOptions): UseBrowseStarredReturn {
   const { signOut } = useAuth();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
@@ -84,14 +81,14 @@ export function usePaginatedStarredRepositories({
 
   useEffect(() => {
     if (typedError) {
-      logger.debug('usePaginatedStarredRepositories: Error occurred', {
+      logger.debug('useBrowseStarred: Error occurred', {
         message: typedError.message,
         name: typedError.name,
         isGitHubAuthError: isGitHubAuthError(typedError),
       });
     }
     if (isGitHubAuthError(typedError)) {
-      logger.info('usePaginatedStarredRepositories: GitHub auth error, signing out', {
+      logger.info('useBrowseStarred: GitHub auth error, signing out', {
         errorMessage: typedError?.message,
       });
       sessionStorage.setItem('session_expired', 'true');
