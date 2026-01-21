@@ -25,11 +25,11 @@ function AuthenticatedLayout() {
     setIsSidebarOpen(false);
   }, []);
 
-  const handleCreateRadar = useCallback(() => {
+  const handleOpenCreateRadarModal = useCallback(() => {
     setIsCreateRadarModalOpen(true);
   }, []);
 
-  const handleCreateRadarModalClose = useCallback(() => {
+  const handleCloseCreateRadarModal = useCallback(() => {
     setIsCreateRadarModalOpen(false);
   }, []);
 
@@ -53,7 +53,10 @@ function AuthenticatedLayout() {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapsed={handleToggleCollapsed}
         >
-          <SidebarRadarList onLinkClick={handleSidebarClose} onCreateRadar={handleCreateRadar} />
+          <SidebarRadarList
+            onLinkClick={handleSidebarClose}
+            onCreateRadar={handleOpenCreateRadarModal}
+          />
         </Sidebar>
       )}
       <main
@@ -63,7 +66,7 @@ function AuthenticatedLayout() {
       </main>
 
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
-      {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCreateRadarModalClose} />}
+      {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
     </div>
   );
 }
