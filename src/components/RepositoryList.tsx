@@ -13,9 +13,7 @@ export interface SortOptionConfig {
 }
 
 interface RepositoryListProps {
-  // null = pre-search state (user hasn't searched yet)
-  // [] = searched but no results
-  // [...repos] = has results
+  // null = pre-search state, [] = no results, [...repos] = has results
   repositories: Repository[] | null;
   isLoading: boolean;
   isFetchingMore: boolean;
@@ -32,14 +30,12 @@ interface RepositoryListProps {
   title: string;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
-  emptyStateMessage: string;
-  emptyStateHint: string;
+  // Message/hint for empty states (null or []) - parent decides content
+  emptyMessage: string;
+  emptyHint: string;
   // Optional: for showing "Showing X of Y" when results are capped
   totalStarred?: number;
   fetchedStarredCount?: number;
-  // Optional: message for pre-search state (when repositories is null)
-  preSearchMessage?: string;
-  preSearchHint?: string;
 }
 
 const RepositoryList = ({
@@ -59,12 +55,10 @@ const RepositoryList = ({
   title,
   searchPlaceholder,
   sortOptions,
-  emptyStateMessage,
-  emptyStateHint,
+  emptyMessage,
+  emptyHint,
   totalStarred,
   fetchedStarredCount,
-  preSearchMessage,
-  preSearchHint,
 }: RepositoryListProps) => {
   // Track if we've already triggered a fetch to prevent race conditions
   const isFetchingRef = useRef(false);
@@ -174,41 +168,31 @@ const RepositoryList = ({
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {repositories.length === 0 && (
+        {repositories !== null && repositories.length === 0 && (
           <>
-            {emptyStateMessage} {hasActiveSearch ? 'Try a different search term' : emptyStateHint}
+            {emptyMessage} {emptyHint}
           </>
         )}
       </div>
     </div>
   );
 
-  // Pre-search state (e.g., Explore page before user has searched)
-  if (repositories === null) {
+  // Empty state: pre-search (null) or no results ([])
+  if (repositories === null || (repositories.length === 0 && !isLoading && !isSearching)) {
+    const isPreSearch = repositories === null;
     return (
       <div data-testid="repository-list">
         {controls}
-        <div className="text-center py-16">
-          <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
-          {preSearchMessage && (
-            <h2 className="mt-4 text-lg font-medium text-gray-900">{preSearchMessage}</h2>
+        <div className={`text-center ${isPreSearch ? 'py-16' : 'py-12'}`}>
+          {isPreSearch && (
+            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
           )}
-          {preSearchHint && <p className="mt-2 text-sm text-gray-500">{preSearchHint}</p>}
-        </div>
-      </div>
-    );
-  }
-
-  // Empty state - no repositories at all
-  if (repositories.length === 0 && !isLoading && !isSearching) {
-    return (
-      <div data-testid="repository-list">
-        {controls}
-        <div className="text-center py-12">
-          <p className="text-gray-500">{emptyStateMessage}</p>
-          <p className="text-sm text-gray-400 mt-2">
-            {hasActiveSearch ? 'Try a different search term' : emptyStateHint}
+          <p
+            className={`text-gray-500 ${isPreSearch ? 'mt-4 text-lg font-medium text-gray-900' : ''}`}
+          >
+            {emptyMessage}
           </p>
+          <p className="text-sm text-gray-400 mt-2">{emptyHint}</p>
           {hasActiveSearch && (
             <button
               onClick={() => {

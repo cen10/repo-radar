@@ -71,8 +71,8 @@ const defaultProps = {
   title: 'My Stars',
   searchPlaceholder: 'Search your starred repositories...',
   sortOptions: defaultSortOptions,
-  emptyStateMessage: 'No repositories found',
-  emptyStateHint: 'Star some repositories on GitHub to see them here',
+  emptyMessage: 'No repositories found',
+  emptyHint: 'Star some repositories on GitHub to see them here',
 };
 
 describe('RepositoryList', () => {
@@ -338,8 +338,8 @@ describe('RepositoryList', () => {
       render(
         <RepositoryList
           {...defaultProps}
-          emptyStateMessage="Custom empty message"
-          emptyStateHint="Custom hint"
+          emptyMessage="Custom empty message"
+          emptyHint="Custom hint"
         />
       );
 

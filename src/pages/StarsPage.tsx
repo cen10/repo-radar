@@ -49,6 +49,12 @@ const StarsPage = () => {
     }
   };
 
+  // Compute empty state message based on whether user is searching
+  const emptyMessage = 'No repositories found';
+  const emptyHint = isSearchMode
+    ? 'Try a different search term'
+    : 'Star some repositories on GitHub to see them here';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
@@ -68,8 +74,8 @@ const StarsPage = () => {
         onLoadMore={result.fetchNextPage}
         searchPlaceholder="Search your starred repositories..."
         sortOptions={SORT_OPTIONS}
-        emptyStateMessage="No repositories found"
-        emptyStateHint="Star some repositories on GitHub to see them here"
+        emptyMessage={emptyMessage}
+        emptyHint={emptyHint}
         totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
         fetchedStarredCount={isSearchMode ? searchResult.fetchedStarredCount : undefined}
       />
