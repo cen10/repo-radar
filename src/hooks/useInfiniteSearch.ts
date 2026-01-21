@@ -53,7 +53,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const { token, query, mode, sortBy, enabled } = options;
   const { signOut } = useAuth();
   const trimmedQuery = query.trim();
-  // Allow fetch even if token is null - getValidGitHubToken will try localStorage fallback
   const shouldFetch = enabled && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
