@@ -4,7 +4,6 @@ import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 
-// Sort options for Stars page (browsing supports 'updated' and 'created')
 type StarsSortOption = 'updated' | 'created';
 
 const SORT_OPTIONS = [
@@ -27,7 +26,6 @@ const StarsPage = () => {
     enabled: !isSearchMode,
   });
 
-  // Hook for searching within starred repos
   const searchResult = useInfiniteSearch({
     token: providerToken,
     query: activeSearch,
