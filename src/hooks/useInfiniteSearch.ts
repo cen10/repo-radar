@@ -73,7 +73,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   } = useQuery({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
-      // getValidGitHubToken handles null providerToken by falling back to localStorage
       const validToken = getValidGitHubToken(token);
       return fetchAllStarredRepositories(validToken);
     },
@@ -90,9 +89,8 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     pageParam: number;
     signal: AbortSignal;
   }) => {
-    // getValidGitHubToken handles null providerToken by falling back to localStorage
     const validToken = getValidGitHubToken(token);
-    // Use options.mode for narrowing - TypeScript knows sortBy type from discriminated union
+
     if (options.mode === 'starred') {
       return searchStarredRepositories(
         validToken,
@@ -148,7 +146,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const isLoading = isLoadingSearch || isLoadingAllStarred;
   const error = (searchError || allStarredError) as Error | null;
 
-  // Handle GitHub auth errors (expired token or no token available) by signing out
   useEffect(() => {
     if (error) {
       logger.debug('useInfiniteSearch: Error occurred', {
@@ -158,7 +155,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       });
     }
     if (isGitHubAuthError(error)) {
-      // Token is invalid or unavailable (getValidGitHubToken already tried localStorage)
       logger.info('useInfiniteSearch: GitHub auth error, signing out', {
         errorMessage: error?.message,
       });
