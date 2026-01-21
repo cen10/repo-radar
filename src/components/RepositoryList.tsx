@@ -92,7 +92,7 @@ const RepositoryList = ({
   }, [isIntersecting, handleLoadMore]);
 
   // Loading state (show *full page* spinner only for initial load)
-  if (isLoading && repositories !== null && repositories.length === 0 && !isSearching) {
+  if (isLoading && repositories?.length === 0 && !isSearching) {
     return (
       <div className="flex justify-center items-center min-h-[400px]" role="status">
         <LoadingSpinner className="h-12 w-12 text-indigo-600" />
