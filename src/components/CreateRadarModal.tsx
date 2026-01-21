@@ -25,6 +25,12 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
     }
   };
 
+  const handleClose = () => {
+    if (!isSubmitting) {
+      onClose();
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -57,7 +63,7 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
   const errorId = error ? 'radar-name-error' : undefined;
 
   return (
-    <Dialog open={true} onClose={onClose} className="relative z-50">
+    <Dialog open={true} onClose={handleClose} className="relative z-50">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 data-closed:opacity-0"
@@ -111,7 +117,7 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isSubmitting}
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >

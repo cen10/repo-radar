@@ -345,6 +345,30 @@ describe('CreateRadarModal', () => {
 
       expect(onClose).toHaveBeenCalled();
     });
+
+    it('does not close modal via Escape during submission', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      vi.mocked(radarService.createRadar).mockImplementation(() => new Promise(() => {}));
+
+      renderWithProviders(<CreateRadarModal {...defaultProps} onClose={onClose} />);
+
+      const input = screen.getByLabelText(/radar name/i);
+      await user.type(input, 'Test Radar');
+
+      const createButton = screen.getByRole('button', { name: /create/i });
+      await user.click(createButton);
+
+      // Wait for submission to start (spinner appears)
+      await waitFor(() => {
+        expect(createButton.querySelector('svg.animate-spin')).toBeInTheDocument();
+      });
+
+      // Try to close via Escape
+      await user.keyboard('{Escape}');
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   describe('Form submission via Enter', () => {
