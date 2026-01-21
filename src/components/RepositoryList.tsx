@@ -131,7 +131,7 @@ const RepositoryList = ({
         >
           <div className="flex">
             <label htmlFor="repo-search" className="sr-only">
-              {searchPlaceholder}
+              Search
             </label>
             <input
               id="repo-search"
