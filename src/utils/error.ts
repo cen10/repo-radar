@@ -1,4 +1,15 @@
 /**
+ * Error thrown when no GitHub token is available.
+ * Indicates the user needs to re-authenticate.
+ */
+export class GitHubReauthRequiredError extends Error {
+  constructor(message = 'No GitHub token available') {
+    super(message);
+    this.name = 'GitHubReauthRequiredError';
+  }
+}
+
+/**
  * Helper function to extract error message with fallback
  * @param error - The error object to extract message from
  * @param defaultMessage - The default message to use if error message is empty

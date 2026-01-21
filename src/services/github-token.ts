@@ -1,17 +1,7 @@
 import { logger } from '../utils/logger';
+import { GitHubReauthRequiredError } from '../utils/error';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
-
-/**
- * Error thrown when no GitHub token is available.
- * Indicates the user needs to re-authenticate.
- */
-export class GitHubReauthRequiredError extends Error {
-  constructor(message = 'No GitHub token available') {
-    super(message);
-    this.name = 'GitHubReauthRequiredError';
-  }
-}
 
 /**
  * Get a valid GitHub token, falling back to localStorage if providerToken is null.

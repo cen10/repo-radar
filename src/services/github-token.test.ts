@@ -4,8 +4,8 @@ import {
   getStoredAccessToken,
   clearStoredAccessToken,
   getValidGitHubToken,
-  GitHubReauthRequiredError,
 } from './github-token';
+import { GitHubReauthRequiredError } from '../utils/error';
 import { mockLogger } from '../test/mocks/logger';
 
 describe('github-token service', () => {
