@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getErrorMessage, isGitHubAuthError } from './error';
+import { GitHubReauthRequiredError } from '../services/github-token';
 
 describe('getErrorMessage', () => {
   const defaultMessage = 'Default error message';
@@ -68,5 +69,15 @@ describe('isGitHubAuthError', () => {
 
   it('returns false for null', () => {
     expect(isGitHubAuthError(null)).toBe(false);
+  });
+
+  it('returns true for GitHubReauthRequiredError', () => {
+    const error = new GitHubReauthRequiredError();
+    expect(isGitHubAuthError(error)).toBe(true);
+  });
+
+  it('returns true for GitHubReauthRequiredError with custom message', () => {
+    const error = new GitHubReauthRequiredError('Custom no token message');
+    expect(isGitHubAuthError(error)).toBe(true);
   });
 });

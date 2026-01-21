@@ -15,12 +15,10 @@ const SORT_OPTIONS = [
 const StarsPage = () => {
   const { providerToken } = useAuth();
 
-  // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
   const [sortBy, setSortBy] = useState<StarsSortOption>('updated');
 
-  // Determine if we're in search mode
   const isSearchMode = activeSearch.trim().length > 0;
 
   // Hook for browsing starred repos (no search)
@@ -39,11 +37,9 @@ const StarsPage = () => {
     enabled: isSearchMode,
   });
 
-  // Select the appropriate result based on mode
   const result = isSearchMode ? searchResult : browseResult;
 
   const handleSortChange = (newSort: SortOption) => {
-    // Only allow valid sort options for stars page
     if (newSort === 'updated' || newSort === 'created') {
       setSortBy(newSort);
     }

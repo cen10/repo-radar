@@ -7,6 +7,7 @@ import {
   type SearchSortOption,
   type StarredSearchSortOption,
 } from '../services/github';
+import { getValidGitHubToken } from '../services/github-token';
 import { useStarredIds } from './useStarredIds';
 import { useAuth } from './useAuth';
 import { isGitHubAuthError } from '../utils/error';
@@ -53,7 +54,8 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const { token, query, mode, sortBy, enabled } = options;
   const { signOut } = useAuth();
   const trimmedQuery = query.trim();
-  const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
+  // Allow fetch even if token is null - getValidGitHubToken will try localStorage fallback
+  const shouldFetch = enabled && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
   // Get starred IDs for marking search results (used in 'all' mode)
@@ -71,10 +73,9 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   } = useQuery({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
-      if (!token) {
-        throw new Error('Token required');
-      }
-      return fetchAllStarredRepositories(token);
+      // getValidGitHubToken handles null providerToken by falling back to localStorage
+      const validToken = getValidGitHubToken(token);
+      return fetchAllStarredRepositories(validToken);
     },
     enabled: shouldFetch && isStarredSearch,
     staleTime: Infinity,
@@ -89,13 +90,12 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     pageParam: number;
     signal: AbortSignal;
   }) => {
-    if (!token) {
-      throw new Error('Token required');
-    }
+    // getValidGitHubToken handles null providerToken by falling back to localStorage
+    const validToken = getValidGitHubToken(token);
     // Use options.mode for narrowing - TypeScript knows sortBy type from discriminated union
     if (options.mode === 'starred') {
       return searchStarredRepositories(
-        token,
+        validToken,
         trimmedQuery,
         pageParam,
         ITEMS_PER_PAGE,
@@ -105,7 +105,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       );
     }
     return searchRepositories(
-      token,
+      validToken,
       trimmedQuery,
       pageParam,
       ITEMS_PER_PAGE,
@@ -148,7 +148,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const isLoading = isLoadingSearch || isLoadingAllStarred;
   const error = (searchError || allStarredError) as Error | null;
 
-  // Handle GitHub auth errors (expired token) by signing out
+  // Handle GitHub auth errors (expired token or no token available) by signing out
   useEffect(() => {
     if (error) {
       logger.debug('useInfiniteSearch: Error occurred', {
@@ -158,7 +158,8 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       });
     }
     if (isGitHubAuthError(error)) {
-      logger.info('useInfiniteSearch: GitHub token invalid, signing out user', {
+      // Token is invalid or unavailable (getValidGitHubToken already tried localStorage)
+      logger.info('useInfiniteSearch: GitHub auth error, signing out', {
         errorMessage: error?.message,
       });
       sessionStorage.setItem('session_expired', 'true');

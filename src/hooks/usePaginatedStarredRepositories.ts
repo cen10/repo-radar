@@ -5,6 +5,7 @@ import {
   type StarredSortOption,
   type SortDirection,
 } from '../services/github';
+import { getValidGitHubToken } from '../services/github-token';
 import { useAuth } from './useAuth';
 import { isGitHubAuthError } from '../utils/error';
 import { logger } from '../utils/logger';
@@ -49,11 +50,10 @@ export function usePaginatedStarredRepositories({
   const { signOut } = useAuth();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
-    if (!token) {
-      throw new Error('Token required');
-    }
+    // getValidGitHubToken handles null providerToken by falling back to localStorage
+    const validToken = getValidGitHubToken(token);
     const repos = await fetchStarredRepositories(
-      token,
+      validToken,
       pageParam,
       ITEMS_PER_PAGE,
       sortBy as StarredSortOption,
@@ -77,13 +77,14 @@ export function usePaginatedStarredRepositories({
       queryFn: fetchStarredPage,
       initialPageParam: 1,
       getNextPageParam,
-      enabled: enabled && !!token,
+      // Allow fetch even if token is null - getValidGitHubToken will try localStorage fallback
+      enabled,
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
   const typedError = error as Error | null;
 
-  // Handle GitHub auth errors (expired token) by signing out
+  // Handle GitHub auth errors (expired token or no token available) by signing out
   useEffect(() => {
     if (typedError) {
       logger.debug('usePaginatedStarredRepositories: Error occurred', {
@@ -93,7 +94,8 @@ export function usePaginatedStarredRepositories({
       });
     }
     if (isGitHubAuthError(typedError)) {
-      logger.info('usePaginatedStarredRepositories: GitHub token invalid, signing out user', {
+      // Token is invalid or unavailable (getValidGitHubToken already tried localStorage)
+      logger.info('usePaginatedStarredRepositories: GitHub auth error, signing out', {
         errorMessage: typedError?.message,
       });
       sessionStorage.setItem('session_expired', 'true');
