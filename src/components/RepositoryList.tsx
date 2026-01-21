@@ -59,10 +59,12 @@ const RepositoryList = ({
   totalStarred,
   fetchedStarredCount,
 }: RepositoryListProps) => {
-  // Track if we've already triggered a fetch to prevent race conditions
+  // Guard against duplicate fetches from rapid IntersectionObserver callbacks.
+  // isFetchingMore prop won't be true until React re-renders, but the observer
+  // can fire multiple times before that. This ref provides synchronous protection.
+  // See: https://github.com/TanStack/query/issues/6689
   const isFetchingRef = useRef(false);
 
-  // Sync ref with fetch state; also reset when sort changes to allow new fetches
   useEffect(() => {
     isFetchingRef.current = isFetchingMore;
   }, [isFetchingMore, sortBy]);
