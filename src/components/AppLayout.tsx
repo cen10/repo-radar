@@ -4,8 +4,8 @@ import { AuthProvider } from './AuthProvider';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
+import { CreateRadarModal } from './CreateRadarModal';
 import { useAuth } from '../hooks/use-auth';
-import { logger } from '../utils/logger';
 
 /**
  * Inner layout component that uses auth context.
@@ -15,6 +15,7 @@ function AuthenticatedLayout() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCreateRadarModalOpen, setIsCreateRadarModalOpen] = useState(false);
 
   const handleMenuToggle = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
@@ -25,8 +26,11 @@ function AuthenticatedLayout() {
   }, []);
 
   const handleCreateRadar = useCallback(() => {
-    // TODO: Open create radar modal (T048)
-    logger.info('Create radar clicked - modal to be implemented in T048');
+    setIsCreateRadarModalOpen(true);
+  }, []);
+
+  const handleCreateRadarModalClose = useCallback(() => {
+    setIsCreateRadarModalOpen(false);
   }, []);
 
   const handleToggleCollapsed = useCallback(() => {
@@ -57,6 +61,9 @@ function AuthenticatedLayout() {
       >
         <Outlet />
       </main>
+
+      {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
+      {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCreateRadarModalClose} />}
     </div>
   );
 }
