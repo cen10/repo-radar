@@ -50,7 +50,6 @@ export function usePaginatedStarredRepositories({
   const { signOut } = useAuth();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
-    // getValidGitHubToken handles null providerToken by falling back to localStorage
     const validToken = getValidGitHubToken(token);
     const repos = await fetchStarredRepositories(
       validToken,
@@ -77,14 +76,12 @@ export function usePaginatedStarredRepositories({
       queryFn: fetchStarredPage,
       initialPageParam: 1,
       getNextPageParam,
-      // Allow fetch even if token is null - getValidGitHubToken will try localStorage fallback
       enabled,
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
   const typedError = error as Error | null;
 
-  // Handle GitHub auth errors (expired token or no token available) by signing out
   useEffect(() => {
     if (typedError) {
       logger.debug('usePaginatedStarredRepositories: Error occurred', {
@@ -94,7 +91,6 @@ export function usePaginatedStarredRepositories({
       });
     }
     if (isGitHubAuthError(typedError)) {
-      // Token is invalid or unavailable (getValidGitHubToken already tried localStorage)
       logger.info('usePaginatedStarredRepositories: GitHub auth error, signing out', {
         errorMessage: typedError?.message,
       });
