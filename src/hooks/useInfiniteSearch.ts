@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import {
   searchRepositories,
   searchStarredRepositories,
@@ -11,8 +9,7 @@ import {
 import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
 import { useStarredIds } from './useStarredIds';
 import { useAuth } from './useAuth';
-import { isGitHubAuthError } from '../utils/error';
-import { logger } from '../utils/logger';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -43,6 +40,18 @@ interface UseInfiniteSearchReturn {
   totalStarred: number;
 }
 
+interface AllStarredData {
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+}
+
+interface SearchPage {
+  repositories: Repository[];
+  totalCount: number;
+  apiSearchResultTotal: number;
+}
+
 /**
  * Hook for infinite scroll loading of search results.
  *
@@ -52,8 +61,7 @@ interface UseInfiniteSearchReturn {
  */
 export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const { token, query, mode, sortBy, enabled } = options;
-  const { signOut, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const trimmedQuery = query.trim();
   const hasAnyToken = !!token || !!getStoredAccessToken();
   const shouldFetch = enabled && !!user && hasAnyToken && trimmedQuery.length > 0;
@@ -71,7 +79,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     data: allStarredData,
     isLoading: isLoadingAllStarred,
     error: allStarredError,
-  } = useQuery({
+  } = useQuery<AllStarredData, Error>({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
       const validToken = getValidGitHubToken(token);
@@ -114,11 +122,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     );
   };
 
-  const getNextPageParam = (
-    lastPage: { apiSearchResultTotal: number },
-    _allPages: unknown,
-    lastPageParam: number
-  ) => {
+  const getNextPageParam = (lastPage: SearchPage, _allPages: unknown, lastPageParam: number) => {
     const totalPages = Math.ceil(lastPage.apiSearchResultTotal / ITEMS_PER_PAGE);
     if (lastPageParam >= totalPages) return undefined;
     return lastPageParam + 1;
@@ -132,7 +136,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     fetchNextPage,
     error: searchError,
     refetch,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<SearchPage, Error, InfiniteData<SearchPage>, readonly unknown[], number>({
     queryKey: ['searchRepositories', token, trimmedQuery, mode, sortBy],
     queryFn: fetchSearchPage,
     initialPageParam: 1,
@@ -145,25 +149,9 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const totalCount = data?.pages[0]?.apiSearchResultTotal ?? 0;
 
   const isLoading = isLoadingSearch || isLoadingAllStarred;
-  const error = (searchError || allStarredError) as Error | null;
+  const error = searchError || allStarredError;
 
-  useEffect(() => {
-    if (error) {
-      logger.debug('useInfiniteSearch: Error occurred', {
-        message: error.message,
-        name: error.name,
-        isGitHubAuthError: isGitHubAuthError(error),
-      });
-    }
-    if (isGitHubAuthError(error)) {
-      logger.info('useInfiniteSearch: GitHub auth error, signing out', {
-        errorMessage: error?.message,
-      });
-      sessionStorage.setItem('session_expired', 'true');
-      void signOut();
-      void navigate('/');
-    }
-  }, [error, signOut, navigate]);
+  useAuthErrorHandler(error, 'useInfiniteSearch');
 
   const totalStarred = allStarredData?.totalStarred ?? 0;
 

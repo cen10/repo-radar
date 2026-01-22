@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import {
   fetchStarredRepositories,
   type StarredSortOption,
@@ -8,8 +6,7 @@ import {
 } from '../services/github';
 import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
 import { useAuth } from './useAuth';
-import { isGitHubAuthError } from '../utils/error';
-import { logger } from '../utils/logger';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -33,6 +30,12 @@ interface UseBrowseStarredReturn {
   refetch: () => void;
 }
 
+interface StarredPage {
+  repositories: Repository[];
+  page: number;
+  hasMore: boolean;
+}
+
 /**
  * Hook for browsing starred repositories with infinite scroll.
  *
@@ -45,8 +48,7 @@ export function useBrowseStarred({
   sortDirection = 'desc',
   enabled,
 }: UseBrowseStarredOptions): UseBrowseStarredReturn {
-  const { signOut, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const hasAnyToken = !!token || !!getStoredAccessToken();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
@@ -65,13 +67,13 @@ export function useBrowseStarred({
     };
   };
 
-  const getNextPageParam = (lastPage: { hasMore: boolean; page: number }) => {
+  const getNextPageParam = (lastPage: StarredPage) => {
     if (!lastPage.hasMore) return undefined;
     return lastPage.page + 1;
   };
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
-    useInfiniteQuery({
+    useInfiniteQuery<StarredPage, Error, InfiniteData<StarredPage>, readonly unknown[], number>({
       queryKey: ['starredRepositories', token, sortBy, sortDirection],
       queryFn: fetchStarredPage,
       initialPageParam: 1,
@@ -80,25 +82,8 @@ export function useBrowseStarred({
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
-  const typedError = error as Error | null;
 
-  useEffect(() => {
-    if (typedError) {
-      logger.debug('useBrowseStarred: Error occurred', {
-        message: typedError.message,
-        name: typedError.name,
-        isGitHubAuthError: isGitHubAuthError(typedError),
-      });
-    }
-    if (isGitHubAuthError(typedError)) {
-      logger.info('useBrowseStarred: GitHub auth error, signing out', {
-        errorMessage: typedError?.message,
-      });
-      sessionStorage.setItem('session_expired', 'true');
-      void signOut();
-      void navigate('/');
-    }
-  }, [typedError, signOut, navigate]);
+  useAuthErrorHandler(error, 'useBrowseStarred');
 
   return {
     repositories,
@@ -106,7 +91,7 @@ export function useBrowseStarred({
     isFetchingNextPage,
     hasNextPage: hasNextPage ?? false,
     fetchNextPage,
-    error: typedError,
+    error,
     refetch,
   };
 }

@@ -10,6 +10,11 @@ vi.mock('../services/github', () => ({
   fetchRepositoryReleases: vi.fn(),
 }));
 
+// Mock useAuthErrorHandler since it requires AuthProvider and Router
+vi.mock('./useAuthErrorHandler', () => ({
+  useAuthErrorHandler: vi.fn(),
+}));
+
 // Helper to create a test QueryClient
 const createTestQueryClient = () =>
   new QueryClient({

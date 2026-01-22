@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllStarredRepositories, type SortDirection } from '../services/github';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
 
 interface UseAllStarredRepositoriesOptions {
@@ -29,12 +30,18 @@ interface UseAllStarredRepositoriesReturn {
  *
  * Uses the same query key as useInfiniteSearch for cache sharing.
  */
+interface AllStarredData {
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+}
+
 export function useAllStarredRepositories({
   token,
   sortDirection = 'desc',
   enabled,
 }: UseAllStarredRepositoriesOptions): UseAllStarredRepositoriesReturn {
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<AllStarredData, Error>({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
       if (!token) {
@@ -46,6 +53,8 @@ export function useAllStarredRepositories({
     staleTime: Infinity,
   });
 
+  useAuthErrorHandler(error, 'useAllStarredRepositories');
+
   let repositories: Repository[] = [];
   if (data) {
     repositories = sortDirection === 'asc' ? [...data.repositories].reverse() : data.repositories;
@@ -55,7 +64,7 @@ export function useAllStarredRepositories({
     repositories,
     totalStarred: data?.totalStarred ?? 0,
     isLoading,
-    error: error as Error | null,
+    error,
     refetch,
   };
 }
