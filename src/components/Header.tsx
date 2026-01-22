@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import { LoadingSpinner } from './icons';
 import {
@@ -78,6 +79,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -132,6 +134,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
       setSignOutError(null);
       setIsSigningOut(true);
       await signOut();
+      void navigate('/');
     } catch (err) {
       const message = getSignOutErrorMessage(err);
       logger.error('Sign out error:', err);

@@ -191,13 +191,13 @@ function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSid
   return (
     <div
       className={`
-        hidden lg:block fixed left-0 top-16 z-40
+        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] z-40
         transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
       <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
-      <aside className="bg-white border-r border-b border-gray-200 rounded-br-lg overflow-visible">
+      <aside className="h-full bg-white border-r border-gray-200 overflow-visible">
         <nav aria-label="Main navigation" className="flex flex-col">
           {children}
         </nav>

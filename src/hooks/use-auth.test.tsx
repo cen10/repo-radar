@@ -37,7 +37,7 @@ describe('useAuth', () => {
 
     expect(result.current).toHaveProperty('user');
     expect(result.current).toHaveProperty('providerToken');
-    expect(result.current).toHaveProperty('loading');
+    expect(result.current).toHaveProperty('authLoading');
     expect(result.current).toHaveProperty('signInWithGitHub');
     expect(result.current).toHaveProperty('signOut');
   });

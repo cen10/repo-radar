@@ -4,8 +4,8 @@ import {
   getStoredAccessToken,
   clearStoredAccessToken,
   getValidGitHubToken,
-  GitHubReauthRequiredError,
 } from './github-token';
+import { GitHubReauthRequiredError } from '../utils/error';
 import { mockLogger } from '../test/mocks/logger';
 
 describe('github-token service', () => {
@@ -88,51 +88,49 @@ describe('github-token service', () => {
     });
   });
 
+  describe('GitHubReauthRequiredError', () => {
+    it('creates error with default message', () => {
+      const error = new GitHubReauthRequiredError();
+      expect(error.message).toBe('No GitHub token available');
+      expect(error.name).toBe('GitHubReauthRequiredError');
+    });
+
+    it('creates error with custom message', () => {
+      const error = new GitHubReauthRequiredError('Custom message');
+      expect(error.message).toBe('Custom message');
+      expect(error.name).toBe('GitHubReauthRequiredError');
+    });
+
+    it('is instanceof Error', () => {
+      const error = new GitHubReauthRequiredError();
+      expect(error).toBeInstanceOf(Error);
+    });
+  });
+
   describe('getValidGitHubToken', () => {
-    it('returns provider_token if available', () => {
-      const token = getValidGitHubToken('valid-github-token');
-      expect(token).toBe('valid-github-token');
+    it('returns providerToken when available', () => {
+      const result = getValidGitHubToken('provider-token');
+      expect(result).toBe('provider-token');
     });
 
-    it('returns stored access token when provider_token is null', () => {
-      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
-
-      const token = getValidGitHubToken(null);
-      expect(token).toBe('stored-access-token');
-    });
-
-    it('logs info message when using stored access token', () => {
-      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-access-token');
-
-      getValidGitHubToken(null);
-
+    it('falls back to localStorage when providerToken is null', () => {
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
+      const result = getValidGitHubToken(null);
+      expect(result).toBe('stored-token');
       expect(mockLogger.info).toHaveBeenCalledWith(
         'provider_token is null, using stored access token'
       );
     });
 
-    it('throws GitHubReauthRequiredError if no provider_token and no stored access token', () => {
+    it('throws GitHubReauthRequiredError when no token available', () => {
       expect(() => getValidGitHubToken(null)).toThrow(GitHubReauthRequiredError);
-      expect(() => getValidGitHubToken(null)).toThrow(
-        'No GitHub token available - re-authentication required'
-      );
-    });
-  });
-
-  describe('GitHubReauthRequiredError', () => {
-    it('is an instance of Error', () => {
-      const error = new GitHubReauthRequiredError('test message');
-      expect(error).toBeInstanceOf(Error);
+      expect(() => getValidGitHubToken(null)).toThrow('No GitHub token available');
     });
 
-    it('has correct name property', () => {
-      const error = new GitHubReauthRequiredError('test message');
-      expect(error.name).toBe('GitHubReauthRequiredError');
-    });
-
-    it('has correct message', () => {
-      const error = new GitHubReauthRequiredError('custom error message');
-      expect(error.message).toBe('custom error message');
+    it('prefers providerToken over localStorage', () => {
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
+      const result = getValidGitHubToken('provider-token');
+      expect(result).toBe('provider-token');
     });
   });
 });

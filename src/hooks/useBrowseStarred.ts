@@ -1,23 +1,26 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import {
   fetchStarredRepositories,
   type StarredSortOption,
   type SortDirection,
 } from '../services/github';
+import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
+import { useAuth } from './useAuth';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
 
-export type PaginatedSortOption = 'updated' | 'created';
+export type BrowseSortOption = 'updated' | 'created';
 
-interface UsePaginatedStarredRepositoriesOptions {
+interface UseBrowseStarredOptions {
   token: string | null;
-  sortBy: PaginatedSortOption;
+  sortBy: BrowseSortOption;
   sortDirection?: SortDirection;
   enabled: boolean;
 }
 
-interface UsePaginatedStarredRepositoriesReturn {
+interface UseBrowseStarredReturn {
   repositories: Repository[];
   isLoading: boolean;
   isFetchingNextPage: boolean;
@@ -27,27 +30,31 @@ interface UsePaginatedStarredRepositoriesReturn {
   refetch: () => void;
 }
 
+interface StarredPage {
+  repositories: Repository[];
+  page: number;
+  hasMore: boolean;
+}
+
 /**
- * Hook for paginated browsing of starred repositories with server-side sorting.
+ * Hook for browsing starred repositories with infinite scroll.
  *
- * Supports incremental loading (infinite scroll) for 'updated' and 'created' sorts.
+ * Supports server-side sorting by 'updated' or 'created'.
  * For sorting by star count, use useAllStarredRepositories instead.
- *
- * Note: No cap on total repos - users can scroll through all their starred repos.
- * This is fine since we fetch one page at a time (no parallel API call concerns).
  */
-export function usePaginatedStarredRepositories({
+export function useBrowseStarred({
   token,
   sortBy,
   sortDirection = 'desc',
   enabled,
-}: UsePaginatedStarredRepositoriesOptions): UsePaginatedStarredRepositoriesReturn {
+}: UseBrowseStarredOptions): UseBrowseStarredReturn {
+  const { user } = useAuth();
+  const hasAnyToken = !!token || !!getStoredAccessToken();
+
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
-    if (!token) {
-      throw new Error('Token required');
-    }
+    const validToken = getValidGitHubToken(token);
     const repos = await fetchStarredRepositories(
-      token,
+      validToken,
       pageParam,
       ITEMS_PER_PAGE,
       sortBy as StarredSortOption,
@@ -60,21 +67,23 @@ export function usePaginatedStarredRepositories({
     };
   };
 
-  const getNextPageParam = (lastPage: { hasMore: boolean; page: number }) => {
+  const getNextPageParam = (lastPage: StarredPage) => {
     if (!lastPage.hasMore) return undefined;
     return lastPage.page + 1;
   };
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
-    useInfiniteQuery({
+    useInfiniteQuery<StarredPage, Error, InfiniteData<StarredPage>, readonly unknown[], number>({
       queryKey: ['starredRepositories', token, sortBy, sortDirection],
       queryFn: fetchStarredPage,
       initialPageParam: 1,
       getNextPageParam,
-      enabled: enabled && !!token,
+      enabled: enabled && !!user && hasAnyToken,
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
+
+  useAuthErrorHandler(error, 'useBrowseStarred');
 
   return {
     repositories,
@@ -82,7 +91,7 @@ export function usePaginatedStarredRepositories({
     isFetchingNextPage,
     hasNextPage: hasNextPage ?? false,
     fetchNextPage,
-    error: error as Error | null,
+    error,
     refetch,
   };
 }

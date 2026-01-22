@@ -1,33 +1,75 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LoadingSpinner } from '../components/icons';
+import { useBrowseStarred } from '../hooks/useBrowseStarred';
+import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
+import RepositoryList, { type SortOption } from '../components/RepositoryList';
+
+type StarsSortOption = 'updated' | 'created';
+
+const SORT_OPTIONS = [
+  { value: 'updated' as const, label: 'Recently Updated' },
+  { value: 'created' as const, label: 'Recently Starred' },
+];
 
 const StarsPage = () => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { providerToken } = useAuth();
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      void navigate('/');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [sortBy, setSortBy] = useState<StarsSortOption>('updated');
+
+  const isSearchMode = activeSearch.trim().length > 0;
+
+  const browseResult = useBrowseStarred({
+    token: providerToken,
+    sortBy,
+    enabled: !isSearchMode,
+  });
+
+  const searchResult = useInfiniteSearch({
+    token: providerToken,
+    query: activeSearch,
+    mode: 'starred',
+    sortBy,
+    enabled: isSearchMode,
+  });
+
+  const result = isSearchMode ? searchResult : browseResult;
+
+  const handleSortChange = (newSort: SortOption) => {
+    if (newSort === 'updated' || newSort === 'created') {
+      setSortBy(newSort);
     }
-  }, [user, authLoading, navigate]);
+  };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" role="status">
-        <LoadingSpinner className="h-12 w-12 text-indigo-600" />
-        <span className="sr-only">Loading...</span>
-      </div>
-    );
-  }
-
-  if (!user) return null;
+  const emptyMessage = 'No repositories found';
+  const emptyHint = isSearchMode
+    ? 'Try a different search term'
+    : 'Star some repositories on GitHub to see them here';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">My Stars</h1>
-      <p className="text-gray-600 mt-2">Placeholder - will show starred repositories</p>
+      <RepositoryList
+        title="My Stars"
+        repositories={result.repositories}
+        isLoading={result.isLoading}
+        isFetchingMore={result.isFetchingNextPage}
+        hasMore={result.hasNextPage}
+        error={result.error}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={setActiveSearch}
+        isSearching={isSearchMode && result.isLoading}
+        hasActiveSearch={isSearchMode}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onLoadMore={result.fetchNextPage}
+        searchPlaceholder="Search your starred repositories..."
+        sortOptions={SORT_OPTIONS}
+        emptyMessage={emptyMessage}
+        emptyHint={emptyHint}
+        totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
+      />
     </div>
   );
 };

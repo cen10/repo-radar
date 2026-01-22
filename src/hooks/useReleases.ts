@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchRepositoryReleases } from '../services/github';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Release } from '../types';
 
 interface UseReleasesOptions {
@@ -34,7 +35,7 @@ export function useReleases({
   repo,
   enabled = true,
 }: UseReleasesOptions): UseReleasesReturn {
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery<Release[], Error>({
     queryKey: ['releases', owner, repo],
     queryFn: () => {
       if (!token) {
@@ -45,10 +46,12 @@ export function useReleases({
     enabled: enabled && !!token && !!owner && !!repo,
   });
 
+  useAuthErrorHandler(error, 'useReleases');
+
   return {
     releases: data ?? [],
     isLoading,
-    error: error as Error | null,
+    error,
     refetch,
   };
 }

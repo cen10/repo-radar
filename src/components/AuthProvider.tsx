@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const applySessionToState = useCallback((nextSession: Session | null) => {
@@ -59,8 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getSession = useCallback(async (): Promise<boolean> => {
+    logger.debug('getSession: Starting session check...');
     try {
-      setLoading(true);
+      setAuthLoading(true);
       setConnectionError(null);
 
       const {
@@ -72,34 +73,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const message = getErrorMessage(error, 'Unknown Supabase error');
         logger.error(`Error connecting to Supabase: ${message}`, error);
         setConnectionError(CONNECTION_FAILED);
-        setLoading(false);
+        setAuthLoading(false);
         return false;
       }
 
+      logger.debug('getSession: Session retrieved', {
+        hasSession: !!initialSession,
+        userId: initialSession?.user?.id,
+        expiresAt: initialSession?.expires_at,
+      });
+
       applySessionToState(initialSession);
-      setLoading(false);
+      setAuthLoading(false);
       return true;
     } catch (err) {
       const message = getErrorMessage(err, 'Unexpected error');
       logger.error(`Unexpected error getting session: ${message}`, err);
       setConnectionError(UNEXPECTED_ERROR);
-      setLoading(false);
+      setAuthLoading(false);
       return false;
     }
   }, [applySessionToState]);
 
   const handleAuthStateChange = useCallback(
-    (_event: AuthChangeEvent, session: Session | null) => {
+    (event: AuthChangeEvent, session: Session | null) => {
+      logger.debug('Auth state change event received', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        expiresAt: session?.expires_at,
+        providerToken: session?.provider_token ? 'present' : 'absent',
+      });
+
       try {
         applySessionToState(session);
-        setLoading(false);
+        setAuthLoading(false);
+
+        // Log specific events that could cause logout
+        if (event === 'SIGNED_OUT') {
+          logger.info('User signed out via auth state change');
+        } else if (event === 'TOKEN_REFRESHED') {
+          logger.debug('Token refreshed successfully', {
+            newExpiresAt: session?.expires_at,
+          });
+        } else if (!session && event !== 'INITIAL_SESSION') {
+          logger.warn('Session became null unexpectedly', { event });
+        }
       } catch (err) {
         const message = getErrorMessage(err, 'Unexpected error');
         logger.error(`Unexpected error handling auth state change: ${message}`, err);
         // On error, clear auth state to prevent inconsistent state
         setProviderToken(null);
         setUser(null);
-        setLoading(false);
+        setAuthLoading(false);
       }
     },
     [applySessionToState]
@@ -136,29 +162,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
+    logger.info('signOut: Starting sign out, clearing local state first...');
+    // Clear local state first to prevent race condition where queries re-run
+    // with stale localStorage token during Supabase sign-out
+    clearStoredAccessToken();
+    queryClient.clear();
 
+    const { error } = await supabase.auth.signOut();
     if (error) {
-      logger.error('Error signing out:', error);
+      logger.error('signOut: Error signing out:', error);
       throw error;
     }
 
-    // Only clear after sign-out succeeds to avoid data loss on failure
-    clearStoredAccessToken();
-    queryClient.clear();
+    logger.info('signOut: Sign out complete');
   }, [queryClient]);
 
   const value: AuthContextType = useMemo(
     () => ({
       providerToken,
       user,
-      loading,
+      authLoading,
       connectionError,
       signInWithGitHub,
       signOut,
       retryAuth: getSession,
     }),
-    [providerToken, user, loading, connectionError, signInWithGitHub, signOut, getSession]
+    [providerToken, user, authLoading, connectionError, signInWithGitHub, signOut, getSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

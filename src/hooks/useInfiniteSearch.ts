@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, type InfiniteData } from '@tanstack/react-query';
 import {
   searchRepositories,
   searchStarredRepositories,
@@ -6,7 +6,10 @@ import {
   type SearchSortOption,
   type StarredSearchSortOption,
 } from '../services/github';
+import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
 import { useStarredIds } from './useStarredIds';
+import { useAuth } from './useAuth';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
 
 const ITEMS_PER_PAGE = 30;
@@ -34,6 +37,19 @@ interface UseInfiniteSearchReturn {
   error: Error | null;
   totalCount: number;
   refetch: () => void;
+  totalStarred: number;
+}
+
+interface AllStarredData {
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+}
+
+interface SearchPage {
+  repositories: Repository[];
+  totalCount: number;
+  apiSearchResultTotal: number;
 }
 
 /**
@@ -45,8 +61,10 @@ interface UseInfiniteSearchReturn {
  */
 export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfiniteSearchReturn {
   const { token, query, mode, sortBy, enabled } = options;
+  const { user } = useAuth();
   const trimmedQuery = query.trim();
-  const shouldFetch = enabled && !!token && trimmedQuery.length > 0;
+  const hasAnyToken = !!token || !!getStoredAccessToken();
+  const shouldFetch = enabled && !!user && hasAnyToken && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
   // Get starred IDs for marking search results (used in 'all' mode)
@@ -61,13 +79,11 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     data: allStarredData,
     isLoading: isLoadingAllStarred,
     error: allStarredError,
-  } = useQuery({
+  } = useQuery<AllStarredData, Error>({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
-      if (!token) {
-        throw new Error('Token required');
-      }
-      return fetchAllStarredRepositories(token);
+      const validToken = getValidGitHubToken(token);
+      return fetchAllStarredRepositories(validToken);
     },
     enabled: shouldFetch && isStarredSearch,
     staleTime: Infinity,
@@ -82,13 +98,11 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     pageParam: number;
     signal: AbortSignal;
   }) => {
-    if (!token) {
-      throw new Error('Token required');
-    }
-    // Use options.mode for narrowing - TypeScript knows sortBy type from discriminated union
+    const validToken = getValidGitHubToken(token);
+
     if (options.mode === 'starred') {
       return searchStarredRepositories(
-        token,
+        validToken,
         trimmedQuery,
         pageParam,
         ITEMS_PER_PAGE,
@@ -98,7 +112,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
       );
     }
     return searchRepositories(
-      token,
+      validToken,
       trimmedQuery,
       pageParam,
       ITEMS_PER_PAGE,
@@ -108,11 +122,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     );
   };
 
-  const getNextPageParam = (
-    lastPage: { apiSearchResultTotal: number },
-    _allPages: unknown,
-    lastPageParam: number
-  ) => {
+  const getNextPageParam = (lastPage: SearchPage, _allPages: unknown, lastPageParam: number) => {
     const totalPages = Math.ceil(lastPage.apiSearchResultTotal / ITEMS_PER_PAGE);
     if (lastPageParam >= totalPages) return undefined;
     return lastPageParam + 1;
@@ -126,7 +136,7 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     fetchNextPage,
     error: searchError,
     refetch,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<SearchPage, Error, InfiniteData<SearchPage>, readonly unknown[], number>({
     queryKey: ['searchRepositories', token, trimmedQuery, mode, sortBy],
     queryFn: fetchSearchPage,
     initialPageParam: 1,
@@ -139,7 +149,11 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const totalCount = data?.pages[0]?.apiSearchResultTotal ?? 0;
 
   const isLoading = isLoadingSearch || isLoadingAllStarred;
-  const error = (searchError || allStarredError) as Error | null;
+  const error = searchError || allStarredError;
+
+  useAuthErrorHandler(error, 'useInfiniteSearch');
+
+  const totalStarred = allStarredData?.totalStarred ?? 0;
 
   return {
     repositories,
@@ -150,5 +164,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     error,
     totalCount,
     refetch,
+    totalStarred,
   };
 }

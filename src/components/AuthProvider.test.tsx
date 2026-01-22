@@ -23,14 +23,14 @@ vi.mock('../services/github-token', () => ({
 }));
 
 const TestComponent = () => {
-  const { user, loading, providerToken, connectionError } = useAuth();
+  const { user, authLoading, providerToken, connectionError } = useAuth();
   return (
     <div>
-      {loading && <span>Loading...</span>}
+      {authLoading && <span>Loading...</span>}
       {user && <span>User: {user.login}</span>}
       {providerToken && <span>Token exists</span>}
       {connectionError && <span>Connection Error: {connectionError}</span>}
-      {!loading && !user && !connectionError && <span>No user</span>}
+      {!authLoading && !user && !connectionError && <span>No user</span>}
     </div>
   );
 };
@@ -287,7 +287,7 @@ describe('AuthProvider', () => {
           <div>
             <div>User: {auth.user ? auth.user.login : 'none'}</div>
             <div>Token: {auth.providerToken ? 'active' : 'none'}</div>
-            <div>Loading: {auth.loading ? 'yes' : 'no'}</div>
+            <div>Loading: {auth.authLoading ? 'yes' : 'no'}</div>
           </div>
         );
       };
@@ -366,7 +366,7 @@ describe('AuthProvider', () => {
         return (
           <div>
             <div>Connection: {auth.connectionError ?? 'none'}</div>
-            <div>Loading: {auth.loading ? 'yes' : 'no'}</div>
+            <div>Loading: {auth.authLoading ? 'yes' : 'no'}</div>
           </div>
         );
       };
@@ -618,10 +618,10 @@ describe('AuthProvider', () => {
       };
 
       const TestComponentWithName = () => {
-        const { user, loading } = useAuth();
+        const { user, authLoading } = useAuth();
         return (
           <div>
-            {loading && <span>Loading...</span>}
+            {authLoading && <span>Loading...</span>}
             {user && <span>Name: {user.name || 'none'}</span>}
           </div>
         );
@@ -656,10 +656,10 @@ describe('AuthProvider', () => {
       };
 
       const TestComponentWithName = () => {
-        const { user, loading } = useAuth();
+        const { user, authLoading } = useAuth();
         return (
           <div>
-            {loading && <span>Loading...</span>}
+            {authLoading && <span>Loading...</span>}
             {user && <span>Name: {user.name || 'none'}</span>}
           </div>
         );
@@ -694,10 +694,10 @@ describe('AuthProvider', () => {
       };
 
       const TestComponentWithAvatar = () => {
-        const { user, loading } = useAuth();
+        const { user, authLoading } = useAuth();
         return (
           <div>
-            {loading && <span>Loading...</span>}
+            {authLoading && <span>Loading...</span>}
             {user && <span>Avatar: {user.avatar_url || 'empty'}</span>}
           </div>
         );
@@ -732,10 +732,10 @@ describe('AuthProvider', () => {
       };
 
       const TestComponentFull = () => {
-        const { user, loading } = useAuth();
+        const { user, authLoading } = useAuth();
         return (
           <div>
-            {loading && <span>Loading...</span>}
+            {authLoading && <span>Loading...</span>}
             {user && (
               <>
                 <span>Login: {user.login}</span>

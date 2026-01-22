@@ -3,6 +3,12 @@ import { logger } from '../utils/logger';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
+/**
+ * Maximum starred repos to fetch for client-side search/sort.
+ * Limits parallel API calls to avoid rate limiting and slow performance.
+ */
+export const MAX_STARRED_REPOS = 500;
+
 interface GitHubStarredRepo {
   id: number;
   name: string;
@@ -86,7 +92,7 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
  */
 export async function fetchAllStarredRepositories(
   token: string,
-  maxRepos = 500
+  maxRepos = MAX_STARRED_REPOS
 ): Promise<{
   repositories: Repository[];
   totalFetched: number;

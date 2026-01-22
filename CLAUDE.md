@@ -155,6 +155,22 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 
     - Avoid creating helper functions just to wrap constructors - keep tests simple.
 
+17. **Comment sparingly**: Don't add comments that merely restate what the code does - let well-named functions speak for themselves. Add comments only when explaining:
+    - **Why** something is done a non-obvious way
+    - **Tricky logic** that isn't self-evident (e.g., race condition guards, edge case handling)
+    - **Workarounds** for bugs or limitations
+
+    ```typescript
+    // BAD: Comment restates what the function name already tells us
+    // getValidGitHubToken handles null providerToken by falling back to localStorage
+    const validToken = getValidGitHubToken(token);
+
+    // GOOD: Comment explains non-obvious behavior
+    // Guard against TanStack Query race condition where rapid pagination
+    // can trigger duplicate fetches (see issue #6689)
+    const isFetchingRef = useRef(false);
+    ```
+
 ## Testing Best Practices
 
 ### Logger Mocking Pattern

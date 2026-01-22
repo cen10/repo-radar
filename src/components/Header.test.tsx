@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
 import type { AuthContextType } from '../contexts/auth-context';
 
 vi.mock('../hooks/use-auth');
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 const mockUser = {
   id: '123',
@@ -38,14 +43,14 @@ describe('Header', () => {
       })
     );
 
-    const { container } = render(<Header />);
+    const { container } = renderWithRouter(<Header />);
     expect(container.firstChild).toBeNull();
   });
 
   it('displays user information when authenticated', () => {
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     expect(screen.getByText(/repo radar/i)).toBeInTheDocument();
     expect(screen.getByText(/test user/i)).toBeInTheDocument();
@@ -61,7 +66,7 @@ describe('Header', () => {
       })
     );
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     expect(screen.getByText(/^testuser$/)).toBeInTheDocument();
   });
@@ -73,7 +78,7 @@ describe('Header', () => {
       })
     );
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     expect(screen.getByText(/@testuser/)).toBeInTheDocument();
   });
@@ -82,7 +87,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -102,7 +107,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error(errorMessage));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -118,7 +123,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -134,7 +139,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error(''));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -151,7 +156,7 @@ describe('Header', () => {
       })
     );
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
@@ -160,7 +165,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Test error'));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -178,7 +183,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -196,7 +201,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(networkError);
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -211,7 +216,7 @@ describe('Header', () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
     vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
 
-    render(<Header />);
+    renderWithRouter(<Header />);
 
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
@@ -227,7 +232,7 @@ describe('Header', () => {
     it('renders hamburger menu button when onMenuToggle is provided', () => {
       vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
-      render(<Header onMenuToggle={() => {}} />);
+      renderWithRouter(<Header onMenuToggle={() => {}} />);
 
       expect(screen.getByRole('button', { name: /open navigation menu/i })).toBeInTheDocument();
     });
@@ -235,7 +240,7 @@ describe('Header', () => {
     it('does not render hamburger menu button when onMenuToggle is not provided', () => {
       vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
 
-      render(<Header />);
+      renderWithRouter(<Header />);
 
       expect(
         screen.queryByRole('button', { name: /open navigation menu/i })
@@ -246,7 +251,7 @@ describe('Header', () => {
       vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
       const onMenuToggle = vi.fn();
 
-      render(<Header onMenuToggle={onMenuToggle} />);
+      renderWithRouter(<Header onMenuToggle={onMenuToggle} />);
 
       const menuButton = screen.getByRole('button', { name: /open navigation menu/i });
       fireEvent.click(menuButton);

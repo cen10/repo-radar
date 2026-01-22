@@ -1,15 +1,33 @@
 import { logger } from '../utils/logger';
+import { GitHubReauthRequiredError } from '../utils/error';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
 
 /**
- * Custom error thrown when GitHub token is unavailable and re-authentication is required
+ * Get a valid GitHub token, falling back to localStorage if providerToken is null.
+ *
+ * This handles the case where Supabase session refresh drops the provider_token
+ * but we still have a valid token stored in localStorage.
+ *
+ * @param providerToken - The token from auth context (may be null after session refresh)
+ * @returns A valid GitHub token
+ * @throws GitHubReauthRequiredError if no token is available
  */
-export class GitHubReauthRequiredError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'GitHubReauthRequiredError';
+export function getValidGitHubToken(providerToken: string | null): string {
+  // 1. Use provider_token if available
+  if (providerToken) {
+    return providerToken;
   }
+
+  // 2. Fall back to stored token (Supabase dropped provider_token on refresh)
+  const storedAccessToken = getStoredAccessToken();
+  if (storedAccessToken) {
+    logger.info('provider_token is null, using stored access token');
+    return storedAccessToken;
+  }
+
+  // 3. No token available - throw error
+  throw new GitHubReauthRequiredError('No GitHub token available');
 }
 
 /**
@@ -45,29 +63,4 @@ export function clearStoredAccessToken(): void {
   } catch (error) {
     logger.warn('Failed to clear access token from localStorage', error);
   }
-}
-
-/**
- * Get a valid GitHub access token
- *
- * @param providerToken - The provider_token from Supabase session (null after session refresh)
- * @returns A valid GitHub access token
- * @throws GitHubReauthRequiredError if no token is available
- */
-export function getValidGitHubToken(providerToken: string | null): string {
-  // Use provider_token if available
-  if (providerToken) {
-    return providerToken;
-  }
-
-  // provider_token is null (Supabase drops it on session refresh) - use stored token
-  // GitHub OAuth tokens don't expire, so the stored token remains valid
-  const storedAccessToken = getStoredAccessToken();
-  if (storedAccessToken) {
-    logger.info('provider_token is null, using stored access token');
-    return storedAccessToken;
-  }
-
-  // No token available - user needs to re-authenticate
-  throw new GitHubReauthRequiredError('No GitHub token available - re-authentication required');
 }
