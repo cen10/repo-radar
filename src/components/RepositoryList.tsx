@@ -246,9 +246,11 @@ const RepositoryList = ({
         <div className="text-center py-4 text-gray-500">
           {totalStarred && totalStarred > MAX_STARRED_REPOS ? (
             <>
-              <p>{`Showing ${MAX_STARRED_REPOS} of ${totalStarred} starred repositories`}</p>
+              <p>
+                {repositories.length === 1 ? '1 repository' : `${repositories.length} repositories`}
+              </p>
               <p className="text-sm mt-1">
-                Search results may be incomplete.{' '}
+                {`Searched ${MAX_STARRED_REPOS} of ${totalStarred} starred repos. `}
                 <a
                   href="https://github.com/stars"
                   target="_blank"
