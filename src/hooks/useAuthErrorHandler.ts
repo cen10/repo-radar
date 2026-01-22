@@ -30,8 +30,13 @@ export function useAuthErrorHandler(error: Error | null, hookName: string) {
         errorMessage: error?.message,
       });
       sessionStorage.setItem('session_expired', 'true');
-      void signOut();
-      void navigate('/');
+      // Await signOut before navigating to prevent race condition where
+      // Home page redirects back to /stars while user is still truthy
+      const handleSignOut = async () => {
+        await signOut();
+        void navigate('/');
+      };
+      void handleSignOut();
     }
   }, [error, signOut, navigate, hookName]);
 }
