@@ -1,12 +1,318 @@
-import { useParams } from 'react-router-dom';
+import { useState, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import {
+  EllipsisVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
+import { useAuth } from '../hooks/useAuth';
+import { useRadar } from '../hooks/useRadar';
+import { useRadarRepositories } from '../hooks/useRadarRepositories';
+import { DeleteRadarModal } from '../components/DeleteRadarModal';
+import { RepoCard } from '../components/RepoCard';
+import { LoadingSpinner, RadarIcon } from '../components/icons';
+import type { Repository } from '../types';
+
+type RadarSortOption = 'updated' | 'stars';
+
+const SORT_OPTIONS = [
+  { value: 'updated' as const, label: 'Recently Updated' },
+  { value: 'stars' as const, label: 'Most Stars' },
+];
 
 const RadarPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { providerToken } = useAuth();
+
+  // Data fetching
+  const {
+    radar,
+    isLoading: radarLoading,
+    error: radarError,
+    isNotFound,
+  } = useRadar({ radarId: id });
+
+  const {
+    repositories,
+    isLoading: reposLoading,
+    error: reposError,
+  } = useRadarRepositories({
+    radarId: id,
+    token: providerToken,
+    enabled: !!radar,
+  });
+
+  // Search & sort state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [sortBy, setSortBy] = useState<RadarSortOption>('updated');
+
+  // Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Client-side search filtering
+  const filteredRepos = useMemo(() => {
+    if (!activeSearch.trim()) return repositories;
+    const query = activeSearch.toLowerCase();
+    return repositories.filter(
+      (repo) =>
+        repo.name.toLowerCase().includes(query) ||
+        repo.description?.toLowerCase().includes(query) ||
+        repo.language?.toLowerCase().includes(query) ||
+        repo.topics.some((t) => t.toLowerCase().includes(query))
+    );
+  }, [repositories, activeSearch]);
+
+  // Client-side sorting
+  const sortedRepos = useMemo(() => {
+    return [...filteredRepos].sort((a, b) =>
+      sortBy === 'stars'
+        ? b.stargazers_count - a.stargazers_count
+        : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+  }, [filteredRepos, sortBy]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveSearch(searchQuery);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+  };
+
+  const handleRename = () => {
+    // Placeholder for rename functionality
+    // TODO: Implement inline edit or rename modal
+    console.log('Rename radar:', radar?.name);
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleted = () => {
+    void navigate('/stars');
+  };
+
+  const isLoading = radarLoading || reposLoading;
+  const error = radarError || reposError;
+  const hasActiveSearch = activeSearch.trim().length > 0;
+
+  // Loading state
+  if (isLoading && !radar) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-center items-center min-h-[400px]" role="status">
+          <LoadingSpinner className="h-12 w-12 text-indigo-600" />
+          <span className="sr-only">Loading radar...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (isNotFound) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-16">
+          <h1 className="text-2xl font-semibold text-gray-900">Radar not found</h1>
+          <p className="mt-2 text-gray-500">
+            This radar doesn&apos;t exist or you don&apos;t have access to it.
+          </p>
+          <Link
+            to="/stars"
+            className="mt-6 inline-block text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            ← Back to My Stars
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12" role="alert">
+          <p className="text-red-600 mb-4">Error loading radar</p>
+          <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+          <Link to="/stars" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            ← Back to My Stars
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Radar loaded successfully
+  const repoCount = repositories.length;
+  const repoText = repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Radar: {id}</h1>
-      <p className="text-gray-600 mt-2">Placeholder - will show radar collection</p>
+      {/* Header with radar name and kebab menu */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
+            <RadarIcon className="h-7 w-7 text-indigo-600" />
+            {radar?.name}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">{repoText}</p>
+        </div>
+
+        <Menu as="div" className="relative">
+          <MenuButton className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span className="sr-only">Open radar menu</span>
+            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+          </MenuButton>
+
+          <MenuItems
+            transition
+            className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
+          >
+            <MenuItem>
+              <button
+                onClick={handleRename}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100"
+              >
+                <PencilIcon className="h-4 w-4" aria-hidden="true" />
+                Rename
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={handleDeleteClick}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 data-focus:bg-gray-100"
+              >
+                <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                Delete
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
+      </div>
+
+      {/* Search and Sort */}
+      {repoCount > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {/* Search */}
+          <form className="flex-1" onSubmit={handleSearchSubmit}>
+            <div className="flex">
+              <label htmlFor="radar-search" className="sr-only">
+                Search
+              </label>
+              <input
+                id="radar-search"
+                name="search"
+                type="text"
+                placeholder="Search repositories in this radar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Search</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as RadarSortOption)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
+            aria-label="Sort repositories"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Loading repos indicator */}
+      {reposLoading && (
+        <div className="flex justify-center items-center py-8" role="status">
+          <LoadingSpinner className="h-8 w-8 text-indigo-600" />
+          <span className="ml-3 text-gray-500">Loading repositories...</span>
+        </div>
+      )}
+
+      {/* Empty radar state */}
+      {!reposLoading && repoCount === 0 && (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-lg">This radar is not tracking any repositories yet.</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Add repositories from your Stars or Explore page
+          </p>
+          <Link
+            to="/stars"
+            className="mt-6 inline-block text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            Browse My Stars →
+          </Link>
+        </div>
+      )}
+
+      {/* No search results */}
+      {!reposLoading && repoCount > 0 && sortedRepos.length === 0 && hasActiveSearch && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No repositories found</p>
+          <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
+          <button
+            onClick={handleClearSearch}
+            className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            Clear search
+          </button>
+        </div>
+      )}
+
+      {/* Repository Grid */}
+      {!reposLoading && sortedRepos.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedRepos.map((repo: Repository) => (
+              <RepoCard key={repo.id} repository={repo} />
+            ))}
+          </div>
+
+          {/* Results count */}
+          <div className="text-center py-4 text-gray-500">
+            {hasActiveSearch ? (
+              <p>
+                {sortedRepos.length === 1
+                  ? '1 repository found'
+                  : `${sortedRepos.length} repositories found`}
+              </p>
+            ) : (
+              <p>{repoText}</p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Delete Modal */}
+      {isDeleteModalOpen && radar && (
+        <DeleteRadarModal
+          radar={radar}
+          repoCount={repoCount}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onDeleted={handleDeleted}
+        />
+      )}
     </div>
   );
 };

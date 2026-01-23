@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GlobeAltIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
@@ -57,6 +58,7 @@ const ExplorePage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
         title="Explore"
+        titleIcon={<GlobeAltIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
         repositories={repositories}
         isLoading={result.isLoading}
         isFetchingMore={result.isFetchingNextPage}

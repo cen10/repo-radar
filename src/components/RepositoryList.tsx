@@ -29,6 +29,7 @@ interface RepositoryListProps {
   onSortChange: (sort: SortOption) => void;
   onLoadMore: () => void;
   title: string;
+  titleIcon: React.ReactNode;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
   emptyMessage: string;
@@ -52,6 +53,7 @@ const RepositoryList = ({
   onSortChange,
   onLoadMore,
   title,
+  titleIcon,
   searchPlaceholder,
   sortOptions,
   emptyMessage,
@@ -113,7 +115,10 @@ const RepositoryList = ({
   const controls = (
     <div>
       {/* Header */}
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">{title}</h1>
+      <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 mb-6">
+        {titleIcon}
+        {title}
+      </h1>
 
       {/* Search and Sort */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">

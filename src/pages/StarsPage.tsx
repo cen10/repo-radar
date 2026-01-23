@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { StarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
@@ -51,6 +52,7 @@ const StarsPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
         title="My Stars"
+        titleIcon={<StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
         repositories={result.repositories}
         isLoading={result.isLoading}
         isFetchingMore={result.isFetchingNextPage}

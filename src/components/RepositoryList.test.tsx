@@ -69,6 +69,7 @@ const defaultProps = {
   onSortChange: vi.fn(),
   onLoadMore: vi.fn(),
   title: 'My Stars',
+  titleIcon: <span data-testid="title-icon">★</span>,
   searchPlaceholder: 'Search your starred repositories...',
   sortOptions: defaultSortOptions,
   emptyMessage: 'No repositories found',
@@ -166,7 +167,7 @@ describe('RepositoryList', () => {
       const repos = [createMockRepository({ id: 1 })];
       render(<RepositoryList {...defaultProps} repositories={repos} title="Custom Title" />);
 
-      expect(screen.getByRole('heading', { name: 'Custom Title' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /custom title/i })).toBeInTheDocument();
     });
   });
 

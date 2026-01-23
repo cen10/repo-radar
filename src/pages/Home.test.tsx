@@ -34,7 +34,7 @@ const mockUser: User = {
 const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
   user: null,
   providerToken: null,
-  loading: false,
+  authLoading: false,
   connectionError: null,
   signInWithGitHub: vi.fn(),
   signOut: vi.fn(),
