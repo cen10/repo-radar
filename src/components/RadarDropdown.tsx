@@ -79,14 +79,12 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [togglingRadarId, setTogglingRadarId] = useState<string | null>(null);
   // Optimistic state for checkbox values during toggle
   const [optimisticRadarIds, setOptimisticRadarIds] = useState<string[] | null>(null);
   const [wasOpen, setWasOpen] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const createButtonRef = useRef<HTMLButtonElement>(null);
-  const activeCheckboxRef = useRef<HTMLInputElement | null>(null);
 
   // Focus input when entering create mode
   useEffect(() => {
@@ -118,16 +116,17 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
 
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
 
-  const invalidateCaches = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ['radars'] });
-    void queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] });
+  const invalidateCaches = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['radars'] }),
+      queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] }),
+    ]);
   }, [queryClient, githubRepoId]);
 
   const handleToggleRadar = async (radar: RadarWithCount, isChecked: boolean) => {
-    setTogglingRadarId(radar.id);
     setError(null);
 
-    // Optimistic update: immediately show the expected state
+    // Optimistic update: immediately show the new state
     const currentIds = optimisticRadarIds ?? radarIds;
     const newOptimisticIds = isChecked
       ? currentIds.filter((id) => id !== radar.id)
@@ -142,18 +141,13 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
         await addRepoToRadar(radar.id, githubRepoId);
         setSuccessMessage(`Added to ${radar.name}`);
       }
-      invalidateCaches();
-      // Clear optimistic state after cache invalidation triggers refetch
-      setOptimisticRadarIds(null);
+      // Sync with server in background
+      void invalidateCaches();
     } catch (err) {
       // Revert optimistic update on error
       setOptimisticRadarIds(null);
       const message = err instanceof Error ? err.message : 'Failed to update radar';
       setError(message);
-    } finally {
-      setTogglingRadarId(null);
-      // Restore focus to the checkbox after re-render
-      setTimeout(() => activeCheckboxRef.current?.focus(), 0);
     }
   };
 
@@ -173,8 +167,8 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
       // Add repo to the new radar
       await addRepoToRadar(newRadar.id, githubRepoId);
 
-      // Invalidate caches
-      invalidateCaches();
+      // Wait for cache invalidation before resetting form
+      await invalidateCaches();
 
       // Reset form and announce success
       setNewRadarName('');
@@ -274,7 +268,6 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
                     {radars.map((radar) => {
                       const isChecked = effectiveRadarIds.includes(radar.id);
                       const isDisabled = isCheckboxDisabled(radar, isChecked);
-                      const isToggling = togglingRadarId === radar.id;
                       const tooltip = isDisabled ? getDisabledTooltip(radar) : null;
 
                       const labelContent = (
@@ -286,39 +279,12 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            disabled={isDisabled || isToggling}
-                            onChange={(e) => {
-                              activeCheckboxRef.current = e.target;
-                              void handleToggleRadar(radar, isChecked);
-                            }}
+                            disabled={isDisabled}
+                            onChange={() => void handleToggleRadar(radar, isChecked)}
                             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                             aria-disabled={isDisabled}
                           />
                           <span className="ml-3 text-sm text-gray-700">{radar.name}</span>
-                          {isToggling && (
-                            <span className="ml-auto">
-                              <svg
-                                className="h-4 w-4 animate-spin text-indigo-600"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                              </svg>
-                            </span>
-                          )}
                         </label>
                       );
 
