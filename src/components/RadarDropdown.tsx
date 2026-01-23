@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -15,6 +16,58 @@ interface RadarDropdownProps {
 }
 
 const MAX_NAME_LENGTH = 50;
+
+// Portal-based tooltip that escapes overflow containers
+interface PortalTooltipProps {
+  content: string;
+  children: React.ReactNode;
+  leftOffset?: number; // Offset from left edge of trigger (default: 28 for checkbox items)
+}
+
+function PortalTooltip({ content, children, leftOffset = 28 }: PortalTooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 4, // 4px gap below trigger
+        left: rect.left + leftOffset,
+      });
+    }
+  }, [leftOffset]);
+
+  const handleMouseEnter = () => {
+    updatePosition();
+    setIsVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsVisible(false);
+  };
+
+  return (
+    <>
+      <div ref={triggerRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        {children}
+      </div>
+      {isVisible &&
+        createPortal(
+          <div
+            className="fixed z-[100] w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white pointer-events-none"
+            style={{ top: position.top, left: position.left }}
+            role="tooltip"
+          >
+            {content}
+            <span className="absolute left-4 bottom-full border-4 border-transparent border-b-gray-900" />
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
 
 export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDropdownProps) {
   const queryClient = useQueryClient();
@@ -224,51 +277,58 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
                       const isToggling = togglingRadarId === radar.id;
                       const tooltip = isDisabled ? getDisabledTooltip(radar) : null;
 
+                      const labelContent = (
+                        <label
+                          className={`flex items-center px-4 py-2 hover:bg-indigo-50 cursor-pointer ${
+                            isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={isDisabled || isToggling}
+                            onChange={(e) => {
+                              activeCheckboxRef.current = e.target;
+                              void handleToggleRadar(radar, isChecked);
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                            aria-disabled={isDisabled}
+                          />
+                          <span className="ml-3 text-sm text-gray-700">{radar.name}</span>
+                          {isToggling && (
+                            <span className="ml-auto">
+                              <svg
+                                className="h-4 w-4 animate-spin text-indigo-600"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                            </span>
+                          )}
+                        </label>
+                      );
+
                       return (
                         <li key={radar.id}>
-                          <label
-                            className={`flex items-center px-4 py-2 hover:bg-indigo-50 cursor-pointer ${
-                              isDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                            title={tooltip ?? undefined}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              disabled={isDisabled || isToggling}
-                              onChange={(e) => {
-                                activeCheckboxRef.current = e.target;
-                                void handleToggleRadar(radar, isChecked);
-                              }}
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
-                              aria-disabled={isDisabled}
-                            />
-                            <span className="ml-3 text-sm text-gray-700">{radar.name}</span>
-                            {isToggling && (
-                              <span className="ml-auto">
-                                <svg
-                                  className="h-4 w-4 animate-spin text-indigo-600"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                              </span>
-                            )}
-                          </label>
+                          {tooltip ? (
+                            <PortalTooltip content={tooltip}>{labelContent}</PortalTooltip>
+                          ) : (
+                            labelContent
+                          )}
                         </li>
                       );
                     })}
@@ -348,17 +408,26 @@ export function RadarDropdown({ githubRepoId, trigger, onOpenChange }: RadarDrop
                       </button>
                     </div>
                   </form>
+                ) : isAtRadarLimit ? (
+                  <PortalTooltip
+                    content={`You've reached your radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER})`}
+                    leftOffset={20}
+                  >
+                    <button
+                      ref={createButtonRef}
+                      onClick={() => setIsCreating(true)}
+                      disabled={isAtRadarLimit}
+                      className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Create new radar
+                    </button>
+                  </PortalTooltip>
                 ) : (
                   <button
                     ref={createButtonRef}
                     onClick={() => setIsCreating(true)}
-                    disabled={isAtRadarLimit}
-                    title={
-                      isAtRadarLimit
-                        ? `You've reached your radar limit (${RADAR_LIMITS.MAX_RADARS_PER_USER})`
-                        : undefined
-                    }
-                    className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <PlusIcon className="h-4 w-4 mr-2" />
                     Create new radar
