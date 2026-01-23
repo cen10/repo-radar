@@ -3,6 +3,9 @@ import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
 import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
+import { RadarDropdown } from './RadarDropdown';
+import { RadarIcon } from './RadarIcon';
+import { useRepoRadars } from '../hooks/useRepoRadars';
 
 interface RepoCardProps {
   repository: Repository;
@@ -10,6 +13,7 @@ interface RepoCardProps {
 
 export function RepoCard({ repository }: RepoCardProps) {
   const {
+    id,
     name,
     owner,
     description,
@@ -21,6 +25,9 @@ export function RepoCard({ repository }: RepoCardProps) {
     metrics,
     is_starred,
   } = repository;
+
+  const { radarIds } = useRepoRadars(id);
+  const isInAnyRadar = radarIds.length > 0;
 
   const topicsLabel =
     topics?.length > 0
@@ -52,7 +59,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           >
             <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
-            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}, opens in new tab`}</span>
+            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}${isInAnyRadar ? ', tracked' : ''}, opens in new tab`}</span>
           </a>
         </div>
         {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}
@@ -64,6 +71,22 @@ export function RepoCard({ repository }: RepoCardProps) {
             className="shrink-0 z-2 mt-0.5"
           />
         )}
+        {/* Radar dropdown - z-[2] to sit above the stretched link overlay (z-[1]) */}
+        <RadarDropdown
+          githubRepoId={id}
+          trigger={
+            <button
+              className={`relative z-2 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                isInAnyRadar
+                  ? 'text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50'
+                  : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
+              }`}
+              aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
+            >
+              <RadarIcon filled={isInAnyRadar} className="h-5 w-5" />
+            </button>
+          }
+        />
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
           <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" aria-label="Starred" />
