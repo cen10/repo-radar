@@ -130,10 +130,10 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
 ## Phase 3.11: Layout & Navigation (T033-T038)
 
-- [ ] T033 Create Sidebar component in `src/components/Sidebar.tsx` with My Stars, Explore nav items
-- [ ] T034 Create SidebarRadarList component for displaying user's radars with counts
-- [ ] T035 Create MobileDrawer component with hamburger menu trigger
-- [ ] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content
+- [x] T033 Create Sidebar component in `src/components/Sidebar.tsx` with My Stars, Explore nav items
+- [x] T034 Create SidebarRadarList component for displaying user's radars with counts
+- [x] T035 Create MobileDrawer component with hamburger menu trigger _(MobileDrawer in Sidebar.tsx, hamburger trigger in Header.tsx)_
+- [x] T036 Create AppLayout wrapper component that combines Header, Sidebar, and main content _(AppLayout function in App.tsx)_
 - [x] T037 Update routing in `src/App.tsx`: add /stars, /explore, /radar/:id, /repo/:id routes
 - [x] T037a Wire up StarsPage and ExplorePage to use RepositoryList component with data hooks (remove tab UI, each page is standalone)
 - [x] T038 Redirect /dashboard to /stars, update post-login redirect to /stars
@@ -149,7 +149,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
 ## Phase 3.13: Radar UI Components (T043-T049)
 
-- [ ] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
+- [x] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
 - [ ] T044 Create RadarDropdown component for desktop "Add to Radar" interaction
 - [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction
 - [ ] T046 Add radar icon to RepoCard with filled/outline states
