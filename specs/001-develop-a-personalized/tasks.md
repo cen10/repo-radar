@@ -150,9 +150,9 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 ## Phase 3.13: Radar UI Components (T043-T049)
 
 - [x] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
-- [ ] T044 Create RadarDropdown component for desktop "Add to Radar" interaction
+- [x] T044 Create ManageRadarsModal component for "Add to Radar" interaction
 - [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction
-- [ ] T046 Add radar icon to RepoCard with filled/outline states
+- [x] T046 Add radar icon to RepoCard with filled/outline states
 - [ ] T047 Create radar sweep animation CSS/component for add-to-radar feedback
 - [ ] T048 Create CreateRadarModal component for creating new radars from sidebar
 - [ ] T049 Create RadarContextMenu component with Rename/Delete actions
