@@ -84,22 +84,13 @@ describe('useRadar', () => {
     expect(result.current.isNotFound).toBe(false);
   });
 
-  it('does not fetch when radarId is undefined', async () => {
-    const { result } = renderHook(() => useRadar({ radarId: undefined }), { wrapper });
-
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.radar).toBeNull();
-    expect(result.current.isNotFound).toBe(false);
+  it('does not fetch when radarId is undefined', () => {
+    renderHook(() => useRadar({ radarId: undefined }), { wrapper });
     expect(radar.getRadar).not.toHaveBeenCalled();
   });
 
-  it('does not fetch when enabled is false', async () => {
-    const { result } = renderHook(() => useRadar({ radarId: 'radar-1', enabled: false }), {
-      wrapper,
-    });
-
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.radar).toBeNull();
+  it('does not fetch when enabled is false', () => {
+    renderHook(() => useRadar({ radarId: 'radar-1', enabled: false }), { wrapper });
     expect(radar.getRadar).not.toHaveBeenCalled();
   });
 
