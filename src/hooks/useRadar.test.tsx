@@ -51,7 +51,6 @@ describe('useRadar', () => {
     });
 
     expect(result.current.radar).toEqual(mockRadar);
-    expect(result.current.radar?.name).toBe('Frontend Tools');
     expect(result.current.error).toBeNull();
     expect(result.current.isNotFound).toBe(false);
   });
