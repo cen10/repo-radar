@@ -1,17 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import {
-  EllipsisVerticalIcon,
-  PencilIcon,
-  TrashIcon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
+import { EllipsisVerticalIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { DeleteRadarModal } from '../components/DeleteRadarModal';
 import { RepoCard } from '../components/RepoCard';
+import { SearchBar } from '../components/SearchBar';
+import { SortDropdown } from '../components/SortDropdown';
 import { LoadingSpinner, RadarIcon } from '../components/icons';
 import type { Repository } from '../types';
 
@@ -74,11 +71,6 @@ const RadarPage = () => {
         : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
   }, [filteredRepos, sortBy]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setActiveSearch(searchQuery);
-  };
 
   const handleClearSearch = () => {
     setSearchQuery('');
@@ -201,44 +193,14 @@ const RadarPage = () => {
       {/* Search and Sort */}
       {repoCount > 0 && (
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          {/* Search */}
-          <form className="flex-1" onSubmit={handleSearchSubmit}>
-            <div className="flex">
-              <label htmlFor="radar-search" className="sr-only">
-                Search
-              </label>
-              <input
-                id="radar-search"
-                name="search"
-                type="text"
-                placeholder="Search repositories in this radar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-              >
-                <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">Search</span>
-              </button>
-            </div>
-          </form>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as RadarSortOption)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
-            aria-label="Sort repositories"
-          >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <SearchBar
+            id="radar-search"
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={setActiveSearch}
+            placeholder="Search repositories in this radar..."
+          />
+          <SortDropdown value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
         </div>
       )}
 
