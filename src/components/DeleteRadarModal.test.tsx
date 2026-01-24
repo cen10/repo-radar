@@ -106,7 +106,7 @@ describe('DeleteRadarModal', () => {
     it('shows loading spinner during deletion', async () => {
       const user = userEvent.setup();
       // Create a promise that doesn't resolve immediately
-      let resolveDelete: () => void;
+      let resolveDelete!: () => void;
       const deletePromise = new Promise<void>((resolve) => {
         resolveDelete = resolve;
       });
@@ -120,7 +120,7 @@ describe('DeleteRadarModal', () => {
       expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
 
       // Resolve the promise
-      resolveDelete!();
+      resolveDelete();
     });
 
     it('shows error message on delete failure', async () => {
@@ -157,28 +157,37 @@ describe('DeleteRadarModal', () => {
   });
 
   describe('Modal closing behavior', () => {
-    it('does not close modal during deletion', async () => {
+    it('does not close modal during deletion, but does after success', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
+      const onDeleted = vi.fn();
       // Create a promise that doesn't resolve immediately
-      let resolveDelete: () => void;
+      let resolveDelete!: () => void;
       const deletePromise = new Promise<void>((resolve) => {
         resolveDelete = resolve;
       });
       vi.mocked(radarService.deleteRadar).mockReturnValue(deletePromise);
 
-      renderWithProviders(<DeleteRadarModal {...defaultProps} onClose={onClose} />);
+      renderWithProviders(
+        <DeleteRadarModal {...defaultProps} onClose={onClose} onDeleted={onDeleted} />
+      );
 
       await user.click(screen.getByRole('button', { name: /delete/i }));
 
       // Try to click cancel while deleting
       await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-      // onClose should not have been called
+      // onClose should not have been called during deletion
       expect(onClose).not.toHaveBeenCalled();
+      expect(onDeleted).not.toHaveBeenCalled();
 
       // Resolve the promise
-      resolveDelete!();
+      resolveDelete();
+
+      // Now onDeleted should be called
+      await waitFor(() => {
+        expect(onDeleted).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });
