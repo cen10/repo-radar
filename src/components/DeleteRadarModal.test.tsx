@@ -136,7 +136,7 @@ describe('DeleteRadarModal', () => {
       });
     });
 
-    it('invalidates radars cache on success', async () => {
+    it('invalidates all radar caches on success', async () => {
       const user = userEvent.setup();
       const testQueryClient = createTestQueryClient();
       const invalidateQueriesSpy = vi.spyOn(testQueryClient, 'invalidateQueries');
@@ -148,6 +148,10 @@ describe('DeleteRadarModal', () => {
 
       await waitFor(() => {
         expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['radar', 'radar-123'] });
+        expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+          queryKey: ['radarRepositories', 'radar-123'],
+        });
       });
     });
   });
