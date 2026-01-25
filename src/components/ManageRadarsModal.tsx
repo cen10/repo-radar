@@ -72,7 +72,6 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
   const { radarIds, isLoading: isLoadingRepoRadars } = useRepoRadars(githubRepoId);
 
   const [error, setError] = useState<string | null>(null);
-  const [optimisticRadarIds, setOptimisticRadarIds] = useState<string[] | null>(null);
 
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
 
@@ -80,22 +79,15 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
   const totalRepos = radars.reduce((sum, r) => sum + r.repo_count, 0);
   const isAtTotalRepoLimit = totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS;
 
-  const invalidateCaches = useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['radars'] }),
-      queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] }),
-    ]);
-  }, [queryClient, githubRepoId]);
+  const queryKey = ['repo-radars', githubRepoId] as const;
 
   const handleToggleRadar = async (radar: RadarWithCount, isChecked: boolean) => {
     setError(null);
 
-    // Optimistic update: immediately show the new state
-    const currentIds = optimisticRadarIds ?? radarIds;
-    const newOptimisticIds = isChecked
-      ? currentIds.filter((id) => id !== radar.id)
-      : [...currentIds, radar.id];
-    setOptimisticRadarIds(newOptimisticIds);
+    // Optimistic update: directly update the cache
+    const previousIds = radarIds;
+    const newIds = isChecked ? radarIds.filter((id) => id !== radar.id) : [...radarIds, radar.id];
+    queryClient.setQueryData(queryKey, newIds);
 
     try {
       if (isChecked) {
@@ -103,12 +95,12 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
       } else {
         await addRepoToRadar(radar.id, githubRepoId);
       }
-      // Sync with server, then clear optimistic state to use fresh data
-      await invalidateCaches();
-      setOptimisticRadarIds(null);
+      // Refresh both caches with server data
+      void queryClient.invalidateQueries({ queryKey: ['radars'] });
+      void queryClient.invalidateQueries({ queryKey });
     } catch (err) {
-      // Revert optimistic update on error
-      setOptimisticRadarIds(null);
+      // Revert to previous state on error
+      queryClient.setQueryData(queryKey, previousIds);
       const message = err instanceof Error ? err.message : 'Failed to update radar';
       setError(message);
     }
@@ -130,9 +122,6 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
     }
     return null;
   };
-
-  // Use optimistic state if available, otherwise use server state
-  const effectiveRadarIds = optimisticRadarIds ?? radarIds;
 
   return (
     <Dialog open={true} onClose={onClose} className="relative z-50">
@@ -171,7 +160,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
               ) : (
                 <ul className="space-y-1">
                   {radars.map((radar) => {
-                    const isChecked = effectiveRadarIds.includes(radar.id);
+                    const isChecked = radarIds.includes(radar.id);
                     const isDisabled = isCheckboxDisabled(radar, isChecked);
                     const tooltip = isDisabled ? getDisabledTooltip(radar) : null;
 
