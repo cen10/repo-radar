@@ -103,8 +103,9 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
       } else {
         await addRepoToRadar(radar.id, githubRepoId);
       }
-      // Sync with server in background
-      void invalidateCaches();
+      // Sync with server, then clear optimistic state to use fresh data
+      await invalidateCaches();
+      setOptimisticRadarIds(null);
     } catch (err) {
       // Revert optimistic update on error
       setOptimisticRadarIds(null);
