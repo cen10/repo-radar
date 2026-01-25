@@ -1,7 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { EllipsisVerticalIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowLeftIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
@@ -120,7 +125,7 @@ const RadarPage = () => {
             to="/stars"
             className="mt-6 inline-block text-indigo-600 hover:text-indigo-700 font-medium"
           >
-            ← Back to My Stars
+            <ArrowLeftIcon className="inline h-4 w-4" aria-hidden="true" /> Back to My Stars
           </Link>
         </div>
       </div>
@@ -135,7 +140,7 @@ const RadarPage = () => {
           <p className="text-red-600 mb-4">Error loading radar</p>
           <p className="text-sm text-gray-600 mb-4">{error.message}</p>
           <Link to="/stars" className="text-indigo-600 hover:text-indigo-700 font-medium">
-            ← Back to My Stars
+            <ArrowLeftIcon className="inline h-4 w-4" aria-hidden="true" /> Back to My Stars
           </Link>
         </div>
       </div>
