@@ -794,6 +794,13 @@ export async function fetchRepositoriesByIds(
   results.forEach((result, index) => {
     if (result.status === 'fulfilled' && result.value !== null) {
       repositories.push(result.value);
+    } else if (result.status === 'rejected') {
+      // Propagate auth/rate-limit errors instead of silently swallowing them
+      const error = result.reason;
+      if (error instanceof Error && error.message.includes('GitHub')) {
+        throw error;
+      }
+      failedIds.push(repoIds[index]);
     } else {
       failedIds.push(repoIds[index]);
     }
