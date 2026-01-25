@@ -68,12 +68,17 @@ function PortalTooltip({ content, children, leftOffset = 28 }: PortalTooltipProp
 
 export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalProps) {
   const queryClient = useQueryClient();
-  const { radars, isLoading: isLoadingRadars } = useRadars();
-  const { radarIds, isLoading: isLoadingRepoRadars } = useRepoRadars(githubRepoId);
+  const { radars, isLoading: isLoadingRadars, error: radarsError } = useRadars();
+  const {
+    radarIds,
+    isLoading: isLoadingRepoRadars,
+    error: repoRadarsError,
+  } = useRepoRadars(githubRepoId);
 
-  const [error, setError] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
+  const fetchError = radarsError || repoRadarsError;
 
   // Derived state for limits
   const totalRepos = radars.reduce((sum, r) => sum + r.repo_count, 0);
@@ -83,7 +88,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
   const radarsQueryKey = ['radars'] as const;
 
   const handleToggleRadar = async (radar: RadarWithCount, isChecked: boolean) => {
-    setError(null);
+    setToggleError(null);
 
     // Optimistic update: update both caches for consistent UI state
     const previousIds = radarIds;
@@ -112,7 +117,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
       queryClient.setQueryData(repoRadarsQueryKey, previousIds);
       queryClient.setQueryData(radarsQueryKey, previousRadars);
       const message = err instanceof Error ? err.message : 'Failed to update radar';
-      setError(message);
+      setToggleError(message);
     }
   };
 
@@ -163,6 +168,10 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
             <div className="max-h-64 overflow-y-auto">
               {isLoading ? (
                 <div className="py-3 text-sm text-gray-500">Loading...</div>
+              ) : fetchError ? (
+                <div className="py-3 text-sm text-red-600">
+                  Failed to load radars. Please try again.
+                </div>
               ) : radars.length === 0 ? (
                 <div className="py-3 text-sm text-gray-500">
                   No radars yet. Create one in the sidebar.
@@ -206,11 +215,11 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
               )}
             </div>
 
-            {/* Error message */}
-            {error && (
+            {/* Toggle error message */}
+            {toggleError && (
               <div className="mt-3 rounded-md bg-red-50 px-3 py-2">
                 <p className="text-sm text-red-600" role="alert">
-                  {error}
+                  {toggleError}
                 </p>
               </div>
             )}
