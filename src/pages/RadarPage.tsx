@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { DeleteRadarModal } from '../components/DeleteRadarModal';
+import { RenameRadarModal } from '../components/RenameRadarModal';
 import { RepoCard } from '../components/RepoCard';
 import { SearchBar } from '../components/SearchBar';
 import { SortDropdown } from '../components/SortDropdown';
@@ -48,6 +49,7 @@ const RadarPage = () => {
   const [sortBy, setSortBy] = useState<RadarSortOption>('updated');
 
   // Modal state
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Client-side search filtering
@@ -77,10 +79,8 @@ const RadarPage = () => {
     setActiveSearch('');
   };
 
-  const handleRename = () => {
-    // Placeholder for rename functionality
-    // TODO: Implement inline edit or rename modal
-    console.log('Rename radar:', radar?.name);
+  const handleRenameClick = () => {
+    setIsRenameModalOpen(true);
   };
 
   const handleDeleteClick = () => {
@@ -170,7 +170,7 @@ const RadarPage = () => {
           >
             <MenuItem>
               <button
-                onClick={handleRename}
+                onClick={handleRenameClick}
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100"
               >
                 <PencilIcon className="h-4 w-4" aria-hidden="true" />
@@ -264,6 +264,11 @@ const RadarPage = () => {
             )}
           </div>
         </>
+      )}
+
+      {/* Rename Modal */}
+      {isRenameModalOpen && radar && (
+        <RenameRadarModal radar={radar} onClose={() => setIsRenameModalOpen(false)} />
       )}
 
       {/* Delete Modal */}
