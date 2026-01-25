@@ -52,8 +52,8 @@ const RadarPage = () => {
 
   // Client-side search filtering
   const filteredRepos = useMemo(() => {
-    if (!activeSearch.trim()) return repositories;
-    const query = activeSearch.toLowerCase();
+    const query = activeSearch.trim().toLowerCase();
+    if (!query) return repositories;
     return repositories.filter(
       (repo) =>
         repo.name.toLowerCase().includes(query) ||
