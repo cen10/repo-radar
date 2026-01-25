@@ -79,15 +79,24 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
   const totalRepos = radars.reduce((sum, r) => sum + r.repo_count, 0);
   const isAtTotalRepoLimit = totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS;
 
-  const queryKey = ['repo-radars', githubRepoId] as const;
+  const repoRadarsQueryKey = ['repo-radars', githubRepoId] as const;
+  const radarsQueryKey = ['radars'] as const;
 
   const handleToggleRadar = async (radar: RadarWithCount, isChecked: boolean) => {
     setError(null);
 
-    // Optimistic update: directly update the cache
+    // Optimistic update: update both caches for consistent UI state
     const previousIds = radarIds;
+    const previousRadars = radars;
+
     const newIds = isChecked ? radarIds.filter((id) => id !== radar.id) : [...radarIds, radar.id];
-    queryClient.setQueryData(queryKey, newIds);
+    queryClient.setQueryData(repoRadarsQueryKey, newIds);
+
+    // Also update radars cache to keep repo_count in sync with checkbox state
+    const newRadars = radars.map((r) =>
+      r.id === radar.id ? { ...r, repo_count: r.repo_count + (isChecked ? -1 : 1) } : r
+    );
+    queryClient.setQueryData(radarsQueryKey, newRadars);
 
     try {
       if (isChecked) {
@@ -96,11 +105,12 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
         await addRepoToRadar(radar.id, githubRepoId);
       }
       // Refresh both caches with server data
-      void queryClient.invalidateQueries({ queryKey: ['radars'] });
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: radarsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: repoRadarsQueryKey });
     } catch (err) {
-      // Revert to previous state on error
-      queryClient.setQueryData(queryKey, previousIds);
+      // Revert both caches on error
+      queryClient.setQueryData(repoRadarsQueryKey, previousIds);
+      queryClient.setQueryData(radarsQueryKey, previousRadars);
       const message = err instanceof Error ? err.message : 'Failed to update radar';
       setError(message);
     }
