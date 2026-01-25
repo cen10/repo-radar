@@ -114,7 +114,7 @@ const RadarPage = () => {
         <div className="text-center py-16">
           <h1 className="text-2xl font-semibold text-gray-900">Radar not found</h1>
           <p className="mt-2 text-gray-500">
-            This radar doesn&apos;t exist or you don&apos;t have access to it.
+            This radar doesn't exist or you don't have access to it.
           </p>
           <Link
             to="/stars"
