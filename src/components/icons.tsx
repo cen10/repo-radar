@@ -50,18 +50,3 @@ export function RadarIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-// Radar icon - filled version for active state (bullseye pattern)
-// Radii are 0.75 larger than outline version to account for stroke width
-export function RadarIconSolid({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      {/* Layered circles: colored -> white -> colored -> white -> colored (center) */}
-      <circle cx="12" cy="12" r="9.75" />
-      <circle cx="12" cy="12" r="8.25" fill="white" />
-      <circle cx="12" cy="12" r="6.75" />
-      <circle cx="12" cy="12" r="5.25" fill="white" />
-      <circle cx="12" cy="12" r="3.75" />
-    </svg>
-  );
-}

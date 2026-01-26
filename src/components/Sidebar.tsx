@@ -2,10 +2,6 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
-import {
-  StarIcon as StarIconSolid,
-  GlobeAltIcon as GlobeAltIconSolid,
-} from '@heroicons/react/24/solid';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
@@ -61,12 +57,11 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  activeIcon: React.ComponentType<{ className?: string }>;
 }
 
 const navItems: NavItem[] = [
-  { to: '/stars', label: 'My Stars', icon: StarIcon, activeIcon: StarIconSolid },
-  { to: '/explore', label: 'Explore', icon: GlobeAltIcon, activeIcon: GlobeAltIconSolid },
+  { to: '/stars', label: 'My Stars', icon: StarIcon },
+  { to: '/explore', label: 'Explore', icon: GlobeAltIcon },
 ];
 
 interface NavContentProps {
@@ -79,7 +74,7 @@ interface NavContentProps {
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
   return (
     <div className="space-y-1 pt-8 pb-4 px-2">
-      {navItems.map(({ to, label, icon: Icon, activeIcon: ActiveIcon }) => (
+      {navItems.map(({ to, label, icon: Icon }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
             to={to}
@@ -104,11 +99,10 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
                       : ''
                   }`}
                 >
-                  {isActive ? (
-                    <ActiveIcon className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  )}
+                  <Icon
+                    className={`h-5 w-5 ${isActive ? 'text-indigo-600' : ''}`}
+                    aria-hidden="true"
+                  />
                 </span>
                 <span
                   className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${

@@ -5,6 +5,7 @@ import {
   searchRepositories,
   fetchRateLimit,
   fetchRepositoryReleases,
+  fetchRepositoriesByIds,
 } from './github';
 
 // Mock fetch globally
@@ -662,6 +663,101 @@ describe('GitHub API Service', () => {
       expect(result[0].draft).toBe(false);
       expect(result[1].prerelease).toBe(false);
       expect(result[1].draft).toBe(true);
+    });
+  });
+
+  describe('fetchRepositoriesByIds', () => {
+    // Helper to create mock repo response for /repositories/{id} endpoint
+    const createMockRepoResponse = (id: number, name: string) => ({
+      id,
+      name,
+      full_name: `user/${name}`,
+      owner: {
+        login: 'user',
+        avatar_url: 'https://example.com/avatar.jpg',
+      },
+      description: 'Test repository',
+      html_url: `https://github.com/user/${name}`,
+      stargazers_count: 100,
+      open_issues_count: 5,
+      language: 'TypeScript',
+      topics: ['testing'],
+      updated_at: '2024-01-01T00:00:00Z',
+      pushed_at: '2024-01-01T00:00:00Z',
+      created_at: '2023-01-01T00:00:00Z',
+    });
+
+    it('should fetch repositories by IDs successfully', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => createMockRepoResponse(1, 'repo-1'),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => createMockRepoResponse(2, 'repo-2'),
+        });
+
+      const result = await fetchRepositoriesByIds(testToken, [1, 2]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('repo-1');
+      expect(result[1].name).toBe('repo-2');
+    });
+
+    it('should return empty array for empty input', async () => {
+      const result = await fetchRepositoriesByIds(testToken, []);
+
+      expect(result).toEqual([]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should skip repos that return 404', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => createMockRepoResponse(1, 'repo-1'),
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => createMockRepoResponse(3, 'repo-3'),
+        });
+
+      const result = await fetchRepositoriesByIds(testToken, [1, 2, 3]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('repo-1');
+      expect(result[1].name).toBe('repo-3');
+    });
+
+    it('should propagate authentication errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+      });
+
+      await expect(fetchRepositoriesByIds(testToken, [1])).rejects.toThrow(
+        'GitHub authentication failed'
+      );
+    });
+
+    it('should propagate rate limit errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        headers: new Headers({
+          'x-ratelimit-remaining': '0',
+          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+        }),
+      });
+
+      await expect(fetchRepositoriesByIds(testToken, [1])).rejects.toThrow(
+        'GitHub API rate limit exceeded'
+      );
     });
   });
 });

@@ -690,3 +690,128 @@ export async function fetchRepositoryReleases(
     throw error;
   }
 }
+
+/**
+ * Fetch a single repository by its GitHub numeric ID.
+ * Uses GET /repositories/{id} endpoint.
+ * @param token - GitHub access token
+ * @param repoId - GitHub repository numeric ID
+ * @returns Repository data or null if not found/inaccessible
+ */
+async function fetchRepositoryById(token: string, repoId: number): Promise<Repository | null> {
+  const url = `${GITHUB_API_BASE}/repositories/${repoId}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        // Repo deleted or made private
+        return null;
+      }
+      if (response.status === 401) {
+        throw new Error('GitHub authentication failed. Please sign in again.');
+      }
+      if (response.status === 403) {
+        const remaining = response.headers.get('x-ratelimit-remaining');
+        if (remaining === '0') {
+          const resetTime = response.headers.get('x-ratelimit-reset');
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
+          throw new Error(
+            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
+          );
+        }
+        // Repo access forbidden (private repo we can't access)
+        return null;
+      }
+      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    }
+
+    const repo: GitHubStarredRepo = await response.json();
+
+    return {
+      id: repo.id,
+      name: repo.name,
+      full_name: repo.full_name,
+      owner: {
+        login: repo.owner.login,
+        avatar_url: repo.owner.avatar_url,
+      },
+      description: repo.description,
+      html_url: repo.html_url,
+      stargazers_count: repo.stargazers_count,
+      open_issues_count: repo.open_issues_count,
+      language: repo.language,
+      topics: repo.topics || [],
+      updated_at: repo.updated_at,
+      pushed_at: repo.pushed_at,
+      created_at: repo.created_at,
+      is_starred: false, // Will be determined by caller if needed
+      metrics: {
+        stars_growth_rate: calculateGrowthRate(repo),
+        stars_gained: calculateStarsGained(repo),
+        issues_growth_rate: 0,
+        is_trending: isTrending(repo),
+      },
+    };
+  } catch (error) {
+    // Re-throw auth/rate-limit errors
+    if (error instanceof Error && error.message.includes('GitHub')) {
+      throw error;
+    }
+    logger.error('Failed to fetch repository by ID:', { repoId, error });
+    return null;
+  }
+}
+
+/**
+ * Fetch multiple repositories by their GitHub numeric IDs.
+ * Uses parallel requests for performance.
+ * Skips any repos that fail to fetch (deleted, private, etc.).
+ * @param token - GitHub access token
+ * @param repoIds - Array of GitHub repository numeric IDs
+ * @returns Array of successfully fetched repositories
+ */
+export async function fetchRepositoriesByIds(
+  token: string,
+  repoIds: number[]
+): Promise<Repository[]> {
+  if (repoIds.length === 0) {
+    return [];
+  }
+
+  const results = await Promise.allSettled(repoIds.map((id) => fetchRepositoryById(token, id)));
+
+  const repositories: Repository[] = [];
+  const failedIds: number[] = [];
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value !== null) {
+      repositories.push(result.value);
+    } else if (result.status === 'rejected') {
+      // Propagate auth/rate-limit errors instead of silently swallowing them
+      const error = result.reason;
+      if (error instanceof Error && error.message.includes('GitHub')) {
+        throw error;
+      }
+      failedIds.push(repoIds[index]);
+    } else {
+      failedIds.push(repoIds[index]);
+    }
+  });
+
+  if (failedIds.length > 0) {
+    logger.warn('Some repositories could not be fetched', {
+      failedCount: failedIds.length,
+      failedIds: failedIds.slice(0, 10), // Log first 10 for debugging
+    });
+  }
+
+  return repositories;
+}
