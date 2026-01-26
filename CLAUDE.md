@@ -84,10 +84,34 @@ Component → TanStack Query hook → Service function → Data source
 | `useInfiniteSearch` | GitHub API | `services/github.ts` |
 
 **For local/UI state**, use React primitives:
-- `useState` for component state
+- `useState` for component state (form inputs, modal open/close, UI toggles)
 - `useContext` (e.g., `AuthContext`) for shared client state
 
 **Not used**: TanStack Query for local-only state. Keep server state and client state separate.
+
+### Optimistic Updates
+
+For optimistic updates to server state, use direct cache manipulation via `queryClient.setQueryData()` - never separate `useState`:
+
+```typescript
+// ✓ Good: Direct cache manipulation (single source of truth)
+const handleToggle = async () => {
+  const previousData = queryClient.getQueryData(queryKey);
+  queryClient.setQueryData(queryKey, optimisticData);
+  try {
+    await mutate();
+    void queryClient.invalidateQueries({ queryKey });
+  } catch {
+    queryClient.setQueryData(queryKey, previousData); // Revert on error
+  }
+};
+
+// ✗ Bad: Separate optimistic state (two sources of truth, error-prone)
+const [optimisticData, setOptimisticData] = useState(null);
+const effectiveData = optimisticData ?? serverData; // Complex derivation
+```
+
+The key insight: TanStack Query's cache *is* the state - it's mutable via `setQueryData()`. Optimistic UI state for server data is NOT "local/UI state" - it belongs in the cache.
 
 ## Performance Targets
 
@@ -169,6 +193,21 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     // Guard against TanStack Query race condition where rapid pagination
     // can trigger duplicate fetches (see issue #6689)
     const isFetchingRef = useRef(false);
+    ```
+
+18. **Avoid deeply nested ternaries**: Never nest ternaries more than two levels. For conditional rendering with multiple states, use if-else in a render function:
+
+    ```tsx
+    // ✗ Bad: Deeply nested ternary
+    {isLoading ? <Loading /> : error ? <Error /> : data.length === 0 ? <Empty /> : <List />}
+
+    // ✓ Good: Render function with if-else
+    const renderContent = () => {
+      if (isLoading) return <Loading />;
+      if (error) return <Error />;
+      if (data.length === 0) return <Empty />;
+      return <List />;
+    };
     ```
 
 ## Testing Best Practices
