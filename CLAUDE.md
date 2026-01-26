@@ -195,6 +195,21 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     const isFetchingRef = useRef(false);
     ```
 
+18. **Avoid deeply nested ternaries**: Never nest ternaries more than two levels. For conditional rendering with multiple states, use if-else in a render function:
+
+    ```tsx
+    // ✗ Bad: Deeply nested ternary
+    {isLoading ? <Loading /> : error ? <Error /> : data.length === 0 ? <Empty /> : <List />}
+
+    // ✓ Good: Render function with if-else
+    const renderContent = () => {
+      if (isLoading) return <Loading />;
+      if (error) return <Error />;
+      if (data.length === 0) return <Empty />;
+      return <List />;
+    };
+    ```
+
 ## Testing Best Practices
 
 ### Logger Mocking Pattern

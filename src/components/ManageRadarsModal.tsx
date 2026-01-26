@@ -138,6 +138,61 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
     return null;
   };
 
+  const renderRadarList = () => {
+    let statusMessage: string | null = null;
+
+    if (isLoading) {
+      statusMessage = 'Loading...';
+    } else if (fetchError) {
+      statusMessage = 'Failed to load radars. Please try again.';
+    } else if (radars.length === 0) {
+      statusMessage = 'No radars yet. Create one in the sidebar.';
+    }
+
+    if (statusMessage) {
+      const colorClass = fetchError ? 'text-red-600' : 'text-gray-500';
+      return <div className={`py-3 text-sm ${colorClass}`}>{statusMessage}</div>;
+    }
+
+    return (
+      <ul className="space-y-1">
+        {radars.map((radar) => {
+          const isChecked = radarIds.includes(radar.id);
+          const isDisabled = isCheckboxDisabled(radar, isChecked);
+          const tooltip = isDisabled ? getDisabledTooltip(radar) : null;
+
+          const labelContent = (
+            <label
+              className={`flex items-center rounded-md px-3 py-2 hover:bg-indigo-50 cursor-pointer ${
+                isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isChecked}
+                disabled={isDisabled}
+                onChange={() => void handleToggleRadar(radar, isChecked)}
+                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                aria-disabled={isDisabled}
+              />
+              <span className="ml-3 text-sm text-gray-700">{radar.name}</span>
+            </label>
+          );
+
+          return (
+            <li key={radar.id}>
+              {tooltip ? (
+                <PortalTooltip content={tooltip}>{labelContent}</PortalTooltip>
+              ) : (
+                labelContent
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   return (
     <Dialog open={true} onClose={onClose} className="relative z-50">
       <DialogBackdrop
@@ -165,55 +220,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
           {/* Content */}
           <div className="px-6 py-4">
             {/* Radar list */}
-            <div className="max-h-64 overflow-y-auto">
-              {isLoading ? (
-                <div className="py-3 text-sm text-gray-500">Loading...</div>
-              ) : fetchError ? (
-                <div className="py-3 text-sm text-red-600">
-                  Failed to load radars. Please try again.
-                </div>
-              ) : radars.length === 0 ? (
-                <div className="py-3 text-sm text-gray-500">
-                  No radars yet. Create one in the sidebar.
-                </div>
-              ) : (
-                <ul className="space-y-1">
-                  {radars.map((radar) => {
-                    const isChecked = radarIds.includes(radar.id);
-                    const isDisabled = isCheckboxDisabled(radar, isChecked);
-                    const tooltip = isDisabled ? getDisabledTooltip(radar) : null;
-
-                    const labelContent = (
-                      <label
-                        className={`flex items-center rounded-md px-3 py-2 hover:bg-indigo-50 cursor-pointer ${
-                          isDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          disabled={isDisabled}
-                          onChange={() => void handleToggleRadar(radar, isChecked)}
-                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
-                          aria-disabled={isDisabled}
-                        />
-                        <span className="ml-3 text-sm text-gray-700">{radar.name}</span>
-                      </label>
-                    );
-
-                    return (
-                      <li key={radar.id}>
-                        {tooltip ? (
-                          <PortalTooltip content={tooltip}>{labelContent}</PortalTooltip>
-                        ) : (
-                          labelContent
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+            <div className="max-h-64 overflow-y-auto">{renderRadarList()}</div>
 
             {/* Toggle error message */}
             {toggleError && (
