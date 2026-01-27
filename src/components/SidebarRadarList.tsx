@@ -4,7 +4,8 @@ import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip, useSidebarContext } from './Sidebar';
-import { LoadingSpinner, RadarIcon } from './icons';
+import { RadarIcon } from './icons';
+import { Button } from './Button';
 
 interface SidebarRadarListProps {
   onLinkClick: () => void;
@@ -105,24 +106,10 @@ function ErrorState({ onRetry, isFetching }: ErrorStateProps) {
   return (
     <div className="px-3 py-4 text-center" role="alert">
       <p className="text-sm text-gray-500 mb-2">Failed to load radars</p>
-      <button
-        onClick={onRetry}
-        disabled={isFetching}
-        aria-busy={isFetching}
-        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
-      >
-        {isFetching ? (
-          <>
-            <LoadingSpinner className="h-3 w-3" />
-            Retrying...
-          </>
-        ) : (
-          <>
-            <ArrowPathIcon className="h-3 w-3" aria-hidden="true" />
-            Retry
-          </>
-        )}
-      </button>
+      <Button variant="link" onClick={onRetry} loading={isFetching} loadingText="Retrying...">
+        <ArrowPathIcon className="h-4 w-4 mr-1" aria-hidden="true" />
+        Retry
+      </Button>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { RepoCard } from '../components/RepoCard';
 import { SearchBar } from '../components/SearchBar';
 import { SortDropdown } from '../components/SortDropdown';
 import { LoadingSpinner, RadarIcon } from '../components/icons';
+import { Button } from '../components/Button';
 import type { Repository } from '../types';
 
 type RadarSortOption = 'updated' | 'stars';
@@ -238,12 +239,9 @@ const RadarPage = () => {
         <div className="text-center py-12">
           <p className="text-gray-500">No repositories found</p>
           <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
-          <button
-            onClick={handleClearSearch}
-            className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
-          >
+          <Button variant="link" onClick={handleClearSearch} className="mt-4">
             Clear search
-          </button>
+          </Button>
         </div>
       )}
 

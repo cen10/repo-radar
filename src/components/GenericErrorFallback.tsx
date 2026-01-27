@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
-import { LoadingSpinner } from './icons';
 import { ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getErrorMessage } from '../utils/error';
+import { Button } from './Button';
 
 export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const [isRetrying, setIsRetrying] = useState(false);
@@ -33,25 +33,16 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
           We encountered an unexpected error. Please try refreshing the page or contact support if
           the problem persists.
         </p>
-        <button
+        <Button
           ref={retryButtonRef}
           onClick={handleRetry}
-          disabled={isRetrying}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-busy={isRetrying}
+          loading={isRetrying}
+          loadingText="Retrying..."
+          fullWidth
         >
-          {isRetrying ? (
-            <>
-              <LoadingSpinner className="w-4 h-4 mr-2" />
-              Retrying...
-            </>
-          ) : (
-            <>
-              <ArrowPathIcon className="w-4 h-4 mr-2" />
-              Try Again
-            </>
-          )}
-        </button>
+          <ArrowPathIcon className="w-4 h-4 mr-2" />
+          Try Again
+        </Button>
 
         {process.env.NODE_ENV === 'development' && (
           <details className="mt-6 text-left w-full max-w-none">

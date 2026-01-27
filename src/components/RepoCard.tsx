@@ -7,6 +7,7 @@ import { HotBadge } from './HotBadge';
 import { ManageRadarsModal } from './ManageRadarsModal';
 import { RadarIcon } from './RadarIcon';
 import { useRepoRadars } from '../hooks/useRepoRadars';
+import { Button } from './Button';
 
 interface RepoCardProps {
   repository: Repository;
@@ -74,9 +75,11 @@ export function RepoCard({ repository }: RepoCardProps) {
           />
         )}
         {/* Radar button - z-[2] to sit above the stretched link overlay (z-[1]) */}
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setIsModalOpen(true)}
-          className={`relative z-2 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+          className={`relative z-2 ${
             isInAnyRadar
               ? 'text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50'
               : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
@@ -84,7 +87,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
           <RadarIcon filled={isInAnyRadar} className="h-5 w-5" />
-        </button>
+        </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
           <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" aria-label="Starred" />

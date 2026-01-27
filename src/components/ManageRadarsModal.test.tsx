@@ -110,7 +110,7 @@ describe('ManageRadarsModal', () => {
         id: 'repo-1',
         radar_id: 'radar-1',
         github_repo_id: TEST_REPO_ID,
-        created_at: '2024-01-15T10:00:00Z',
+        added_at: '2024-01-15T10:00:00Z',
       });
 
       renderWithProviders(<ManageRadarsModal {...defaultProps} />, queryClient);

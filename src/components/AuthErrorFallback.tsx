@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
-import { LoadingSpinner } from './icons';
 import { ExclamationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { Button } from './Button';
 
 export function AuthErrorFallback({ error: _error, resetErrorBoundary }: FallbackProps) {
   const [isRetrying, setIsRetrying] = useState(false);
@@ -31,25 +31,16 @@ export function AuthErrorFallback({ error: _error, resetErrorBoundary }: Fallbac
         <p className="text-gray-600 mb-6">
           We're having trouble with the login system. This might be a temporary issue.
         </p>
-        <button
+        <Button
           ref={retryButtonRef}
           onClick={handleRetry}
-          disabled={isRetrying}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-busy={isRetrying}
+          loading={isRetrying}
+          loadingText="Retrying..."
+          fullWidth
         >
-          {isRetrying ? (
-            <>
-              <LoadingSpinner className="w-4 h-4 mr-2" />
-              Retrying...
-            </>
-          ) : (
-            <>
-              <ArrowPathIcon className="w-4 h-4 mr-2" />
-              Try Again
-            </>
-          )}
-        </button>
+          <ArrowPathIcon className="w-4 h-4 mr-2" />
+          Try Again
+        </Button>
         <p className="text-sm text-gray-500 mt-6">
           If this continues, please contact support with the timestamp:{' '}
           {new Date().toLocaleString()}
