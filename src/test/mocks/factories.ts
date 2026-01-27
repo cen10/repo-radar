@@ -30,7 +30,9 @@ export const createMockRepository = (overrides?: Partial<Repository>): Repositor
 
 /**
  * Creates a mock Radar object with sensible defaults.
- * Includes repo_count for convenience (tests that don't need it can ignore it).
+ * Returns RadarWithCount for convenience. When mocking services that return
+ * Radar (e.g., createRadar), the extra repo_count is safely ignored due to
+ * TypeScript's structural typing.
  */
 export const createMockRadar = (overrides?: Partial<RadarWithCount>): RadarWithCount => ({
   id: 'radar-1',
