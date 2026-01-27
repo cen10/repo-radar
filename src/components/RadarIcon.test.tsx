@@ -10,6 +10,7 @@ describe('RadarIcon', () => {
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveAttribute('fill', 'none');
     expect(svg).toHaveAttribute('stroke', 'currentColor');
+    expect(svg).toHaveAttribute('stroke-width', '1.5');
   });
 
   it('renders filled icon when filled is true', () => {
@@ -17,8 +18,10 @@ describe('RadarIcon', () => {
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute('fill', 'currentColor');
-    expect(svg).not.toHaveAttribute('stroke');
+    expect(svg).toHaveAttribute('fill', 'none');
+    expect(svg).toHaveAttribute('stroke', 'currentColor');
+    // Filled state has thicker strokes
+    expect(svg).toHaveAttribute('stroke-width', '2');
   });
 
   it('applies custom className', () => {
@@ -35,16 +38,15 @@ describe('RadarIcon', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('renders different SVG structure for filled vs outline', () => {
+  it('uses thicker strokes for filled state to indicate active', () => {
     const { container: outlineContainer } = render(<RadarIcon filled={false} />);
     const { container: filledContainer } = render(<RadarIcon filled={true} />);
 
-    // Outline uses circle elements
-    const outlineCircles = outlineContainer.querySelectorAll('circle');
-    expect(outlineCircles.length).toBeGreaterThan(0);
+    const outlineSvg = outlineContainer.querySelector('svg');
+    const filledSvg = filledContainer.querySelector('svg');
 
-    // Filled uses path element
-    const filledPath = filledContainer.querySelector('path');
-    expect(filledPath).toBeInTheDocument();
+    // Both use same structure (circles), but different stroke widths
+    expect(outlineSvg).toHaveAttribute('stroke-width', '1.5');
+    expect(filledSvg).toHaveAttribute('stroke-width', '2');
   });
 });
