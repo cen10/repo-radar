@@ -1,0 +1,359 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import RadarPage from './RadarPage';
+import * as useRadarHook from '../hooks/useRadar';
+import * as useRadarRepositoriesHook from '../hooks/useRadarRepositories';
+import * as useAuthHook from '../hooks/useAuth';
+import type { Radar } from '../types/database';
+import type { Repository } from '../types';
+
+// Mock the hooks
+vi.mock('../hooks/useRadar');
+vi.mock('../hooks/useRadarRepositories');
+vi.mock('../hooks/useAuth');
+
+// Helper to create a test QueryClient
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
+
+// Helper to create a mock radar
+const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
+  id: 'radar-123',
+  user_id: 'user-123',
+  name: 'Frontend Tools',
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  ...overrides,
+});
+
+// Helper to create a mock repository
+const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
+  id: 12345,
+  name: 'test-repo',
+  full_name: 'owner/test-repo',
+  owner: { login: 'owner', avatar_url: 'https://example.com/avatar.png' },
+  description: 'A test repository',
+  html_url: 'https://github.com/owner/test-repo',
+  stargazers_count: 100,
+  open_issues_count: 5,
+  language: 'TypeScript',
+  topics: ['testing'],
+  updated_at: '2024-01-15T10:00:00Z',
+  pushed_at: '2024-01-15T10:00:00Z',
+  created_at: '2023-01-01T00:00:00Z',
+  is_starred: false,
+  ...overrides,
+});
+
+describe('RadarPage', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient();
+    vi.clearAllMocks();
+
+    // Default auth mock
+    vi.mocked(useAuthHook.useAuth).mockReturnValue({
+      providerToken: 'test-token',
+      user: { id: 'user-1', login: 'testuser', name: 'Test User', avatar_url: '', email: null },
+      authLoading: false,
+      connectionError: null,
+      signInWithGitHub: vi.fn(),
+      signOut: vi.fn(),
+      retryAuth: vi.fn(),
+    });
+  });
+
+  const renderWithProviders = (radarId: string = 'radar-123') => {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
+          <Routes>
+            <Route path="/radar/:id" element={<RadarPage />} />
+            <Route path="/stars" element={<div>Stars Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+  };
+
+  describe('Loading state', () => {
+    it('shows loading spinner while fetching radar', () => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: null,
+        isLoading: true,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: true,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders();
+
+      expect(screen.getByRole('status')).toBeInTheDocument();
+      expect(screen.getByText(/loading radar/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Not found state', () => {
+    it('shows not found message when radar does not exist', () => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: null,
+        isLoading: false,
+        error: null,
+        isNotFound: true,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders();
+
+      expect(screen.getByText(/radar not found/i)).toBeInTheDocument();
+      expect(screen.getByText(/back to my stars/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Error state', () => {
+    it('shows error message when fetch fails', () => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: null,
+        isLoading: false,
+        error: new Error('Failed to load'),
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders();
+
+      expect(screen.getByText(/error loading radar/i)).toBeInTheDocument();
+      expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Empty radar state', () => {
+    it('shows empty message when radar has no repositories', () => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: createMockRadar(),
+        isLoading: false,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderWithProviders();
+
+      expect(
+        screen.getByText(/this radar is not tracking any repositories yet/i)
+      ).toBeInTheDocument();
+      expect(screen.getByText(/browse my stars/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Success state with repositories', () => {
+    beforeEach(() => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: createMockRadar({ name: 'Frontend Tools' }),
+        isLoading: false,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [
+          createMockRepository({ id: 1, name: 'repo-one', stargazers_count: 500 }),
+          createMockRepository({ id: 2, name: 'repo-two', stargazers_count: 100 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it('displays radar name and repository count', () => {
+      renderWithProviders();
+
+      expect(screen.getByRole('heading', { name: /frontend tools/i })).toBeInTheDocument();
+      // "2 repositories" appears in both header and footer, so use getAllByText
+      const repoCountElements = screen.getAllByText(/2 repositories/i);
+      expect(repoCountElements.length).toBeGreaterThan(0);
+    });
+
+    it('displays repository cards', () => {
+      renderWithProviders();
+
+      expect(screen.getByText('repo-one')).toBeInTheDocument();
+      expect(screen.getByText('repo-two')).toBeInTheDocument();
+    });
+
+    it('shows search and sort controls', () => {
+      renderWithProviders();
+
+      expect(screen.getByLabelText(/sort repositories/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/search repositories/i)).toBeInTheDocument();
+    });
+
+    it('shows kebab menu button', () => {
+      renderWithProviders();
+
+      expect(screen.getByRole('button', { name: /open radar menu/i })).toBeInTheDocument();
+    });
+  });
+
+  describe('Search functionality', () => {
+    beforeEach(() => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: createMockRadar(),
+        isLoading: false,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [
+          createMockRepository({ id: 1, name: 'react-query', description: 'Data fetching' }),
+          createMockRepository({ id: 2, name: 'tailwind', description: 'CSS framework' }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it('filters repositories by search query', async () => {
+      const user = userEvent.setup();
+      renderWithProviders();
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      await user.type(searchInput, 'react');
+      await user.click(screen.getByRole('button', { name: /search/i }));
+
+      expect(screen.getByText('react-query')).toBeInTheDocument();
+      expect(screen.queryByText('tailwind')).not.toBeInTheDocument();
+    });
+
+    it('shows no results message when search has no matches', async () => {
+      const user = userEvent.setup();
+      renderWithProviders();
+
+      const searchInput = screen.getByPlaceholderText(/search repositories/i);
+      await user.type(searchInput, 'nonexistent');
+      await user.click(screen.getByRole('button', { name: /search/i }));
+
+      expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
+      expect(screen.getByText(/clear search/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Sort functionality', () => {
+    beforeEach(() => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: createMockRadar(),
+        isLoading: false,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [
+          createMockRepository({
+            id: 1,
+            name: 'fewer-stars',
+            stargazers_count: 50,
+            updated_at: '2024-01-01T00:00:00Z',
+          }),
+          createMockRepository({
+            id: 2,
+            name: 'more-stars',
+            stargazers_count: 500,
+            updated_at: '2024-01-15T00:00:00Z',
+          }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it('sorts by recently updated by default', () => {
+      renderWithProviders();
+
+      const cards = screen.getAllByRole('article');
+      expect(cards[0]).toHaveTextContent('more-stars'); // More recently updated
+    });
+
+    it('sorts by most stars when selected', async () => {
+      const user = userEvent.setup();
+      renderWithProviders();
+
+      const sortSelect = screen.getByLabelText(/sort repositories/i);
+      await user.selectOptions(sortSelect, 'stars');
+
+      const cards = screen.getAllByRole('article');
+      expect(cards[0]).toHaveTextContent('more-stars'); // Has more stars
+    });
+  });
+
+  describe('Delete modal', () => {
+    beforeEach(() => {
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: createMockRadar(),
+        isLoading: false,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [createMockRepository()],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it('opens delete modal when Delete is clicked in menu', async () => {
+      const user = userEvent.setup();
+      renderWithProviders();
+
+      // Open the kebab menu
+      await user.click(screen.getByRole('button', { name: /open radar menu/i }));
+
+      // Click Delete
+      await user.click(screen.getByRole('menuitem', { name: /delete/i }));
+
+      // Check modal is open
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+        expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
+      });
+    });
+  });
+});

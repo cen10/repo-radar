@@ -2,6 +2,8 @@ import { useEffect, useRef, useCallback } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
 import { LoadingSpinner } from './icons';
+import { SearchBar } from './SearchBar';
+import { SortDropdown } from './SortDropdown';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { MAX_STARRED_REPOS } from '../services/github';
@@ -29,6 +31,7 @@ interface RepositoryListProps {
   onSortChange: (sort: SortOption) => void;
   onLoadMore: () => void;
   title: string;
+  titleIcon: React.ReactElement;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
   emptyMessage: string;
@@ -52,6 +55,7 @@ const RepositoryList = ({
   onSortChange,
   onLoadMore,
   title,
+  titleIcon,
   searchPlaceholder,
   sortOptions,
   emptyMessage,
@@ -113,54 +117,21 @@ const RepositoryList = ({
   const controls = (
     <div>
       {/* Header */}
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">{title}</h1>
+      <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 mb-6">
+        {titleIcon}
+        {title}
+      </h1>
 
       {/* Search and Sort */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Search */}
-        <form
-          className="flex-1"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSearchSubmit(searchQuery);
-          }}
-        >
-          <div className="flex">
-            <label htmlFor="repo-search" className="sr-only">
-              Search
-            </label>
-            <input
-              id="repo-search"
-              name="search"
-              type="text"
-              placeholder={searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
-            >
-              <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
-              <span className="sr-only">Search</span>
-            </button>
-          </div>
-        </form>
-
-        {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 cursor-pointer"
-          aria-label="Sort repositories"
-        >
-          {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <SearchBar
+          id="repo-search"
+          value={searchQuery}
+          onChange={onSearchChange}
+          onSubmit={onSearchSubmit}
+          placeholder={searchPlaceholder}
+        />
+        <SortDropdown value={sortBy} onChange={onSortChange} options={sortOptions} />
       </div>
 
       {/* Hidden aria-live region for screen reader announcements */}

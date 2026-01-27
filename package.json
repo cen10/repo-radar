@@ -58,6 +58,7 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
+      "bash -c 'npm run typecheck'",
       "eslint --fix",
       "prettier --write"
     ],
