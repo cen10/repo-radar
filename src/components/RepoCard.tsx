@@ -76,14 +76,10 @@ export function RepoCard({ repository }: RepoCardProps) {
         )}
         {/* Radar button - z-[2] to sit above the stretched link overlay (z-[1]) */}
         <Button
-          variant="ghost"
+          variant="ghost-primary"
           size="sm"
           onClick={() => setIsModalOpen(true)}
-          className={`relative z-2 ${
-            isInAnyRadar
-              ? 'text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50'
-              : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
-          }`}
+          className={`relative z-2 ${isInAnyRadar ? 'text-indigo-600 hover:text-indigo-700' : ''}`}
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
           <RadarIcon filled={isInAnyRadar} className="h-5 w-5" />

@@ -30,6 +30,12 @@ describe('Button', () => {
       expect(button).toHaveClass('text-gray-500', 'hover:bg-gray-100');
     });
 
+    it('renders ghost-primary variant with indigo hover', () => {
+      render(<Button variant="ghost-primary">Action</Button>);
+      const button = screen.getByRole('button', { name: /action/i });
+      expect(button).toHaveClass('text-gray-400', 'hover:bg-indigo-50');
+    });
+
     it('renders link variant with indigo text', () => {
       render(<Button variant="link">Learn more</Button>);
       const button = screen.getByRole('button', { name: /learn more/i });
@@ -71,6 +77,17 @@ describe('Button', () => {
     it('uses square padding for ghost variant', () => {
       render(
         <Button variant="ghost" size="sm">
+          Icon
+        </Button>
+      );
+      const button = screen.getByRole('button', { name: /icon/i });
+      expect(button).toHaveClass('p-1');
+      expect(button).not.toHaveClass('px-3');
+    });
+
+    it('uses square padding for ghost-primary variant', () => {
+      render(
+        <Button variant="ghost-primary" size="sm">
           Icon
         </Button>
       );

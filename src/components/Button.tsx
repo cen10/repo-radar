@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Button as HeadlessButton } from '@headlessui/react';
 import { LoadingSpinner } from './icons';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'ghost-primary' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -36,6 +36,12 @@ const variantStyles: Record<ButtonVariant, string> = {
   ghost: [
     'text-gray-500',
     'hover:bg-gray-100 hover:text-gray-700',
+    'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+    'disabled:cursor-not-allowed disabled:opacity-50',
+  ].join(' '),
+  'ghost-primary': [
+    'text-gray-400',
+    'hover:bg-indigo-50 hover:text-indigo-600',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),
@@ -74,8 +80,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref
 ) {
   const isDisabled = disabled || loading;
-  const isGhostOrLink = variant === 'ghost' || variant === 'link';
-  const sizeClass = isGhostOrLink && variant === 'ghost' ? ghostSizeStyles[size] : sizeStyles[size];
+  const isGhostVariant = variant === 'ghost' || variant === 'ghost-primary';
+  const sizeClass = isGhostVariant ? ghostSizeStyles[size] : sizeStyles[size];
 
   const baseClasses = [
     'inline-flex items-center justify-center rounded-md font-medium',
