@@ -73,10 +73,15 @@ export function RadarIcon({ filled, className = '' }: RadarIconProps) {
           <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
         </svg>
         {/* Animated radar wedge - grows, rotates, then shrinks */}
+        {/* Sized to 75% to match radar outer ring (r=9 in 24x24 viewBox) */}
         <div
-          className="absolute inset-0 w-full h-full rounded-full animate-radar-wedge"
+          className="absolute rounded-full animate-radar-wedge"
           aria-hidden="true"
           style={{
+            width: '75%',
+            height: '75%',
+            top: '12.5%',
+            left: '12.5%',
             background: `conic-gradient(
               from 0deg at 50% 50%,
               transparent var(--wedge-start),
