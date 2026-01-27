@@ -329,6 +329,27 @@ const result = mapData(data, data.requiredField);
 - Body: wrap at 72 chars; explain the _why_
 - **Avoid force pushes**: Don't amend commits that have been pushed. Create new commits instead.
 
+## Pull Request Descriptions
+
+PR descriptions should describe the **final state** of the code, not the journey to get there:
+
+- **Do**: Describe what the PR accomplishes and why
+- **Don't**: Narrate interim states or mention bugs that were introduced and fixed within the same PR
+- **Do**: Note design decisions, tradeoffs, or alternatives considered if useful for reviewers
+- **Don't**: Say "Fixed bug where X" if that bug was introduced earlier in the same PR branch
+
+Useful sections to include:
+- **Summary**: What changed and why (bullet points)
+- **Design decisions**: Tradeoffs made, alternatives considered
+- **Test plan**: How to verify the changes work
+- **Notes for reviewers**: Tricky areas to pay attention to, or specific behaviors to verify
+
+Example of what NOT to write:
+> "Earlier commits used approach A, but we switched to approach B. Also fixed a bug where X was happening."
+
+Instead write:
+> "Uses approach B because [reason]. Alternative considered: approach A, but [why we didn't use it]."
+
 ## Environment Variables
 
 ```env
