@@ -42,10 +42,18 @@
 }
 
 @keyframes radar-sweep {
-  from {
+  /* Wait for wedge to grow (0-25%) */
+  0% {
     --sweep-angle: 0deg;
   }
-  to {
+  25% {
+    --sweep-angle: 0deg;
+  }
+  /* Track wedge trailing edge exactly */
+  75% {
+    --sweep-angle: 270deg;
+  }
+  100% {
     --sweep-angle: 360deg;
   }
 }
@@ -63,20 +71,39 @@
   );
 }
 
-/* Radar wedge rotation - matches purple reveal, fades at end to prevent overlap */
-/* With 90° wedge, fade starts at 75% (270°) when leading edge reaches 12 o'clock */
+/* Radar wedge - grows from 0° to 90°, rotates, then shrinks */
+@property --wedge-start {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --wedge-end {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 @keyframes radar-wedge {
+  /* Start: no wedge */
   0% {
-    transform: rotate(0deg);
-    opacity: 1;
+    --wedge-start: 0deg;
+    --wedge-end: 0deg;
   }
+  /* Growth phase: wedge expands to 90° */
+  25% {
+    --wedge-start: 0deg;
+    --wedge-end: 90deg;
+  }
+  /* Rotation phase complete: wedge at end position */
   75% {
-    transform: rotate(270deg);
-    opacity: 1;
+    --wedge-start: 270deg;
+    --wedge-end: 360deg;
   }
+  /* Shrink: trailing edge catches up */
   100% {
-    transform: rotate(360deg);
-    opacity: 0;
+    --wedge-start: 360deg;
+    --wedge-end: 360deg;
   }
 }
 

@@ -72,23 +72,20 @@ export function RadarIcon({ filled, className = '' }: RadarIconProps) {
           <circle cx="12" cy="12" r="5" />
           <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
         </svg>
-        {/* Rotating radar wedge beam */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          className="absolute inset-0 w-full h-full animate-radar-wedge"
+        {/* Animated radar wedge - grows, rotates, then shrinks */}
+        <div
+          className="absolute inset-0 w-full h-full rounded-full animate-radar-wedge"
           aria-hidden="true"
-          style={{ transformOrigin: 'center' }}
-        >
-          <defs>
-            <linearGradient id="wedge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgb(79, 70, 229)" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="rgb(79, 70, 229)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {/* Wedge path: pie slice from center to edge, 90 degree arc */}
-          <path d="M 12 12 L 12 3 A 9 9 0 0 1 21 12 Z" fill="url(#wedge-gradient)" />
-        </svg>
+          style={{
+            background: `conic-gradient(
+              from 0deg at 50% 50%,
+              transparent var(--wedge-start),
+              rgba(79, 70, 229, 0.5) var(--wedge-start),
+              rgba(79, 70, 229, 0.1) var(--wedge-end),
+              transparent var(--wedge-end)
+            )`,
+          }}
+        />
       </div>
     );
   }
