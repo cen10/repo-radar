@@ -30,10 +30,11 @@ describe('Button', () => {
       expect(button).toHaveClass('text-gray-500', 'hover:bg-gray-100');
     });
 
-    it('renders ghost-primary variant with indigo hover', () => {
+    it('renders ghost-primary variant with indigo background hover only', () => {
       render(<Button variant="ghost-primary">Action</Button>);
       const button = screen.getByRole('button', { name: /action/i });
       expect(button).toHaveClass('text-gray-400', 'hover:bg-indigo-50');
+      expect(button).not.toHaveClass('hover:text-indigo-600');
     });
 
     it('renders link variant with indigo text', () => {

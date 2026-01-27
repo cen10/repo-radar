@@ -41,7 +41,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   ].join(' '),
   'ghost-primary': [
     'text-gray-400',
-    'hover:bg-indigo-50 hover:text-indigo-600',
+    'hover:bg-indigo-50',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
     'disabled:cursor-not-allowed disabled:opacity-50',
   ].join(' '),

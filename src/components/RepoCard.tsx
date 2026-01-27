@@ -82,7 +82,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           className={`relative z-2 ${isInAnyRadar ? 'text-indigo-600 hover:text-indigo-700' : ''}`}
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
-          <RadarIcon filled={isInAnyRadar} className="h-5 w-5" />
+          <RadarIcon filled={isInAnyRadar} className="h-8 w-8" />
         </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
