@@ -7,48 +7,22 @@ import RadarPage from './RadarPage';
 import * as useRadarHook from '../hooks/useRadar';
 import * as useRadarRepositoriesHook from '../hooks/useRadarRepositories';
 import * as useAuthHook from '../hooks/useAuth';
+import { createTestQueryClient } from '../test/helpers/query-client';
+import { createMockRepository } from '../test/mocks/factories';
 import type { Radar } from '../types/database';
-import type { Repository } from '../types';
 
 // Mock the hooks
 vi.mock('../hooks/useRadar');
 vi.mock('../hooks/useRadarRepositories');
 vi.mock('../hooks/useAuth');
 
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-// Helper to create a mock radar
+// Local factory for Radar type (without repo_count) - useRadar returns Radar, not RadarWithCount
 const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
   id: 'radar-123',
   user_id: 'user-123',
   name: 'Frontend Tools',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
-  ...overrides,
-});
-
-// Helper to create a mock repository
-const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
-  id: 12345,
-  name: 'test-repo',
-  full_name: 'owner/test-repo',
-  owner: { login: 'owner', avatar_url: 'https://example.com/avatar.png' },
-  description: 'A test repository',
-  html_url: 'https://github.com/owner/test-repo',
-  stargazers_count: 100,
-  open_issues_count: 5,
-  language: 'TypeScript',
-  topics: ['testing'],
-  updated_at: '2024-01-15T10:00:00Z',
-  pushed_at: '2024-01-15T10:00:00Z',
-  created_at: '2023-01-01T00:00:00Z',
-  is_starred: false,
   ...overrides,
 });
 
@@ -239,8 +213,18 @@ describe('RadarPage', () => {
       });
       vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
         repositories: [
-          createMockRepository({ id: 1, name: 'react-query', description: 'Data fetching' }),
-          createMockRepository({ id: 2, name: 'tailwind', description: 'CSS framework' }),
+          createMockRepository({
+            id: 1,
+            name: 'react-query',
+            description: 'Data fetching',
+            topics: ['data'],
+          }),
+          createMockRepository({
+            id: 2,
+            name: 'tailwind',
+            description: 'CSS framework',
+            topics: ['css'],
+          }),
         ],
         isLoading: false,
         error: null,
