@@ -681,63 +681,22 @@ async function fetchRepositoryById(token: string, repoId: number): Promise<Repos
 
   try {
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: getGitHubHeaders(token),
     });
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        // Repo deleted or made private
-        return null;
-      }
-      if (response.status === 401) {
-        throw new Error('GitHub authentication failed. Please sign in again.');
-      }
-      if (response.status === 403) {
-        const remaining = response.headers.get('x-ratelimit-remaining');
-        if (remaining === '0') {
-          const resetTime = response.headers.get('x-ratelimit-reset');
-          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
-          throw new Error(
-            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
-          );
-        }
-        // Repo access forbidden (private repo we can't access)
-        return null;
-      }
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    const result = checkGitHubResponse(response);
+    if (!result.ok) {
+      // 404: Repo deleted or made private
+      if (result.status === 404) return null;
+      // 403 without rate limit: Private repo we can't access
+      // 403 with rate limit: throw (message contains "rate limit")
+      if (result.status === 403 && !result.message.includes('rate limit')) return null;
+      throw new Error(result.message);
     }
 
     const repo: GitHubStarredRepo = await response.json();
 
-    return {
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
-      owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatar_url,
-      },
-      description: repo.description,
-      html_url: repo.html_url,
-      stargazers_count: repo.stargazers_count,
-      open_issues_count: repo.open_issues_count,
-      language: repo.language,
-      topics: repo.topics || [],
-      updated_at: repo.updated_at,
-      pushed_at: repo.pushed_at,
-      created_at: repo.created_at,
-      is_starred: false, // Will be determined by caller if needed
-      metrics: {
-        stars_growth_rate: calculateGrowthRate(repo),
-        stars_gained: calculateStarsGained(repo),
-        issues_growth_rate: 0,
-        is_trending: isTrending(repo),
-      },
-    };
+    return mapGitHubRepoToRepository(repo, { is_starred: false });
   } catch (error) {
     // Re-throw auth/rate-limit errors
     if (error instanceof Error && error.message.includes('GitHub')) {
