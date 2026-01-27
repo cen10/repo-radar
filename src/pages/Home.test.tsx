@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './Home';
-import type { User } from '../types';
-import type { AuthContextType } from '../contexts/auth-context';
+import { createMockUser, createMockAuthContext } from '../test/mocks/factories';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();
@@ -23,24 +22,10 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const mockUser: User = {
-  id: '1',
-  login: 'testuser',
-  name: 'Test User',
-  avatar_url: 'https://example.com/avatar.jpg',
-  email: 'test@example.com',
-};
+const mockUser = createMockUser();
 
-const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
-  user: null,
-  providerToken: null,
-  authLoading: false,
-  connectionError: null,
-  signInWithGitHub: vi.fn(),
-  signOut: vi.fn(),
-  retryAuth: vi.fn(),
-  ...overrides,
-});
+// Helper for creating unauthenticated context
+const unauthenticatedContext = () => createMockAuthContext({ user: null, providerToken: null });
 
 describe('Home', () => {
   beforeEach(() => {
@@ -49,7 +34,7 @@ describe('Home', () => {
   });
 
   it('renders the home page content', () => {
-    mockUseAuth.mockReturnValue(createMockAuthContext());
+    mockUseAuth.mockReturnValue(unauthenticatedContext());
 
     render(
       <BrowserRouter>
@@ -63,7 +48,7 @@ describe('Home', () => {
   });
 
   it('focuses the sign-in button on page load', () => {
-    mockUseAuth.mockReturnValue(createMockAuthContext());
+    mockUseAuth.mockReturnValue(unauthenticatedContext());
 
     render(
       <BrowserRouter>
@@ -76,7 +61,7 @@ describe('Home', () => {
   });
 
   it('displays feature cards', () => {
-    mockUseAuth.mockReturnValue(createMockAuthContext());
+    mockUseAuth.mockReturnValue(unauthenticatedContext());
 
     render(
       <BrowserRouter>
@@ -108,7 +93,9 @@ describe('Home', () => {
 
   it('sign in button triggers GitHub OAuth flow', async () => {
     const mockSignIn = vi.fn();
-    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ user: null, providerToken: null, signInWithGitHub: mockSignIn })
+    );
 
     const user = userEvent.setup();
 
@@ -127,7 +114,9 @@ describe('Home', () => {
   it('shows loading state while signing in', async () => {
     // Mock that never resolves to keep loading state active
     const mockSignIn = vi.fn().mockImplementation(() => new Promise(() => {}));
-    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ user: null, providerToken: null, signInWithGitHub: mockSignIn })
+    );
 
     const user = userEvent.setup();
 
@@ -145,7 +134,9 @@ describe('Home', () => {
 
   it('resets button state when sign in fails', async () => {
     const mockSignIn = vi.fn().mockRejectedValue(new Error('Network error'));
-    mockUseAuth.mockReturnValue(createMockAuthContext({ signInWithGitHub: mockSignIn }));
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ user: null, providerToken: null, signInWithGitHub: mockSignIn })
+    );
 
     const user = userEvent.setup();
 
@@ -165,7 +156,7 @@ describe('Home', () => {
 
   it('shows session expired message when redirected after auth error', () => {
     sessionStorage.setItem('session_expired', 'true');
-    mockUseAuth.mockReturnValue(createMockAuthContext());
+    mockUseAuth.mockReturnValue(unauthenticatedContext());
 
     render(
       <BrowserRouter>
@@ -178,7 +169,7 @@ describe('Home', () => {
 
   it('clears session expired flag from sessionStorage after showing message', () => {
     sessionStorage.setItem('session_expired', 'true');
-    mockUseAuth.mockReturnValue(createMockAuthContext());
+    mockUseAuth.mockReturnValue(unauthenticatedContext());
 
     render(
       <BrowserRouter>

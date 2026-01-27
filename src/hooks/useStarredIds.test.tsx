@@ -3,36 +3,8 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStarredIds } from './useStarredIds';
 import type { Repository } from '../types';
-
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-// Helper to create a mock repository
-const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
-  id: 1,
-  name: 'test-repo',
-  full_name: 'user/test-repo',
-  owner: {
-    login: 'user',
-    avatar_url: 'https://example.com/avatar.jpg',
-  },
-  description: 'Test repository',
-  html_url: 'https://github.com/user/test-repo',
-  stargazers_count: 100,
-  open_issues_count: 5,
-  language: 'TypeScript',
-  topics: ['react', 'typescript'],
-  updated_at: '2024-01-15T10:00:00Z',
-  pushed_at: '2024-01-15T10:00:00Z',
-  created_at: '2023-01-01T00:00:00Z',
-  is_starred: false,
-  ...overrides,
-});
+import { createTestQueryClient } from '../test/helpers/query-client';
+import { createMockRepository } from '../test/mocks/factories';
 
 // Cache data structure used by useAllStarredRepositories
 interface AllStarredData {

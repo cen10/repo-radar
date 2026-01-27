@@ -6,7 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidebarRadarList } from './SidebarRadarList';
 import * as radarService from '../services/radar';
 import * as Sidebar from './Sidebar';
-import type { RadarWithCount } from '../types/database';
+import { createTestQueryClient } from '../test/helpers/query-client';
+import { createMockRadar } from '../test/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({
@@ -28,25 +29,6 @@ vi.spyOn(Sidebar, 'useSidebarContext').mockReturnValue(defaultContextValue);
 const setSidebarContext = (value: { collapsed: boolean; hideText: boolean }) => {
   vi.spyOn(Sidebar, 'useSidebarContext').mockReturnValue(value);
 };
-
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-// Helper to create a mock radar
-const createMockRadar = (overrides?: Partial<RadarWithCount>): RadarWithCount => ({
-  id: 'radar-1',
-  user_id: 'user-123',
-  name: 'Test Radar',
-  repo_count: 5,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  ...overrides,
-});
 
 const defaultProps = {
   onLinkClick: vi.fn(),

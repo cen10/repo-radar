@@ -3,14 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
 import { GenericErrorFallback } from './GenericErrorFallback';
-
-// Test component that throws an error
-function ThrowError({ shouldThrow = false }: { shouldThrow?: boolean }) {
-  if (shouldThrow) {
-    throw new Error('Test error');
-  }
-  return <div>No Error</div>;
-}
+import { ThrowError } from '../test/helpers/error-boundary';
 
 describe('GenericErrorFallback', () => {
   // Suppress console.error for these tests since we expect errors

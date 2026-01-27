@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
+import { createTestQueryClient } from '../test/helpers/query-client';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import {
@@ -61,20 +62,12 @@ function assertDefined<T>(val: T | undefined, name: string): asserts val is T {
   }
 }
 
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
 // Wrapper component that provides QueryClient context
-const renderWithQueryClient = (ui: React.ReactElement, queryClient?: QueryClient) => {
-  const client = queryClient ?? createTestQueryClient();
+const renderWithQueryClient = (ui: React.ReactElement) => {
+  const queryClient = createTestQueryClient();
   return {
-    ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>),
-    queryClient: client,
+    ...render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>),
+    queryClient,
   };
 };
 

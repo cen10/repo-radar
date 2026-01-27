@@ -4,30 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CreateRadarModal } from './CreateRadarModal';
 import * as radarService from '../services/radar';
-import type { Radar } from '../types/database';
+import { createTestQueryClient } from '../test/helpers/query-client';
+import { createMockRadar } from '../test/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({
   createRadar: vi.fn(),
 }));
-
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-// Helper to create a mock radar
-const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
-  id: 'radar-123',
-  user_id: 'user-123',
-  name: 'Test Radar',
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  ...overrides,
-});
 
 const defaultProps = {
   onClose: vi.fn(),

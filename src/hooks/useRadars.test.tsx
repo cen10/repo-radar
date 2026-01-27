@@ -1,45 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import * as radar from '../services/radar';
-import type { RadarWithCount } from '../types/database';
+import { createQueryClientWrapper } from '../test/helpers/render';
+import { createMockRadar } from '../test/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({
   getRadars: vi.fn(),
 }));
 
-// Helper to create a test QueryClient
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-
-// Helper to create a mock radar
-const createMockRadar = (overrides?: Partial<RadarWithCount>): RadarWithCount => ({
-  id: 'radar-1',
-  user_id: 'user-1',
-  name: 'Frontend',
-  created_at: '2024-01-15T10:00:00Z',
-  updated_at: '2024-01-15T10:00:00Z',
-  repo_count: 5,
-  ...overrides,
-});
-
 describe('useRadars', () => {
-  let queryClient: QueryClient;
+  let wrapper: ({ children }: { children: React.ReactNode }) => React.ReactNode;
 
   beforeEach(() => {
-    queryClient = createTestQueryClient();
+    const result = createQueryClientWrapper();
+    wrapper = result.wrapper;
     vi.clearAllMocks();
   });
-
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
 
   it('fetches radars successfully', async () => {
     const mockRadars = [

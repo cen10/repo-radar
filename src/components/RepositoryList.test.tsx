@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import RepositoryList from './RepositoryList';
 import type { Repository } from '../types';
+import { createMockRepository } from '../test/mocks/factories';
 
 // Mock the intersection observer hook
 vi.mock('../hooks/useIntersectionObserver', () => ({
@@ -27,27 +28,6 @@ vi.mock('./RepoCard', () => ({
     </div>
   ),
 }));
-
-const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
-  id: 1,
-  name: 'test-repo',
-  full_name: 'user/test-repo',
-  owner: {
-    login: 'user',
-    avatar_url: 'https://example.com/avatar.jpg',
-  },
-  description: 'Test repository description',
-  html_url: 'https://github.com/user/test-repo',
-  stargazers_count: 100,
-  open_issues_count: 5,
-  language: 'TypeScript',
-  topics: ['react', 'typescript'],
-  updated_at: '2024-01-15T10:00:00Z',
-  pushed_at: '2024-01-15T10:00:00Z',
-  created_at: '2023-01-01T00:00:00Z',
-  is_starred: false,
-  ...overrides,
-});
 
 const defaultSortOptions = [
   { value: 'updated' as const, label: 'Recently Updated' },
