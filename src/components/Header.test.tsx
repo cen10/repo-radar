@@ -1,34 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
-import type { AuthContextType } from '../contexts/auth-context';
+import { renderWithRouter } from '../test/helpers/render';
+import { createMockUser, createMockAuthContext } from '../test/mocks/factories';
 
 vi.mock('../hooks/use-auth');
 
-function renderWithRouter(ui: React.ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
-}
-
-const mockUser = {
-  id: '123',
-  email: 'test@example.com',
-  login: 'testuser',
-  name: 'Test User',
-  avatar_url: 'https://example.com/avatar.jpg',
-};
-
-const createMockAuthContext = (overrides: Partial<AuthContextType> = {}): AuthContextType => ({
-  user: mockUser,
-  providerToken: 'test-github-token',
-  authLoading: false,
-  connectionError: null,
-  signInWithGitHub: vi.fn(),
-  signOut: vi.fn(),
-  retryAuth: vi.fn(),
-  ...overrides,
-});
+const mockUser = createMockUser();
 
 describe('Header', () => {
   beforeEach(() => {
@@ -36,19 +15,14 @@ describe('Header', () => {
   });
 
   it('returns null when no user is authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue(
-      createMockAuthContext({
-        user: null,
-        providerToken: null,
-      })
-    );
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: null, providerToken: null }));
 
     const { container } = renderWithRouter(<Header />);
     expect(container.firstChild).toBeNull();
   });
 
   it('displays user information when authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
 
     renderWithRouter(<Header />);
 
@@ -61,9 +35,7 @@ describe('Header', () => {
 
   it('displays login when user has no name', () => {
     vi.mocked(useAuth).mockReturnValue(
-      createMockAuthContext({
-        user: { ...mockUser, name: null },
-      })
+      createMockAuthContext({ user: createMockUser({ name: null }) })
     );
 
     renderWithRouter(<Header />);
@@ -73,9 +45,7 @@ describe('Header', () => {
 
   it('displays handle when user has no email', () => {
     vi.mocked(useAuth).mockReturnValue(
-      createMockAuthContext({
-        user: { ...mockUser, email: null },
-      })
+      createMockAuthContext({ user: createMockUser({ email: null }) })
     );
 
     renderWithRouter(<Header />);
@@ -85,7 +55,9 @@ describe('Header', () => {
 
   it('handles sign out successfully', async () => {
     const mockSignOut = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -105,7 +77,9 @@ describe('Header', () => {
   it('displays error message when sign out fails', async () => {
     const errorMessage = 'Failed to sign out';
     const mockSignOut = vi.fn().mockRejectedValue(new Error(errorMessage));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -121,7 +95,9 @@ describe('Header', () => {
 
   it('handles sign out with unexpected error', async () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Network error'));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -137,7 +113,9 @@ describe('Header', () => {
 
   it('handles sign out with error without message', async () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error(''));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -151,9 +129,7 @@ describe('Header', () => {
 
   it('does not display avatar when user has no avatar', () => {
     vi.mocked(useAuth).mockReturnValue(
-      createMockAuthContext({
-        user: { ...mockUser, avatar_url: '' },
-      })
+      createMockAuthContext({ user: createMockUser({ avatar_url: '' }) })
     );
 
     renderWithRouter(<Header />);
@@ -163,7 +139,9 @@ describe('Header', () => {
 
   it('displays error with proper accessibility attributes', async () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Test error'));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -181,7 +159,9 @@ describe('Header', () => {
   it('displays user-friendly message for network errors', async () => {
     // Simulate network error with "Failed to fetch" message
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Failed to fetch'));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -199,7 +179,9 @@ describe('Header', () => {
     const networkError = new Error('Some network issue');
     networkError.name = 'NetworkError';
     const mockSignOut = vi.fn().mockRejectedValue(networkError);
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -214,7 +196,9 @@ describe('Header', () => {
 
   it('returns focus to sign out button after error', async () => {
     const mockSignOut = vi.fn().mockRejectedValue(new Error('Sign out failed'));
-    vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ signOut: mockSignOut }));
+    vi.mocked(useAuth).mockReturnValue(
+      createMockAuthContext({ user: mockUser, signOut: mockSignOut })
+    );
 
     renderWithRouter(<Header />);
 
@@ -230,7 +214,7 @@ describe('Header', () => {
 
   describe('Mobile menu button', () => {
     it('renders hamburger menu button when onMenuToggle is provided', () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
 
       renderWithRouter(<Header onMenuToggle={() => {}} />);
 
@@ -238,7 +222,7 @@ describe('Header', () => {
     });
 
     it('does not render hamburger menu button when onMenuToggle is not provided', () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
 
       renderWithRouter(<Header />);
 
@@ -248,7 +232,7 @@ describe('Header', () => {
     });
 
     it('calls onMenuToggle when hamburger button is clicked', () => {
-      vi.mocked(useAuth).mockReturnValue(createMockAuthContext());
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
       const onMenuToggle = vi.fn();
 
       renderWithRouter(<Header onMenuToggle={onMenuToggle} />);

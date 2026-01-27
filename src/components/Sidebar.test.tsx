@@ -1,13 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-
-// Helper to render with router
-const renderWithRouter = (ui: React.ReactElement, { route = '/' } = {}) => {
-  return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
-};
+import { renderWithRouter } from '../test/helpers/render';
 
 // Default props for tests - Sidebar requires isOpen, onClose, isCollapsed, and onToggleCollapsed
 const defaultProps = {
