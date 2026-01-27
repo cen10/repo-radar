@@ -529,7 +529,9 @@ describe('GitHub API Service', () => {
         headers: new Headers(),
       });
 
-      await expect(fetchRateLimit(testToken)).rejects.toThrow('Failed to fetch rate limit');
+      await expect(fetchRateLimit(testToken)).rejects.toThrow(
+        'Failed to fetch rate limit: 500 Internal Server Error'
+      );
     });
   });
 

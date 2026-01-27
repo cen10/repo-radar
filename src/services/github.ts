@@ -34,6 +34,118 @@ interface GitHubStarredRepoWithTimestamp {
   repo: GitHubStarredRepo;
 }
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Returns standard headers for GitHub API requests.
+ */
+function getGitHubHeaders(token: string, accept = 'application/vnd.github.v3+json'): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: accept,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+}
+
+/**
+ * Parses the rate limit reset time from response headers.
+ * Returns null if the header is missing.
+ */
+function parseRateLimitReset(response: Response): Date | null {
+  const resetTime = response.headers.get('x-ratelimit-reset');
+  return resetTime ? new Date(parseInt(resetTime) * 1000) : null;
+}
+
+type ResponseCheck = { ok: true } | { ok: false; status: number; message: string };
+
+/**
+ * Checks a GitHub API response and returns a result object.
+ * Provides user-friendly error messages for common error cases.
+ * Caller decides what constitutes an error for their use case.
+ *
+ * @param context - Optional context for generic errors (e.g., "fetch rate limit")
+ */
+function checkGitHubResponse(response: Response, context?: string): ResponseCheck {
+  if (response.ok) return { ok: true };
+
+  if (response.status === 401) {
+    return {
+      ok: false,
+      status: 401,
+      message: 'GitHub authentication failed. Please sign in again.',
+    };
+  }
+
+  if (response.status === 403) {
+    const remaining = response.headers.get('x-ratelimit-remaining');
+    if (remaining === '0') {
+      const resetDate = parseRateLimitReset(response);
+      const resetInfo = resetDate ? ` Resets at ${resetDate.toLocaleTimeString()}` : '';
+      return { ok: false, status: 403, message: `GitHub API rate limit exceeded.${resetInfo}` };
+    }
+    return {
+      ok: false,
+      status: 403,
+      message: 'GitHub API access forbidden. Please check your permissions.',
+    };
+  }
+
+  if (response.status === 422) {
+    return {
+      ok: false,
+      status: 422,
+      message: 'Invalid search query. Please check your search terms.',
+    };
+  }
+
+  const statusInfo = `${response.status} ${response.statusText}`;
+  const message = context
+    ? `Failed to ${context}: ${statusInfo}`
+    : `GitHub API error: ${statusInfo}`;
+  return { ok: false, status: response.status, message };
+}
+
+interface MapRepoOptions {
+  starred_at?: string;
+  is_starred?: boolean;
+}
+
+/**
+ * Transforms GitHub API repository response to our Repository type.
+ */
+function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOptions): Repository {
+  return {
+    id: repo.id,
+    name: repo.name,
+    full_name: repo.full_name,
+    owner: { login: repo.owner.login, avatar_url: repo.owner.avatar_url },
+    description: repo.description,
+    html_url: repo.html_url,
+    stargazers_count: repo.stargazers_count,
+    open_issues_count: repo.open_issues_count,
+    language: repo.language,
+    topics: repo.topics || [],
+    updated_at: repo.updated_at,
+    pushed_at: repo.pushed_at,
+    created_at: repo.created_at,
+    starred_at: options?.starred_at,
+    is_starred: options?.is_starred ?? false,
+    metrics: {
+      stars_growth_rate: calculateGrowthRate(repo),
+      stars_gained: calculateStarsGained(repo),
+      issues_growth_rate: 0,
+      is_trending: isTrending(repo),
+    },
+    is_following: false,
+  };
+}
+
+// ============================================================================
+// Public API Functions
+// ============================================================================
+
 /**
  * Gets the total number of starred repositories for the authenticated user.
  *
@@ -50,19 +162,11 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
   const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
   const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+    headers: getGitHubHeaders(token),
   });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('GitHub authentication failed. Please sign in again.');
-    }
-    throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-  }
+  const result = checkGitHubResponse(response);
+  if (!result.ok) throw new Error(result.message);
 
   const linkHeader = response.headers.get('Link');
 
@@ -190,62 +294,18 @@ export async function fetchStarredRepositories(
 
   try {
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Use star+json to get starred_at timestamp for each repo
-        Accept: 'application/vnd.github.star+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      // Use star+json to get starred_at timestamp for each repo
+      headers: getGitHubHeaders(token, 'application/vnd.github.star+json'),
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('GitHub authentication failed. Please sign in again.');
-      }
-      if (response.status === 403) {
-        const remaining = response.headers.get('x-ratelimit-remaining');
-        if (remaining === '0') {
-          const resetTime = response.headers.get('x-ratelimit-reset');
-          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
-          throw new Error(
-            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
-          );
-        }
-        throw new Error('GitHub API access forbidden. Please check your permissions.');
-      }
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-    }
+    const result = checkGitHubResponse(response);
+    if (!result.ok) throw new Error(result.message);
 
     const data: GitHubStarredRepoWithTimestamp[] = await response.json();
 
-    // Transform GitHub API response to our Repository type
-    return data.map(({ repo, starred_at }) => ({
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
-      owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatar_url,
-      },
-      description: repo.description,
-      html_url: repo.html_url,
-      stargazers_count: repo.stargazers_count,
-      open_issues_count: repo.open_issues_count,
-      language: repo.language,
-      topics: repo.topics || [],
-      updated_at: repo.updated_at,
-      pushed_at: repo.pushed_at,
-      created_at: repo.created_at,
-      starred_at, // When the user starred this repo
-      is_starred: true, // These are all starred repos by definition
-      metrics: {
-        stars_growth_rate: calculateGrowthRate(repo),
-        stars_gained: calculateStarsGained(repo),
-        issues_growth_rate: 0, // Would need historical data
-        is_trending: isTrending(repo),
-      },
-      is_following: false, // This would come from user's saved preferences
-    }));
+    return data.map(({ repo, starred_at }) =>
+      mapGitHubRepoToRepository(repo, { starred_at, is_starred: true })
+    );
   } catch (error) {
     logger.error('Failed to fetch starred repositories:', error);
     throw error;
@@ -375,32 +435,11 @@ export async function searchRepositories(
   try {
     const response = await fetch(url, {
       signal,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: getGitHubHeaders(token),
     });
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('GitHub authentication failed. Please sign in again.');
-      }
-      if (response.status === 403) {
-        const remaining = response.headers.get('x-ratelimit-remaining');
-        if (remaining === '0') {
-          const resetTime = response.headers.get('x-ratelimit-reset');
-          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
-          throw new Error(
-            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
-          );
-        }
-        throw new Error('GitHub API access forbidden. Please check your permissions.');
-      }
-      if (response.status === 422) {
-        throw new Error('Invalid search query. Please check your search terms.');
-      }
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
-    }
+
+    const result = checkGitHubResponse(response);
+    if (!result.ok) throw new Error(result.message);
 
     const data = await response.json();
     const repos: GitHubStarredRepo[] = data.items || [];
@@ -410,33 +449,9 @@ export async function searchRepositories(
     const GITHUB_SEARCH_LIMIT = 1000;
     const apiSearchResultTotal = Math.min(totalCount, GITHUB_SEARCH_LIMIT);
 
-    // Transform GitHub API response to our Repository type
-    const repositories = repos.map((repo) => ({
-      id: repo.id,
-      name: repo.name,
-      full_name: repo.full_name,
-      owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatar_url,
-      },
-      description: repo.description,
-      html_url: repo.html_url,
-      stargazers_count: repo.stargazers_count,
-      open_issues_count: repo.open_issues_count,
-      language: repo.language,
-      topics: repo.topics || [],
-      updated_at: repo.updated_at,
-      pushed_at: repo.pushed_at,
-      created_at: repo.created_at,
-      is_starred: starredIds.has(repo.id), // Simple boolean check
-      metrics: {
-        stars_growth_rate: calculateGrowthRate(repo),
-        stars_gained: calculateStarsGained(repo),
-        issues_growth_rate: 0,
-        is_trending: isTrending(repo),
-      },
-      is_following: false, // Deprecated - keeping for backwards compatibility
-    }));
+    const repositories = repos.map((repo) =>
+      mapGitHubRepoToRepository(repo, { is_starred: starredIds.has(repo.id) })
+    );
 
     return {
       repositories,
@@ -564,11 +579,7 @@ export async function isRepositoryStarred(
   try {
     const response = await fetch(`${GITHUB_API_BASE}/user/starred/${owner}/${repo}`, {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: getGitHubHeaders(token),
     });
 
     return response.status === 204;
@@ -587,16 +598,11 @@ export async function fetchRateLimit(token: string): Promise<{
   reset: Date;
 }> {
   const response = await fetch(`${GITHUB_API_BASE}/rate_limit`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+    headers: getGitHubHeaders(token),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch rate limit');
-  }
+  const result = checkGitHubResponse(response, 'fetch rate limit');
+  if (!result.ok) throw new Error(result.message);
 
   const data = await response.json();
   const core = data.rate || data.resources?.core;
@@ -641,50 +647,22 @@ export async function fetchRepositoryReleases(
 
   try {
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      headers: getGitHubHeaders(token),
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('GitHub authentication failed. Please sign in again.');
-      }
-      if (response.status === 403) {
-        const remaining = response.headers.get('x-ratelimit-remaining');
-        if (remaining === '0') {
-          const resetTime = response.headers.get('x-ratelimit-reset');
-          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
-          throw new Error(
-            `GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`
-          );
-        }
-        throw new Error('GitHub API access forbidden. Please check your permissions.');
-      }
-      if (response.status === 404) {
-        // Repository not found or no releases - return empty array
-        return [];
-      }
-      throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+    const result = checkGitHubResponse(response);
+    if (!result.ok) {
+      // GitHub returns 404 for two reasons:
+      // 1. The repository doesn't exist (rare - user likely navigated here from a valid repo)
+      // 2. The repository exists but has no releases (common)
+      // In both cases, returning an empty array is appropriate - no releases to show.
+      if (result.status === 404) return [];
+      throw new Error(result.message);
     }
 
     const data: GitHubRelease[] = await response.json();
 
-    // Transform GitHub API response to our Release type
-    return data.map((release) => ({
-      id: release.id,
-      tag_name: release.tag_name,
-      name: release.name,
-      body: release.body,
-      html_url: release.html_url,
-      published_at: release.published_at,
-      created_at: release.created_at,
-      prerelease: release.prerelease,
-      draft: release.draft,
-      author: release.author,
-    }));
+    return data.map((release) => ({ ...release }));
   } catch (error) {
     logger.error('Failed to fetch repository releases:', error);
     throw error;
