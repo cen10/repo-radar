@@ -42,20 +42,28 @@ export function RepoCard({ repository }: RepoCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNameTruncated, setIsNameTruncated] = useState(false);
   const nameRef = useRef<HTMLHeadingElement>(null);
-  const { radarIds } = useRepoRadars(id);
+  const { radarIds, isLoading } = useRepoRadars(id);
   const isInAnyRadar = radarIds.length > 0;
 
   // Radar icon animation state
-  const [displayedActive, setDisplayedActive] = useState(isInAnyRadar);
+  // null = waiting for initial data load
+  const [displayedActive, setDisplayedActive] = useState<boolean | null>(null);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const wasModalOpenRef = useRef(false);
 
-  // When modal closes, sync visual state with data (animating if newly added)
+  // Initialize displayedActive once when data loads
+  useEffect(() => {
+    if (displayedActive === null && !isLoading) {
+      setDisplayedActive(isInAnyRadar);
+    }
+  }, [displayedActive, isInAnyRadar, isLoading]);
+
+  // Handle modal close: animate if added, sync if removed
   useEffect(() => {
     const modalJustClosed = wasModalOpenRef.current && !isModalOpen;
     wasModalOpenRef.current = isModalOpen;
 
-    if (!modalJustClosed) return;
+    if (!modalJustClosed || displayedActive === null) return;
 
     const wasAdded = isInAnyRadar && !displayedActive;
     const wasRemoved = !isInAnyRadar && displayedActive;
@@ -144,7 +152,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
           <DynamicRadarIcon
-            isActive={displayedActive}
+            isActive={displayedActive ?? false}
             shouldAnimate={shouldAnimate}
             onAnimationEnd={handleAnimationEnd}
             className="h-7 w-7"
