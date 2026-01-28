@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { StaticRadarIcon } from './icons';
 
 interface DynamicRadarIconProps {
   /** Controls filled (active) vs unfilled (inactive) rendering */
@@ -11,25 +12,6 @@ interface DynamicRadarIconProps {
 }
 
 type SvgProps = Omit<ComponentProps<'svg'>, 'children'>;
-
-/** Gray outline icon (inactive state) */
-function InactiveIcon(props: SvgProps) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      aria-hidden="true"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="3" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="9" />
-    </svg>
-  );
-}
 
 /** Indigo filled icon (active state) */
 function ActiveIcon(props: SvgProps) {
@@ -87,10 +69,10 @@ export function DynamicRadarIcon({
   onAnimationEnd,
 }: DynamicRadarIconProps) {
   if (shouldAnimate) {
-    // Layered reveal: InactiveIcon (base) → ActiveIcon (clipped, revealed by sweep) → SweepWedge (rotating gradient)
+    // Layered reveal: StaticRadarIcon (base) → ActiveIcon (clipped, revealed by sweep) → SweepWedge (rotating gradient)
     return (
       <div className={`relative ${className}`}>
-        <InactiveIcon className="absolute inset-0 w-full h-full text-gray-400" />
+        <StaticRadarIcon className="absolute inset-0 w-full h-full text-gray-400" />
         <ActiveIcon
           className="absolute inset-0 w-full h-full text-indigo-600 animate-radar-sweep"
           onAnimationEnd={onAnimationEnd}
@@ -104,5 +86,5 @@ export function DynamicRadarIcon({
     return <ActiveIcon className={`${className} text-indigo-600`} />;
   }
 
-  return <InactiveIcon className={`${className} text-gray-400`} />;
+  return <StaticRadarIcon className={`${className} text-gray-400`} />;
 }
