@@ -60,7 +60,7 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
   };
 
   const trimmedName = name.trim();
-  const isCreateDisabled = !trimmedName || isSubmitting;
+  const isCreateDisabled = !trimmedName;
   const errorId = error ? 'radar-name-error' : undefined;
 
   return (

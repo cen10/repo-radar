@@ -63,7 +63,7 @@ export function RenameRadarModal({ radar, onClose, onRenamed }: RenameRadarModal
 
   const trimmedName = name.trim();
   const isUnchanged = trimmedName === radar.name;
-  const isSaveDisabled = !trimmedName || isUnchanged || isSubmitting;
+  const isSaveDisabled = !trimmedName || isUnchanged;
   const errorId = error ? 'radar-name-error' : undefined;
 
   return (
