@@ -76,7 +76,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             href={html_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
+            className="group/link no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
             <span className="group/name relative block z-2">
               <h3 ref={nameRef} className="text-lg font-semibold text-gray-900 truncate">
@@ -84,7 +84,7 @@ export function RepoCard({ repository }: RepoCardProps) {
               </h3>
               {isNameTruncated && (
                 <span
-                  className="pointer-events-none absolute left-0 top-full mt-1 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover/name:opacity-100 z-50"
+                  className="pointer-events-none absolute left-0 top-full mt-1 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover/name:opacity-100 group-focus/link:opacity-100 z-50"
                   role="tooltip"
                   aria-hidden="true"
                 >
