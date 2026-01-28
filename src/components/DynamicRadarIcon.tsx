@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Global flag: only enable animation after user has clicked on the page
+// Global flag: only enable animation after user has clicked on the
+// page - it prevents animation from triggering when the page loads.
 let userHasInteracted = false;
 if (typeof window !== 'undefined') {
   const markInteracted = () => {
