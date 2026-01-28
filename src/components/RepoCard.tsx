@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
@@ -29,8 +29,26 @@ export function RepoCard({ repository }: RepoCardProps) {
   } = repository;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNameTruncated, setIsNameTruncated] = useState(false);
+  const nameRef = useRef<HTMLHeadingElement>(null);
   const { radarIds } = useRepoRadars(id);
   const isInAnyRadar = radarIds.length > 0;
+
+  // Detect if name is truncated (using ResizeObserver for reliable measurement)
+  useEffect(() => {
+    const el = nameRef.current;
+    if (!el) return;
+
+    const checkTruncation = () => {
+      setIsNameTruncated(el.scrollWidth > el.clientWidth);
+    };
+
+    checkTruncation();
+    const observer = new ResizeObserver(checkTruncation);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [name]);
 
   const topicsLabel =
     topics?.length > 0
@@ -53,42 +71,59 @@ export function RepoCard({ repository }: RepoCardProps) {
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <a
             href={html_url}
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
-            <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
+            <span className="group/name relative block z-2">
+              <h3 ref={nameRef} className="text-lg font-semibold text-gray-900 truncate">
+                {name}
+              </h3>
+              {isNameTruncated && (
+                <span
+                  className="pointer-events-none absolute left-0 top-full mt-1 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs font-normal text-white opacity-0 transition-opacity group-hover/name:opacity-100 z-50"
+                  role="tooltip"
+                  aria-hidden="true"
+                >
+                  {name}
+                  <span className="absolute left-4 bottom-full border-4 border-transparent border-b-gray-900" />
+                </span>
+              )}
+            </span>
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
             <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}${isInAnyRadar ? ', tracked' : ''}, opens in new tab`}</span>
           </a>
         </div>
-        {/* Hot badge - z-[2] to sit above the stretched link overlay (z-[1]) */}
-        {metrics && (
-          <HotBadge
-            stars={stargazers_count}
-            growthRate={starsGrowthRate ?? 0}
-            starsGained={starsGained}
-            className="shrink-0 z-2 mt-0.5"
-          />
-        )}
         {/* Radar button - z-[2] to sit above the stretched link overlay (z-[1]) */}
         <Button
           variant="ghost-primary"
           size="sm"
           onClick={() => setIsModalOpen(true)}
-          className="relative z-2"
+          className="relative z-2 -mt-2"
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
-          <RadarIcon filled={isInAnyRadar} className="h-8 w-8" modalOpen={isModalOpen} />
+          <RadarIcon filled={isInAnyRadar} className="h-7 w-7" modalOpen={isModalOpen} />
         </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
-          <StarIconSolid className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" aria-label="Starred" />
+          <StarIconSolid className="h-7 w-7 text-yellow-500 shrink-0 -mt-1" aria-label="Starred" />
         )}
       </div>
+
+      {/* Hot badge */}
+      {metrics && (
+        <div className="mb-3">
+          <HotBadge
+            stars={stargazers_count}
+            growthRate={starsGrowthRate ?? 0}
+            starsGained={starsGained}
+            className="z-2"
+          />
+        </div>
+      )}
 
       {/* Description */}
       {truncatedDescription && (
