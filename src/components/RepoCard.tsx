@@ -92,7 +92,7 @@ export function RepoCard({ repository }: RepoCardProps) {
                   <span className="absolute left-4 bottom-full border-4 border-transparent border-b-gray-900" />
                 </span>
               )}
-            </span>
+            </span>{' '}
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
             <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}${isInAnyRadar ? ', tracked' : ''}, opens in new tab`}</span>
           </a>
