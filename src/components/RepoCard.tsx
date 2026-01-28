@@ -9,6 +9,17 @@ import { DynamicRadarIcon } from './DynamicRadarIcon';
 import { useRepoRadars } from '../hooks/useRepoRadars';
 import { Button } from './Button';
 
+// Global flag: only enable animation after user has clicked on the page.
+// Prevents animation from triggering when the page loads with repos already in radars.
+let userHasInteracted = false;
+if (typeof window !== 'undefined') {
+  const markInteracted = () => {
+    userHasInteracted = true;
+    window.removeEventListener('click', markInteracted);
+  };
+  window.addEventListener('click', markInteracted);
+}
+
 interface RepoCardProps {
   repository: Repository;
 }
@@ -33,6 +44,29 @@ export function RepoCard({ repository }: RepoCardProps) {
   const nameRef = useRef<HTMLHeadingElement>(null);
   const { radarIds } = useRepoRadars(id);
   const isInAnyRadar = radarIds.length > 0;
+
+  // Radar icon animation state
+  const [displayedActive, setDisplayedActive] = useState(isInAnyRadar);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+
+  // When modal closes, sync visual state with data (animating if newly added)
+  useEffect(() => {
+    if (isModalOpen) return;
+
+    const wasAdded = isInAnyRadar && !displayedActive;
+    const wasRemoved = !isInAnyRadar && displayedActive;
+
+    if (wasAdded && userHasInteracted) {
+      setShouldAnimate(true);
+    } else if (wasRemoved) {
+      setDisplayedActive(false);
+    }
+  }, [isModalOpen, isInAnyRadar, displayedActive]);
+
+  const handleAnimationEnd = () => {
+    setShouldAnimate(false);
+    setDisplayedActive(true);
+  };
 
   // Detect if name is truncated (using ResizeObserver for reliable measurement)
   useEffect(() => {
@@ -105,7 +139,12 @@ export function RepoCard({ repository }: RepoCardProps) {
           className="relative z-2 -mt-2"
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
-          <DynamicRadarIcon filled={isInAnyRadar} className="h-7 w-7" modalOpen={isModalOpen} />
+          <DynamicRadarIcon
+            isActive={displayedActive}
+            shouldAnimate={shouldAnimate}
+            onAnimationEnd={handleAnimationEnd}
+            className="h-7 w-7"
+          />
         </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
