@@ -95,9 +95,9 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
           className="absolute inset-0 w-full h-full text-gray-400"
           aria-hidden="true"
         >
+          <circle cx="12" cy="12" r="3" />
+          <circle cx="12" cy="12" r="6" />
           <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="5" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
         </svg>
         {/* Filled icon revealed by sweep */}
         <svg
@@ -110,9 +110,9 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
           aria-hidden="true"
           onAnimationEnd={handleAnimationEnd}
         >
+          <circle cx="12" cy="12" r="3" />
+          <circle cx="12" cy="12" r="6" />
           <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="5" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
         </svg>
         {/* Animated radar wedge - grows, rotates, then shrinks */}
         {/* Sized to 75% to match radar outer ring (r=9 in 24x24 viewBox) */}
@@ -148,9 +148,9 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
         className={`${className} text-indigo-600`}
         aria-hidden="true"
       >
+        <circle cx="12" cy="12" r="3" />
+        <circle cx="12" cy="12" r="6" />
         <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
       </svg>
     );
   }
@@ -165,9 +165,9 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
       className={`${className} text-gray-400`}
       aria-hidden="true"
     >
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r="6" />
       <circle cx="12" cy="12" r="9" />
-      <circle cx="12" cy="12" r="5" />
-      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }
