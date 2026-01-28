@@ -5,7 +5,7 @@ import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
 import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 import { ManageRadarsModal } from './ManageRadarsModal';
-import { RadarIcon } from './RadarIcon';
+import { DynamicRadarIcon } from './DynamicRadarIcon';
 import { useRepoRadars } from '../hooks/useRepoRadars';
 import { Button } from './Button';
 
@@ -105,7 +105,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           className="relative z-2 -mt-2"
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
-          <RadarIcon filled={isInAnyRadar} className="h-7 w-7" modalOpen={isModalOpen} />
+          <DynamicRadarIcon filled={isInAnyRadar} className="h-7 w-7" modalOpen={isModalOpen} />
         </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (

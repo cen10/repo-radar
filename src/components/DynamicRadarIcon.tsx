@@ -10,7 +10,7 @@ if (typeof window !== 'undefined') {
   window.addEventListener('click', markInteracted);
 }
 
-interface RadarIconProps {
+interface DynamicRadarIconProps {
   filled: boolean;
   className?: string;
   /** If provided, defers animation until modalOpen becomes false */
@@ -26,7 +26,7 @@ interface RadarIconProps {
  * Animation only triggers after user has interacted with the page.
  * If modalOpen prop is used, animation defers until modal closes.
  */
-export function RadarIcon({ filled, className = '', modalOpen }: RadarIconProps) {
+export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicRadarIconProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const prevFilledRef = useRef(filled);
   const [pendingAnimation, setPendingAnimation] = useState(false);

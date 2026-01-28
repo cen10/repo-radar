@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { RadarIcon } from './RadarIcon';
+import { DynamicRadarIcon } from './DynamicRadarIcon';
 
-describe('RadarIcon', () => {
+describe('DynamicRadarIcon', () => {
   it('renders outline icon when filled is false', () => {
-    const { container } = render(<RadarIcon filled={false} />);
+    const { container } = render(<DynamicRadarIcon filled={false} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -14,7 +14,7 @@ describe('RadarIcon', () => {
   });
 
   it('renders filled icon when filled is true', () => {
-    const { container } = render(<RadarIcon filled={true} />);
+    const { container } = render(<DynamicRadarIcon filled={true} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -25,22 +25,24 @@ describe('RadarIcon', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(<RadarIcon filled={false} className="h-5 w-5 text-gray-500" />);
+    const { container } = render(
+      <DynamicRadarIcon filled={false} className="h-5 w-5 text-gray-500" />
+    );
 
     const svg = container.querySelector('svg');
     expect(svg).toHaveClass('h-5', 'w-5', 'text-gray-500');
   });
 
   it('has aria-hidden for decorative purposes', () => {
-    const { container } = render(<RadarIcon filled={false} />);
+    const { container } = render(<DynamicRadarIcon filled={false} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('uses thicker strokes for filled state to indicate active', () => {
-    const { container: outlineContainer } = render(<RadarIcon filled={false} />);
-    const { container: filledContainer } = render(<RadarIcon filled={true} />);
+    const { container: outlineContainer } = render(<DynamicRadarIcon filled={false} />);
+    const { container: filledContainer } = render(<DynamicRadarIcon filled={true} />);
 
     const outlineSvg = outlineContainer.querySelector('svg');
     const filledSvg = filledContainer.querySelector('svg');

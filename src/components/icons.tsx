@@ -29,8 +29,8 @@ export function LoadingSpinner({ className = 'w-5 h-5' }: { className?: string }
   );
 }
 
-// Radar icon - concentric circles representing radar (outline version)
-export function RadarIcon({ className }: { className?: string }) {
+// Static radar icon - concentric circles representing radar (outline version)
+export function StaticRadarIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}

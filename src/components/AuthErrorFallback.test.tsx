@@ -103,8 +103,8 @@ describe('AuthErrorFallback', () => {
 
       const retryButton = screen.getByRole('button', { name: /try again/i });
 
-      // Initially aria-busy should be false
-      expect(retryButton).toHaveAttribute('aria-busy', 'false');
+      // Initially aria-busy should not be present (only rendered when true)
+      expect(retryButton).not.toHaveAttribute('aria-busy');
 
       // Set up to not throw on retry
       shouldThrow = false;

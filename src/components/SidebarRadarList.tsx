@@ -4,7 +4,7 @@ import { PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip, useSidebarContext } from './Sidebar';
-import { RadarIcon } from './icons';
+import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
 
 interface SidebarRadarListProps {
@@ -52,7 +52,9 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
                   : ''
               }`}
             >
-              <RadarIcon className={`h-5 w-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`} />
+              <StaticRadarIcon
+                className={`h-5 w-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}
+              />
             </span>
             {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
             {!hideText && (
