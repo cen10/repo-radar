@@ -221,7 +221,6 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               onClick={handleSignOut}
               loading={isSigningOut}
               loadingText="Signing out..."
-              aria-label="Sign out"
             >
               <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
               Sign out
