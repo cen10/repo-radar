@@ -14,18 +14,18 @@ if (typeof window !== 'undefined') {
 interface DynamicRadarIconProps {
   filled: boolean;
   className?: string;
-  /** If provided, defers animation until modalOpen becomes false */
-  modalOpen?: boolean;
+  /** Defers animation until modalOpen becomes false */
+  modalOpen: boolean;
 }
 
 /**
  * Radar icon with filled/outline states and sweep animation.
- * Filled = repo is tracked in at least one radar (thicker strokes)
- * Outline = repo is not tracked (thinner strokes)
+ * Filled = repo is tracked in at least one radar (indigo, thicker strokes)
+ * Outline = repo is not tracked (gray, thinner strokes)
  *
- * When transitioning from unfilled to filled, a sweep animation plays.
- * Animation only triggers after user has interacted with the page.
- * If modalOpen prop is used, animation defers until modal closes.
+ * A sweep animation plays when transitioning from unfilled to filled.
+ * Animation is suppressed on page load (waits for first user click),
+ * and defers until modal closes so users see it.
  */
 export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicRadarIconProps) {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -38,10 +38,9 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
   useEffect(() => {
     const wasUnfilled = !prevFilledRef.current;
     const justBecameFilled = filled && wasUnfilled && userHasInteracted;
-    const isModalOpenAndTracked = modalOpen !== undefined && modalOpen;
 
     if (justBecameFilled) {
-      if (isModalOpenAndTracked) {
+      if (modalOpen) {
         // Defer animation until modal closes
         setPendingAnimation(true);
       } else {
@@ -50,7 +49,7 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
         setDeferredFilled(true);
       }
     } else if (!filled) {
-      if (!isModalOpenAndTracked) {
+      if (!modalOpen) {
         // Sync immediately (if modal open, keep showing purple until it closes)
         setDeferredFilled(false);
         setPendingAnimation(false);
@@ -75,8 +74,7 @@ export function DynamicRadarIcon({ filled, className = '', modalOpen }: DynamicR
     }
   }, [modalOpen, pendingAnimation, filled, deferredFilled]);
 
-  // Use deferredFilled for visual state when modalOpen is tracked, otherwise use filled directly
-  const displayFilled = modalOpen !== undefined ? deferredFilled : filled;
+  const displayFilled = deferredFilled;
 
   const handleAnimationEnd = () => {
     setIsAnimating(false);

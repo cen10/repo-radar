@@ -4,7 +4,7 @@ import { DynamicRadarIcon } from './DynamicRadarIcon';
 
 describe('DynamicRadarIcon', () => {
   it('renders outline icon when filled is false', () => {
-    const { container } = render(<DynamicRadarIcon filled={false} />);
+    const { container } = render(<DynamicRadarIcon filled={false} modalOpen={false} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -14,7 +14,7 @@ describe('DynamicRadarIcon', () => {
   });
 
   it('renders filled icon when filled is true', () => {
-    const { container } = render(<DynamicRadarIcon filled={true} />);
+    const { container } = render(<DynamicRadarIcon filled={true} modalOpen={false} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
@@ -26,7 +26,7 @@ describe('DynamicRadarIcon', () => {
 
   it('applies custom className', () => {
     const { container } = render(
-      <DynamicRadarIcon filled={false} className="h-5 w-5 text-gray-500" />
+      <DynamicRadarIcon filled={false} modalOpen={false} className="h-5 w-5 text-gray-500" />
     );
 
     const svg = container.querySelector('svg');
@@ -34,15 +34,19 @@ describe('DynamicRadarIcon', () => {
   });
 
   it('has aria-hidden for decorative purposes', () => {
-    const { container } = render(<DynamicRadarIcon filled={false} />);
+    const { container } = render(<DynamicRadarIcon filled={false} modalOpen={false} />);
 
     const svg = container.querySelector('svg');
     expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('uses thicker strokes for filled state to indicate active', () => {
-    const { container: outlineContainer } = render(<DynamicRadarIcon filled={false} />);
-    const { container: filledContainer } = render(<DynamicRadarIcon filled={true} />);
+    const { container: outlineContainer } = render(
+      <DynamicRadarIcon filled={false} modalOpen={false} />
+    );
+    const { container: filledContainer } = render(
+      <DynamicRadarIcon filled={true} modalOpen={false} />
+    );
 
     const outlineSvg = outlineContainer.querySelector('svg');
     const filledSvg = filledContainer.querySelector('svg');
