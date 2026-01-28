@@ -48,10 +48,14 @@ export function RepoCard({ repository }: RepoCardProps) {
   // Radar icon animation state
   const [displayedActive, setDisplayedActive] = useState(isInAnyRadar);
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const wasModalOpenRef = useRef(false);
 
   // When modal closes, sync visual state with data (animating if newly added)
   useEffect(() => {
-    if (isModalOpen) return;
+    const modalJustClosed = wasModalOpenRef.current && !isModalOpen;
+    wasModalOpenRef.current = isModalOpen;
+
+    if (!modalJustClosed) return;
 
     const wasAdded = isInAnyRadar && !displayedActive;
     const wasRemoved = !isInAnyRadar && displayedActive;
