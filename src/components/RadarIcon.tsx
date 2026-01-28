@@ -13,6 +13,8 @@ if (typeof window !== 'undefined') {
 interface RadarIconProps {
   filled: boolean;
   className?: string;
+  /** If provided, defers animation until modalOpen becomes false */
+  modalOpen?: boolean;
 }
 
 /**
@@ -22,18 +24,58 @@ interface RadarIconProps {
  *
  * When transitioning from unfilled to filled, a sweep animation plays.
  * Animation only triggers after user has interacted with the page.
+ * If modalOpen prop is used, animation defers until modal closes.
  */
-export function RadarIcon({ filled, className = '' }: RadarIconProps) {
+export function RadarIcon({ filled, className = '', modalOpen }: RadarIconProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const prevFilledRef = useRef(filled);
+  const [pendingAnimation, setPendingAnimation] = useState(false);
+  // Track deferred filled state - stays false while modal is open
+  const [deferredFilled, setDeferredFilled] = useState(filled);
 
-  // Detect transition from unfilled to filled (only after user interaction)
+  // Detect transitions and defer visual changes while modal is open
   useEffect(() => {
-    if (filled && !prevFilledRef.current && userHasInteracted) {
-      setIsAnimating(true);
+    const wasUnfilled = !prevFilledRef.current;
+    const justBecameFilled = filled && wasUnfilled && userHasInteracted;
+    const isModalOpenAndTracked = modalOpen !== undefined && modalOpen;
+
+    if (justBecameFilled) {
+      if (isModalOpenAndTracked) {
+        // Defer animation until modal closes
+        setPendingAnimation(true);
+      } else {
+        // Animate immediately
+        setIsAnimating(true);
+        setDeferredFilled(true);
+      }
+    } else if (!filled) {
+      if (!isModalOpenAndTracked) {
+        // Sync immediately (if modal open, keep showing purple until it closes)
+        setDeferredFilled(false);
+        setPendingAnimation(false);
+      }
     }
     prevFilledRef.current = filled;
-  }, [filled]);
+  }, [filled, modalOpen]);
+
+  // When modal closes, sync visual state with actual state
+  useEffect(() => {
+    if (modalOpen === false) {
+      if (pendingAnimation && filled) {
+        // Deferred fill transition - animate now
+        setPendingAnimation(false);
+        setIsAnimating(true);
+        setDeferredFilled(true);
+      } else if (deferredFilled !== filled) {
+        // Deferred unfill transition - sync without animation
+        setDeferredFilled(filled);
+        setPendingAnimation(false);
+      }
+    }
+  }, [modalOpen, pendingAnimation, filled, deferredFilled]);
+
+  // Use deferredFilled for visual state when modalOpen is tracked, otherwise use filled directly
+  const displayFilled = modalOpen !== undefined ? deferredFilled : filled;
 
   const handleAnimationEnd = () => {
     setIsAnimating(false);
@@ -95,7 +137,7 @@ export function RadarIcon({ filled, className = '' }: RadarIconProps) {
     );
   }
 
-  if (filled) {
+  if (displayFilled) {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -103,7 +145,7 @@ export function RadarIcon({ filled, className = '' }: RadarIconProps) {
         fill="none"
         stroke="currentColor"
         strokeWidth={2.0}
-        className={className}
+        className={`${className} text-indigo-600`}
         aria-hidden="true"
       >
         <circle cx="12" cy="12" r="9" />
@@ -120,7 +162,7 @@ export function RadarIcon({ filled, className = '' }: RadarIconProps) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}
-      className={className}
+      className={`${className} text-gray-400`}
       aria-hidden="true"
     >
       <circle cx="12" cy="12" r="9" />

@@ -79,10 +79,10 @@ export function RepoCard({ repository }: RepoCardProps) {
           variant="ghost-primary"
           size="sm"
           onClick={() => setIsModalOpen(true)}
-          className={`relative z-2 ${isInAnyRadar ? 'text-indigo-600 hover:text-indigo-700' : ''}`}
+          className="relative z-2"
           aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         >
-          <RadarIcon filled={isInAnyRadar} className="h-8 w-8" />
+          <RadarIcon filled={isInAnyRadar} className="h-8 w-8" modalOpen={isModalOpen} />
         </Button>
         {/* Star indicator (visual only, shown only for starred repos) */}
         {is_starred && (
