@@ -53,13 +53,19 @@ const variantStyles: Record<ButtonVariant, string> = {
   ].join(' '),
 };
 
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+const textSizeStyles: Record<ButtonSize, string> = {
+  sm: 'text-sm',
+  md: 'text-sm',
+  lg: 'text-base',
 };
 
-const ghostSizeStyles: Record<ButtonSize, string> = {
+const paddingStyles: Record<ButtonSize, string> = {
+  sm: 'px-3 py-1.5',
+  md: 'px-4 py-2',
+  lg: 'px-6 py-3',
+};
+
+const ghostPaddingStyles: Record<ButtonSize, string> = {
   sm: 'p-1',
   md: 'p-2',
   lg: 'p-3',
@@ -81,12 +87,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const isDisabled = disabled || loading;
   const isGhostVariant = variant === 'ghost' || variant === 'ghost-primary';
-  const sizeClass = isGhostVariant ? ghostSizeStyles[size] : sizeStyles[size];
+
+  // Determine padding: ghost variants use minimal padding, link has none, others use standard
+  const getPaddingClass = () => {
+    if (variant === 'link') return '';
+    if (isGhostVariant) return ghostPaddingStyles[size];
+    return paddingStyles[size];
+  };
 
   const baseClasses = [
     'inline-flex items-center justify-center rounded-md font-medium',
     variantStyles[variant],
-    variant !== 'link' ? sizeClass : '',
+    textSizeStyles[size],
+    getPaddingClass(),
     fullWidth ? 'w-full' : '',
     className,
   ]
