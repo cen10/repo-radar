@@ -190,7 +190,8 @@ export function RepoHeader({
   );
 }
 
-// Simple language color mapping (common languages)
+// Language colors from GitHub's linguist repo (github/linguist/blob/master/lib/linguist/languages.yml)
+// Verified 2026-01-29
 function getLanguageColor(language: string): string {
   const colors: Record<string, string> = {
     TypeScript: '#3178c6',
@@ -208,7 +209,7 @@ function getLanguageColor(language: string): string {
     Kotlin: '#A97BFF',
     Dart: '#00B4AB',
     HTML: '#e34c26',
-    CSS: '#563d7c',
+    CSS: '#663399',
     Shell: '#89e051',
     Vue: '#41b883',
   };
