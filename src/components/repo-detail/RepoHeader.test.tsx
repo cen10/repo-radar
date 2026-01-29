@@ -89,26 +89,14 @@ describe('RepoHeader', () => {
       expect(screen.queryByText('TypeScript')).not.toBeInTheDocument();
     });
 
-    it('renders license as link when url is present', () => {
+    it('renders license as link to repo license tab', () => {
       renderWithProviders(<RepoHeader {...defaultProps} />);
 
       const licenseLink = screen.getByRole('link', { name: /mit license/i });
-      expect(licenseLink).toHaveAttribute('href', 'https://api.github.com/licenses/mit');
-    });
-
-    it('renders license as text when url is absent', () => {
-      renderWithProviders(
-        <RepoHeader
-          {...defaultProps}
-          repository={{
-            ...defaultRepo,
-            license: { key: 'mit', name: 'MIT License', url: null },
-          }}
-        />
+      expect(licenseLink).toHaveAttribute(
+        'href',
+        'https://github.com/user/test-repo?tab=MIT-1-ov-file#readme'
       );
-
-      expect(screen.getByText('MIT License')).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /mit license/i })).not.toBeInTheDocument();
     });
 
     it('does not render license when absent', () => {

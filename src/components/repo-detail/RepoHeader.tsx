@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import type { Repository } from '../../types';
 import { formatRelativeTime } from '../../utils/formatters';
 import { isHotRepo } from '../../utils/metrics';
@@ -120,20 +120,15 @@ export function RepoHeader({
         )}
 
         {license && (
-          <span className="text-sm text-gray-600">
-            {license.url ? (
-              <a
-                href={license.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-indigo-600"
-              >
-                {license.name}
-              </a>
-            ) : (
-              license.name
-            )}
-          </span>
+          <a
+            href={`${html_url}?tab=${license.key.toUpperCase()}-1-ov-file#readme`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-indigo-600"
+          >
+            {license.name}
+            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
         )}
       </div>
 
