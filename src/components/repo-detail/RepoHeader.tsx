@@ -44,6 +44,8 @@ export function RepoHeader({
 
   const showRefreshing = isRefreshing || isRefreshingLocal;
 
+  // Ensure spinner shows for at least MIN_REFRESH_DISPLAY_MS so users
+  // notice the refresh happened, even if the API call is very fast
   const handleRefresh = async () => {
     setIsRefreshingLocal(true);
     const minDelayPromise = new Promise((resolve) => setTimeout(resolve, MIN_REFRESH_DISPLAY_MS));
