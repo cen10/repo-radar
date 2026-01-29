@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { ArrowPathIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { Repository } from '../../types';
 import { formatRelativeTime } from '../../utils/formatters';
+import { isHotRepo } from '../../utils/metrics';
 import { RadarIconButton } from '../RadarIconButton';
+import { HotBadge } from '../HotBadge';
+import { StarredBadge } from '../StarredBadge';
 
 const MIN_REFRESH_DISPLAY_MS = 300;
 
@@ -20,8 +22,23 @@ export function RepoHeader({
   isRefreshing,
   dataFetchedAt,
 }: RepoHeaderProps) {
-  const { id, full_name, owner, description, html_url, language, license, topics, is_starred } =
-    repository;
+  const {
+    id,
+    full_name,
+    owner,
+    description,
+    html_url,
+    language,
+    license,
+    topics,
+    is_starred,
+    stargazers_count,
+    metrics,
+  } = repository;
+
+  const starsGrowthRate = metrics?.stars_growth_rate ?? 0;
+  const starsGained = metrics?.stars_gained ?? 0;
+  const isHot = isHotRepo(stargazers_count, starsGrowthRate, starsGained);
   const [isRefreshingLocal, setIsRefreshingLocal] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
@@ -46,7 +63,16 @@ export function RepoHeader({
         />
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 wrap-break-word">{full_name}</h1>
+          <h1 className="text-2xl font-bold wrap-break-word">
+            <a
+              href={html_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-900 hover:text-indigo-600"
+            >
+              {full_name}
+            </a>
+          </h1>
           <a
             href={`https://github.com/${owner.login}`}
             target="_blank"
@@ -59,23 +85,24 @@ export function RepoHeader({
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <RadarIconButton githubRepoId={id} iconClassName="h-6 w-6" />
-          {is_starred && <StarIcon className="h-6 w-6 text-yellow-500" aria-label="Starred" />}
-
-          <a
-            href={html_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            View on GitHub
-            <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
-          </a>
+          <RadarIconButton githubRepoId={id} iconClassName="h-9 w-9" />
         </div>
       </div>
 
       {/* Description */}
       {description && <p className="text-gray-700 mb-4">{description}</p>}
+
+      {/* Status badges */}
+      {(is_starred || isHot) && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {is_starred && <StarredBadge />}
+          <HotBadge
+            stars={stargazers_count}
+            growthRate={starsGrowthRate}
+            starsGained={starsGained}
+          />
+        </div>
+      )}
 
       {/* Meta row: Language, License */}
       <div className="flex flex-wrap items-center gap-3 mb-4">

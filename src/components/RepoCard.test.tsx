@@ -208,16 +208,17 @@ describe('RepoCard', () => {
   });
 
   describe('Star indicator', () => {
-    it('displays star icon when repository is starred', () => {
+    it('displays starred badge when repository is starred', () => {
       renderWithProviders(<RepoCard repository={{ ...defaultRepo, is_starred: true }} />);
 
-      expect(screen.getByLabelText('Starred')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /starred/i })).toBeInTheDocument();
+      expect(screen.getByText('Starred')).toBeInTheDocument();
     });
 
-    it('does not display star icon when repository is not starred', () => {
+    it('does not display starred badge when repository is not starred', () => {
       renderWithProviders(<RepoCard repository={{ ...defaultRepo, is_starred: false }} />);
 
-      expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: /starred/i })).not.toBeInTheDocument();
     });
 
     it('includes starred in card link aria-label when starred', () => {

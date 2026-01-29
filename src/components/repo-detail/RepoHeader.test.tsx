@@ -34,10 +34,15 @@ describe('RepoHeader', () => {
   });
 
   describe('basic information', () => {
-    it('renders repository name as heading', () => {
+    it('renders repository name as heading with link to GitHub', () => {
       renderWithProviders(<RepoHeader {...defaultProps} />);
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('user/test-repo');
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading).toHaveTextContent('user/test-repo');
+
+      const link = screen.getByRole('link', { name: 'user/test-repo' });
+      expect(link).toHaveAttribute('href', 'https://github.com/user/test-repo');
+      expect(link).toHaveAttribute('target', '_blank');
     });
 
     it('renders owner link with correct href', () => {
@@ -66,14 +71,6 @@ describe('RepoHeader', () => {
       );
 
       expect(screen.queryByText('Test repository description')).not.toBeInTheDocument();
-    });
-
-    it('renders View on GitHub link with correct href', () => {
-      renderWithProviders(<RepoHeader {...defaultProps} />);
-
-      const githubLink = screen.getByRole('link', { name: /view on github/i });
-      expect(githubLink).toHaveAttribute('href', 'https://github.com/user/test-repo');
-      expect(githubLink).toHaveAttribute('target', '_blank');
     });
   });
 
@@ -204,20 +201,21 @@ describe('RepoHeader', () => {
   });
 
   describe('starred indicator', () => {
-    it('shows star icon when repository is starred', () => {
+    it('shows starred badge when repository is starred', () => {
       renderWithProviders(
         <RepoHeader {...defaultProps} repository={{ ...defaultRepo, is_starred: true }} />
       );
 
-      expect(screen.getByLabelText('Starred')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /starred/i })).toBeInTheDocument();
+      expect(screen.getByText('Starred')).toBeInTheDocument();
     });
 
-    it('does not show star icon when repository is not starred', () => {
+    it('does not show starred badge when repository is not starred', () => {
       renderWithProviders(
         <RepoHeader {...defaultProps} repository={{ ...defaultRepo, is_starred: false }} />
       );
 
-      expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: /starred/i })).not.toBeInTheDocument();
     });
   });
 

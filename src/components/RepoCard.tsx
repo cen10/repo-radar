@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
 import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
+import { StarredBadge } from './StarredBadge';
 import { RadarIconButton } from './RadarIconButton';
 
 interface RepoCardProps {
@@ -91,21 +91,20 @@ export function RepoCard({ repository }: RepoCardProps) {
         </div>
         {/* Radar button - z-2 to sit above the stretched link overlay (z-1) */}
         <RadarIconButton githubRepoId={id} className="relative z-2 -mt-2" />
-        {/* Star indicator (visual only, shown only for starred repos) */}
-        {is_starred && (
-          <StarIconSolid className="h-7 w-7 text-yellow-500 shrink-0 -mt-1" aria-label="Starred" />
-        )}
       </div>
 
-      {/* Hot badge */}
-      {metrics && (
-        <div className="mb-3">
-          <HotBadge
-            stars={stargazers_count}
-            growthRate={starsGrowthRate ?? 0}
-            starsGained={starsGained}
-            className="z-2"
-          />
+      {/* Status badges */}
+      {(isHot || is_starred) && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {is_starred && <StarredBadge className="z-2" />}
+          {metrics && (
+            <HotBadge
+              stars={stargazers_count}
+              growthRate={starsGrowthRate ?? 0}
+              starsGained={starsGained}
+              className="z-2"
+            />
+          )}
         </div>
       )}
 
