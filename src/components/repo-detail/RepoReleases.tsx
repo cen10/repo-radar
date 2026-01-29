@@ -78,7 +78,7 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
                         {release.name || release.tag_name}
                       </span>
                       {release.prerelease && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap shrink-0">
                           Pre-release
                         </span>
                       )}

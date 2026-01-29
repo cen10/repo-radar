@@ -36,19 +36,17 @@ export function RepoStats({ repository }: RepoStatsProps) {
   return (
     <div className="mb-8 bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3">
       {/* Inline stats with icons */}
-      <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2 text-gray-900">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-gray-900">
         <span className="inline-flex items-baseline gap-1.5">
           <StarIcon className="h-4 w-4 self-center" aria-hidden="true" />
           <span className="text-lg font-semibold">{formatCompactNumber(stargazers_count)}</span>
           <span className="text-sm">stars</span>
         </span>
-        <span className="text-gray-400">·</span>
         <span className="inline-flex items-baseline gap-1.5">
           <ForkIcon className="h-4 w-4 self-center" />
           <span className="text-lg font-semibold">{formatCompactNumber(forks_count)}</span>
           <span className="text-sm">forks</span>
         </span>
-        <span className="text-gray-400">·</span>
         <span className="inline-flex items-baseline gap-1.5">
           <EyeIcon className="h-4 w-4 self-center" aria-hidden="true" />
           <span className="text-lg font-semibold">{formatCompactNumber(watchers_count)}</span>
