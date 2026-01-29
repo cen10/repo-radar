@@ -81,6 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     disabled,
     className,
     children,
+    type = 'button',
     ...props
   },
   ref
@@ -109,6 +110,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   return (
     <HeadlessButton
       ref={ref}
+      type={type}
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={baseClasses}
