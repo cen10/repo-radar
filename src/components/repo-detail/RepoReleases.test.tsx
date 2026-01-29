@@ -136,7 +136,7 @@ describe('RepoReleases', () => {
       );
     });
 
-    it('only expands one release at a time', async () => {
+    it('allows multiple releases to be expanded simultaneously', async () => {
       const user = userEvent.setup();
       const releases = [
         createMockRelease({ id: 1, name: 'Release 1', body: 'Notes 1' }),
@@ -150,7 +150,7 @@ describe('RepoReleases', () => {
       expect(screen.getByText('Notes 1')).toBeInTheDocument();
 
       await user.click(button2);
-      expect(screen.queryByText('Notes 1')).not.toBeInTheDocument();
+      expect(screen.getByText('Notes 1')).toBeInTheDocument();
       expect(screen.getByText('Notes 2')).toBeInTheDocument();
     });
   });
