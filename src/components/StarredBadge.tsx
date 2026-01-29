@@ -12,7 +12,7 @@ export function StarredBadge({ className = '' }: StarredBadgeProps) {
       aria-label="Starred repository"
     >
       <StarIcon className="h-3.5 w-3.5" aria-hidden="true" />
-      <span className="ml-1" aria-hidden="true">
+      <span className="ml-1 mt-0.25" aria-hidden="true">
         Starred
       </span>
     </span>
