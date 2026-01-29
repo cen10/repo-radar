@@ -6,6 +6,14 @@ export interface User {
   email: string | null;
 }
 
+// License information from GitHub's license detection (e.g., MIT, Apache-2.0)
+// See: https://docs.github.com/en/rest/licenses
+export interface RepositoryLicense {
+  key: string; // SPDX identifier (e.g., "mit", "apache-2.0")
+  name: string; // Human-readable name (e.g., "MIT License")
+  url: string | null; // Link to license details on GitHub
+}
+
 export interface Repository {
   id: number;
   name: string;
@@ -17,8 +25,11 @@ export interface Repository {
   description: string | null;
   html_url: string;
   stargazers_count: number;
+  forks_count: number;
+  watchers_count: number; // Note: GitHub API calls this subscribers_count
   open_issues_count: number;
   language: string | null;
+  license: RepositoryLicense | null;
   topics: string[];
   updated_at: string;
   pushed_at: string | null;

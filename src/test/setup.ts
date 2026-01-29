@@ -1,8 +1,16 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterAll, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { configMocks, mockAnimationsApi } from 'jsdom-testing-mocks';
 import { mockSupabaseClient } from './mocks/supabase';
 import { mockLogger } from './mocks/logger';
+
+// jsdom-testing-mocks requires afterEach and afterAll to mock
+// the Web Animations API.
+configMocks({ afterEach, afterAll });
+
+// Mock Web Animations API for Headless UI components (prevents polyfill warnings)
+mockAnimationsApi();
 
 // Mock ResizeObserver for Headless UI components
 class ResizeObserverMock {

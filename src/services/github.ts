@@ -20,8 +20,15 @@ interface GitHubStarredRepo {
   description: string | null;
   html_url: string;
   stargazers_count: number;
+  forks_count: number;
+  subscribers_count: number; // GitHub calls watchers "subscribers"
   open_issues_count: number;
   language: string | null;
+  license: {
+    key: string;
+    name: string;
+    url: string | null;
+  } | null;
   topics?: string[];
   updated_at: string;
   pushed_at: string | null;
@@ -124,8 +131,11 @@ function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOpt
     description: repo.description,
     html_url: repo.html_url,
     stargazers_count: repo.stargazers_count,
+    forks_count: repo.forks_count,
+    watchers_count: repo.subscribers_count, // GitHub API uses subscribers_count for watchers
     open_issues_count: repo.open_issues_count,
     language: repo.language,
+    license: repo.license,
     topics: repo.topics || [],
     updated_at: repo.updated_at,
     pushed_at: repo.pushed_at,
@@ -676,7 +686,15 @@ export async function fetchRepositoryReleases(
  * @param repoId - GitHub repository numeric ID
  * @returns Repository data or null if not found/inaccessible
  */
-async function fetchRepositoryById(token: string, repoId: number): Promise<Repository | null> {
+/**
+ * Fetch a single repository by its GitHub numeric ID.
+ * Returns null if the repo doesn't exist or is inaccessible (deleted, private).
+ * Throws on auth errors or rate limiting.
+ */
+export async function fetchRepositoryById(
+  token: string,
+  repoId: number
+): Promise<Repository | null> {
   const url = `${GITHUB_API_BASE}/repositories/${repoId}`;
 
   try {
