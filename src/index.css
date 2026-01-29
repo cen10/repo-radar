@@ -14,9 +14,11 @@
 
   --font-mono: 'Fira Code', 'SF Mono', monospace;
 
-  /* animations → gives you animate-pulse-slow / animate-shimmer */
+  /* animations → gives you animate-pulse-slow / animate-shimmer / animate-radar-sweep / animate-radar-wedge */
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-shimmer: shimmer 2s ease-in-out infinite;
+  --animate-radar-sweep: radar-sweep 0.6s linear forwards;
+  --animate-radar-wedge: radar-wedge 0.6s linear forwards;
 }
 
 /* Keyframes should live outside @theme */
@@ -29,6 +31,79 @@
   }
   100% {
     opacity: 1;
+  }
+}
+
+/* Radar sweep animation - smooth reveal using conic-gradient mask */
+@property --sweep-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes radar-sweep {
+  /* Wait for wedge to grow (0-25%) */
+  0% {
+    --sweep-angle: 0deg;
+  }
+  25% {
+    --sweep-angle: 0deg;
+  }
+  /* Track wedge trailing edge exactly */
+  75% {
+    --sweep-angle: 270deg;
+  }
+  100% {
+    --sweep-angle: 360deg;
+  }
+}
+
+.animate-radar-sweep {
+  mask-image: conic-gradient(
+    from 0deg at 50% 50%,
+    black var(--sweep-angle),
+    transparent var(--sweep-angle)
+  );
+  -webkit-mask-image: conic-gradient(
+    from 0deg at 50% 50%,
+    black var(--sweep-angle),
+    transparent var(--sweep-angle)
+  );
+}
+
+/* Radar wedge - grows from 0° to 90°, rotates, then shrinks */
+@property --wedge-start {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --wedge-end {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes radar-wedge {
+  /* Start: no wedge */
+  0% {
+    --wedge-start: 0deg;
+    --wedge-end: 0deg;
+  }
+  /* Growth phase: wedge expands to 90° */
+  25% {
+    --wedge-start: 0deg;
+    --wedge-end: 90deg;
+  }
+  /* Rotation phase complete: wedge at end position */
+  75% {
+    --wedge-start: 270deg;
+    --wedge-end: 360deg;
+  }
+  /* Shrink: trailing edge catches up */
+  100% {
+    --wedge-start: 360deg;
+    --wedge-end: 360deg;
   }
 }
 

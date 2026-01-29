@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
-import { LoadingSpinner } from './icons';
 import {
   ArrowRightOnRectangleIcon,
   ExclamationCircleIcon,
@@ -11,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
+import { Button } from './Button';
 
 // Helper function to provide user-friendly error messages for sign out
 function getSignOutErrorMessage(error: unknown): string {
@@ -154,13 +154,15 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             {onMenuToggle && (
-              <button
+              <Button
+                variant="ghost"
+                size="md"
                 onClick={onMenuToggle}
-                className="lg:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="lg:hidden"
                 aria-label="Open navigation menu"
               >
                 <Bars3Icon className="h-6 w-6" />
-              </button>
+              </Button>
             )}
             <h1 className="text-xl font-semibold text-gray-900">Repo Radar</h1>
           </div>
@@ -182,16 +184,17 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
 
             {/* Help button */}
             <div className="relative">
-              <button
+              <Button
                 ref={helpButtonRef}
+                variant="ghost"
+                size="md"
                 onClick={toggleHelp}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
                 aria-label="Help"
                 aria-expanded={isHelpOpen}
                 aria-controls="help-panel"
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
-              </button>
+              </Button>
 
               {/* Sliding help panel */}
               <div
@@ -212,26 +215,16 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               </div>
             </div>
 
-            <button
+            <Button
               ref={signOutButtonRef}
+              variant="secondary"
               onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Sign out"
-              aria-busy={isSigningOut}
+              loading={isSigningOut}
+              loadingText="Signing out..."
             >
-              {isSigningOut ? (
-                <>
-                  <LoadingSpinner className="mr-2 h-4 w-4" />
-                  Signing out...
-                </>
-              ) : (
-                <>
-                  <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
-                  Sign out
-                </>
-              )}
-            </button>
+              <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+              Sign out
+            </Button>
           </div>
         </div>
       </header>

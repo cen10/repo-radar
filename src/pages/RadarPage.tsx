@@ -15,7 +15,8 @@ import { RenameRadarModal } from '../components/RenameRadarModal';
 import { RepoCard } from '../components/RepoCard';
 import { SearchBar } from '../components/SearchBar';
 import { SortDropdown } from '../components/SortDropdown';
-import { LoadingSpinner, RadarIcon } from '../components/icons';
+import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
+import { Button } from '../components/Button';
 import type { Repository } from '../types';
 
 type RadarSortOption = 'updated' | 'stars';
@@ -157,7 +158,7 @@ const RadarPage = () => {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
-            <RadarIcon className="h-7 w-7 text-indigo-600" />
+            <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
             {radar?.name}
           </h1>
           <p className="mt-1 text-sm text-gray-500">{repoText}</p>
@@ -238,12 +239,9 @@ const RadarPage = () => {
         <div className="text-center py-12">
           <p className="text-gray-500">No repositories found</p>
           <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
-          <button
-            onClick={handleClearSearch}
-            className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
-          >
+          <Button variant="link" onClick={handleClearSearch} className="mt-4">
             Clear search
-          </button>
+          </Button>
         </div>
       )}
 

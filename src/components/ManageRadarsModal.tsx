@@ -7,6 +7,7 @@ import { useRadars } from '../hooks/useRadars';
 import { useRepoRadars } from '../hooks/useRepoRadars';
 import { addRepoToRadar, removeRepoFromRadar, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
+import { Button } from './Button';
 
 interface ManageRadarsModalProps {
   githubRepoId: number;
@@ -207,14 +208,9 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6">
             <DialogTitle className="text-lg font-semibold text-gray-900">Add to Radar</DialogTitle>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Close"
-            >
+            <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
               <XMarkIcon className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
 
           {/* Content */}
@@ -234,13 +230,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
 
           {/* Footer */}
           <div className="flex justify-end px-6 pb-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Done
-            </button>
+            <Button onClick={onClose}>Done</Button>
           </div>
         </DialogPanel>
       </div>

@@ -4,6 +4,7 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import { useQueryClient } from '@tanstack/react-query';
 import { updateRadar } from '../services/radar';
 import type { Radar } from '../types/database';
+import { Button } from './Button';
 
 interface RenameRadarModalProps {
   radar: Radar;
@@ -62,7 +63,7 @@ export function RenameRadarModal({ radar, onClose, onRenamed }: RenameRadarModal
 
   const trimmedName = name.trim();
   const isUnchanged = trimmedName === radar.name;
-  const isSaveDisabled = !trimmedName || isUnchanged || isSubmitting;
+  const isSaveDisabled = !trimmedName || isUnchanged;
   const errorId = error ? 'radar-name-error' : undefined;
 
   return (
@@ -115,45 +116,17 @@ export function RenameRadarModal({ radar, onClose, onRenamed }: RenameRadarModal
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={isSaveDisabled}
-                className="inline-flex w-[72px] items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-600 disabled:opacity-70"
+                loading={isSubmitting}
+                className="w-[72px]"
               >
-                {isSubmitting ? (
-                  <svg
-                    className="h-4 w-4 animate-spin"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                ) : (
-                  'Save'
-                )}
-              </button>
+                Save
+              </Button>
             </div>
           </form>
         </DialogPanel>

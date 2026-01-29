@@ -2,6 +2,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
+import { Button } from '../components/Button';
 
 const Home = () => {
   const { user, authLoading, signInWithGitHub } = useAuth();
@@ -100,21 +101,15 @@ const Home = () => {
           </div>
         )}
 
-        <button
+        <Button
           ref={signInButtonRef}
+          size="lg"
           onClick={handleSignIn}
-          disabled={isSigningIn}
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={isSigningIn}
+          loadingText="Signing in..."
         >
-          {isSigningIn ? (
-            <>
-              <LoadingSpinner className="h-5 w-5 mr-2" />
-              Signing in...
-            </>
-          ) : (
-            'Sign in with GitHub'
-          )}
-        </button>
+          Sign in with GitHub
+        </Button>
       </div>
     </div>
   );
