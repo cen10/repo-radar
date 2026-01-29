@@ -45,6 +45,10 @@ export function RepoCard({ repository }: RepoCardProps) {
   const { radarIds, isLoading } = useRepoRadars(id);
   const isInAnyRadar = radarIds.length > 0;
 
+  // Keep a ref to current value for use in callbacks
+  const isInAnyRadarRef = useRef(isInAnyRadar);
+  isInAnyRadarRef.current = isInAnyRadar;
+
   // Radar icon animation state
   // null = waiting for initial data load
   const [displayedActive, setDisplayedActive] = useState<boolean | null>(null);
@@ -60,6 +64,7 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   // Handle modal close: animate if added, sync if removed
   useEffect(() => {
+    // Detect modal close transition (must check before updating ref)
     const modalJustClosed = wasModalOpenRef.current && !isModalOpen;
     wasModalOpenRef.current = isModalOpen;
 
@@ -77,7 +82,7 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   const handleAnimationEnd = () => {
     setShouldAnimate(false);
-    setDisplayedActive(true);
+    setDisplayedActive(isInAnyRadarRef.current);
   };
 
   // Detect if name is truncated (using ResizeObserver for reliable measurement)
