@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react';
 import { StarIcon, EyeIcon } from '@heroicons/react/24/outline';
-import type { Repository } from '../../types';
 import { formatCompactNumber } from '../../utils/formatters';
 import { ForkIcon } from '../icons';
 
@@ -17,24 +16,35 @@ export interface LinkItem {
   label: string;
 }
 
-export function getStats(repository: Repository): StatItem[] {
+export interface StatCounts {
+  stargazers_count: number;
+  forks_count: number;
+  watchers_count: number;
+}
+
+export interface LinkParams {
+  html_url: string;
+  open_issues_count: number;
+}
+
+export function getStats(counts: StatCounts): StatItem[] {
   return [
-    { key: 'stars', icon: StarIcon, value: repository.stargazers_count, label: 'stars' },
-    { key: 'forks', icon: ForkIcon, value: repository.forks_count, label: 'forks' },
-    { key: 'watchers', icon: EyeIcon, value: repository.watchers_count, label: 'watchers' },
+    { key: 'stars', icon: StarIcon, value: counts.stargazers_count, label: 'stars' },
+    { key: 'forks', icon: ForkIcon, value: counts.forks_count, label: 'forks' },
+    { key: 'watchers', icon: EyeIcon, value: counts.watchers_count, label: 'watchers' },
   ];
 }
 
-export function getLinks(repository: Repository): LinkItem[] {
+export function getLinks(params: LinkParams): LinkItem[] {
   return [
     {
       key: 'issues',
-      href: `${repository.html_url}/issues`,
-      label: `${formatCompactNumber(repository.open_issues_count)} open issues`,
+      href: `${params.html_url}/issues`,
+      label: `${formatCompactNumber(params.open_issues_count)} open issues`,
     },
     {
       key: 'pulls',
-      href: `${repository.html_url}/pulls`,
+      href: `${params.html_url}/pulls`,
       label: 'Pull requests',
     },
   ];
