@@ -2,9 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRepository } from '../hooks/useRepository';
-import { useRepoRadars } from '../hooks/useRepoRadars';
 import { useReleases } from '../hooks/useReleases';
-import { RepoHeader, RepoStats, RepoReleases, RepoRadarSection } from '../components/repo-detail';
+import { RepoHeader, RepoStats, RepoReleases } from '../components/repo-detail';
 import { LoadingSpinner } from '../components/icons';
 
 const RepoDetailPage = () => {
@@ -16,10 +15,6 @@ const RepoDetailPage = () => {
       repoId: id,
       token: providerToken,
     });
-
-  const { radarIds } = useRepoRadars(repository?.id ?? 0, {
-    enabled: !!repository,
-  });
 
   const { releases, isLoading: releasesLoading } = useReleases({
     token: providerToken,
@@ -98,7 +93,6 @@ const RepoDetailPage = () => {
         isLoading={releasesLoading}
         releasesUrl={`${repository.html_url}/releases`}
       />
-      <RepoRadarSection repository={repository} radarIds={radarIds} />
     </div>
   );
 };

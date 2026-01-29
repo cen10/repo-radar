@@ -84,7 +84,7 @@ export function RepoHeader({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="shrink-0">
           <RadarIconButton githubRepoId={id} iconClassName="h-9 w-9" />
         </div>
       </div>
