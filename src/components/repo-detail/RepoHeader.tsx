@@ -23,6 +23,7 @@ export function RepoHeader({
   const { id, full_name, owner, description, html_url, language, license, topics, is_starred } =
     repository;
   const [isRefreshingLocal, setIsRefreshingLocal] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
   const showRefreshing = isRefreshing || isRefreshingLocal;
 
@@ -110,7 +111,7 @@ export function RepoHeader({
       {/* Topics */}
       {topics && topics.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
-          {topics.slice(0, 5).map((topic) => (
+          {(showAllTopics ? topics : topics.slice(0, 10)).map((topic) => (
             <span
               key={topic}
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
@@ -118,8 +119,21 @@ export function RepoHeader({
               {topic}
             </span>
           ))}
-          {topics.length > 5 && (
-            <span className="text-xs text-gray-500">{`+${topics.length - 5} more`}</span>
+          {topics.length > 10 && !showAllTopics && (
+            <button
+              onClick={() => setShowAllTopics(true)}
+              className="text-xs text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer"
+            >
+              {`+${topics.length - 10} more`}
+            </button>
+          )}
+          {showAllTopics && topics.length > 10 && (
+            <button
+              onClick={() => setShowAllTopics(false)}
+              className="text-xs text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer"
+            >
+              Show less
+            </button>
           )}
         </div>
       )}
