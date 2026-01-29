@@ -259,6 +259,36 @@ describe('RepoHeader', () => {
         { timeout: 500 }
       );
     });
+
+    it('re-enables refresh button after onRefresh throws an error', async () => {
+      const user = userEvent.setup();
+      vi.useRealTimers();
+
+      // Create a delayed rejection to ensure we can observe the disabled state
+      const onRefresh = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise((_, reject) => setTimeout(() => reject(new Error('Network error')), 50))
+        );
+      renderWithProviders(<RepoHeader {...defaultProps} onRefresh={onRefresh} />);
+
+      const button = screen.getByRole('button', { name: /refresh/i });
+      await user.click(button);
+
+      // Button should be disabled during the refresh
+      expect(button).toBeDisabled();
+
+      // Button should be re-enabled even after error (wait for delay + min display time)
+      await waitFor(
+        () => {
+          expect(button).not.toBeDisabled();
+        },
+        { timeout: 600 }
+      );
+
+      // Verify the refresh was actually called
+      expect(onRefresh).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('radar integration', () => {

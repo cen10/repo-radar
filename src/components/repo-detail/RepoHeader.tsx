@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ArrowPathIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import type { Repository } from '../../types';
 import { formatRelativeTime } from '../../utils/formatters';
@@ -41,16 +41,27 @@ export function RepoHeader({
   const isHot = isHotRepo(stargazers_count, starsGrowthRate, starsGained);
   const [isRefreshingLocal, setIsRefreshingLocal] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  const isRefreshingRef = useRef(false);
 
   const showRefreshing = isRefreshing || isRefreshingLocal;
 
   // Ensure spinner shows for at least MIN_REFRESH_DISPLAY_MS so users
-  // notice the refresh happened, even if the API call is very fast
+  // notice the refresh happened, even if the API call is very fast.
+  // Errors are handled by TanStack Query at the page level, so we catch
+  // and ignore here to prevent unhandled promise rejections.
   const handleRefresh = async () => {
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
     setIsRefreshingLocal(true);
-    const minDelayPromise = new Promise((resolve) => setTimeout(resolve, MIN_REFRESH_DISPLAY_MS));
-    await Promise.all([onRefresh(), minDelayPromise]);
-    setIsRefreshingLocal(false);
+    try {
+      const minDelayPromise = new Promise((resolve) => setTimeout(resolve, MIN_REFRESH_DISPLAY_MS));
+      await Promise.all([onRefresh(), minDelayPromise]);
+    } catch {
+      // Error handling is done by TanStack Query's error state
+    } finally {
+      isRefreshingRef.current = false;
+      setIsRefreshingLocal(false);
+    }
   };
 
   return (
