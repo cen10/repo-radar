@@ -156,7 +156,7 @@ export function RepoHeader({
               {`+${topics.length - 10} more`}
             </button>
           )}
-          {showAllTopics && topics.length > 10 && (
+          {showAllTopics && (
             <button
               onClick={() => setShowAllTopics(false)}
               className="text-xs text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer"
