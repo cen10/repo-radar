@@ -153,18 +153,18 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 - [x] T044 Create ManageRadarsModal component for "Add to Radar" interaction
 - [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction
 - [x] T046 Add radar icon to RepoCard with filled/outline states
-- [ ] T047 Create radar sweep animation CSS/component for add-to-radar feedback
-- [ ] T048 Create CreateRadarModal component for creating new radars from sidebar
-- [ ] T049 Create RadarContextMenu component with Rename/Delete actions
+- [x] T047 Create radar sweep animation CSS/component for add-to-radar feedback _(implemented in `src/index.css` and `DynamicRadarIcon.tsx`)_
+- [x] T048 Create CreateRadarModal component for creating new radars from sidebar
+- [x] T049 Create RadarContextMenu component with Rename/Delete actions _(implemented as kebab menu in RadarPage)_
 
 ## Phase 3.14: Radar Page & Detail Page (T050-T053, T030-T031)
 
-- [ ] T050 Create RadarPage component in `src/pages/RadarPage.tsx` with header and repo list
-- [ ] T051 Create RepoDetailPage component in `src/pages/RepoDetailPage.tsx`
-- [ ] T052 Update RepoCard click behavior to navigate to internal detail page
-- [ ] T030 Add refresh button to detail page
-- [ ] T031 Add last updated timestamp to detail page
-- [ ] T053 [P] Create EmptyState components for empty radar, no stars, no search results
+- [x] T050 Create RadarPage component in `src/pages/RadarPage.tsx` with header and repo list
+- [x] T051 Create RepoDetailPage component in `src/pages/RepoDetailPage.tsx`
+- [x] T052 Update RepoCard click behavior to navigate to internal detail page
+- [x] T030 Add refresh button to detail page
+- [x] T031 Add last updated timestamp to detail page
+- [x] T053 Create EmptyState components for empty radar, no stars, no search results
 
 ## Phase 3.15: Search & Polish (T054-T055)
 
