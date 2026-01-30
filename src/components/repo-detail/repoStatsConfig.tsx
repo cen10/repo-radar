@@ -3,26 +3,26 @@ import { StarIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { formatCompactNumber } from '../../utils/formatters';
 import { ForkIcon } from '../icons';
 
-export interface StatItem {
+interface StatItem {
   key: string;
   icon: ComponentType<{ className?: string }>;
   value: number;
   label: string;
 }
 
-export interface LinkItem {
+interface LinkItem {
   key: string;
   href: string;
   label: string;
 }
 
-export interface StatCounts {
+interface StatCounts {
   stargazers_count: number;
   forks_count: number;
   watchers_count: number;
 }
 
-export interface LinkParams {
+interface LinkParams {
   html_url: string;
   open_issues_count: number;
 }
