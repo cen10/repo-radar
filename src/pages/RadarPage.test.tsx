@@ -189,7 +189,8 @@ describe('RadarPage', () => {
     it('shows search and sort controls', () => {
       renderWithProviders();
 
-      expect(screen.getByLabelText(/sort repositories/i)).toBeInTheDocument();
+      // Sort dropdown button (Headless UI Listbox)
+      expect(screen.getByRole('button', { name: /recently updated/i })).toBeInTheDocument();
       // Search is collapsible - look for the toggle button instead of the input
       expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
     });
@@ -303,8 +304,10 @@ describe('RadarPage', () => {
       const user = userEvent.setup();
       renderWithProviders();
 
-      const sortSelect = screen.getByLabelText(/sort repositories/i);
-      await user.selectOptions(sortSelect, 'stars');
+      // Click sort dropdown to open it
+      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+      // Select "Most Stars" option
+      await user.click(screen.getByRole('option', { name: /most stars/i }));
 
       const cards = screen.getAllByRole('article');
       expect(cards[0]).toHaveTextContent('more-stars'); // Has more stars
