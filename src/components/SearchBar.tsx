@@ -6,9 +6,17 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   placeholder: string;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
-export function SearchBar({ id, value, onChange, onSubmit, placeholder }: SearchBarProps) {
+export function SearchBar({
+  id,
+  value,
+  onChange,
+  onSubmit,
+  placeholder,
+  inputRef,
+}: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(value);
@@ -21,6 +29,7 @@ export function SearchBar({ id, value, onChange, onSubmit, placeholder }: Search
           Search
         </label>
         <input
+          ref={inputRef}
           id={id}
           name="search"
           type="text"

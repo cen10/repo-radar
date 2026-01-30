@@ -43,6 +43,10 @@ interface RepositoryListProps {
   preSearchHint?: string;
   // Optional: total starred repos for showing "hit the cap" warning
   totalStarred?: number;
+  // Hide the internal search bar (use when page provides its own collapsible search)
+  hideSearch?: boolean;
+  // Hide the internal title (use when page provides its own title)
+  hideTitle?: boolean;
 }
 
 const RepositoryList = ({
@@ -67,6 +71,8 @@ const RepositoryList = ({
   preSearchMessage,
   preSearchHint,
   totalStarred,
+  hideSearch = false,
+  hideTitle = false,
 }: RepositoryListProps) => {
   // Guard against duplicate fetches from rapid IntersectionObserver callbacks.
   // isFetchingMore prop won't be true until React re-renders, but the observer
@@ -122,23 +128,27 @@ const RepositoryList = ({
   // Controls - search and sort
   const controls = (
     <div>
-      {/* Header */}
-      <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 mb-6">
-        {titleIcon}
-        {title}
-      </h1>
+      {/* Header (hidden when page provides its own title) */}
+      {!hideTitle && (
+        <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900 mb-6">
+          {titleIcon}
+          {title}
+        </h1>
+      )}
 
-      {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <SearchBar
-          id="repo-search"
-          value={searchQuery}
-          onChange={onSearchChange}
-          onSubmit={onSearchSubmit}
-          placeholder={searchPlaceholder}
-        />
-        <SortDropdown value={sortBy} onChange={onSortChange} options={sortOptions} />
-      </div>
+      {/* Search and Sort (hidden when page provides its own collapsible search) */}
+      {!hideSearch && (
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <SearchBar
+            id="repo-search"
+            value={searchQuery}
+            onChange={onSearchChange}
+            onSubmit={onSearchSubmit}
+            placeholder={searchPlaceholder}
+          />
+          <SortDropdown value={sortBy} onChange={onSortChange} options={sortOptions} />
+        </div>
+      )}
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">

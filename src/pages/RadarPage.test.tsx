@@ -190,7 +190,8 @@ describe('RadarPage', () => {
       renderWithProviders();
 
       expect(screen.getByLabelText(/sort repositories/i)).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/search repositories/i)).toBeInTheDocument();
+      // Search is collapsible - look for the toggle button instead of the input
+      expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
     });
 
     it('shows kebab menu button', () => {
@@ -234,9 +235,12 @@ describe('RadarPage', () => {
       const user = userEvent.setup();
       renderWithProviders();
 
+      // Expand the collapsible search first
+      await user.click(screen.getByRole('button', { name: /open search/i }));
+
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       await user.type(searchInput, 'react');
-      await user.click(screen.getByRole('button', { name: /search/i }));
+      await user.click(screen.getByRole('button', { name: /^search$/i }));
 
       expect(screen.getByText('react-query')).toBeInTheDocument();
       expect(screen.queryByText('tailwind')).not.toBeInTheDocument();
@@ -246,9 +250,12 @@ describe('RadarPage', () => {
       const user = userEvent.setup();
       renderWithProviders();
 
+      // Expand the collapsible search first
+      await user.click(screen.getByRole('button', { name: /open search/i }));
+
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       await user.type(searchInput, 'nonexistent');
-      await user.click(screen.getByRole('button', { name: /search/i }));
+      await user.click(screen.getByRole('button', { name: /^search$/i }));
 
       expect(screen.getByText(/no repos found/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
