@@ -681,15 +681,12 @@ export async function fetchRepositoryReleases(
 
 /**
  * Fetch a single repository by its GitHub numeric ID.
- * Uses GET /repositories/{id} endpoint.
+ * Returns null if the repo doesn't exist or is inaccessible (deleted, private).
+ * Throws on auth errors or rate limiting.
+ *
  * @param token - GitHub access token
  * @param repoId - GitHub repository numeric ID
  * @returns Repository data or null if not found/inaccessible
- */
-/**
- * Fetch a single repository by its GitHub numeric ID.
- * Returns null if the repo doesn't exist or is inaccessible (deleted, private).
- * Throws on auth errors or rate limiting.
  */
 export async function fetchRepositoryById(
   token: string,
