@@ -145,10 +145,8 @@ describe('RadarPage', () => {
 
       renderWithProviders();
 
-      expect(
-        screen.getByText(/this radar is not tracking any repositories yet/i)
-      ).toBeInTheDocument();
-      expect(screen.getByText(/browse my stars/i)).toBeInTheDocument();
+      expect(screen.getByText(/no repos on this radar yet/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /go to my stars/i })).toBeInTheDocument();
     });
   });
 
@@ -252,8 +250,8 @@ describe('RadarPage', () => {
       await user.type(searchInput, 'nonexistent');
       await user.click(screen.getByRole('button', { name: /search/i }));
 
-      expect(screen.getByText(/no repositories found/i)).toBeInTheDocument();
-      expect(screen.getByText(/clear search/i)).toBeInTheDocument();
+      expect(screen.getByText(/no repos found/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
   });
 

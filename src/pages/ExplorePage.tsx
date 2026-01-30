@@ -46,13 +46,8 @@ const ExplorePage = () => {
     }
   };
 
-  // null = pre-search, [] = no results - parent computes appropriate message
+  // null = pre-search, [] = no results
   const repositories = hasActiveSearch ? result.repositories : null;
-  const emptyMessage = repositories === null ? 'Discover repositories' : 'No repositories found';
-  const emptyHint =
-    repositories === null
-      ? 'Search across all of GitHub to find interesting projects'
-      : 'Try a different search term';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -74,8 +69,8 @@ const ExplorePage = () => {
         onLoadMore={result.fetchNextPage}
         searchPlaceholder="Search all GitHub repositories..."
         sortOptions={SORT_OPTIONS}
-        emptyMessage={emptyMessage}
-        emptyHint={emptyHint}
+        preSearchMessage="Discover repositories"
+        preSearchHint="Search across all of GitHub to find interesting projects"
       />
     </div>
   );

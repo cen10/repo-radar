@@ -1,9 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, type ReactNode } from 'react';
 import type { Repository } from '../types';
 import { RepoCard } from './RepoCard';
 import { LoadingSpinner } from './icons';
 import { SearchBar } from './SearchBar';
 import { SortDropdown } from './SortDropdown';
+import { NoSearchResultsState } from './EmptyState';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { MAX_STARRED_REPOS } from '../services/github';
@@ -34,8 +35,12 @@ interface RepositoryListProps {
   titleIcon: React.ReactElement;
   searchPlaceholder: string;
   sortOptions: SortOptionConfig[];
-  emptyMessage: string;
-  emptyHint: string;
+  // Empty state when no data and not searching (e.g., NoStarredReposState)
+  // Optional for search-first pages where this state is unreachable
+  emptyState?: ReactNode;
+  // Pre-search state (repositories === null) - for search-first pages like Explore
+  preSearchMessage?: string;
+  preSearchHint?: string;
   // Optional: total starred repos for showing "hit the cap" warning
   totalStarred?: number;
 }
@@ -58,8 +63,9 @@ const RepositoryList = ({
   titleIcon,
   searchPlaceholder,
   sortOptions,
-  emptyMessage,
-  emptyHint,
+  emptyState,
+  preSearchMessage,
+  preSearchHint,
   totalStarred,
 }: RepositoryListProps) => {
   // Guard against duplicate fetches from rapid IntersectionObserver callbacks.
@@ -136,43 +142,42 @@ const RepositoryList = ({
 
       {/* Hidden aria-live region for screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {repositories !== null && repositories.length === 0 && (
-          <>
-            {emptyMessage} {emptyHint}
-          </>
+        {repositories !== null && repositories.length === 0 && hasActiveSearch && (
+          <>No repositories found. Try a different search term.</>
         )}
       </div>
     </div>
   );
 
-  // Empty state: pre-search (null) or no results ([])
-  if (repositories === null || (repositories.length === 0 && !isLoading && !isSearching)) {
-    const isPreSearch = repositories === null;
+  // Pre-search state (repositories === null) - for search-first pages like Explore
+  if (repositories === null) {
     return (
       <div data-testid="repository-list">
         {controls}
-        <div className={`text-center ${isPreSearch ? 'py-16' : 'py-12'}`}>
-          {isPreSearch && (
-            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
-          )}
-          <p
-            className={`text-gray-500 ${isPreSearch ? 'mt-4 text-lg font-medium text-gray-900' : ''}`}
-          >
-            {emptyMessage}
+        <div className="text-center py-16">
+          <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
+          <p className="mt-4 text-lg font-medium text-gray-900">
+            {preSearchMessage ?? 'Discover repositories'}
           </p>
-          <p className="text-sm text-gray-400 mt-2">{emptyHint}</p>
-          {hasActiveSearch && (
-            <button
-              onClick={() => {
-                onSearchChange('');
-                onSearchSubmit('');
-              }}
-              className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              Clear search
-            </button>
-          )}
+          <p className="text-sm text-gray-400 mt-2">
+            {preSearchHint ?? 'Search to find repositories'}
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  // Empty state: no results
+  if (repositories.length === 0 && !isLoading && !isSearching) {
+    const handleClearSearch = () => {
+      onSearchChange('');
+      onSearchSubmit('');
+    };
+
+    return (
+      <div data-testid="repository-list">
+        {controls}
+        {hasActiveSearch ? <NoSearchResultsState onClearSearch={handleClearSearch} /> : emptyState}
       </div>
     );
   }

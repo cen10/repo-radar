@@ -34,8 +34,10 @@ const defaultSortOptions = [
   { value: 'created' as const, label: 'Recently Starred' },
 ];
 
+const MockEmptyState = () => <div data-testid="custom-empty-state">No starred repos yet</div>;
+
 const defaultProps = {
-  repositories: [],
+  repositories: [] as Repository[],
   isLoading: false,
   isFetchingMore: false,
   hasMore: false,
@@ -52,8 +54,7 @@ const defaultProps = {
   titleIcon: <span data-testid="title-icon">★</span>,
   searchPlaceholder: 'Search your starred repositories...',
   sortOptions: defaultSortOptions,
-  emptyMessage: 'No repositories found',
-  emptyHint: 'Star some repositories on GitHub to see them here',
+  emptyState: <MockEmptyState />,
 };
 
 describe('RepositoryList', () => {
@@ -91,17 +92,16 @@ describe('RepositoryList', () => {
   });
 
   describe('Empty state', () => {
-    it('displays empty state when no repositories are provided', () => {
+    it('displays custom empty state when no repositories and not searching', () => {
       render(<RepositoryList {...defaultProps} />);
 
-      // Text appears in both visible UI and aria-live region for screen readers
-      expect(screen.getAllByText(/no repositories found/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/star some repositories/i).length).toBeGreaterThan(0);
+      expect(screen.getByTestId('custom-empty-state')).toBeInTheDocument();
     });
 
-    it('shows clear search button when search returns no results', () => {
+    it('shows NoSearchResultsState when search returns no results', () => {
       render(<RepositoryList {...defaultProps} repositories={[]} hasActiveSearch={true} />);
 
+      expect(screen.getByText(/no repos found/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /clear search/i })).toBeInTheDocument();
     });
 
@@ -314,18 +314,25 @@ describe('RepositoryList', () => {
     });
   });
 
-  describe('Empty state customization', () => {
-    it('shows custom empty state message', () => {
+  describe('Pre-search state', () => {
+    it('shows pre-search state when repositories is null', () => {
+      render(<RepositoryList {...defaultProps} repositories={null} />);
+
+      expect(screen.getByText(/discover repositories/i)).toBeInTheDocument();
+    });
+
+    it('shows custom pre-search message when provided', () => {
       render(
         <RepositoryList
           {...defaultProps}
-          emptyMessage="Custom empty message"
-          emptyHint="Custom hint"
+          repositories={null}
+          preSearchMessage="Search to begin"
+          preSearchHint="Find something interesting"
         />
       );
 
-      expect(screen.getAllByText(/custom empty message/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/custom hint/i).length).toBeGreaterThan(0);
+      expect(screen.getByText(/search to begin/i)).toBeInTheDocument();
+      expect(screen.getByText(/find something interesting/i)).toBeInTheDocument();
     });
   });
 });

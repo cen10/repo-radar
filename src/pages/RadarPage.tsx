@@ -16,7 +16,7 @@ import { RepoCard } from '../components/RepoCard';
 import { SearchBar } from '../components/SearchBar';
 import { SortDropdown } from '../components/SortDropdown';
 import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
-import { Button } from '../components/Button';
+import { EmptyRadarState, NoSearchResultsState } from '../components/EmptyState';
 import type { Repository } from '../types';
 
 type RadarSortOption = 'updated' | 'stars';
@@ -219,30 +219,11 @@ const RadarPage = () => {
       )}
 
       {/* Empty radar state */}
-      {!reposLoading && repoCount === 0 && (
-        <div className="text-center py-16">
-          <p className="text-gray-500 text-lg">This radar is not tracking any repositories yet.</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Add repositories from your Stars or Explore page
-          </p>
-          <Link
-            to="/stars"
-            className="mt-6 inline-block text-indigo-600 hover:text-indigo-700 font-medium"
-          >
-            Browse My Stars →
-          </Link>
-        </div>
-      )}
+      {!reposLoading && repoCount === 0 && <EmptyRadarState />}
 
       {/* No search results */}
       {!reposLoading && repoCount > 0 && sortedRepos.length === 0 && hasActiveSearch && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No repositories found</p>
-          <p className="text-sm text-gray-400 mt-2">Try a different search term</p>
-          <Button variant="link" onClick={handleClearSearch} className="mt-4">
-            Clear search
-          </Button>
-        </div>
+        <NoSearchResultsState onClearSearch={handleClearSearch} />
       )}
 
       {/* Repository Grid */}

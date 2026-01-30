@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
+import { NoStarredReposState } from '../components/EmptyState';
 
 type StarsSortOption = 'updated' | 'created';
 
@@ -43,11 +44,6 @@ const StarsPage = () => {
     }
   };
 
-  const emptyMessage = 'No repositories found';
-  const emptyHint = isSearchMode
-    ? 'Try a different search term'
-    : 'Star some repositories on GitHub to see them here';
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <RepositoryList
@@ -68,8 +64,7 @@ const StarsPage = () => {
         onLoadMore={result.fetchNextPage}
         searchPlaceholder="Search your starred repositories..."
         sortOptions={SORT_OPTIONS}
-        emptyMessage={emptyMessage}
-        emptyHint={emptyHint}
+        emptyState={<NoStarredReposState />}
         totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
       />
     </div>
