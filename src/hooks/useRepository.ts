@@ -66,7 +66,8 @@ export function useRepository({
     // Stores both true AND false results to avoid repeat calls.
     // This is separate from allStarredRepositories, which only
     // contains the first 500 starred repos for the Stars page.
-    queryKey: ['isRepositoryStarred', token, data?.owner.login, data?.name],
+    // Key uses repo ID (stable across renames), API uses owner/name.
+    queryKey: ['isRepositoryStarred', token, data?.id],
     queryFn: () => isRepositoryStarred(token!, data!.owner.login, data!.name),
     enabled: !!token && !!data && !isInStarredCache,
   });
