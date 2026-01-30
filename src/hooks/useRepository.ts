@@ -39,7 +39,7 @@ export function useRepository({
   enabled = true,
 }: UseRepositoryOptions): UseRepositoryReturn {
   const numericId = repoId ? Number(repoId) : NaN;
-  const isValidId = !isNaN(numericId);
+  const isValidId = Number.isInteger(numericId) && numericId > 0;
 
   const queryClient = useQueryClient();
 

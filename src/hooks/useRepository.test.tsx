@@ -103,6 +103,17 @@ describe('useRepository', () => {
     expect(result.current.isInvalidId).toBe(true);
   });
 
+  it.each(['0', '-1', '1.5', 'Infinity'])(
+    'treats %s as invalid (not a positive integer)',
+    (repoId) => {
+      const { result } = renderHook(() => useRepository({ repoId, token: TEST_TOKEN }), {
+        wrapper,
+      });
+      expect(github.fetchRepositoryById).not.toHaveBeenCalled();
+      expect(result.current.isInvalidId).toBe(true);
+    }
+  );
+
   it('does not fetch when enabled is false', () => {
     renderHook(() => useRepository({ repoId: '12345', token: TEST_TOKEN, enabled: false }), {
       wrapper,
