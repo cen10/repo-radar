@@ -21,16 +21,23 @@ export function BottomSheet({
   doneLabel = 'Done',
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
+  const isSwipeGesture = useRef(false);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     currentTranslateY.current = 0;
+    // Only allow swipe gesture if scrollable content is at top
+    const scrollTop = scrollRef.current?.scrollTop ?? 0;
+    isSwipeGesture.current = scrollTop === 0;
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (touchStartY.current === null || !panelRef.current) return;
+    // Don't interfere with content scrolling
+    if (!isSwipeGesture.current) return;
 
     const deltaY = e.touches[0].clientY - touchStartY.current;
 
@@ -44,7 +51,7 @@ export function BottomSheet({
   const handleTouchEnd = useCallback(() => {
     if (!panelRef.current) return;
 
-    if (currentTranslateY.current > SWIPE_THRESHOLD) {
+    if (isSwipeGesture.current && currentTranslateY.current > SWIPE_THRESHOLD) {
       onClose();
     } else {
       // Snap back to original position
@@ -53,6 +60,7 @@ export function BottomSheet({
 
     touchStartY.current = null;
     currentTranslateY.current = 0;
+    isSwipeGesture.current = false;
   }, [onClose]);
 
   return (
@@ -79,7 +87,9 @@ export function BottomSheet({
           <div className="px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 1rem)' }}>
             <DialogTitle className="text-lg font-semibold text-gray-900">{title}</DialogTitle>
 
-            <div className="mt-4 max-h-[60vh] overflow-y-auto">{children}</div>
+            <div ref={scrollRef} className="mt-4 max-h-[60vh] overflow-y-auto">
+              {children}
+            </div>
 
             <div className="mt-6 pb-4">
               <Button variant="primary" className="w-full" onClick={onClose}>
