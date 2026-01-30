@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import { useRepoRadars } from './useRepoRadars';
@@ -27,8 +27,8 @@ export function useRadarToggle({ githubRepoId }: UseRadarToggleOptions) {
   const totalRepos = radars.reduce((sum, r) => sum + r.repo_count, 0);
   const isAtTotalRepoLimit = totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS;
 
-  const repoRadarsQueryKey = ['repo-radars', githubRepoId] as const;
-  const radarsQueryKey = ['radars'] as const;
+  const repoRadarsQueryKey = useMemo(() => ['repo-radars', githubRepoId] as const, [githubRepoId]);
+  const radarsQueryKey = useMemo(() => ['radars'] as const, []);
 
   const handleToggleRadar = useCallback(
     async (radar: RadarWithCount, isChecked: boolean) => {

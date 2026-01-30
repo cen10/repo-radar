@@ -51,11 +51,11 @@ export function BottomSheet({
   const handleTouchEnd = useCallback(() => {
     if (!panelRef.current) return;
 
+    // Always reset inline transform before any action
+    panelRef.current.style.transform = '';
+
     if (isSwipeGesture.current && currentTranslateY.current > SWIPE_THRESHOLD) {
       onClose();
-    } else {
-      // Snap back to original position
-      panelRef.current.style.transform = '';
     }
 
     touchStartY.current = null;
