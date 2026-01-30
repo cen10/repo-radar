@@ -55,14 +55,13 @@ const StarsPage = () => {
       </h1>
 
       {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
         <CollapsibleSearch
           id="stars-search"
           value={searchQuery}
           onChange={setSearchQuery}
           onSubmit={setActiveSearch}
           placeholder="Search your starred repositories..."
-          className="flex-1"
         />
         <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
       </div>

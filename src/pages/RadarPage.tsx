@@ -198,14 +198,13 @@ const RadarPage = () => {
 
       {/* Search and Sort */}
       {repoCount > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <CollapsibleSearch
             id="radar-search"
             value={searchQuery}
             onChange={setSearchQuery}
             onSubmit={setActiveSearch}
             placeholder="Search repositories in this radar..."
-            className="flex-1"
           />
           <SortDropdown value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
         </div>

@@ -92,8 +92,10 @@ export function CollapsibleSearch({
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Collapsed state: Toggle button */}
+    <div
+      className={`flex items-center gap-2 flex-1 min-h-[42px] mr-2 ${isExpanded ? '' : 'justify-end'} ${className}`}
+    >
+      {/* Collapsed state: Hint + search icon */}
       {!isExpanded && (
         <Button
           ref={toggleButtonRef}
@@ -105,22 +107,19 @@ export function CollapsibleSearch({
           aria-label="Open search"
           className="flex items-center gap-2"
         >
-          <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
           <kbd
             className="text-xs text-gray-400 font-sans bg-gray-100 px-1.5 py-0.5 rounded"
             aria-hidden="true"
           >
             {shortcutHint}
           </kbd>
+          <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
         </Button>
       )}
 
       {/* Expanded state: Search bar + close button */}
       {isExpanded && (
-        <div
-          id={`${id}-container`}
-          className="flex items-center gap-2 flex-1 transition-all duration-200 ease-out motion-reduce:transition-none"
-        >
+        <div id={`${id}-container`} className="flex items-center gap-2 flex-1">
           <SearchBar
             id={id}
             value={value}
