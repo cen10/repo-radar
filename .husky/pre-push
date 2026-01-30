@@ -6,7 +6,7 @@
 # Get the original command from parent process
 PUSH_COMMAND=$(ps -o args= -p $PPID 2>/dev/null || echo "")
 
-if echo "$PUSH_COMMAND" | grep -qE -- '--force|--force-with-lease| -f '; then
+if echo "$PUSH_COMMAND" | grep -qE -- '--force|--force-with-lease| -f( |$)'; then
   echo ""
   echo "ERROR: Force push is blocked in this repository."
   echo ""
