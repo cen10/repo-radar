@@ -66,14 +66,13 @@ export function CollapsibleSearch({
   // Keyboard shortcut handling
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Open with Cmd+K or Ctrl+K
+      // Toggle with Cmd+K or Ctrl+K
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
-        if (!isExpanded) {
-          expand();
+        if (isExpanded) {
+          collapse();
         } else {
-          // If already expanded, focus the input
-          inputRef.current?.focus();
+          expand();
         }
       }
 
