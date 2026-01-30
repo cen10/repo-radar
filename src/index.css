@@ -113,18 +113,7 @@
 
 @layer base {
   body {
-    @apply bg-github-bg text-github-text antialiased;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    @apply w-2 h-2;
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-github-bg-secondary;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-github-border rounded-full hover:bg-github-text-secondary;
+    @apply bg-white text-gray-900 antialiased;
   }
 }
 

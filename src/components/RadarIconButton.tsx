@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRepoRadars } from '../hooks/useRepoRadars';
+import { useIsMobile } from '../hooks/useMediaQuery';
 import { DynamicRadarIcon } from './DynamicRadarIcon';
 import { ManageRadarsModal } from './ManageRadarsModal';
+import { AddToRadarSheet } from './AddToRadarSheet';
 import { Button } from './Button';
 
 // Global flag: only enable animation after user has clicked on the page.
@@ -40,6 +42,7 @@ export function RadarIconButton({
 }: RadarIconButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { radarIds, isLoading } = useRepoRadars(githubRepoId);
+  const isMobile = useIsMobile();
   const isInAnyRadar = radarIds.length > 0;
 
   // Keep a ref to current value for use in callbacks
@@ -99,7 +102,17 @@ export function RadarIconButton({
         />
       </Button>
 
-      {isModalOpen && (
+      {/* Mobile: Bottom sheet (<768px) */}
+      {isMobile && (
+        <AddToRadarSheet
+          githubRepoId={githubRepoId}
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+
+      {/* Desktop: Modal (>=768px) */}
+      {!isMobile && isModalOpen && (
         <ManageRadarsModal githubRepoId={githubRepoId} onClose={() => setIsModalOpen(false)} />
       )}
     </>
