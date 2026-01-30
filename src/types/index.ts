@@ -64,3 +64,13 @@ export interface Release {
     avatar_url: string;
   } | null;
 }
+
+/**
+ * Cache structure for all starred repositories.
+ * Used by TanStack Query cache for the allStarredRepositories query.
+ */
+export interface AllStarredData {
+  repositories: Repository[];
+  totalFetched: number;
+  totalStarred: number;
+}

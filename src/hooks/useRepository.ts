@@ -3,13 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchRepositoryById, isRepositoryStarred } from '../services/github';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
 import { useStarredIds } from './useStarredIds';
-import type { Repository } from '../types';
-
-interface AllStarredData {
-  repositories: Repository[];
-  totalFetched: number;
-  totalStarred: number;
-}
+import type { Repository, AllStarredData } from '../types';
 
 interface UseRepositoryOptions {
   repoId: string | undefined;

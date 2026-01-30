@@ -2,16 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStarredIds } from './useStarredIds';
-import type { Repository } from '../types';
+import type { AllStarredData } from '../types';
 import { createTestQueryClient } from '../test/helpers/query-client';
 import { createMockRepository } from '../test/mocks/factories';
-
-// Cache data structure used by useAllStarredRepositories
-interface AllStarredData {
-  repositories: Repository[];
-  totalFetched: number;
-  totalStarred: number;
-}
 
 const TEST_TOKEN = 'test-token';
 const QUERY_KEY = ['allStarredRepositories', TEST_TOKEN];
