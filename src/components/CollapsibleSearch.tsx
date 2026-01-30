@@ -28,6 +28,7 @@ export function CollapsibleSearch({
 }: CollapsibleSearchProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldFocusToggle, setShouldFocusToggle] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const shortcutHint = getShortcutHint();
@@ -77,9 +78,12 @@ export function CollapsibleSearch({
         }
       }
 
-      // Close with Escape (only when expanded)
+      // Close with Escape (only when expanded and focus is within the search)
       if (event.key === 'Escape' && isExpanded) {
-        collapse();
+        const focusWithinSearch = containerRef.current?.contains(document.activeElement);
+        if (focusWithinSearch) {
+          collapse();
+        }
       }
     };
 
@@ -93,6 +97,7 @@ export function CollapsibleSearch({
 
   return (
     <div
+      ref={containerRef}
       className={`flex items-center gap-2 flex-1 min-h-[42px] mr-2 ${isExpanded ? '' : 'justify-end'} ${className}`}
     >
       {/* Collapsed state: Hint + search icon */}

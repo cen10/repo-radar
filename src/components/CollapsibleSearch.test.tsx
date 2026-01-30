@@ -155,15 +155,17 @@ describe('CollapsibleSearch', () => {
       expect(screen.queryByPlaceholderText('Search repos...')).not.toBeInTheDocument();
     });
 
-    it('collapses when Escape is pressed', async () => {
+    it('collapses when Escape is pressed while focused in search', async () => {
       const user = userEvent.setup();
       render(<CollapsibleSearch {...defaultProps} />);
 
       // Expand first
       await user.click(screen.getByRole('button', { name: /open search/i }));
-      expect(screen.getByPlaceholderText('Search repos...')).toBeInTheDocument();
+      const input = screen.getByPlaceholderText('Search repos...');
+      expect(input).toBeInTheDocument();
 
-      // Then press Escape
+      // Focus input and press Escape
+      input.focus();
       await user.keyboard('{Escape}');
 
       expect(screen.queryByPlaceholderText('Search repos...')).not.toBeInTheDocument();
@@ -186,8 +188,11 @@ describe('CollapsibleSearch', () => {
       const user = userEvent.setup();
       render(<CollapsibleSearch {...defaultProps} />);
 
-      // Expand and then press Escape
+      // Expand and focus input
       await user.click(screen.getByRole('button', { name: /open search/i }));
+      screen.getByPlaceholderText('Search repos...').focus();
+
+      // Press Escape
       await user.keyboard('{Escape}');
 
       await waitFor(() => {
