@@ -18,7 +18,7 @@ export function SortDropdown<T extends string>({ value, onChange, options }: Sor
   return (
     <Listbox value={value} onChange={onChange}>
       <div className="relative w-full sm:w-auto">
-        <ListboxButton className="relative w-full sm:w-auto min-w-[180px] cursor-pointer rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <ListboxButton className="relative w-full sm:w-[200px] cursor-pointer rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <span className="block truncate">{selectedOption?.label}</span>
           <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -27,15 +27,15 @@ export function SortDropdown<T extends string>({ value, onChange, options }: Sor
 
         <ListboxOptions
           transition
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none"
+          className="absolute right-0 z-50 mt-1 max-h-60 min-w-[200px] w-max overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none"
         >
           {options.map((option) => (
             <ListboxOption
               key={option.value}
               value={option.value}
-              className="group relative cursor-pointer select-none py-2 pl-10 pr-4 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white"
+              className="group relative cursor-pointer select-none py-2 pl-10 pr-4 text-gray-900 data-[focus]:bg-indigo-600 data-[focus]:text-white whitespace-nowrap"
             >
-              <span className="block truncate font-normal group-data-[selected]:font-semibold">
+              <span className="block font-normal group-data-[selected]:font-semibold">
                 {option.label}
               </span>
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600 group-data-[focus]:text-white [.group:not([data-selected])_&]:hidden">
