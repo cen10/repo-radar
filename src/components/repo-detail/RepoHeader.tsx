@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowPathIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import type { Repository } from '../../types';
 import { formatRelativeTime } from '../../utils/formatters';
@@ -44,6 +44,11 @@ export function RepoHeader({
   const isRefreshingRef = useRef(false);
 
   const showRefreshing = isRefreshing || isRefreshingLocal;
+
+  // Reset local UI state if repository changes while component stays mounted
+  useEffect(() => {
+    setShowAllTopics(false);
+  }, [id]);
 
   // Ensure spinner shows for at least MIN_REFRESH_DISPLAY_MS so users
   // notice the refresh happened, even if the API call is very fast.
