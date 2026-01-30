@@ -6,10 +6,11 @@ import { Button } from './Button';
 
 interface ManageRadarsModalProps {
   githubRepoId: number;
+  open: boolean;
   onClose: () => void;
 }
 
-export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalProps) {
+export function ManageRadarsModal({ githubRepoId, open, onClose }: ManageRadarsModalProps) {
   const {
     radars,
     radarIds,
@@ -73,7 +74,7 @@ export function ManageRadarsModal({ githubRepoId, onClose }: ManageRadarsModalPr
   };
 
   return (
-    <Dialog open={true} onClose={onClose} className="relative z-50">
+    <Dialog open={open} onClose={onClose} className="relative z-50">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 data-closed:opacity-0"

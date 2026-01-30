@@ -102,8 +102,8 @@ export function RadarIconButton({
         />
       </Button>
 
-      {/* Mobile: Bottom sheet (<768px) */}
-      {isMobile && isModalOpen && (
+      {/* Mobile: Bottom sheet (<768px) - keep mounted for exit animations */}
+      {isMobile && (
         <AddToRadarSheet
           githubRepoId={githubRepoId}
           open={isModalOpen}
@@ -111,9 +111,13 @@ export function RadarIconButton({
         />
       )}
 
-      {/* Desktop: Modal (>=768px) */}
-      {!isMobile && isModalOpen && (
-        <ManageRadarsModal githubRepoId={githubRepoId} onClose={() => setIsModalOpen(false)} />
+      {/* Desktop: Modal (>=768px) - keep mounted for exit animations */}
+      {!isMobile && (
+        <ManageRadarsModal
+          githubRepoId={githubRepoId}
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       )}
     </>
   );

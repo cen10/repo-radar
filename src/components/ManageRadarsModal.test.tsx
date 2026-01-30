@@ -24,6 +24,7 @@ const TEST_REPO_ID = 12345;
 
 const defaultProps = {
   githubRepoId: TEST_REPO_ID,
+  open: true,
   onClose: vi.fn(),
 };
 
