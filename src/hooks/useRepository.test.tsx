@@ -95,6 +95,14 @@ describe('useRepository', () => {
     expect(result.current.isNotFound).toBe(false);
   });
 
+  it('does not fetch when repoId has trailing non-numeric characters', () => {
+    const { result } = renderHook(() => useRepository({ repoId: '12345abc', token: TEST_TOKEN }), {
+      wrapper,
+    });
+    expect(github.fetchRepositoryById).not.toHaveBeenCalled();
+    expect(result.current.isInvalidId).toBe(true);
+  });
+
   it('does not fetch when enabled is false', () => {
     renderHook(() => useRepository({ repoId: '12345', token: TEST_TOKEN, enabled: false }), {
       wrapper,
