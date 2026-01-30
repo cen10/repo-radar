@@ -92,7 +92,7 @@ export function useRepository({
         ...cachedData,
         repositories: [...cachedData.repositories, { ...data, is_starred: true }],
         totalFetched: cachedData.totalFetched + 1,
-        totalStarred: cachedData.totalStarred + 1,
+        // Don't increment totalStarred - it's the authoritative count from GitHub
       });
     }
   }, [isStarredFromApi, data, token, queryClient]);
