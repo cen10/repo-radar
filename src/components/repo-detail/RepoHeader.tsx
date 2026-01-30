@@ -109,11 +109,13 @@ export function RepoHeader({
       {(is_starred || isHot) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {is_starred && <StarredBadge />}
-          <HotBadge
-            stars={stargazers_count}
-            growthRate={starsGrowthRate}
-            starsGained={starsGained}
-          />
+          {metrics && (
+            <HotBadge
+              stars={stargazers_count}
+              growthRate={starsGrowthRate}
+              starsGained={starsGained}
+            />
+          )}
         </div>
       )}
 
