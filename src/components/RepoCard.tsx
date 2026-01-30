@@ -1,24 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { Link } from 'react-router-dom';
 import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
 import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
-import { ManageRadarsModal } from './ManageRadarsModal';
-import { DynamicRadarIcon } from './DynamicRadarIcon';
-import { useRepoRadars } from '../hooks/useRepoRadars';
-import { Button } from './Button';
-
-// Global flag: only enable animation after user has clicked on the page.
-// Prevents animation from triggering when the page loads with repos already in radars.
-let userHasInteracted = false;
-if (typeof window !== 'undefined') {
-  const markInteracted = () => {
-    userHasInteracted = true;
-    window.removeEventListener('click', markInteracted);
-  };
-  window.addEventListener('click', markInteracted);
-}
+import { StarredBadge } from './StarredBadge';
+import { RadarIconButton } from './RadarIconButton';
 
 interface RepoCardProps {
   repository: Repository;
@@ -30,7 +17,6 @@ export function RepoCard({ repository }: RepoCardProps) {
     name,
     owner,
     description,
-    html_url,
     stargazers_count,
     open_issues_count,
     language,
@@ -39,51 +25,8 @@ export function RepoCard({ repository }: RepoCardProps) {
     is_starred,
   } = repository;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNameTruncated, setIsNameTruncated] = useState(false);
   const nameRef = useRef<HTMLHeadingElement>(null);
-  const { radarIds, isLoading } = useRepoRadars(id);
-  const isInAnyRadar = radarIds.length > 0;
-
-  // Keep a ref to current value for use in callbacks
-  const isInAnyRadarRef = useRef(isInAnyRadar);
-  isInAnyRadarRef.current = isInAnyRadar;
-
-  // Radar icon animation state
-  // null = waiting for initial data load
-  const [displayedActive, setDisplayedActive] = useState<boolean | null>(null);
-  const [shouldAnimate, setShouldAnimate] = useState(false);
-  const wasModalOpenRef = useRef(false);
-
-  // Initialize displayedActive once when data loads
-  useEffect(() => {
-    if (displayedActive === null && !isLoading) {
-      setDisplayedActive(isInAnyRadar);
-    }
-  }, [displayedActive, isInAnyRadar, isLoading]);
-
-  // Handle modal close: animate if added, sync if removed
-  useEffect(() => {
-    // Detect modal close transition (must check before updating ref)
-    const modalJustClosed = wasModalOpenRef.current && !isModalOpen;
-    wasModalOpenRef.current = isModalOpen;
-
-    if (!modalJustClosed || displayedActive === null) return;
-
-    const wasAdded = isInAnyRadar && !displayedActive;
-    const wasRemoved = !isInAnyRadar && displayedActive;
-
-    if (wasAdded && userHasInteracted) {
-      setShouldAnimate(true);
-    } else if (wasRemoved) {
-      setDisplayedActive(false);
-    }
-  }, [isModalOpen, isInAnyRadar, displayedActive]);
-
-  const handleAnimationEnd = () => {
-    setShouldAnimate(false);
-    setDisplayedActive(isInAnyRadarRef.current);
-  };
 
   // Detect if name is truncated (using ResizeObserver for reliable measurement)
   useEffect(() => {
@@ -123,10 +66,8 @@ export function RepoCard({ repository }: RepoCardProps) {
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
         <div className="flex-1 min-w-0">
-          <a
-            href={html_url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={`/repo/${id}`}
             className="group/link no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
             <span className="group/name relative block z-2">
@@ -145,39 +86,25 @@ export function RepoCard({ repository }: RepoCardProps) {
               )}
             </span>{' '}
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
-            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}${isInAnyRadar ? ', tracked' : ''}, opens in new tab`}</span>
-          </a>
+            <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}`}</span>
+          </Link>
         </div>
-        {/* Radar button - z-[2] to sit above the stretched link overlay (z-[1]) */}
-        <Button
-          variant="ghost-primary"
-          size="sm"
-          onClick={() => setIsModalOpen(true)}
-          className="relative z-2 -mt-2"
-          aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
-        >
-          <DynamicRadarIcon
-            isActive={displayedActive ?? false}
-            shouldAnimate={shouldAnimate}
-            onAnimationEnd={handleAnimationEnd}
-            className="h-7 w-7"
-          />
-        </Button>
-        {/* Star indicator (visual only, shown only for starred repos) */}
-        {is_starred && (
-          <StarIconSolid className="h-7 w-7 text-yellow-500 shrink-0 -mt-1" aria-label="Starred" />
-        )}
+        {/* Radar button - z-2 to sit above the stretched link overlay (z-1) */}
+        <RadarIconButton githubRepoId={id} className="relative z-2 -mt-2" />
       </div>
 
-      {/* Hot badge */}
-      {metrics && (
-        <div className="mb-3">
-          <HotBadge
-            stars={stargazers_count}
-            growthRate={starsGrowthRate ?? 0}
-            starsGained={starsGained}
-            className="z-2"
-          />
+      {/* Status badges */}
+      {(isHot || is_starred) && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {is_starred && <StarredBadge className="z-2" />}
+          {metrics && (
+            <HotBadge
+              stars={stargazers_count}
+              growthRate={starsGrowthRate ?? 0}
+              starsGained={starsGained}
+              className="z-2"
+            />
+          )}
         </div>
       )}
 
@@ -229,9 +156,6 @@ export function RepoCard({ repository }: RepoCardProps) {
         <li>Open issues: {open_issues_count.toLocaleString()}</li>
         {language && <li>Primary language: {language}</li>}
       </ul>
-
-      {/* Manage Radars Modal */}
-      {isModalOpen && <ManageRadarsModal githubRepoId={id} onClose={() => setIsModalOpen(false)} />}
     </article>
   );
 }

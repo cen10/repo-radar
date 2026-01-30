@@ -1,12 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useSyncExternalStore } from 'react';
-import type { Repository } from '../types';
-
-interface AllStarredData {
-  repositories: Repository[];
-  totalFetched: number;
-  totalStarred: number;
-}
+import type { AllStarredData } from '../types';
 
 interface UseStarredIdsOptions {
   token: string | null;

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import { RepoCard } from './RepoCard';
 import * as radarService from '../services/radar';
 import { createTestQueryClient } from '../test/helpers/query-client';
@@ -30,7 +31,11 @@ Object.defineProperty(window, 'open', {
 
 const renderWithProviders = (ui: React.ReactElement) => {
   const queryClient = createTestQueryClient();
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    </MemoryRouter>
+  );
 };
 
 // Test-specific repository with values suitable for RepoCard tests
@@ -178,14 +183,11 @@ describe('RepoCard', () => {
     expect(screen.queryByText(/description truncated/i)).not.toBeInTheDocument();
   });
 
-  it('configures repository link to open in new tab securely', () => {
+  it('links to internal repository detail page', () => {
     renderWithProviders(<RepoCard repository={defaultRepo} />);
 
     const link = screen.getByRole('link', { name: /awesome-repo by octocat/i });
-    expect(link).toHaveAttribute('href', 'https://github.com/octocat/awesome-repo');
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-    expect(link).toHaveAccessibleName(/opens in new tab/i);
+    expect(link).toHaveAttribute('href', '/repo/123');
   });
 
   it('link is reachable via keyboard navigation', async () => {
@@ -206,16 +208,17 @@ describe('RepoCard', () => {
   });
 
   describe('Star indicator', () => {
-    it('displays star icon when repository is starred', () => {
+    it('displays starred badge when repository is starred', () => {
       renderWithProviders(<RepoCard repository={{ ...defaultRepo, is_starred: true }} />);
 
-      expect(screen.getByLabelText('Starred')).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: /starred/i })).toBeInTheDocument();
+      expect(screen.getByText('Starred')).toBeInTheDocument();
     });
 
-    it('does not display star icon when repository is not starred', () => {
+    it('does not display starred badge when repository is not starred', () => {
       renderWithProviders(<RepoCard repository={{ ...defaultRepo, is_starred: false }} />);
 
-      expect(screen.queryByLabelText('Starred')).not.toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: /starred/i })).not.toBeInTheDocument();
     });
 
     it('includes starred in card link aria-label when starred', () => {
@@ -361,7 +364,7 @@ describe('RepoCard', () => {
       );
 
       const link = screen.getByRole('link');
-      expect(link).toHaveAccessibleName(/awesome-repo by octocat.*opens in new tab/i);
+      expect(link).toHaveAccessibleName(/awesome-repo by octocat/i);
       expect(link).not.toHaveAccessibleName(/hot,/i);
     });
   });
@@ -390,26 +393,6 @@ describe('RepoCard', () => {
       await waitFor(() => {
         const button = screen.getByRole('button', { name: /manage radars/i });
         expect(button).toBeInTheDocument();
-      });
-    });
-
-    it('includes tracked in card link aria-label when in radar', async () => {
-      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue(['radar-1']);
-      renderWithProviders(<RepoCard repository={defaultRepo} />);
-
-      await waitFor(() => {
-        const link = screen.getByRole('link');
-        expect(link).toHaveAccessibleName(/tracked/i);
-      });
-    });
-
-    it('does not include tracked in card link aria-label when not in radar', async () => {
-      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
-      renderWithProviders(<RepoCard repository={defaultRepo} />);
-
-      await waitFor(() => {
-        const link = screen.getByRole('link');
-        expect(link).not.toHaveAccessibleName(/tracked/i);
       });
     });
 

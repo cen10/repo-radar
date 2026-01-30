@@ -10,7 +10,7 @@ import { getValidGitHubToken, getStoredAccessToken } from '../services/github-to
 import { useStarredIds } from './useStarredIds';
 import { useAuth } from './useAuth';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
-import type { Repository } from '../types';
+import type { Repository, AllStarredData } from '../types';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -37,12 +37,6 @@ interface UseInfiniteSearchReturn {
   error: Error | null;
   totalCount: number;
   refetch: () => void;
-  totalStarred: number;
-}
-
-interface AllStarredData {
-  repositories: Repository[];
-  totalFetched: number;
   totalStarred: number;
 }
 

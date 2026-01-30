@@ -359,3 +359,14 @@ graph TD
 **Slice 3 (Navigation & Radar)**: 24 tasks (includes cache migration)
 **Slice 4 (Trend Detection)**: 18 tasks
 **Slice 5 (Full Analytics)**: 18 tasks
+
+---
+
+## Technical Debt / Cleanup
+
+- [ ] T097 Remove unused `totalFetched` field from `AllStarredData` interface and related code
+  - Was used in old Dashboard for "Showing X of Y" message
+  - Dashboard removed in T038, StarsPage uses hardcoded `MAX_STARRED_REPOS` constant instead
+  - Files to update: `src/services/github.ts`, `src/hooks/useRepository.ts`, `src/hooks/useAllStarredRepositories.ts`, `src/hooks/useStarredIds.ts`, `src/hooks/useInfiniteSearch.ts`
+- [ ] T098 Update legacy Tailwind classes to v4 canonical names
+  - `break-words` → `wrap-break-word` in `src/components/GenericErrorFallback.tsx`

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllStarredRepositories, type SortDirection } from '../services/github';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
-import type { Repository } from '../types';
+import type { Repository, AllStarredData } from '../types';
 
 interface UseAllStarredRepositoriesOptions {
   token: string | null;
@@ -30,11 +30,6 @@ interface UseAllStarredRepositoriesReturn {
  *
  * Uses the same query key as useInfiniteSearch for cache sharing.
  */
-interface AllStarredData {
-  repositories: Repository[];
-  totalFetched: number;
-  totalStarred: number;
-}
 
 export function useAllStarredRepositories({
   token,
