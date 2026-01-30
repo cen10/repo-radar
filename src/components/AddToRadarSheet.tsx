@@ -94,6 +94,13 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
 
   const [toggleError, setToggleError] = useState<string | null>(null);
 
+  // Clear error when sheet opens (component stays mounted, only `open` prop changes)
+  useEffect(() => {
+    if (open) {
+      setToggleError(null);
+    }
+  }, [open]);
+
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
   const fetchError = radarsError || repoRadarsError;
 
