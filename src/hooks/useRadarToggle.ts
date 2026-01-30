@@ -34,15 +34,17 @@ export function useRadarToggle({ githubRepoId }: UseRadarToggleOptions) {
     async (radar: RadarWithCount, isChecked: boolean) => {
       setToggleError(null);
 
-      // Optimistic update: update both caches for consistent UI state
-      const previousIds = radarIds;
-      const previousRadars = radars;
+      // Read current cache state at execution time to avoid stale closure issues
+      const previousIds = queryClient.getQueryData<string[]>(repoRadarsQueryKey) ?? [];
+      const previousRadars = queryClient.getQueryData<RadarWithCount[]>(radarsQueryKey) ?? [];
 
-      const newIds = isChecked ? radarIds.filter((id) => id !== radar.id) : [...radarIds, radar.id];
+      const newIds = isChecked
+        ? previousIds.filter((id) => id !== radar.id)
+        : [...previousIds, radar.id];
       queryClient.setQueryData(repoRadarsQueryKey, newIds);
 
       // Also update radars cache to keep repo_count in sync with checkbox state
-      const newRadars = radars.map((r) =>
+      const newRadars = previousRadars.map((r) =>
         r.id === radar.id ? { ...r, repo_count: r.repo_count + (isChecked ? -1 : 1) } : r
       );
       queryClient.setQueryData(radarsQueryKey, newRadars);
@@ -64,7 +66,7 @@ export function useRadarToggle({ githubRepoId }: UseRadarToggleOptions) {
         setToggleError(message);
       }
     },
-    [queryClient, radarIds, radars, githubRepoId, repoRadarsQueryKey, radarsQueryKey]
+    [queryClient, githubRepoId, repoRadarsQueryKey, radarsQueryKey]
   );
 
   const isCheckboxDisabled = useCallback(
