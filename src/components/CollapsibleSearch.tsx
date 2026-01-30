@@ -39,7 +39,8 @@ export function CollapsibleSearch({
   const collapse = useCallback(() => {
     setIsExpanded(false);
     setShouldFocusToggle(true);
-  }, []);
+    onChange('');
+  }, [onChange]);
 
   // Auto-focus input when expanded
   useEffect(() => {
