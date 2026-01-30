@@ -10,11 +10,19 @@ const RepoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { providerToken } = useAuth();
 
-  const { repository, isLoading, error, isNotFound, refetch, isRefetching, dataUpdatedAt } =
-    useRepository({
-      repoId: id,
-      token: providerToken,
-    });
+  const {
+    repository,
+    isLoading,
+    error,
+    isNotFound,
+    isInvalidId,
+    refetch,
+    isRefetching,
+    dataUpdatedAt,
+  } = useRepository({
+    repoId: id,
+    token: providerToken,
+  });
 
   const { releases, isLoading: releasesLoading } = useReleases({
     token: providerToken,
@@ -35,7 +43,28 @@ const RepoDetailPage = () => {
     );
   }
 
-  // Not found state
+  // Invalid ID state (e.g., /repo/abc)
+  if (isInvalidId) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-16">
+          <h1 className="text-2xl font-semibold text-gray-900">Invalid repository ID</h1>
+          <p className="mt-2 text-gray-500">
+            The repository ID in the URL is not valid. Please check the link and try again.
+          </p>
+          <Link
+            to="/stars"
+            className="mt-6 inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+            Back to My Stars
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state (valid ID but repo doesn't exist)
   if (isNotFound) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

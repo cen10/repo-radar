@@ -40,6 +40,7 @@ describe('useRepository', () => {
     expect(result.current.repository).toEqual(mockRepo);
     expect(result.current.error).toBeNull();
     expect(result.current.isNotFound).toBe(false);
+    expect(result.current.isInvalidId).toBe(false);
   });
 
   it('returns isNotFound when repository does not exist', async () => {
@@ -86,8 +87,12 @@ describe('useRepository', () => {
   });
 
   it('does not fetch when repoId is not a valid number', () => {
-    renderHook(() => useRepository({ repoId: 'invalid', token: TEST_TOKEN }), { wrapper });
+    const { result } = renderHook(() => useRepository({ repoId: 'invalid', token: TEST_TOKEN }), {
+      wrapper,
+    });
     expect(github.fetchRepositoryById).not.toHaveBeenCalled();
+    expect(result.current.isInvalidId).toBe(true);
+    expect(result.current.isNotFound).toBe(false);
   });
 
   it('does not fetch when enabled is false', () => {

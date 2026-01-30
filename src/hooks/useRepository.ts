@@ -22,6 +22,7 @@ interface UseRepositoryReturn {
   isLoading: boolean;
   error: Error | null;
   isNotFound: boolean;
+  isInvalidId: boolean;
   refetch: () => Promise<void>;
   isRefetching: boolean;
   dataUpdatedAt: number | undefined;
@@ -107,6 +108,7 @@ export function useRepository({
     isLoading,
     error,
     isNotFound: !isLoading && !error && data === null && isValidId,
+    isInvalidId: !isValidId,
     refetch: async () => {
       await refetch();
     },
