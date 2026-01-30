@@ -78,6 +78,7 @@ export function BottomSheet({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         >
           {/* Drag handle indicator */}
           <div className="flex justify-center pt-3 pb-2">
