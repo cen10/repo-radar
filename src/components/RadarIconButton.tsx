@@ -103,7 +103,7 @@ export function RadarIconButton({
       </Button>
 
       {/* Mobile: Bottom sheet (<768px) */}
-      {isMobile && (
+      {isMobile && isModalOpen && (
         <AddToRadarSheet
           githubRepoId={githubRepoId}
           open={isModalOpen}
