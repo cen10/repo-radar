@@ -68,8 +68,8 @@ export function CollapsibleSearch({
   // Keyboard shortcut handling
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Toggle with Cmd+K or Ctrl+K
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      // Toggle with Cmd+K or Ctrl+K (case-insensitive for Caps Lock)
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         if (isExpanded) {
           collapse();
