@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import { useRepoRadars } from './useRepoRadars';
@@ -7,9 +7,10 @@ import type { RadarWithCount } from '../types/database';
 
 interface UseRadarToggleOptions {
   githubRepoId: number;
+  open: boolean;
 }
 
-export function useRadarToggle({ githubRepoId }: UseRadarToggleOptions) {
+export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
   const queryClient = useQueryClient();
   const { radars, isLoading: isLoadingRadars, error: radarsError } = useRadars();
   const {
@@ -19,6 +20,13 @@ export function useRadarToggle({ githubRepoId }: UseRadarToggleOptions) {
   } = useRepoRadars(githubRepoId);
 
   const [toggleError, setToggleError] = useState<string | null>(null);
+
+  // Clear error when dialog opens
+  useEffect(() => {
+    if (open) {
+      setToggleError(null);
+    }
+  }, [open]);
 
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
   const fetchError = radarsError || repoRadarsError;

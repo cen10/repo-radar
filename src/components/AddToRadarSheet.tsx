@@ -18,7 +18,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
     handleToggleRadar,
     isCheckboxDisabled,
     getDisabledTooltip,
-  } = useRadarToggle({ githubRepoId });
+  } = useRadarToggle({ githubRepoId, open });
 
   const renderContent = () => {
     if (isLoading) {

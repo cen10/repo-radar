@@ -20,7 +20,7 @@ export function ManageRadarsModal({ githubRepoId, open, onClose }: ManageRadarsM
     handleToggleRadar,
     isCheckboxDisabled,
     getDisabledTooltip,
-  } = useRadarToggle({ githubRepoId });
+  } = useRadarToggle({ githubRepoId, open });
 
   const renderRadarList = () => {
     let statusMessage: string | null = null;
