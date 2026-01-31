@@ -18,7 +18,10 @@ export function SortDropdown<T extends string>({ value, onChange, options }: Sor
   return (
     <Listbox value={value} onChange={onChange}>
       <div className="relative w-full sm:w-auto">
-        <ListboxButton className="relative w-full sm:w-[200px] cursor-pointer rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <ListboxButton
+          aria-label="Sort repositories"
+          className="relative w-full sm:w-[200px] cursor-pointer rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
           <span className="block truncate">{selectedOption?.label}</span>
           <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
