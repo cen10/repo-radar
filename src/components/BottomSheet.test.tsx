@@ -114,6 +114,7 @@ describe('BottomSheet', () => {
     });
 
     it('closes when swiped down past threshold', () => {
+      vi.useFakeTimers();
       const onClose = vi.fn();
       render(<BottomSheet {...defaultProps} onClose={onClose} />);
 
@@ -125,7 +126,12 @@ describe('BottomSheet', () => {
       fireEvent.touchMove(panel, createTouchEvent(250)); // 150px down, past threshold
       fireEvent.touchEnd(panel, createTouchEvent(250));
 
+      // onClose is called after transition animation completes
+      expect(onClose).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(300);
       expect(onClose).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
     });
 
     it('does not close when swipe is below threshold', () => {

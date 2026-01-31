@@ -4,6 +4,7 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import { Button } from './Button';
 
 const SWIPE_THRESHOLD = 100;
+const TRANSITION_DURATION = 300; // Match CSS transition-transform duration
 
 interface BottomSheetProps {
   open: boolean;
@@ -51,11 +52,20 @@ export function BottomSheet({
   const handleTouchEnd = useCallback(() => {
     if (!panelRef.current) return;
 
-    // Always reset inline transform before any action
-    panelRef.current.style.transform = '';
+    const shouldDismiss = isSwipeGesture.current && currentTranslateY.current > SWIPE_THRESHOLD;
 
-    if (isSwipeGesture.current && currentTranslateY.current > SWIPE_THRESHOLD) {
-      onClose();
+    if (shouldDismiss) {
+      // Animate to off-screen from current position, then close
+      panelRef.current.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        if (panelRef.current) {
+          panelRef.current.style.transform = '';
+        }
+        onClose();
+      }, TRANSITION_DURATION);
+    } else {
+      // Snap back to original position
+      panelRef.current.style.transform = '';
     }
 
     touchStartY.current = null;
