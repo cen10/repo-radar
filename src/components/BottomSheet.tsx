@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import type { ReactNode, TouchEvent } from 'react';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Button } from './Button';
@@ -26,6 +26,20 @@ export function BottomSheet({
   const touchStartY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
   const isSwipeGesture = useRef(false);
+  const dismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear dismiss timeout when sheet closes or unmounts
+  useEffect(() => {
+    if (!open && dismissTimeoutRef.current) {
+      clearTimeout(dismissTimeoutRef.current);
+      dismissTimeoutRef.current = null;
+    }
+    return () => {
+      if (dismissTimeoutRef.current) {
+        clearTimeout(dismissTimeoutRef.current);
+      }
+    };
+  }, [open]);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -57,7 +71,8 @@ export function BottomSheet({
     if (shouldDismiss) {
       // Animate to off-screen from current position, then close
       panelRef.current.style.transform = 'translateY(100%)';
-      setTimeout(() => {
+      dismissTimeoutRef.current = setTimeout(() => {
+        dismissTimeoutRef.current = null;
         if (panelRef.current) {
           panelRef.current.style.transform = '';
         }
