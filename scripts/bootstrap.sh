@@ -8,4 +8,3 @@ fi
 
 echo "Installing dependencies for remote environment..."
 npm install
-exit 0
