@@ -30,3 +30,6 @@ node_modules/
 # Local documentation (not tracked in git)
 docs/
 docs
+
+# Claude Code local settings (personal overrides)
+.claude/*.local.json

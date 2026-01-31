@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AuthProvider } from './AuthProvider';
 import { Header } from './Header';
@@ -16,6 +16,12 @@ function AuthenticatedLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCreateRadarModalOpen, setIsCreateRadarModalOpen] = useState(false);
+  const [transitionsEnabled, setTransitionsEnabled] = useState(false);
+
+  // Enable transitions after initial render to prevent layout shift on page load
+  useEffect(() => {
+    requestAnimationFrame(() => setTransitionsEnabled(true));
+  }, []);
 
   const handleMenuToggle = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
@@ -60,7 +66,7 @@ function AuthenticatedLayout() {
         </Sidebar>
       )}
       <main
-        className={`pt-16 transition-[padding] duration-300 ease-in-out ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`pt-16 ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
       >
         <Outlet />
       </main>
