@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ManageRadarsModal } from './ManageRadarsModal';
+import { AddToRadarSheet } from './AddToRadarSheet';
 import * as radarService from '../services/radar';
 import { createTestQueryClient } from '../test/helpers/query-client';
 import { createMockRadar } from '../test/mocks/factories';
@@ -33,22 +33,30 @@ const renderWithProviders = (ui: React.ReactElement, queryClient?: QueryClient) 
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 };
 
-describe('ManageRadarsModal', () => {
+describe('AddToRadarSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('rendering', () => {
-    it('renders modal with header and close button', async () => {
+    it('renders bottom sheet with title', async () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: /add to radar/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
+      expect(screen.getByText(/add to radar/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument();
+    });
+
+    it('does not render when open is false', () => {
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} open={false} />);
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 
@@ -62,7 +70,7 @@ describe('ManageRadarsModal', () => {
       vi.mocked(radarService.getRadars).mockResolvedValue(radars);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue(['radar-1', 'radar-3']);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByText('Frontend')).toBeInTheDocument();
@@ -78,7 +86,7 @@ describe('ManageRadarsModal', () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByText(/no radars yet/i)).toBeInTheDocument();
@@ -91,7 +99,7 @@ describe('ManageRadarsModal', () => {
         () => new Promise(() => {})
       );
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       expect(screen.getByText(/loading/i)).toBeInTheDocument();
     });
@@ -114,7 +122,7 @@ describe('ManageRadarsModal', () => {
         added_at: '2024-01-15T10:00:00Z',
       });
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />, queryClient);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />, queryClient);
 
       await waitFor(() => {
         expect(screen.getByText('Frontend')).toBeInTheDocument();
@@ -142,7 +150,7 @@ describe('ManageRadarsModal', () => {
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue(['radar-1']);
       vi.mocked(radarService.removeRepoFromRadar).mockResolvedValue();
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).toBeChecked();
@@ -157,14 +165,13 @@ describe('ManageRadarsModal', () => {
 
     it('shows optimistic update immediately', async () => {
       const user = userEvent.setup();
-      // Make the API call hang to verify optimistic update
       vi.mocked(radarService.getRadars).mockResolvedValue([
         createMockRadar({ id: 'radar-1', name: 'Frontend' }),
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
       vi.mocked(radarService.addRepoToRadar).mockImplementation(() => new Promise(() => {}));
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).not.toBeChecked();
@@ -183,7 +190,6 @@ describe('ManageRadarsModal', () => {
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      // Use a delayed rejection to verify optimistic update happens first
       let rejectFn: (err: Error) => void;
       vi.mocked(radarService.addRepoToRadar).mockImplementation(
         () =>
@@ -192,21 +198,17 @@ describe('ManageRadarsModal', () => {
           })
       );
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).not.toBeChecked();
       });
 
       await user.click(screen.getByRole('checkbox'));
-
-      // Should be checked optimistically (before the promise resolves/rejects)
       expect(screen.getByRole('checkbox')).toBeChecked();
 
-      // Now reject the promise
       rejectFn!(new Error('Failed to add'));
 
-      // Wait for error and revert
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).not.toBeChecked();
       });
@@ -222,7 +224,7 @@ describe('ManageRadarsModal', () => {
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).toBeDisabled();
@@ -236,7 +238,7 @@ describe('ManageRadarsModal', () => {
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue(['radar-1']);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       await waitFor(() => {
         const checkboxes = screen.getAllByRole('checkbox');
@@ -248,29 +250,16 @@ describe('ManageRadarsModal', () => {
     });
   });
 
-  describe('modal closing', () => {
+  describe('closing behavior', () => {
     it('calls onClose when Done button is clicked', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} onClose={onClose} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
 
       await user.click(screen.getByRole('button', { name: /done/i }));
-
-      expect(onClose).toHaveBeenCalled();
-    });
-
-    it('calls onClose when X button is clicked', async () => {
-      const user = userEvent.setup();
-      const onClose = vi.fn();
-      vi.mocked(radarService.getRadars).mockResolvedValue([]);
-      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
-
-      renderWithProviders(<ManageRadarsModal {...defaultProps} onClose={onClose} />);
-
-      await user.click(screen.getByRole('button', { name: /close/i }));
 
       expect(onClose).toHaveBeenCalled();
     });
@@ -281,7 +270,7 @@ describe('ManageRadarsModal', () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} onClose={onClose} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
 
       await user.keyboard('{Escape}');
 
@@ -294,7 +283,7 @@ describe('ManageRadarsModal', () => {
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
 
-      renderWithProviders(<ManageRadarsModal {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });

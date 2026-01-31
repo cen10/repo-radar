@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Block force pushes
+# This hook examines the git command to prevent --force and --force-with-lease
+
+# Get the original command from parent process
+PUSH_COMMAND=$(ps -o args= -p $PPID 2>/dev/null || echo "")
+
+if echo "$PUSH_COMMAND" | grep -qE -- '--force|--force-with-lease| -[a-zA-Z]*f( |$)'; then
+  echo ""
+  echo "ERROR: Force push is blocked in this repository."
+  echo ""
+  echo "Instead of amending pushed commits, create a new commit:"
+  echo "  git commit -m 'Fix: description of what you fixed'"
+  echo ""
+  exit 1
+fi
+
+exit 0

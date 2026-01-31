@@ -1,5 +1,11 @@
 # Claude Code Context for Repo Radar
 
+## CRITICAL RULES - READ FIRST
+
+**NEVER force push.** Do not use `git push --force`, `git push -f`, or `git push --force-with-lease`. If you've already pushed a commit and need to make changes, create a new commit instead of amending.
+
+---
+
 ## Project Overview
 
 GitHub Repository Momentum Dashboard - Track star growth, releases, and issue activity across starred repositories.

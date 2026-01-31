@@ -20,6 +20,21 @@ class ResizeObserverMock {
 }
 global.ResizeObserver = ResizeObserverMock;
 
+// Mock matchMedia for responsive hooks (defaults to desktop)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false, // Default to desktop (not mobile)
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Mock Supabase client globally for all tests
 vi.mock('../services/supabase', () => ({
   supabase: mockSupabaseClient,
