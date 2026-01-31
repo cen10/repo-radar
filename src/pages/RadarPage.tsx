@@ -13,7 +13,7 @@ import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { DeleteRadarModal } from '../components/DeleteRadarModal';
 import { RenameRadarModal } from '../components/RenameRadarModal';
 import { RepoCard } from '../components/RepoCard';
-import { SearchBar } from '../components/SearchBar';
+import { CollapsibleSearch } from '../components/CollapsibleSearch';
 import { SortDropdown } from '../components/SortDropdown';
 import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
 import { EmptyRadarState, NoSearchResultsState } from '../components/EmptyState';
@@ -198,8 +198,8 @@ const RadarPage = () => {
 
       {/* Search and Sort */}
       {repoCount > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <SearchBar
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <CollapsibleSearch
             id="radar-search"
             value={searchQuery}
             onChange={setSearchQuery}

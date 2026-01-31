@@ -15,18 +15,28 @@ describe('SortDropdown', () => {
     options,
   };
 
-  it('renders select with options', () => {
+  it('renders dropdown button with current selection', () => {
     render(<SortDropdown {...defaultProps} />);
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Recently Updated' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Most Stars' })).toBeInTheDocument();
+    const button = screen.getByRole('button');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveTextContent('Recently Updated');
   });
 
   it('displays the current value', () => {
     render(<SortDropdown {...defaultProps} value="stars" />);
 
-    expect(screen.getByRole('combobox')).toHaveValue('stars');
+    expect(screen.getByRole('button')).toHaveTextContent('Most Stars');
+  });
+
+  it('shows options when clicked', async () => {
+    const user = userEvent.setup();
+    render(<SortDropdown {...defaultProps} />);
+
+    await user.click(screen.getByRole('button'));
+
+    expect(screen.getByRole('option', { name: 'Recently Updated' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Most Stars' })).toBeInTheDocument();
   });
 
   it('calls onChange when selection changes', async () => {
@@ -34,14 +44,19 @@ describe('SortDropdown', () => {
     const onChange = vi.fn();
     render(<SortDropdown {...defaultProps} onChange={onChange} />);
 
-    await user.selectOptions(screen.getByRole('combobox'), 'stars');
+    await user.click(screen.getByRole('button'));
+    await user.click(screen.getByRole('option', { name: 'Most Stars' }));
 
     expect(onChange).toHaveBeenCalledWith('stars');
   });
 
-  it('has accessible label', () => {
-    render(<SortDropdown {...defaultProps} />);
+  it('marks the selected option', async () => {
+    const user = userEvent.setup();
+    render(<SortDropdown {...defaultProps} value="stars" />);
 
-    expect(screen.getByLabelText(/sort repositories/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button'));
+
+    const selectedOption = screen.getByRole('option', { name: 'Most Stars' });
+    expect(selectedOption).toHaveAttribute('data-selected');
   });
 });

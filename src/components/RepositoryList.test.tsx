@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import RepositoryList from './RepositoryList';
 import type { Repository } from '../types';
@@ -217,7 +218,8 @@ describe('RepositoryList', () => {
   });
 
   describe('Sort functionality', () => {
-    it('calls onSortChange when sort is changed', () => {
+    it('calls onSortChange when sort is changed', async () => {
+      const user = userEvent.setup();
       const mockOnSortChange = vi.fn();
       const repos = [createMockRepository({ id: 1 })];
 
@@ -225,20 +227,25 @@ describe('RepositoryList', () => {
         <RepositoryList {...defaultProps} repositories={repos} onSortChange={mockOnSortChange} />
       );
 
-      const sortSelect = screen.getByLabelText(/sort repositories/i);
-      fireEvent.change(sortSelect, { target: { value: 'created' } });
+      // Click the sort dropdown button to open options
+      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+      // Click the "Recently Starred" option
+      await user.click(screen.getByRole('option', { name: /recently starred/i }));
 
       expect(mockOnSortChange).toHaveBeenCalledWith('created');
     });
 
-    it('shows correct sort options from props', () => {
+    it('shows correct sort options from props', async () => {
+      const user = userEvent.setup();
       const repos = [createMockRepository({ id: 1 })];
 
       render(<RepositoryList {...defaultProps} repositories={repos} />);
 
-      const sortSelect = screen.getByLabelText(/sort repositories/i);
-      expect(sortSelect).toContainElement(screen.getByText('Recently Updated'));
-      expect(sortSelect).toContainElement(screen.getByText('Recently Starred'));
+      // Click button to open options
+      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+
+      expect(screen.getByRole('option', { name: /recently updated/i })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: /recently starred/i })).toBeInTheDocument();
     });
 
     it('shows correct sort value', () => {
@@ -246,11 +253,12 @@ describe('RepositoryList', () => {
 
       render(<RepositoryList {...defaultProps} repositories={repos} sortBy="created" />);
 
-      const sortSelect = screen.getByLabelText(/sort repositories/i);
-      expect(sortSelect).toHaveValue('created');
+      // Button should display the selected value
+      expect(screen.getByRole('button', { name: /recently starred/i })).toBeInTheDocument();
     });
 
-    it('renders custom sort options', () => {
+    it('renders custom sort options', async () => {
+      const user = userEvent.setup();
       const repos = [createMockRepository({ id: 1 })];
       const customSortOptions = [
         { value: 'best-match' as const, label: 'Best Match' },
@@ -266,9 +274,11 @@ describe('RepositoryList', () => {
         />
       );
 
-      const sortSelect = screen.getByLabelText(/sort repositories/i);
-      expect(sortSelect).toContainElement(screen.getByText('Best Match'));
-      expect(sortSelect).toContainElement(screen.getByText('Most Stars'));
+      // Click button to open options
+      await user.click(screen.getByRole('button', { name: /best match/i }));
+
+      expect(screen.getByRole('option', { name: /best match/i })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: /most stars/i })).toBeInTheDocument();
     });
   });
 

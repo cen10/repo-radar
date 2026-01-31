@@ -81,7 +81,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
             onClick={onLinkClick}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden border-l-4 ${
-                collapsed ? 'outline-none' : 'rounded'
+                collapsed ? 'outline-none' : ''
               } ${
                 isActive
                   ? 'border-indigo-600 text-indigo-700'
