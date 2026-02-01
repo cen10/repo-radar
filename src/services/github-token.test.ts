@@ -4,6 +4,7 @@ import {
   getStoredAccessToken,
   clearStoredAccessToken,
   getValidGitHubToken,
+  hasAnyValidToken,
   _resetLogFlags,
 } from './github-token';
 import { GitHubReauthRequiredError } from '../utils/error';
@@ -163,6 +164,38 @@ describe('github-token service', () => {
       localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
       const result = getValidGitHubToken(null);
       expect(result).toBe('test-github-token');
+    });
+  });
+
+  describe('hasAnyValidToken', () => {
+    const originalEnv = import.meta.env.VITE_TEST_GITHUB_TOKEN;
+
+    afterEach(() => {
+      if (originalEnv === undefined) {
+        delete import.meta.env.VITE_TEST_GITHUB_TOKEN;
+      } else {
+        import.meta.env.VITE_TEST_GITHUB_TOKEN = originalEnv;
+      }
+    });
+
+    it('returns true when providerToken is available', () => {
+      expect(hasAnyValidToken('provider-token')).toBe(true);
+    });
+
+    it('returns true when VITE_TEST_GITHUB_TOKEN is set', () => {
+      import.meta.env.VITE_TEST_GITHUB_TOKEN = 'test-token';
+      expect(hasAnyValidToken(null)).toBe(true);
+    });
+
+    it('returns true when localStorage has token', () => {
+      delete import.meta.env.VITE_TEST_GITHUB_TOKEN;
+      localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
+      expect(hasAnyValidToken(null)).toBe(true);
+    });
+
+    it('returns false when no token source is available', () => {
+      delete import.meta.env.VITE_TEST_GITHUB_TOKEN;
+      expect(hasAnyValidToken(null)).toBe(false);
     });
   });
 });
