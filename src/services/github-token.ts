@@ -3,6 +3,10 @@ import { GitHubReauthRequiredError } from '../utils/error';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
 
+// Track whether we've logged fallback token usage (to avoid spam)
+let hasLoggedTestToken = false;
+let hasLoggedStoredToken = false;
+
 /**
  * Get a valid GitHub token with multiple fallback options.
  *
@@ -24,14 +28,20 @@ export function getValidGitHubToken(providerToken: string | null): string {
   // 2. Use test token if available (E2E testing / remote environments)
   const testToken = import.meta.env.VITE_TEST_GITHUB_TOKEN;
   if (testToken) {
-    logger.info('Using VITE_TEST_GITHUB_TOKEN for GitHub API calls');
+    if (!hasLoggedTestToken) {
+      logger.info('Using VITE_TEST_GITHUB_TOKEN for GitHub API calls');
+      hasLoggedTestToken = true;
+    }
     return testToken;
   }
 
   // 3. Fall back to stored token (Supabase dropped provider_token on refresh)
   const storedAccessToken = getStoredAccessToken();
   if (storedAccessToken) {
-    logger.info('provider_token is null, using stored access token');
+    if (!hasLoggedStoredToken) {
+      logger.info('provider_token is null, using stored access token');
+      hasLoggedStoredToken = true;
+    }
     return storedAccessToken;
   }
 
