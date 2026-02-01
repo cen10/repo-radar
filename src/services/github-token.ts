@@ -83,3 +83,11 @@ export function clearStoredAccessToken(): void {
     logger.warn('Failed to clear access token from localStorage', error);
   }
 }
+
+/**
+ * Reset logging flags (for testing only)
+ */
+export function _resetLogFlags(): void {
+  hasLoggedTestToken = false;
+  hasLoggedStoredToken = false;
+}
