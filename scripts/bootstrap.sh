@@ -7,4 +7,4 @@ if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
 fi
 
 echo "Installing dependencies for remote environment..."
-npm install --ignore-scripts
+npm install
