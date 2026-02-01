@@ -4,7 +4,7 @@ import {
   getStoredAccessToken,
   clearStoredAccessToken,
   getValidGitHubToken,
-  hasAnyValidToken,
+  hasFallbackToken,
   _resetLogFlags,
 } from './github-token';
 import { GitHubReauthRequiredError } from '../utils/error';
@@ -167,7 +167,7 @@ describe('github-token service', () => {
     });
   });
 
-  describe('hasAnyValidToken', () => {
+  describe('hasFallbackToken', () => {
     const originalEnv = import.meta.env.VITE_TEST_GITHUB_TOKEN;
 
     afterEach(() => {
@@ -178,24 +178,20 @@ describe('github-token service', () => {
       }
     });
 
-    it('returns true when providerToken is available', () => {
-      expect(hasAnyValidToken('provider-token')).toBe(true);
-    });
-
     it('returns true when VITE_TEST_GITHUB_TOKEN is set', () => {
       import.meta.env.VITE_TEST_GITHUB_TOKEN = 'test-token';
-      expect(hasAnyValidToken(null)).toBe(true);
+      expect(hasFallbackToken()).toBe(true);
     });
 
     it('returns true when localStorage has token', () => {
       delete import.meta.env.VITE_TEST_GITHUB_TOKEN;
       localStorage.setItem(ACCESS_TOKEN_KEY, 'stored-token');
-      expect(hasAnyValidToken(null)).toBe(true);
+      expect(hasFallbackToken()).toBe(true);
     });
 
-    it('returns false when no token source is available', () => {
+    it('returns false when no fallback token is available', () => {
       delete import.meta.env.VITE_TEST_GITHUB_TOKEN;
-      expect(hasAnyValidToken(null)).toBe(false);
+      expect(hasFallbackToken()).toBe(false);
     });
   });
 });

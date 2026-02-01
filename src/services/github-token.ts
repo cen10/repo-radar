@@ -85,18 +85,12 @@ export function clearStoredAccessToken(): void {
 }
 
 /**
- * Check if any valid GitHub token source is available.
- * Use this to determine if queries should be enabled.
- *
- * @param providerToken - The token from auth context (may be null after session refresh)
- * @returns true if any token source is available
+ * Check if a fallback token source is available (env var or localStorage).
+ * Use with providerToken to determine if queries should be enabled:
+ *   enabled: !!token || hasFallbackToken()
  */
-export function hasAnyValidToken(providerToken: string | null): boolean {
-  return (
-    !!providerToken ||
-    !!import.meta.env.VITE_TEST_GITHUB_TOKEN ||
-    !!getStoredAccessToken()
-  );
+export function hasFallbackToken(): boolean {
+  return !!import.meta.env.VITE_TEST_GITHUB_TOKEN || !!getStoredAccessToken();
 }
 
 /**
