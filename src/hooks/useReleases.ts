@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchRepositoryReleases } from '../services/github';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Release } from '../types';
 
@@ -38,12 +39,10 @@ export function useReleases({
   const { data, isLoading, error, refetch } = useQuery<Release[], Error>({
     queryKey: ['releases', owner, repo],
     queryFn: () => {
-      if (!token) {
-        throw new Error('Token required');
-      }
-      return fetchRepositoryReleases(token, owner, repo);
+      const validToken = getValidGitHubToken(token);
+      return fetchRepositoryReleases(validToken, owner, repo);
     },
-    enabled: enabled && !!token && !!owner && !!repo,
+    enabled: enabled && (!!token || hasFallbackToken()) && !!owner && !!repo,
   });
 
   useAuthErrorHandler(error, 'useReleases');

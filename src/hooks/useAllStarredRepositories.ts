@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllStarredRepositories, type SortDirection } from '../services/github';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository, AllStarredData } from '../types';
 
@@ -39,12 +40,10 @@ export function useAllStarredRepositories({
   const { data, isLoading, error, refetch } = useQuery<AllStarredData, Error>({
     queryKey: ['allStarredRepositories', token],
     queryFn: () => {
-      if (!token) {
-        throw new Error('Token required');
-      }
-      return fetchAllStarredRepositories(token);
+      const validToken = getValidGitHubToken(token);
+      return fetchAllStarredRepositories(validToken);
     },
-    enabled: enabled && !!token,
+    enabled: enabled && (!!token || hasFallbackToken()),
     staleTime: Infinity,
   });
 
