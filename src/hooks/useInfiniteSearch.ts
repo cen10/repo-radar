@@ -38,8 +38,6 @@ interface UseInfiniteSearchReturn {
   totalCount: number;
   refetch: () => void;
   totalStarred: number;
-  /** True when in starred mode and user has 0 starred repos to search */
-  hasNoStarredRepos: boolean;
 }
 
 interface SearchPage {
@@ -152,9 +150,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
 
   const totalStarred = allStarredData?.totalStarred ?? 0;
 
-  // In starred mode, user has no starred repos to search
-  const hasNoStarredRepos = isStarredSearch && allStarredData !== undefined && totalStarred === 0;
-
   return {
     repositories,
     isLoading,
@@ -165,6 +160,5 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     totalCount,
     refetch,
     totalStarred,
-    hasNoStarredRepos,
   };
 }
