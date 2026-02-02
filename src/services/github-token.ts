@@ -3,30 +3,49 @@ import { GitHubReauthRequiredError } from '../utils/error';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
 
+// Track whether we've logged fallback token usage (to avoid spam)
+let hasLoggedTestToken = false;
+let hasLoggedStoredToken = false;
+
 /**
- * Get a valid GitHub token, falling back to localStorage if providerToken is null.
+ * Get a valid GitHub token with multiple fallback options.
  *
- * This handles the case where Supabase session refresh drops the provider_token
- * but we still have a valid token stored in localStorage.
+ * Priority:
+ * 1. provider_token from OAuth (normal auth flow)
+ * 2. VITE_TEST_GITHUB_TOKEN env var (E2E testing / remote environments)
+ * 3. Stored token in localStorage (Supabase session refresh fallback)
  *
  * @param providerToken - The token from auth context (may be null after session refresh)
  * @returns A valid GitHub token
  * @throws GitHubReauthRequiredError if no token is available
  */
 export function getValidGitHubToken(providerToken: string | null): string {
-  // 1. Use provider_token if available
+  // 1. Use provider_token if available (normal OAuth flow)
   if (providerToken) {
     return providerToken;
   }
 
-  // 2. Fall back to stored token (Supabase dropped provider_token on refresh)
+  // 2. Use test token if available (E2E testing / remote environments)
+  const testToken = import.meta.env.VITE_TEST_GITHUB_TOKEN;
+  if (testToken) {
+    if (!hasLoggedTestToken) {
+      logger.info('Using VITE_TEST_GITHUB_TOKEN for GitHub API calls');
+      hasLoggedTestToken = true;
+    }
+    return testToken;
+  }
+
+  // 3. Fall back to stored token (Supabase dropped provider_token on refresh)
   const storedAccessToken = getStoredAccessToken();
   if (storedAccessToken) {
-    logger.info('provider_token is null, using stored access token');
+    if (!hasLoggedStoredToken) {
+      logger.info('provider_token is null, using stored access token');
+      hasLoggedStoredToken = true;
+    }
     return storedAccessToken;
   }
 
-  // 3. No token available - throw error
+  // 4. No token available - throw error
   throw new GitHubReauthRequiredError('No GitHub token available');
 }
 
@@ -63,4 +82,21 @@ export function clearStoredAccessToken(): void {
   } catch (error) {
     logger.warn('Failed to clear access token from localStorage', error);
   }
+}
+
+/**
+ * Check if a fallback token source is available (env var or localStorage).
+ * Use with providerToken to determine if queries should be enabled:
+ *   enabled: !!token || hasFallbackToken()
+ */
+export function hasFallbackToken(): boolean {
+  return !!import.meta.env.VITE_TEST_GITHUB_TOKEN || !!getStoredAccessToken();
+}
+
+/**
+ * Reset logging flags (for testing only)
+ */
+export function _resetLogFlags(): void {
+  hasLoggedTestToken = false;
+  hasLoggedStoredToken = false;
 }

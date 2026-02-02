@@ -4,7 +4,7 @@ import {
   type StarredSortOption,
   type SortDirection,
 } from '../services/github';
-import { getValidGitHubToken, getStoredAccessToken } from '../services/github-token';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import { useAuth } from './useAuth';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
 import type { Repository } from '../types';
@@ -49,7 +49,6 @@ export function useBrowseStarred({
   enabled,
 }: UseBrowseStarredOptions): UseBrowseStarredReturn {
   const { user } = useAuth();
-  const hasAnyToken = !!token || !!getStoredAccessToken();
 
   const fetchStarredPage = async ({ pageParam }: { pageParam: number }) => {
     const validToken = getValidGitHubToken(token);
@@ -78,7 +77,7 @@ export function useBrowseStarred({
       queryFn: fetchStarredPage,
       initialPageParam: 1,
       getNextPageParam,
-      enabled: enabled && !!user && hasAnyToken,
+      enabled: enabled && !!user && (!!token || hasFallbackToken()),
     });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];

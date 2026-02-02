@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchRepositoryById, isRepositoryStarred } from '../services/github';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import { useAuthErrorHandler } from './useAuthErrorHandler';
 import { useStarredIds } from './useStarredIds';
 import type { Repository, AllStarredData } from '../types';
@@ -53,12 +54,10 @@ export function useRepository({
   >({
     queryKey: ['repository', repoId],
     queryFn: () => {
-      if (!token) {
-        throw new Error('Token required');
-      }
-      return fetchRepositoryById(token, numericId);
+      const validToken = getValidGitHubToken(token);
+      return fetchRepositoryById(validToken, numericId);
     },
-    enabled: enabled && !!token && isValidId,
+    enabled: enabled && (!!token || hasFallbackToken()) && isValidId,
   });
 
   const { data: isStarredFromApi } = useQuery({
@@ -68,8 +67,11 @@ export function useRepository({
     // contains the first 500 starred repos for the Stars page.
     // Key uses repo ID (stable across renames), API uses owner/name.
     queryKey: ['isRepositoryStarred', token, data?.id],
-    queryFn: () => isRepositoryStarred(token!, data!.owner.login, data!.name),
-    enabled: !!token && !!data && !isInStarredCache,
+    queryFn: () => {
+      const validToken = getValidGitHubToken(token);
+      return isRepositoryStarred(validToken, data!.owner.login, data!.name);
+    },
+    enabled: (!!token || hasFallbackToken()) && !!data && !isInStarredCache,
   });
 
   useAuthErrorHandler(error, 'useRepository');

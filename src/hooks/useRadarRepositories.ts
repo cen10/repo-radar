@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRadarRepos } from '../services/radar';
 import { fetchRepositoriesByIds } from '../services/github';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import type { Repository } from '../types';
 
 interface UseRadarRepositoriesOptions {
@@ -35,9 +36,11 @@ export function useRadarRepositories({
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['radarRepositories', radarId],
     queryFn: async () => {
-      if (!radarId || !token) {
+      if (!radarId) {
         return [];
       }
+
+      const validToken = getValidGitHubToken(token);
 
       // Step 1: Get repo IDs from Supabase
       const radarRepos = await getRadarRepos(radarId);
@@ -48,11 +51,11 @@ export function useRadarRepositories({
 
       // Step 2: Fetch full repo data from GitHub
       const repoIds = radarRepos.map((r) => r.github_repo_id);
-      const repositories = await fetchRepositoriesByIds(token, repoIds);
+      const repositories = await fetchRepositoriesByIds(validToken, repoIds);
 
       return repositories;
     },
-    enabled: enabled && !!radarId && !!token,
+    enabled: enabled && !!radarId && (!!token || hasFallbackToken()),
   });
 
   return {
