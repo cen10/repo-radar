@@ -63,20 +63,18 @@ const StarsPage = () => {
       </h1>
 
       {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-        {!hasNoStarredRepos && (
-          <>
-            <CollapsibleSearch
-              id="stars-search"
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSubmit={setActiveSearch}
-              placeholder="Search your starred repositories..."
-            />
-            <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
-          </>
-        )}
-      </div>
+      {!hasNoStarredRepos && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <CollapsibleSearch
+            id="stars-search"
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={setActiveSearch}
+            placeholder="Search your starred repositories..."
+          />
+          <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
+        </div>
+      )}
 
       <RepositoryList
         title="My Stars"
