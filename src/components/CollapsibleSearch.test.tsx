@@ -274,4 +274,45 @@ describe('CollapsibleSearch', () => {
       expect(input).toHaveAccessibleName(/search/i);
     });
   });
+
+  describe('disabled state', () => {
+    it('disables toggle button when disabled prop is true', () => {
+      render(<CollapsibleSearch {...defaultProps} disabled />);
+
+      // When disabled without disabledPlaceholder, falls back to regular placeholder
+      expect(screen.getByRole('button', { name: /search repos/i })).toBeDisabled();
+    });
+
+    it('does not expand when clicking disabled toggle button', async () => {
+      const user = userEvent.setup();
+      render(<CollapsibleSearch {...defaultProps} disabled />);
+
+      await user.click(screen.getByRole('button', { name: /search repos/i }));
+
+      expect(screen.queryByPlaceholderText('Search repos...')).not.toBeInTheDocument();
+    });
+
+    it('does not expand when keyboard shortcut is pressed while disabled', async () => {
+      const user = userEvent.setup();
+      render(<CollapsibleSearch {...defaultProps} disabled />);
+
+      await user.keyboard('{Meta>}k{/Meta}');
+
+      expect(screen.queryByPlaceholderText('Search repos...')).not.toBeInTheDocument();
+    });
+
+    it('uses disabledPlaceholder for aria-label when disabled', () => {
+      render(
+        <CollapsibleSearch
+          {...defaultProps}
+          disabled
+          disabledPlaceholder="Star repos to search here"
+        />
+      );
+
+      expect(
+        screen.getByRole('button', { name: /star repos to search here/i })
+      ).toBeInTheDocument();
+    });
+  });
 });

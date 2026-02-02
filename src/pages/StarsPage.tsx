@@ -40,6 +40,10 @@ const StarsPage = () => {
 
   const result = isSearchMode ? searchResult : browseResult;
 
+  // Disable search when user has no starred repos (determined after browse loads)
+  const hasNoStarredRepos =
+    !browseResult.isLoading && browseResult.repositories.length === 0 && !browseResult.error;
+
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
       setSortBy(newSort);
@@ -62,6 +66,8 @@ const StarsPage = () => {
           onChange={setSearchQuery}
           onSubmit={setActiveSearch}
           placeholder="Search your starred repositories..."
+          disabled={hasNoStarredRepos}
+          disabledPlaceholder="Star repos to search here"
         />
         <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
       </div>
@@ -86,7 +92,6 @@ const StarsPage = () => {
         sortOptions={SORT_OPTIONS}
         emptyState={<NoStarredReposState />}
         totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
-        hasNoStarredRepos={isSearchMode && searchResult.hasNoStarredRepos}
         hideSearch
         hideTitle
       />

@@ -374,4 +374,4 @@ graph TD
   - In `useInfiniteSearch.ts:138`, the condition `(!isStarredSearch || allStarredRepos.length > 0)` prevents search from ever enabling if user has 0 starred repos
   - `allStarredRepos.length > 0` is always false for users with no starred repos
   - Fix: Distinguish between "loading" and "loaded with 0 results" using `allStarredData !== undefined`
-  - Add empty state UI: "You have no starred repos to search"
+  - Disable search input when user has 0 starred repos with placeholder "Star repos to search here"

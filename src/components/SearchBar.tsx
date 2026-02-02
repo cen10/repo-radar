@@ -7,6 +7,7 @@ interface SearchBarProps {
   onSubmit: (value: string) => void;
   placeholder: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  disabled?: boolean;
 }
 
 export function SearchBar({
@@ -16,6 +17,7 @@ export function SearchBar({
   onSubmit,
   placeholder,
   inputRef,
+  disabled = false,
 }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +38,13 @@ export function SearchBar({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+          disabled={disabled}
+          className={`flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-500 ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
         />
         <button
           type="submit"
-          className="px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+          disabled={disabled}
+          className={`px-4 py-2 bg-indigo-600 text-white border border-indigo-600 rounded-r-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors ${disabled ? 'opacity-60 cursor-not-allowed hover:bg-indigo-600' : ''}`}
         >
           <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
           <span className="sr-only">Search</span>

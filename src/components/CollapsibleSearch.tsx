@@ -10,6 +10,10 @@ interface CollapsibleSearchProps {
   onSubmit: (value: string) => void;
   placeholder: string;
   className?: string;
+  /** When true, search is disabled and cannot be expanded */
+  disabled?: boolean;
+  /** Placeholder to show when disabled (defaults to placeholder) */
+  disabledPlaceholder?: string;
 }
 
 function getShortcutHint(): string {
@@ -25,6 +29,8 @@ export function CollapsibleSearch({
   onSubmit,
   placeholder,
   className = '',
+  disabled = false,
+  disabledPlaceholder,
 }: CollapsibleSearchProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldFocusToggle, setShouldFocusToggle] = useState(false);
@@ -34,8 +40,10 @@ export function CollapsibleSearch({
   const shortcutHint = getShortcutHint();
 
   const expand = useCallback(() => {
-    setIsExpanded(true);
-  }, []);
+    if (!disabled) {
+      setIsExpanded(true);
+    }
+  }, [disabled]);
 
   const collapse = useCallback(() => {
     setIsExpanded(false);
@@ -71,6 +79,7 @@ export function CollapsibleSearch({
       // Toggle with Cmd+K or Ctrl+K (case-insensitive for Caps Lock)
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
+        if (disabled) return;
         if (isExpanded) {
           collapse();
         } else {
@@ -89,7 +98,7 @@ export function CollapsibleSearch({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isExpanded, expand, collapse]);
+  }, [isExpanded, expand, collapse, disabled]);
 
   const handleCloseClick = () => {
     collapse();
@@ -107,10 +116,11 @@ export function CollapsibleSearch({
           variant="ghost"
           size="md"
           onClick={expand}
+          disabled={disabled}
           aria-expanded={isExpanded}
           aria-controls={`${id}-container`}
-          aria-label="Open search"
-          className="flex items-center gap-2"
+          aria-label={disabled ? (disabledPlaceholder ?? placeholder) : 'Open search'}
+          className={`flex items-center gap-2 ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
         >
           <kbd
             className="text-xs text-gray-400 font-sans bg-gray-100 px-1.5 py-0.5 rounded"
@@ -130,8 +140,9 @@ export function CollapsibleSearch({
             value={value}
             onChange={onChange}
             onSubmit={onSubmit}
-            placeholder={placeholder}
+            placeholder={disabled && disabledPlaceholder ? disabledPlaceholder : placeholder}
             inputRef={inputRef}
+            disabled={disabled}
           />
           <Button variant="ghost" size="md" onClick={handleCloseClick} aria-label="Close search">
             <XMarkIcon className="h-5 w-5" aria-hidden="true" />

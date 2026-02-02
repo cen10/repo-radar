@@ -65,4 +65,28 @@ describe('SearchBar', () => {
 
     expect(screen.getByLabelText(/search/i)).toBeInTheDocument();
   });
+
+  describe('disabled state', () => {
+    it('disables input when disabled prop is true', () => {
+      render(<SearchBar {...defaultProps} disabled />);
+
+      expect(screen.getByPlaceholderText('Search...')).toBeDisabled();
+    });
+
+    it('disables submit button when disabled prop is true', () => {
+      render(<SearchBar {...defaultProps} disabled />);
+
+      expect(screen.getByRole('button', { name: /search/i })).toBeDisabled();
+    });
+
+    it('does not call onSubmit when disabled', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn();
+      render(<SearchBar {...defaultProps} value="test" onSubmit={onSubmit} disabled />);
+
+      await user.click(screen.getByRole('button', { name: /search/i }));
+
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+  });
 });
