@@ -368,9 +368,9 @@ graph TD
   - Was used in old Dashboard for "Showing X of Y" message
   - Dashboard removed in T038, StarsPage uses hardcoded `MAX_STARRED_REPOS` constant instead
   - Files to update: `src/services/github.ts`, `src/hooks/useRepository.ts`, `src/hooks/useAllStarredRepositories.ts`, `src/hooks/useStarredIds.ts`, `src/hooks/useInfiniteSearch.ts`
-- [ ] T098 Update legacy Tailwind classes to v4 canonical names
+- [x] T098 Update legacy Tailwind classes to v4 canonical names
   - `break-words` → `wrap-break-word` in `src/components/GenericErrorFallback.tsx`
-- [ ] T099 Fix starred search never enabling for users with 0 starred repos
+- [x] T099 Fix starred search never enabling for users with 0 starred repos
   - In `useInfiniteSearch.ts:138`, the condition `(!isStarredSearch || allStarredRepos.length > 0)` prevents search from ever enabling if user has 0 starred repos
   - `allStarredRepos.length > 0` is always false for users with no starred repos
   - Fix: Distinguish between "loading" and "loaded with 0 results" using `allStarredData !== undefined`

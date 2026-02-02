@@ -50,8 +50,8 @@ export function GenericErrorFallback({ error, resetErrorBoundary }: FallbackProp
               Error Details (Development Only)
             </summary>
             <pre
-              className="mt-2 text-sm bg-gray-800 text-gray-100 p-4 rounded-md overflow-auto 
-        max-h-100 whitespace-pre-wrap break-words hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+              className="mt-2 text-sm bg-gray-800 text-gray-100 p-4 rounded-md overflow-auto
+        max-h-100 whitespace-pre-wrap wrap-break-word hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
             >
               {getErrorMessage(error, 'Unexpected error')}
               {'\n\n'}

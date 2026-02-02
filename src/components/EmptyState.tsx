@@ -85,3 +85,30 @@ export function NoSearchResultsState({ onClearSearch }: NoSearchResultsStateProp
     />
   );
 }
+
+interface NoStarredReposToSearchStateProps {
+  onClearSearch: () => void;
+}
+
+export function NoStarredReposToSearchState({ onClearSearch }: NoStarredReposToSearchStateProps) {
+  return (
+    <EmptyState
+      icon={<StarIcon className="h-12 w-12" aria-hidden="true" />}
+      title="You have no starred repos to search"
+      description="Star repos on GitHub first, then you can search within your collection here."
+      actions={
+        <>
+          <Button variant="link" onClick={onClearSearch}>
+            Clear search
+          </Button>
+          <Link
+            to="/explore"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+          >
+            Explore Repos
+          </Link>
+        </>
+      }
+    />
+  );
+}

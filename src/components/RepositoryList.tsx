@@ -4,7 +4,7 @@ import { RepoCard } from './RepoCard';
 import { LoadingSpinner } from './icons';
 import { SearchBar } from './SearchBar';
 import { SortDropdown } from './SortDropdown';
-import { NoSearchResultsState } from './EmptyState';
+import { NoSearchResultsState, NoStarredReposToSearchState } from './EmptyState';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 import { MAX_STARRED_REPOS } from '../services/github';
@@ -47,6 +47,8 @@ interface RepositoryListProps {
   hideSearch?: boolean;
   // Hide the internal title (use when page provides its own title)
   hideTitle?: boolean;
+  // True when searching starred repos but user has 0 starred repos
+  hasNoStarredRepos?: boolean;
 }
 
 const RepositoryList = ({
@@ -73,6 +75,7 @@ const RepositoryList = ({
   totalStarred,
   hideSearch = false,
   hideTitle = false,
+  hasNoStarredRepos = false,
 }: RepositoryListProps) => {
   // Guard against duplicate fetches from rapid IntersectionObserver callbacks.
   // isFetchingMore prop won't be true until React re-renders, but the observer
@@ -184,10 +187,18 @@ const RepositoryList = ({
       onSearchSubmit('');
     };
 
+    const renderEmptyState = () => {
+      if (!hasActiveSearch) return emptyState;
+      if (hasNoStarredRepos) {
+        return <NoStarredReposToSearchState onClearSearch={handleClearSearch} />;
+      }
+      return <NoSearchResultsState onClearSearch={handleClearSearch} />;
+    };
+
     return (
       <div data-testid="repository-list">
         {controls}
-        {hasActiveSearch ? <NoSearchResultsState onClearSearch={handleClearSearch} /> : emptyState}
+        {renderEmptyState()}
       </div>
     );
   }

@@ -86,6 +86,7 @@ const StarsPage = () => {
         sortOptions={SORT_OPTIONS}
         emptyState={<NoStarredReposState />}
         totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
+        hasNoStarredRepos={isSearchMode && searchResult.hasNoStarredRepos}
         hideSearch
         hideTitle
       />

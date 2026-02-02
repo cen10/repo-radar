@@ -7,6 +7,7 @@ import {
   EmptyRadarState,
   NoStarredReposState,
   NoSearchResultsState,
+  NoStarredReposToSearchState,
 } from './EmptyState';
 
 const renderWithRouter = (ui: React.ReactElement) => {
@@ -146,5 +147,42 @@ describe('NoSearchResultsState', () => {
     await user.click(screen.getByRole('button', { name: /clear search/i }));
 
     expect(handleClearSearch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('NoStarredReposToSearchState', () => {
+  it('renders star icon', () => {
+    renderWithRouter(<NoStarredReposToSearchState onClearSearch={() => {}} />);
+
+    // The StarIcon from heroicons
+    const svg = document.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+  });
+
+  it('renders correct title and description', () => {
+    renderWithRouter(<NoStarredReposToSearchState onClearSearch={() => {}} />);
+
+    expect(screen.getByText(/you have no starred repos to search/i)).toBeInTheDocument();
+    expect(screen.getByText(/star repos on github first/i)).toBeInTheDocument();
+  });
+
+  it('calls onClearSearch when clear button is clicked', async () => {
+    const user = userEvent.setup();
+    const handleClearSearch = vi.fn();
+
+    renderWithRouter(<NoStarredReposToSearchState onClearSearch={handleClearSearch} />);
+
+    await user.click(screen.getByRole('button', { name: /clear search/i }));
+
+    expect(handleClearSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders explore link', () => {
+    renderWithRouter(<NoStarredReposToSearchState onClearSearch={() => {}} />);
+
+    expect(screen.getByRole('link', { name: /explore repos/i })).toHaveAttribute(
+      'href',
+      '/explore'
+    );
   });
 });

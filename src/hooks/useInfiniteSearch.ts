@@ -38,6 +38,8 @@ interface UseInfiniteSearchReturn {
   totalCount: number;
   refetch: () => void;
   totalStarred: number;
+  /** True when in starred mode and user has 0 starred repos to search */
+  hasNoStarredRepos: boolean;
 }
 
 interface SearchPage {
@@ -57,7 +59,8 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
   const { token, query, mode, sortBy, enabled } = options;
   const { user } = useAuth();
   const trimmedQuery = query.trim();
-  const shouldFetch = enabled && !!user && (!!token || hasFallbackToken()) && trimmedQuery.length > 0;
+  const shouldFetch =
+    enabled && !!user && (!!token || hasFallbackToken()) && trimmedQuery.length > 0;
   const isStarredSearch = mode === 'starred';
 
   // Get starred IDs for marking search results (used in 'all' mode)
@@ -134,8 +137,9 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     queryFn: fetchSearchPage,
     initialPageParam: 1,
     getNextPageParam,
-    // Only enable search after all starred repos are loaded (for starred search)
-    enabled: shouldFetch && (!isStarredSearch || allStarredRepos.length > 0),
+    // Only enable search after all starred repos are loaded (for starred search).
+    // Use allStarredData !== undefined to distinguish "loading" from "loaded with 0 repos".
+    enabled: shouldFetch && (!isStarredSearch || allStarredData !== undefined),
   });
 
   const repositories = data?.pages.flatMap((page) => page.repositories) ?? [];
@@ -148,6 +152,9 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
 
   const totalStarred = allStarredData?.totalStarred ?? 0;
 
+  // In starred mode, user has no starred repos to search
+  const hasNoStarredRepos = isStarredSearch && allStarredData !== undefined && totalStarred === 0;
+
   return {
     repositories,
     isLoading,
@@ -158,5 +165,6 @@ export function useInfiniteSearch(options: UseInfiniteSearchOptions): UseInfinit
     totalCount,
     refetch,
     totalStarred,
+    hasNoStarredRepos,
   };
 }
