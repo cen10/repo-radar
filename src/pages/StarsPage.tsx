@@ -42,11 +42,11 @@ const StarsPage = () => {
 
   // Hide search/sort when user has no starred repos (determined after browse loads).
   // Include !isSearchMode to prevent UI from disappearing if user searches during initial load.
-  const hasNoStarredRepos =
-    !isSearchMode &&
-    !browseResult.isLoading &&
-    browseResult.repositories.length === 0 &&
-    !browseResult.error;
+  const showSearchAndSort =
+    isSearchMode ||
+    browseResult.isLoading ||
+    browseResult.repositories.length > 0 ||
+    browseResult.error;
 
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
@@ -63,7 +63,7 @@ const StarsPage = () => {
       </h1>
 
       {/* Search and Sort */}
-      {!hasNoStarredRepos && (
+      {showSearchAndSort && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <CollapsibleSearch
             id="stars-search"
