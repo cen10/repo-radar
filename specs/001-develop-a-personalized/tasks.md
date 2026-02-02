@@ -130,7 +130,7 @@ _Goal: Add current metrics and growth indicators_
 
 ---
 
-# MVP SLICE 3: Navigation & Radar Feature (T033-T055) ⚠️ MOSTLY COMPLETE
+# MVP SLICE 3: Navigation & Radar Feature (T033-T055) ✅ COMPLETE
 
 _Goal: Sidebar navigation, radar collections, and repository detail pages_
 _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
@@ -159,7 +159,7 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
 - [x] T043 Create useRadars hook in `src/hooks/useRadars.ts` for fetching user's radars
 - [x] T044 Create ManageRadarsModal component for "Add to Radar" interaction
-- [ ] T045 Create BottomSheet component for mobile "Add to Radar" interaction (client component)
+- [x] T045 Create BottomSheet component for mobile "Add to Radar" interaction
 - [x] T046 Add radar icon to RepoCard with filled/outline states
 - [x] T047 Create radar sweep animation CSS/component for add-to-radar feedback
 - [x] T048 Create CreateRadarModal component for creating new radars from sidebar
@@ -176,8 +176,8 @@ _See [ux-spec.md](./ux-spec.md) for detailed UX requirements_
 
 ## Phase 3.15: Search & Polish (T054-T055)
 
-- [ ] T054 Create CollapsibleSearch component with ⌘K shortcut support (integrate with Next.js navigation)
-- [ ] T055 Add limit handling UI (disabled states, tooltips for 5 radars/25 repos/50 total limits)
+- [x] T054 Create CollapsibleSearch component with ⌘K shortcut support
+- [x] T055 Add limit handling UI (disabled states, tooltips for 5 radars/25 repos/50 total limits)
 
 ---
 
@@ -506,9 +506,8 @@ graph TD
 ---
 
 **Total Tasks**: 140
-**Completed**: 57 tasks (Slices 1-3 mostly complete)
-**Pending**: 83 tasks
-  - Remaining Slice 3: 3 tasks (T045, T054, T055)
+**Completed**: 60 tasks (Slices 1-3 complete)
+**Pending**: 80 tasks
   - Migration: 38 tasks (T100-T137)
   - Features: 40 tasks (T138-T177)
   - Technical Debt: 2 tasks (T097, T099)
