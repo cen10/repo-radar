@@ -40,9 +40,13 @@ const StarsPage = () => {
 
   const result = isSearchMode ? searchResult : browseResult;
 
-  // Disable search when user has no starred repos (determined after browse loads)
+  // Hide search/sort when user has no starred repos (determined after browse loads).
+  // Include !isSearchMode to prevent UI from disappearing if user searches during initial load.
   const hasNoStarredRepos =
-    !browseResult.isLoading && browseResult.repositories.length === 0 && !browseResult.error;
+    !isSearchMode &&
+    !browseResult.isLoading &&
+    browseResult.repositories.length === 0 &&
+    !browseResult.error;
 
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
