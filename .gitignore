@@ -33,3 +33,8 @@ docs
 
 # Claude Code local settings (personal overrides)
 .claude/*.local.json
+
+# Playwright
+/e2e/test-results/
+/playwright-report/
+/playwright/.cache/
