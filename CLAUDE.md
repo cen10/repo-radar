@@ -64,6 +64,17 @@ npm run format       # Format code with Prettier
 npm run format:check # Check formatting
 ```
 
+### Multiple Worktrees / Port Conflicts
+
+When running `npm run dev`, Vite auto-increments ports if 5173 is in use (5174, 5175, etc.). Always check the terminal output for the actual port:
+
+```
+Port 5173 is in use, trying another one...
+  ➜  Local:   http://localhost:5174/
+```
+
+When using Playwright MCP to verify UI changes, navigate to the correct port from the dev server output.
+
 ## Key Decisions
 
 - Using Supabase RLS for data isolation
