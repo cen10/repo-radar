@@ -420,8 +420,8 @@ _Goal: Detailed analytics and complete features with Next.js patterns_
 
 - [ ] T097 Remove unused `totalFetched` field from `AllStarredData` interface and related code
   - Files to update: `src/services/github.ts`, `src/hooks/useRepository.ts`, etc.
-- ~~[ ] T098 Update legacy Tailwind classes to v4 canonical names~~ → Handled during migration
-- [ ] T099 Fix starred search never enabling for users with 0 starred repos
+- [x] T098 Update legacy Tailwind classes to v4 canonical names
+- [x] T099 Fix starred search never enabling for users with 0 starred repos
 
 ---
 
@@ -506,11 +506,11 @@ graph TD
 ---
 
 **Total Tasks**: 140
-**Completed**: 60 tasks (Slices 1-3 complete)
-**Pending**: 80 tasks
+**Completed**: 62 tasks (Slices 1-3 complete, T098-T099)
+**Pending**: 78 tasks
   - Migration: 38 tasks (T100-T137)
   - Features: 40 tasks (T138-T177)
-  - Technical Debt: 2 tasks (T097, T099)
+  - Technical Debt: 1 task (T097)
 
 ---
 
