@@ -40,6 +40,14 @@ const StarsPage = () => {
 
   const result = isSearchMode ? searchResult : browseResult;
 
+  // Hide search/sort when user has no starred repos (determined after browse loads).
+  // Include !isSearchMode to prevent UI from disappearing if user searches during initial load.
+  const showSearchAndSort =
+    isSearchMode ||
+    browseResult.isLoading ||
+    browseResult.repositories.length > 0 ||
+    browseResult.error;
+
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
       setSortBy(newSort);
@@ -55,16 +63,18 @@ const StarsPage = () => {
       </h1>
 
       {/* Search and Sort */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-        <CollapsibleSearch
-          id="stars-search"
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={setActiveSearch}
-          placeholder="Search your starred repositories..."
-        />
-        <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
-      </div>
+      {showSearchAndSort && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <CollapsibleSearch
+            id="stars-search"
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={setActiveSearch}
+            placeholder="Search your starred repositories..."
+          />
+          <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
+        </div>
+      )}
 
       <RepositoryList
         title="My Stars"
