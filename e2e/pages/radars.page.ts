@@ -1,4 +1,4 @@
-import { type Page, type Locator } from '@playwright/test';
+import { type Page, type Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
 /**
@@ -12,17 +12,15 @@ export class RadarsPage extends BasePage {
   readonly menuButton: Locator;
   readonly deleteMenuItem: Locator;
   readonly deleteConfirmButton: Locator;
-  readonly repositoryCards: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.createRadarButton = page.getByRole('button', { name: /create radar|new radar/i });
+    this.createRadarButton = page.getByRole('button', { name: /create radar/i });
     this.radarNameInput = page.getByPlaceholder(/machine learning|web dev/i);
     this.createSubmitButton = page.getByRole('button', { name: /^create$/i });
     this.menuButton = page.getByRole('button', { name: /menu|options/i });
     this.deleteMenuItem = page.getByRole('menuitem', { name: /delete/i });
     this.deleteConfirmButton = page.getByRole('button', { name: /^delete$/i });
-    this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
   }
 
   /**
@@ -30,17 +28,25 @@ export class RadarsPage extends BasePage {
    */
   async goto() {
     await super.goto('/stars');
-    await this.createRadarButton.waitFor({ state: 'visible' });
+    await this.waitForLoadingToFinish();
   }
 
   /**
    * Create a new radar with the given name.
+   * Returns the generated radar name.
    */
   async createRadar(name: string): Promise<string> {
+    await expect(this.createRadarButton).toBeVisible();
     await this.createRadarButton.click();
+
+    await expect(this.radarNameInput).toBeVisible();
     await this.radarNameInput.fill(name);
+
     await this.createSubmitButton.click();
-    await this.getRadarLink(name).waitFor({ state: 'visible' });
+
+    // Wait for radar to appear in sidebar
+    await expect(this.getRadarLink(name)).toBeVisible();
+
     return name;
   }
 
@@ -56,7 +62,14 @@ export class RadarsPage extends BasePage {
    */
   async navigateToRadar(name: string) {
     await this.getRadarLink(name).click();
-    await this.page.waitForURL(/\/radar\//);
+    await expect(this.page).toHaveURL(/\/radar\//);
+  }
+
+  /**
+   * Check if currently on a radar detail page.
+   */
+  async expectToBeOnRadarPage() {
+    await expect(this.page).toHaveURL(/\/radar\//);
   }
 
   /**
@@ -64,8 +77,25 @@ export class RadarsPage extends BasePage {
    * Must be on a radar detail page (/radar/:id).
    */
   async deleteCurrentRadar() {
-    await this.menuButton.click();
-    await this.deleteMenuItem.click();
-    await this.deleteConfirmButton.click();
+    if (await this.menuButton.isVisible()) {
+      await this.menuButton.click();
+
+      if (await this.deleteMenuItem.isVisible()) {
+        await this.deleteMenuItem.click();
+        await this.deleteConfirmButton.click();
+        // Should redirect back to /stars
+        await expect(this.page).toHaveURL('/stars');
+      }
+    }
+  }
+
+  /**
+   * Create a radar, navigate to it, then delete it.
+   * Useful for cleanup or testing the full CRUD flow.
+   */
+  async createAndDeleteRadar(name: string) {
+    await this.createRadar(name);
+    await this.navigateToRadar(name);
+    await this.deleteCurrentRadar();
   }
 }

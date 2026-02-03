@@ -1,27 +1,24 @@
 import { test, expect } from './fixtures';
 
 test.describe('Starred Repositories', () => {
-  test('displays starred repositories list', async ({ authenticatedPage }) => {
-    await authenticatedPage.goto('/stars');
-    await expect(authenticatedPage).toHaveURL('/stars');
+  test('displays starred repositories list', async ({ starsPage }) => {
+    await starsPage.goto();
+    await expect(starsPage.page).toHaveURL('/stars');
 
     // Wait for either repos to load or empty state
-    await expect(
-      authenticatedPage
-        .locator('[data-testid="repo-card"]')
-        .first()
-        .or(authenticatedPage.getByText(/no starred repositories/i))
-    ).toBeVisible({ timeout: 10000 });
+    await expect(starsPage.repositoryCards.first().or(starsPage.emptyState)).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test('can search starred repositories', async ({ authenticatedPage }) => {
-    await authenticatedPage.goto('/stars');
+  test('can search starred repositories', async ({ starsPage }) => {
+    await starsPage.goto();
 
-    const searchInput = authenticatedPage.getByPlaceholder(/search/i);
-    await expect(searchInput).toBeVisible();
+    // Search is collapsible - verify the "Open search" button is visible
+    await expect(starsPage.openSearchButton).toBeVisible();
+    await starsPage.search('react');
 
-    await searchInput.fill('test');
-    // Search should filter results
-    await authenticatedPage.waitForTimeout(500);
+    // After searching, verify search input is now visible
+    await expect(starsPage.searchInput).toBeVisible();
   });
 });
