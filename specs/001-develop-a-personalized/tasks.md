@@ -201,8 +201,8 @@ _Branch: `t100-playwright-setup`_
 
 _Branch: `t103-e2e-auth-tests`_
 
-- [ ] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts` (also consolidate page objects into fixtures to reduce boilerplate)
-- [ ] T104 Create first E2E tests: login flow, view starred repos, create/delete radar
+- [x] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts` (also consolidate page objects into fixtures to reduce boilerplate)
+- [x] T104 Create first E2E tests: login flow, view starred repos, create/delete radar
 
 **Verify**: E2E tests pass with mocked auth
 

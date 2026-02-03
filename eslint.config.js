@@ -8,7 +8,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'e2e']),
   {
     files: ['src/**/*.{ts,tsx}', 'vite.config.ts', 'vitest.config.ts'],
     extends: [
