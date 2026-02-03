@@ -1,13 +1,11 @@
 import { test as base, type Page } from '@playwright/test';
 import { setupAuthState, setupAuthMocks, mockSupabaseUser } from './auth';
 import { setupSupabaseMocks } from './supabase';
-import { HomePage } from '../pages/home.page';
 import { StarsPage } from '../pages/stars.page';
 import { RadarsPage } from '../pages/radars.page';
 
 export const test = base.extend<{
   authenticatedPage: Page;
-  homePage: HomePage;
   starsPage: StarsPage;
   radarsPage: RadarsPage;
 }>({
@@ -21,10 +19,6 @@ export const test = base.extend<{
     await setupAuthMocks(page);
     await setupSupabaseMocks(page, mockSupabaseUser.id);
     await use(page);
-  },
-
-  homePage: async ({ authenticatedPage }, use) => {
-    await use(new HomePage(authenticatedPage));
   },
 
   starsPage: async ({ authenticatedPage }, use) => {
