@@ -150,29 +150,6 @@ async function setupSupabaseMocks(page: Page) {
         contentType: 'application/json',
         body: '',
       });
-    } else if (method === 'PATCH') {
-      // Update a radar
-      const idMatch = url.searchParams.get('id');
-      const body = request.postDataJSON();
-      if (idMatch) {
-        const id = idMatch.replace('eq.', '');
-        const radar = mockRadars.get(id);
-        if (radar) {
-          radar.name = body.name || radar.name;
-          radar.updated_at = new Date().toISOString();
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(radar),
-          });
-          return;
-        }
-      }
-      await route.fulfill({
-        status: 404,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Not found' }),
-      });
     } else {
       await route.continue();
     }
