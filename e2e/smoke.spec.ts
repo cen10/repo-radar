@@ -20,7 +20,9 @@ test.describe('Smoke Tests', () => {
     // Try to access a protected route directly
     await page.goto('/stars');
 
-    // Should be redirected to home
+    await expect(page).toHaveURL('/');
+
+    // Verify home page content is shown
     const homePage = new HomePage(page);
     await homePage.expectToBeOnHomePage();
   });
