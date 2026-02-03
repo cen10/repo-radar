@@ -28,10 +28,6 @@ export class StarsPage extends BasePage {
     await this.waitForLoadingToFinish();
   }
 
-  async expectToBeOnStarsPage() {
-    await expect(this.heading).toBeVisible();
-  }
-
   async search(query: string) {
     // Click the "Open search" button to expand the collapsible search
     await this.openSearchButton.click();

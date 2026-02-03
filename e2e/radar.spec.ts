@@ -1,4 +1,4 @@
-import { test } from './fixtures';
+import { test, expect } from './fixtures';
 
 test.describe('Radar CRUD', () => {
   test('can create and delete a radar', async ({ radarsPage }) => {
@@ -7,7 +7,7 @@ test.describe('Radar CRUD', () => {
     const radarName = `E2E Test Radar ${Date.now()}`;
     await radarsPage.createRadar(radarName);
     await radarsPage.navigateToRadar(radarName);
-    await radarsPage.expectToBeOnRadarPage();
+    await expect(radarsPage.page).toHaveURL(/\/radar\//);
     await radarsPage.deleteCurrentRadar();
   });
 
