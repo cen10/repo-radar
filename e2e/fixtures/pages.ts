@@ -1,13 +1,28 @@
-import { test as authTest } from './auth';
+import { test as base, type Page } from '@playwright/test';
+import { setupAuthState, setupAuthMocks, mockSupabaseUser } from './auth';
+import { setupSupabaseMocks } from './supabase';
 import { HomePage } from '../pages/home.page';
 import { StarsPage } from '../pages/stars.page';
 import { RadarsPage } from '../pages/radars.page';
 
-export const test = authTest.extend<{
+export const test = base.extend<{
+  authenticatedPage: Page;
   homePage: HomePage;
   starsPage: StarsPage;
   radarsPage: RadarsPage;
 }>({
+  authenticatedPage: async ({ page }, use, testInfo) => {
+    const githubToken = process.env.VITE_TEST_GITHUB_TOKEN;
+    if (!githubToken) {
+      testInfo.skip(true, 'VITE_TEST_GITHUB_TOKEN not set - skipping authenticated test');
+      return;
+    }
+    await setupAuthState(page, githubToken);
+    await setupAuthMocks(page);
+    await setupSupabaseMocks(page, mockSupabaseUser.id);
+    await use(page);
+  },
+
   homePage: async ({ authenticatedPage }, use) => {
     await use(new HomePage(authenticatedPage));
   },
