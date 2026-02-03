@@ -108,22 +108,26 @@ async function setupSupabaseMocks(page: Page) {
     if (method === 'HEAD') {
       // HEAD request for counting radars (used by count check)
       const radars = Array.from(mockRadars.values());
+      const total = radars.length;
+      const rangeEnd = total > 0 ? total - 1 : 0;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: {
-          'content-range': `0-${radars.length}/${radars.length}`,
+          'content-range': `0-${rangeEnd}/${total}`,
         },
         body: '',
       });
     } else if (method === 'GET') {
       // Return list of radars with repo counts
       const radars = Array.from(mockRadars.values());
+      const total = radars.length;
+      const rangeEnd = total > 0 ? total - 1 : 0;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         headers: {
-          'content-range': `0-${radars.length}/${radars.length}`,
+          'content-range': `0-${rangeEnd}/${total}`,
         },
         body: JSON.stringify(radars),
       });
