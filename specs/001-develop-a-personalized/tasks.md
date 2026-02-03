@@ -190,10 +190,10 @@ _Priority: Do first to ensure quality during migration_
 
 _Branch: `t100-playwright-setup`_
 
-- [ ] T100 Install Playwright: `npm install -D @playwright/test && npx playwright install`
-- [ ] T101 [P] Create Playwright config in `playwright.config.ts` with projects for chromium, firefox, webkit
-- [ ] T102 [P] Create E2E test directory structure: `e2e/` with page objects in `e2e/pages/`
-- [ ] T105 [P] Add Playwright scripts to package.json: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`
+- [x] T100 Install Playwright: `npm install -D @playwright/test && npx playwright install`
+- [x] T101 [P] Create Playwright config in `playwright.config.ts` with projects for chromium, firefox, webkit
+- [x] T102 [P] Create E2E test directory structure: `e2e/` with page objects in `e2e/pages/`
+- [x] T105 [P] Add Playwright scripts to package.json: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`
 
 **Verify**: `npm run test:e2e` runs smoke test, `npm run test:e2e:ui` opens UI
 
