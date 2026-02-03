@@ -30,6 +30,7 @@ GitHub Repository Momentum Dashboard - Track star growth, releases, and issue ac
 
 - **Test Runner**: Vitest
 - **Unit/Integration**: React Testing Library
+- **E2E**: Playwright (chromium, firefox, webkit)
 - **Linting**: ESLint
 - **Formatting**: Prettier
 
@@ -56,7 +57,8 @@ specs/            # Feature specifications
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run preview      # Preview production build
-npm run test         # Run tests
+npm run test         # Run unit/integration tests
+npm run test:e2e     # Run Playwright E2E tests
 npm run typecheck    # TypeScript type checking
 npm run lint         # Lint code
 npm run lint:fix     # Lint and auto-fix
@@ -92,15 +94,16 @@ Component → TanStack Query hook → Service function → Data source
               (caching layer)       (API call)
 ```
 
-| Hook | Data Source | Service |
-|------|-------------|---------|
-| `useRadars` | Supabase (PostgreSQL) | `services/radar.ts` |
-| `useAllStarredRepositories` | GitHub API | `services/github.ts` |
-| `usePaginatedStarredRepositories` | GitHub API | `services/github.ts` |
-| `useReleases` | GitHub API | `services/github.ts` |
-| `useInfiniteSearch` | GitHub API | `services/github.ts` |
+| Hook                              | Data Source           | Service              |
+| --------------------------------- | --------------------- | -------------------- |
+| `useRadars`                       | Supabase (PostgreSQL) | `services/radar.ts`  |
+| `useAllStarredRepositories`       | GitHub API            | `services/github.ts` |
+| `usePaginatedStarredRepositories` | GitHub API            | `services/github.ts` |
+| `useReleases`                     | GitHub API            | `services/github.ts` |
+| `useInfiniteSearch`               | GitHub API            | `services/github.ts` |
 
 **For local/UI state**, use React primitives:
+
 - `useState` for component state (form inputs, modal open/close, UI toggles)
 - `useContext` (e.g., `AuthContext`) for shared client state
 
@@ -128,7 +131,7 @@ const [optimisticData, setOptimisticData] = useState(null);
 const effectiveData = optimisticData ?? serverData; // Complex derivation
 ```
 
-The key insight: TanStack Query's cache *is* the state - it's mutable via `setQueryData()`. Optimistic UI state for server data is NOT "local/UI state" - it belongs in the cache.
+The key insight: TanStack Query's cache _is_ the state - it's mutable via `setQueryData()`. Optimistic UI state for server data is NOT "local/UI state" - it belongs in the cache.
 
 ## Performance Targets
 
@@ -149,15 +152,18 @@ The key insight: TanStack Query's cache *is* the state - it's mutable via `setQu
 Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode are often caused by React's development overhead (`jsxDEV`, `createTask`, React DevTools instrumentation), not actual performance issues.
 
 **Before optimizing:**
+
 1. Run production build: `npm run build && npm run preview`
 2. Preview server runs on **port 4173** (not 5173 which is dev)
 3. If violations disappear in production, no action needed
 
 **When to investigate:**
+
 - Violations persist in production build
 - PRs touching rendering-heavy code (lists, animations, complex components)
 
 **Debugging tools:**
+
 - Chrome DevTools → Performance tab → Record → look for "Long Task" markers
 - Click on long tasks to see the call stack and identify the slow code
 
@@ -216,7 +222,9 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 
     ```tsx
     // ✗ Bad: Deeply nested ternary
-    {isLoading ? <Loading /> : error ? <Error /> : data.length === 0 ? <Empty /> : <List />}
+    {
+      isLoading ? <Loading /> : error ? <Error /> : data.length === 0 ? <Empty /> : <List />;
+    }
 
     // ✓ Good: Render function with if-else
     const renderContent = () => {
@@ -272,9 +280,29 @@ await waitFor(() => {
 ```
 
 Key points:
+
 - Test from different UI contexts (e.g., action from search results vs. main list)
 - Clear the spy before the action to isolate assertions: `invalidateQueriesSpy.mockClear()`
 - Consider all query keys that contain the modified data
+
+### E2E Testing with Playwright
+
+**CRITICAL: Always examine the actual UI before writing E2E tests.** Never write locators based on assumptions about what the DOM "should" look like.
+
+**Required workflow for E2E test development:**
+
+1. **Navigate to the page** - Start the dev server and open the page in a browser, or use Playwright MCP
+2. **Capture the DOM structure** - Use `browser_snapshot` tool or browser devtools to see actual elements
+3. **Identify real locators** - What roles, labels, and text actually exist? Don't assume `data-testid` or common patterns
+4. **Write locators that match** - Use what you observed, not what you expected
+5. **Run the test** - Verify it passes before committing
+
+**E2E test files:**
+
+- `e2e/` - Test specs and fixtures
+- `e2e/pages/` - Page object models
+- `e2e/fixtures/` - Playwright fixtures (auth, page objects)
+- Run with: `npm run test:e2e` or `npx playwright test`
 
 ## Accessibility Patterns
 
@@ -356,15 +384,18 @@ PR descriptions should describe the **final state** of the code, not the journey
 - **Don't**: Say "Fixed bug where X" if that bug was introduced earlier in the same PR branch
 
 Useful sections to include:
+
 - **Summary**: What changed and why (bullet points)
 - **Design decisions**: Tradeoffs made, alternatives considered
 - **Test plan**: How to verify the changes work
 - **Notes for reviewers**: Tricky areas to pay attention to, or specific behaviors to verify
 
 Example of what NOT to write:
+
 > "Earlier commits used approach A, but we switched to approach B. Also fixed a bug where X was happening."
 
 Instead write:
+
 > "Uses approach B because [reason]. Alternative considered: approach A, but [why we didn't use it]."
 
 ## Environment Variables

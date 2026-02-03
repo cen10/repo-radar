@@ -1,20 +1,22 @@
-import { test as base } from '@playwright/test';
+import { test as authTest } from './auth';
 import { HomePage } from '../pages/home.page';
 import { StarsPage } from '../pages/stars.page';
+import { RadarsPage } from '../pages/radars.page';
 
-type PageFixtures = {
+export const test = authTest.extend<{
   homePage: HomePage;
   starsPage: StarsPage;
-};
-
-export const pageFixtures: Parameters<typeof base.extend<PageFixtures>>[0] = {
-  homePage: async ({ page }, use) => {
-    await use(new HomePage(page));
+  radarsPage: RadarsPage;
+}>({
+  homePage: async ({ authenticatedPage }, use) => {
+    await use(new HomePage(authenticatedPage));
   },
 
-  starsPage: async ({ page }, use) => {
-    await use(new StarsPage(page));
+  starsPage: async ({ authenticatedPage }, use) => {
+    await use(new StarsPage(authenticatedPage));
   },
-};
 
-export type { PageFixtures };
+  radarsPage: async ({ authenticatedPage }, use) => {
+    await use(new RadarsPage(authenticatedPage));
+  },
+});
