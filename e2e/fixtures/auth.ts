@@ -2,7 +2,7 @@ import { test as base, type Page } from '@playwright/test';
 
 const GITHUB_TOKEN_KEY = 'github_access_token';
 
-const mockUser = {
+const mockSupabaseUser = {
   id: 'e2e-test-user-id',
   aud: 'authenticated',
   role: 'authenticated',
@@ -30,7 +30,7 @@ function createMockSession(githubToken: string) {
     expires_at: now + 3600,
     provider_token: githubToken,
     provider_refresh_token: null,
-    user: mockUser,
+    user: mockSupabaseUser,
   };
 }
 
