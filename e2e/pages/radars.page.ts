@@ -12,6 +12,8 @@ export class RadarsPage extends BasePage {
   readonly menuButton: Locator;
   readonly deleteMenuItem: Locator;
   readonly deleteConfirmButton: Locator;
+  readonly repositoryCards: Locator;
+  readonly emptyState: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -21,6 +23,8 @@ export class RadarsPage extends BasePage {
     this.menuButton = page.getByRole('button', { name: /menu|options/i });
     this.deleteMenuItem = page.getByRole('menuitem', { name: /delete/i });
     this.deleteConfirmButton = page.getByRole('button', { name: /^delete$/i });
+    this.repositoryCards = page.locator('article').filter({ hasText: /stars:/i });
+    this.emptyState = page.getByText(/no repositories|add some repos/i);
   }
 
   /**

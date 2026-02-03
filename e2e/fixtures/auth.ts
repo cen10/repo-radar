@@ -12,7 +12,15 @@ interface MockRadar {
   radar_repos: { count: number }[];
 }
 
+interface MockRadarRepo {
+  id: string;
+  radar_id: string;
+  github_repo_id: number;
+  added_at: string;
+}
+
 const mockRadars: Map<string, MockRadar> = new Map();
+const mockRadarRepos: Map<string, MockRadarRepo> = new Map();
 
 const mockSupabaseUser = {
   id: 'e2e-test-user-id',
@@ -80,6 +88,7 @@ async function setupSupabaseMocks(page: Page) {
 
   // Clear mock storage at start of each test
   mockRadars.clear();
+  mockRadarRepos.clear();
 
   // Mock Supabase auth/user endpoint
   await page.route(`${supabaseUrl}/auth/v1/user`, async (route: Route) => {
@@ -157,19 +166,71 @@ async function setupSupabaseMocks(page: Page) {
 
   // Mock radar_repos endpoint
   await page.route(`${supabaseUrl}/rest/v1/radar_repos*`, async (route: Route) => {
-    const method = route.request().method();
+    const request = route.request();
+    const method = request.method();
+    const url = new URL(request.url());
 
     if (method === 'GET') {
+      // Filter by radar_id if specified
+      const radarIdParam = url.searchParams.get('radar_id');
+      let repos = Array.from(mockRadarRepos.values());
+      if (radarIdParam) {
+        const radarId = radarIdParam.replace('eq.', '');
+        repos = repos.filter((r) => r.radar_id === radarId);
+      }
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([]),
+        body: JSON.stringify(repos),
       });
-    } else if (method === 'POST' || method === 'DELETE') {
+    } else if (method === 'POST') {
+      // Add repo to radar
+      const body = request.postDataJSON();
+      const newRepoEntry: MockRadarRepo = {
+        id: `mock-radar-repo-${Date.now()}`,
+        radar_id: body.radar_id,
+        github_repo_id: body.github_repo_id,
+        added_at: new Date().toISOString(),
+      };
+      mockRadarRepos.set(newRepoEntry.id, newRepoEntry);
+
+      // Update radar repo count
+      const radar = mockRadars.get(body.radar_id);
+      if (radar) {
+        radar.radar_repos = [{ count: radar.radar_repos[0].count + 1 }];
+      }
+
       await route.fulfill({
-        status: method === 'POST' ? 201 : 204,
+        status: 201,
         contentType: 'application/json',
-        body: method === 'POST' ? JSON.stringify({ id: `mock-repo-${Date.now()}` }) : '',
+        body: JSON.stringify(newRepoEntry),
+      });
+    } else if (method === 'DELETE') {
+      // Remove repo from radar
+      const radarIdParam = url.searchParams.get('radar_id');
+      const repoIdParam = url.searchParams.get('github_repo_id');
+      if (radarIdParam && repoIdParam) {
+        const radarId = radarIdParam.replace('eq.', '');
+        const repoId = parseInt(repoIdParam.replace('eq.', ''), 10);
+
+        // Find and remove the entry
+        for (const [key, entry] of mockRadarRepos.entries()) {
+          if (entry.radar_id === radarId && entry.github_repo_id === repoId) {
+            mockRadarRepos.delete(key);
+
+            // Update radar repo count
+            const radar = mockRadars.get(radarId);
+            if (radar && radar.radar_repos[0].count > 0) {
+              radar.radar_repos = [{ count: radar.radar_repos[0].count - 1 }];
+            }
+            break;
+          }
+        }
+      }
+      await route.fulfill({
+        status: 204,
+        contentType: 'application/json',
+        body: '',
       });
     } else {
       await route.continue();

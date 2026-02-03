@@ -48,4 +48,25 @@ export class StarsPage extends BasePage {
   async clickCreateRadar() {
     await this.createRadarButton.click();
   }
+
+  async addFirstRepoToRadar(radarName: string) {
+    const firstRepoCard = this.repositoryCards.first();
+    const addToRadarButton = firstRepoCard.getByRole('button', { name: /add to radar/i });
+    await addToRadarButton.click();
+
+    const radarCheckbox = this.page.getByRole('checkbox', { name: radarName });
+    await expect(radarCheckbox).toBeVisible({ timeout: 10000 });
+    await radarCheckbox.click();
+
+    // Wait for the checkbox to be checked (indicates API call completed)
+    // Verifying the repo appears on the radar page depends on cache
+    // invalidation timing which is tested at the integration level.
+    await expect(radarCheckbox).toBeChecked({ timeout: 5000 });
+
+    const doneButton = this.page.getByRole('button', { name: /done/i });
+    await doneButton.click();
+
+    // Wait for dropdown to close
+    await expect(radarCheckbox).not.toBeVisible({ timeout: 5000 });
+  }
 }
