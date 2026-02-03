@@ -22,7 +22,7 @@ test.describe('Authentication', () => {
   test('authenticated user can access stars page', async ({ starsPage }) => {
     await starsPage.goto();
     await expect(starsPage.page).toHaveURL('/stars');
-    await starsPage.expectToBeOnStarsPage();
+    await expect(starsPage.heading).toBeVisible();
   });
 
   test('authenticated user is redirected from home to stars', async ({ authenticatedPage }) => {

@@ -70,13 +70,6 @@ export class RadarsPage extends BasePage {
   }
 
   /**
-   * Check if currently on a radar detail page.
-   */
-  async expectToBeOnRadarPage() {
-    await expect(this.page).toHaveURL(/\/radar\//);
-  }
-
-  /**
    * Delete the currently viewed radar.
    * Must be on a radar detail page (/radar/:id).
    */
