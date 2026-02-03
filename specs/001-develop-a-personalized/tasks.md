@@ -222,6 +222,12 @@ _Branch: `t109-e2e-ci`_
 
 - [ ] T109 Configure CI workflow for E2E tests in `.github/workflows/e2e.yml`
 
+**Note**: E2E test files (`e2e/`) are not included in `npm run typecheck`. Decide whether to:
+1. Add `e2e/tsconfig.json` so typecheck catches E2E type errors, or
+2. Ensure CI runs actual E2E tests, which catch type errors at runtime
+
+If CI only runs typecheck as a fast gate before tests, E2E type errors would slip through.
+
 **Verify**: GitHub Actions runs E2E tests on PR
 
 ---
