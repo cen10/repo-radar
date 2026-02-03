@@ -201,7 +201,7 @@ _Branch: `t100-playwright-setup`_
 
 _Branch: `t103-e2e-auth-tests`_
 
-- [ ] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts`
+- [ ] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts` (also consolidate page objects into fixtures to reduce boilerplate)
 - [ ] T104 Create first E2E tests: login flow, view starred repos, create/delete radar
 
 **Verify**: E2E tests pass with mocked auth
@@ -221,6 +221,12 @@ _Branch: `t106-integration-tests`_
 _Branch: `t109-e2e-ci`_
 
 - [ ] T109 Configure CI workflow for E2E tests in `.github/workflows/e2e.yml`
+
+**Note**: E2E test files (`e2e/`) are not included in `npm run typecheck`. Decide whether to:
+1. Add `e2e/tsconfig.json` so typecheck catches E2E type errors, or
+2. Ensure CI runs actual E2E tests, which catch type errors at runtime
+
+If CI only runs typecheck as a fast gate before tests, E2E type errors would slip through.
 
 **Verify**: GitHub Actions runs E2E tests on PR
 
