@@ -1,6 +1,4 @@
 import { test as base, type Page } from '@playwright/test';
-import { HomePage } from '../pages/home.page';
-import { StarsPage } from '../pages/stars.page';
 
 const GITHUB_TOKEN_KEY = 'github_access_token';
 
@@ -62,11 +60,9 @@ async function setupAuthState(page: Page, githubToken: string) {
 
 type AuthFixtures = {
   authenticatedPage: Page;
-  homePage: HomePage;
-  starsPage: StarsPage;
 };
 
-export const test = base.extend<AuthFixtures>({
+export const authFixtures: Parameters<typeof base.extend<AuthFixtures>>[0] = {
   authenticatedPage: async ({ page }, use, testInfo) => {
     const githubToken = process.env.VITE_TEST_GITHUB_TOKEN;
     if (!githubToken) {
@@ -76,14 +72,6 @@ export const test = base.extend<AuthFixtures>({
     await setupAuthState(page, githubToken);
     await use(page);
   },
+};
 
-  homePage: async ({ page }, use) => {
-    await use(new HomePage(page));
-  },
-
-  starsPage: async ({ page }, use) => {
-    await use(new StarsPage(page));
-  },
-});
-
-export { expect } from '@playwright/test';
+export type { AuthFixtures };
