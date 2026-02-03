@@ -3,53 +3,43 @@ import { BasePage } from './base.page';
 
 export class StarsPage extends BasePage {
   readonly heading: Locator;
-  readonly openSearchButton: Locator;
   readonly searchInput: Locator;
+  readonly sortButton: Locator;
   readonly repositoryCards: Locator;
   readonly emptyState: Locator;
+  readonly sidebar: Locator;
   readonly createRadarButton: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.heading = page.getByRole('heading', { name: /my stars|starred/i });
-    this.openSearchButton = page.getByRole('button', { name: /open search/i });
-    this.searchInput = page.getByPlaceholder(/search your starred/i);
-    this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
+    this.heading = page.getByRole('heading', { name: /starred/i });
+    this.searchInput = page.getByPlaceholder(/search/i);
+    this.sortButton = page.getByRole('button', { name: /sort|order/i });
+    this.repositoryCards = page.locator('[data-testid="repo-card"]');
     this.emptyState = page.getByText(/no starred repositories/i);
-    this.createRadarButton = page.getByRole('button', { name: /create radar|new radar/i });
+    this.sidebar = page.getByRole('navigation');
+    this.createRadarButton = page.getByRole('button', { name: /create radar/i });
   }
 
   async goto() {
     await super.goto('/stars');
-    await this.createRadarButton.waitFor({ state: 'visible' });
+    await this.waitForLoadingToFinish();
+  }
+
+  async expectToBeOnStarsPage() {
+    await expect(this.heading).toBeVisible();
   }
 
   async search(query: string) {
-    await this.openSearchButton.click();
-    await this.searchInput.waitFor({ state: 'visible' });
     await this.searchInput.fill(query);
+    await this.waitForLoadingToFinish();
   }
 
-  async addFirstRepoToRadar(radarName: string): Promise<string> {
-    const firstRepoCard = this.repositoryCards.first();
-    const repoName = await firstRepoCard.getByRole('heading', { level: 3 }).textContent();
+  async getRepositoryCount() {
+    return this.repositoryCards.count();
+  }
 
-    const addToRadarButton = firstRepoCard.getByRole('button', { name: /add to radar/i });
-    await addToRadarButton.click();
-
-    const radarCheckbox = this.page.getByRole('checkbox', { name: radarName });
-    await radarCheckbox.waitFor({ state: 'visible', timeout: 10000 });
-    await radarCheckbox.click();
-
-    // Wait for API call to complete (checkbox becomes checked)
-    await expect(radarCheckbox).toBeChecked({ timeout: 5000 });
-
-    const doneButton = this.page.getByRole('button', { name: /done/i });
-    await doneButton.click();
-
-    // Wait for dropdown to close
-    await radarCheckbox.waitFor({ state: 'hidden', timeout: 5000 });
-
-    return repoName ?? '';
+  async clickCreateRadar() {
+    await this.createRadarButton.click();
   }
 }

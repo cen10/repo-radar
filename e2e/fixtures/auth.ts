@@ -1,8 +1,10 @@
-import { type Page, type Route } from '@playwright/test';
+import { test as base, type Page } from '@playwright/test';
+import { HomePage } from '../pages/home.page';
+import { StarsPage } from '../pages/stars.page';
 
 const GITHUB_TOKEN_KEY = 'github_access_token';
 
-export const mockSupabaseUser = {
+const mockUser = {
   id: 'e2e-test-user-id',
   aud: 'authenticated',
   role: 'authenticated',
@@ -30,7 +32,7 @@ function createMockSession(githubToken: string) {
     expires_at: now + 3600,
     provider_token: githubToken,
     provider_refresh_token: null,
-    user: mockSupabaseUser,
+    user: mockUser,
   };
 }
 
@@ -45,11 +47,7 @@ function getSupabaseStorageKey(): string {
   }
 }
 
-/**
- * Sets up authenticated state in browser localStorage.
- * Injects a mock Supabase session and GitHub token.
- */
-export async function setupAuthState(page: Page, githubToken: string) {
+async function setupAuthState(page: Page, githubToken: string) {
   const session = createMockSession(githubToken);
   const storageKey = getSupabaseStorageKey();
 
@@ -62,18 +60,30 @@ export async function setupAuthState(page: Page, githubToken: string) {
   );
 }
 
-/**
- * Sets up mock for Supabase auth/user endpoint.
- */
-export async function setupAuthMocks(page: Page) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-  if (!supabaseUrl) return;
+type AuthFixtures = {
+  authenticatedPage: Page;
+  homePage: HomePage;
+  starsPage: StarsPage;
+};
 
-  await page.route(`${supabaseUrl}/auth/v1/user`, async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockSupabaseUser),
-    });
-  });
-}
+export const test = base.extend<AuthFixtures>({
+  authenticatedPage: async ({ page }, use, testInfo) => {
+    const githubToken = process.env.VITE_TEST_GITHUB_TOKEN;
+    if (!githubToken) {
+      testInfo.skip(true, 'VITE_TEST_GITHUB_TOKEN not set - skipping authenticated test');
+      return;
+    }
+    await setupAuthState(page, githubToken);
+    await use(page);
+  },
+
+  homePage: async ({ page }, use) => {
+    await use(new HomePage(page));
+  },
+
+  starsPage: async ({ page }, use) => {
+    await use(new StarsPage(page));
+  },
+});
+
+export { expect } from '@playwright/test';
