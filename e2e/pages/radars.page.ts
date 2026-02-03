@@ -74,16 +74,16 @@ export class RadarsPage extends BasePage {
    * Must be on a radar detail page (/radar/:id).
    */
   async deleteCurrentRadar() {
-    if (await this.menuButton.isVisible()) {
-      await this.menuButton.click();
+    await expect(this.menuButton).toBeVisible();
+    await this.menuButton.click();
 
-      if (await this.deleteMenuItem.isVisible()) {
-        await this.deleteMenuItem.click();
-        await this.deleteConfirmButton.click();
-        // Should redirect back to /stars
-        await expect(this.page).toHaveURL('/stars');
-      }
-    }
+    await expect(this.deleteMenuItem).toBeVisible();
+    await this.deleteMenuItem.click();
+
+    await expect(this.deleteConfirmButton).toBeVisible();
+    await this.deleteConfirmButton.click();
+
+    await expect(this.page).toHaveURL('/stars');
   }
 
   /**
