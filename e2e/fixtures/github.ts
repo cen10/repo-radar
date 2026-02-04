@@ -4,7 +4,6 @@ import {
   createMockRateLimitResponse,
   resetIdCounter,
   type GitHubStarredRepoResponse,
-  type CreateMockStarredRepoOptions,
 } from './github-mock-data';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -40,13 +39,10 @@ interface GitHubRelease {
  * Create a default mock store with some sample data.
  */
 export function createDefaultGitHubMockStore(): GitHubMockStore {
-  // Reset ID counter for fresh IDs each test
   resetIdCounter();
 
   return {
-    starredRepos: createMockStarredReposList(5, {
-      owner: { login: 'mock-user' },
-    }),
+    starredRepos: createMockStarredReposList(5),
     releasesByRepo: new Map(),
   };
 }
@@ -60,23 +56,6 @@ export function createEmptyGitHubMockStore(): GitHubMockStore {
     starredRepos: [],
     releasesByRepo: new Map(),
   };
-}
-
-/**
- * Add starred repos to the mock store.
- */
-export function addStarredRepos(
-  store: GitHubMockStore,
-  options: CreateMockStarredRepoOptions[]
-): void {
-  for (const opt of options) {
-    store.starredRepos.push({
-      starred_at: opt.starred_at ?? new Date().toISOString(),
-      repo: {
-        ...createMockStarredReposList(1, opt)[0].repo,
-      },
-    });
-  }
 }
 
 /**
