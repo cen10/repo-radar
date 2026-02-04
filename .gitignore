@@ -34,6 +34,9 @@ docs
 # Claude Code local settings (personal overrides)
 .claude/*.local.json
 
+# GitHub OpenAPI schema (regenerate with: npm run schema:update)
+schemas/
+
 # Playwright
 /e2e/test-results/
 /playwright-report/

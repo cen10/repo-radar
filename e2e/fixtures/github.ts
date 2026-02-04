@@ -1,0 +1,315 @@
+import { type Page, type Route } from '@playwright/test';
+import {
+  createMockStarredReposList,
+  createMockRateLimitResponse,
+  resetIdCounter,
+  type GitHubStarredRepoResponse,
+  type CreateMockStarredRepoOptions,
+} from './github-mock-data';
+
+const GITHUB_API_BASE = 'https://api.github.com';
+
+/**
+ * In-memory store for GitHub mock data.
+ * Allows tests to customize the mock data per test.
+ */
+export interface GitHubMockStore {
+  /** Starred repositories (in starred order, most recent first) */
+  starredRepos: GitHubStarredRepoResponse[];
+  /** Releases by repo full_name (e.g., "owner/repo") */
+  releasesByRepo: Map<string, GitHubRelease[]>;
+}
+
+interface GitHubRelease {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  html_url: string;
+  published_at: string | null;
+  created_at: string;
+  prerelease: boolean;
+  draft: boolean;
+  author: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
+/**
+ * Create a default mock store with some sample data.
+ */
+export function createDefaultGitHubMockStore(): GitHubMockStore {
+  // Reset ID counter for fresh IDs each test
+  resetIdCounter();
+
+  return {
+    starredRepos: createMockStarredReposList(5, {
+      owner: { login: 'mock-user' },
+    }),
+    releasesByRepo: new Map(),
+  };
+}
+
+/**
+ * Create an empty mock store (for tests that need full control).
+ */
+export function createEmptyGitHubMockStore(): GitHubMockStore {
+  resetIdCounter();
+  return {
+    starredRepos: [],
+    releasesByRepo: new Map(),
+  };
+}
+
+/**
+ * Add starred repos to the mock store.
+ */
+export function addStarredRepos(
+  store: GitHubMockStore,
+  options: CreateMockStarredRepoOptions[]
+): void {
+  for (const opt of options) {
+    store.starredRepos.push({
+      starred_at: opt.starred_at ?? new Date().toISOString(),
+      repo: {
+        ...createMockStarredReposList(1, opt)[0].repo,
+      },
+    });
+  }
+}
+
+/**
+ * Build GitHub Link header for pagination.
+ * GitHub uses RFC 5988 Link headers for pagination.
+ */
+function buildLinkHeader(
+  totalItems: number,
+  page: number,
+  perPage: number,
+  baseUrl: string
+): string | null {
+  const totalPages = Math.ceil(totalItems / perPage);
+  if (totalPages <= 1) return null;
+
+  const links: string[] = [];
+
+  if (page < totalPages) {
+    links.push(`<${baseUrl}&page=${page + 1}>; rel="next"`);
+    links.push(`<${baseUrl}&page=${totalPages}>; rel="last"`);
+  }
+  if (page > 1) {
+    links.push(`<${baseUrl}&page=${page - 1}>; rel="prev"`);
+    links.push(`<${baseUrl}&page=1>; rel="first"`);
+  }
+
+  return links.length > 0 ? links.join(', ') : null;
+}
+
+/**
+ * Sets up mock GitHub API routes for E2E testing.
+ * Intercepts calls to api.github.com and returns mock responses.
+ *
+ * @param page - Playwright Page object
+ * @param store - Mock data store (defaults to sample data)
+ * @returns The mock store for test manipulation
+ */
+export async function setupGitHubMocks(
+  page: Page,
+  store: GitHubMockStore = createDefaultGitHubMockStore()
+): Promise<GitHubMockStore> {
+  // Mock GET /user/starred - List starred repositories
+  await page.route(`${GITHUB_API_BASE}/user/starred*`, async (route: Route) => {
+    const request = route.request();
+    const method = request.method();
+    const url = new URL(request.url());
+
+    if (method === 'GET') {
+      // Parse pagination params
+      const page = parseInt(url.searchParams.get('page') || '1', 10);
+      const perPage = parseInt(url.searchParams.get('per_page') || '30', 10);
+
+      // Calculate pagination
+      const startIdx = (page - 1) * perPage;
+      const endIdx = startIdx + perPage;
+      const pagedRepos = store.starredRepos.slice(startIdx, endIdx);
+      const total = store.starredRepos.length;
+
+      // Build Link header for pagination (critical for fetchStarredRepoCount)
+      const baseUrl = `${GITHUB_API_BASE}/user/starred?per_page=${perPage}`;
+      const linkHeader = buildLinkHeader(total, page, perPage, baseUrl);
+
+      const headers: Record<string, string> = {
+        'x-ratelimit-limit': '5000',
+        'x-ratelimit-remaining': '4999',
+        'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+      };
+
+      if (linkHeader) {
+        headers['link'] = linkHeader;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers,
+        body: JSON.stringify(pagedRepos),
+      });
+    } else if (method === 'HEAD') {
+      // HEAD request used by fetchStarredRepoCount
+      const perPage = parseInt(url.searchParams.get('per_page') || '1', 10);
+      const total = store.starredRepos.length;
+      const totalPages = Math.ceil(total / perPage);
+
+      // Build Link header with last page (contains total count)
+      let linkHeader = null;
+      if (totalPages > 1) {
+        linkHeader = `<${GITHUB_API_BASE}/user/starred?page=${totalPages}&per_page=${perPage}>; rel="last"`;
+      }
+
+      const headers: Record<string, string> = {
+        'x-ratelimit-limit': '5000',
+        'x-ratelimit-remaining': '4999',
+        'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+      };
+
+      if (linkHeader) {
+        headers['link'] = linkHeader;
+      }
+
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: '',
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // Mock GET /user/starred/:owner/:repo - Check if repo is starred
+  await page.route(
+    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/user/starred/[^/]+/[^/]+$`),
+    async (route: Route) => {
+      const request = route.request();
+      const method = request.method();
+
+      if (method === 'GET') {
+        const url = new URL(request.url());
+        const pathParts = url.pathname.split('/');
+        const owner = pathParts[pathParts.length - 2];
+        const repo = pathParts[pathParts.length - 1];
+        const fullName = `${owner}/${repo}`;
+
+        const isStarred = store.starredRepos.some((r) => r.repo.full_name === fullName);
+
+        if (isStarred) {
+          await route.fulfill({
+            status: 204, // No content = starred
+            body: '',
+          });
+        } else {
+          await route.fulfill({
+            status: 404, // Not found = not starred
+            body: '',
+          });
+        }
+      } else {
+        await route.continue();
+      }
+    }
+  );
+
+  // Mock GET /rate_limit - Rate limit status
+  await page.route(`${GITHUB_API_BASE}/rate_limit`, async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(createMockRateLimitResponse()),
+    });
+  });
+
+  // Mock GET /repos/:owner/:repo/releases - Repository releases
+  await page.route(
+    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/repos/[^/]+/[^/]+/releases`),
+    async (route: Route) => {
+      const url = new URL(route.request().url());
+      const pathParts = url.pathname.split('/');
+      // Path is /repos/:owner/:repo/releases
+      const owner = pathParts[2];
+      const repo = pathParts[3];
+      const fullName = `${owner}/${repo}`;
+
+      const releases = store.releasesByRepo.get(fullName) || [];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'x-ratelimit-limit': '5000',
+          'x-ratelimit-remaining': '4999',
+          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+        },
+        body: JSON.stringify(releases),
+      });
+    }
+  );
+
+  // Mock GET /repositories/:id - Get repository by numeric ID
+  // Used by radar page to fetch repos that are in a radar
+  await page.route(
+    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/repositories/\\d+$`),
+    async (route: Route) => {
+      const url = new URL(route.request().url());
+      const pathParts = url.pathname.split('/');
+      const repoId = parseInt(pathParts[pathParts.length - 1], 10);
+
+      // Find repo by ID in starred repos
+      const starredRepo = store.starredRepos.find((sr) => sr.repo.id === repoId);
+
+      if (starredRepo) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: {
+            'x-ratelimit-limit': '5000',
+            'x-ratelimit-remaining': '4999',
+            'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+          },
+          body: JSON.stringify(starredRepo.repo),
+        });
+      } else {
+        await route.fulfill({
+          status: 404,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Not Found' }),
+        });
+      }
+    }
+  );
+
+  // Mock GET /search/repositories - Repository search (for future use)
+  await page.route(`${GITHUB_API_BASE}/search/repositories*`, async (route: Route) => {
+    const url = new URL(route.request().url());
+    const query = url.searchParams.get('q') || '';
+
+    // Simple search implementation - filter starred repos by query
+    const matchingRepos = store.starredRepos.filter((sr) => {
+      const searchText =
+        `${sr.repo.name} ${sr.repo.description || ''} ${sr.repo.full_name}`.toLowerCase();
+      return searchText.includes(query.toLowerCase());
+    });
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        total_count: matchingRepos.length,
+        incomplete_results: false,
+        items: matchingRepos.map((sr) => sr.repo),
+      }),
+    });
+  });
+
+  return store;
+}

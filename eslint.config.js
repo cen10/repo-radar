@@ -8,7 +8,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default defineConfig(
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'src/types/*.generated.ts']),
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
