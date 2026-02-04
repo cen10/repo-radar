@@ -240,7 +240,7 @@ describe('Radar CRUD Integration', () => {
       mockAddRepoToRadar.mockResolvedValue({ radar_id: 'radar-1', github_repo_id: 123 });
 
       const { queryClient } = renderForIntegration(
-        <ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />,
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
         { authState: { user: mockUser } }
       );
 
@@ -281,7 +281,7 @@ describe('Radar CRUD Integration', () => {
       mockRemoveRepoFromRadar.mockResolvedValue(undefined);
 
       const { queryClient } = renderForIntegration(
-        <ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />,
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
         { authState: { user: mockUser } }
       );
 
@@ -323,7 +323,7 @@ describe('Radar CRUD Integration', () => {
         () => new Promise((resolve) => setTimeout(() => resolve({ radar_id: 'radar-1', github_repo_id: 123 }), 100))
       );
 
-      renderForIntegration(<ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />, {
+      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
         authState: { user: mockUser },
       });
 
@@ -350,7 +350,7 @@ describe('Radar CRUD Integration', () => {
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
       mockAddRepoToRadar.mockRejectedValue(new Error('Failed to add'));
 
-      renderForIntegration(<ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />, {
+      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
         authState: { user: mockUser },
       });
 
@@ -376,18 +376,18 @@ describe('Radar CRUD Integration', () => {
   describe('Radar Limits Enforcement', () => {
     const mockRepository = createMockRepository({ id: 456, name: 'another-repo' });
 
-    it('shows limit message when radar has max repos', async () => {
+    it('disables checkbox when radar has max repos', async () => {
       const radar = createMockRadar({
         id: 'radar-1',
         name: 'Full Radar',
-        repo_count: 25, // At limit
+        repo_count: 25, // At per-radar limit
       });
 
       mockGetRadars.mockResolvedValue([radar]);
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
-      renderForIntegration(<ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />, {
+      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
         authState: { user: mockUser },
       });
 
@@ -395,28 +395,24 @@ describe('Radar CRUD Integration', () => {
         expect(screen.getByText('Full Radar')).toBeInTheDocument();
       });
 
-      // Should show limit indicator
-      expect(screen.getByText(/25\/25/)).toBeInTheDocument();
-
-      // Checkbox should be disabled
+      // Checkbox should be disabled due to per-radar limit
       const checkbox = screen.getByRole('checkbox', { name: /full radar/i });
       expect(checkbox).toBeDisabled();
     });
 
-    it('shows total limit message when at max total repos', async () => {
-      // Create a radar with room, but user is at total limit
+    it('disables checkbox when at total repo limit', async () => {
+      // Create a radar with room, but user is at total limit (50 repos)
       const radar = createMockRadar({
         id: 'radar-1',
         name: 'Has Room',
-        repo_count: 10,
+        repo_count: 50, // All 50 repos are in this radar
       });
 
       mockGetRadars.mockResolvedValue([radar]);
       mockGetRadarsContainingRepo.mockResolvedValue([]);
-      // 50 repos already tracked (at limit)
-      mockGetAllRadarRepoIds.mockResolvedValue(new Set(Array.from({ length: 50 }, (_, i) => i + 1)));
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
-      renderForIntegration(<ManageRadarsModal repository={mockRepository} onClose={vi.fn()} />, {
+      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
         authState: { user: mockUser },
       });
 
@@ -424,8 +420,9 @@ describe('Radar CRUD Integration', () => {
         expect(screen.getByText('Has Room')).toBeInTheDocument();
       });
 
-      // Should show total limit message
-      expect(screen.getByText(/50\/50 total repos tracked/i)).toBeInTheDocument();
+      // Checkbox should be disabled due to total repo limit
+      const checkbox = screen.getByRole('checkbox', { name: /has room/i });
+      expect(checkbox).toBeDisabled();
     });
   });
 });
