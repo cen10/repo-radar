@@ -17,9 +17,6 @@ interface MockRadarRepo {
   added_at: string;
 }
 
-const mockRadars: Map<string, MockRadar> = new Map();
-const mockRadarRepos: Map<string, MockRadarRepo> = new Map();
-
 /**
  * Sets up mock Supabase API routes for E2E testing.
  * Intercepts calls to Supabase REST API and returns mock responses.
@@ -28,9 +25,9 @@ export async function setupSupabaseMocks(page: Page, mockUserId: string) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
   if (!supabaseUrl) return;
 
-  // Clear mock storage at start of each test
-  mockRadars.clear();
-  mockRadarRepos.clear();
+  // Per-test mock storage (local to avoid parallel test interference)
+  const mockRadars = new Map<string, MockRadar>();
+  const mockRadarRepos = new Map<string, MockRadarRepo>();
 
   // Mock Supabase radars endpoint
   await page.route(`${supabaseUrl}/rest/v1/radars*`, async (route: Route) => {
