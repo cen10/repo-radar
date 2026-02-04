@@ -1,4 +1,5 @@
 import type { Release, Repository } from '../types';
+import type { components } from '../types/github-api.generated';
 import { logger } from '../utils/logger';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -9,36 +10,14 @@ const GITHUB_API_BASE = 'https://api.github.com';
  */
 export const MAX_STARRED_REPOS = 500;
 
-interface GitHubStarredRepo {
-  id: number;
-  name: string;
-  full_name: string;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
-  description: string | null;
-  html_url: string;
-  stargazers_count: number;
-  forks_count: number;
-  subscribers_count: number; // GitHub calls watchers "subscribers"
-  open_issues_count: number;
-  language: string | null;
-  license: {
-    key: string;
-    name: string;
-    url: string | null;
-  } | null;
-  topics?: string[];
-  updated_at: string;
-  pushed_at: string | null;
-  created_at: string;
-}
+// GitHub API types from OpenAPI spec
+type GitHubRepository = components['schemas']['repository'];
+type GitHubRelease = components['schemas']['release'];
 
 // Response format when using Accept: application/vnd.github.star+json
 interface GitHubStarredRepoWithTimestamp {
   starred_at: string;
-  repo: GitHubStarredRepo;
+  repo: GitHubRepository;
 }
 
 // ============================================================================
@@ -122,7 +101,7 @@ interface MapRepoOptions {
 /**
  * Transforms GitHub API repository response to our Repository type.
  */
-function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOptions): Repository {
+function mapGitHubRepoToRepository(repo: GitHubRepository, options?: MapRepoOptions): Repository {
   return {
     id: repo.id,
     name: repo.name,
@@ -132,14 +111,14 @@ function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOpt
     html_url: repo.html_url,
     stargazers_count: repo.stargazers_count,
     forks_count: repo.forks_count,
-    watchers_count: repo.subscribers_count, // GitHub API uses subscribers_count for watchers
+    watchers_count: repo.watchers_count,
     open_issues_count: repo.open_issues_count,
     language: repo.language,
     license: repo.license,
     topics: repo.topics || [],
-    updated_at: repo.updated_at,
+    updated_at: repo.updated_at ?? new Date().toISOString(),
     pushed_at: repo.pushed_at,
-    created_at: repo.created_at,
+    created_at: repo.created_at ?? new Date().toISOString(),
     starred_at: options?.starred_at,
     is_starred: options?.is_starred ?? false,
     metrics: {
@@ -326,7 +305,7 @@ export async function fetchStarredRepositories(
  * Simplified growth rate calculation
  * In production, this would compare with historical data
  */
-function calculateGrowthRate(repo: GitHubStarredRepo): number {
+function calculateGrowthRate(repo: GitHubRepository): number {
   // This is a placeholder - real implementation would need historical data
   // For now, return a random value for demonstration
   const recentlyUpdated =
@@ -352,7 +331,7 @@ function calculateGrowthRate(repo: GitHubStarredRepo): number {
  * Mock stars gained calculation
  * In production, this would come from historical snapshot comparison
  */
-function calculateStarsGained(repo: GitHubStarredRepo): number {
+function calculateStarsGained(repo: GitHubRepository): number {
   const recentlyUpdated =
     new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -374,9 +353,11 @@ function calculateStarsGained(repo: GitHubStarredRepo): number {
  * Simplified trending detection
  * In production, this would analyze recent activity patterns
  */
-function isTrending(repo: GitHubStarredRepo): boolean {
+function isTrending(repo: GitHubRepository): boolean {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const recentlyActive = new Date(repo.pushed_at || repo.updated_at) > oneWeekAgo;
+  const lastActivity = repo.pushed_at || repo.updated_at;
+  if (!lastActivity) return false;
+  const recentlyActive = new Date(lastActivity) > oneWeekAgo;
   const highStars = repo.stargazers_count > 1000;
 
   return recentlyActive && highStars;
@@ -452,7 +433,7 @@ export async function searchRepositories(
     if (!result.ok) throw new Error(result.message);
 
     const data = await response.json();
-    const repos: GitHubStarredRepo[] = data.items || [];
+    const repos: GitHubRepository[] = data.items || [];
     const totalCount = data.total_count || 0;
 
     // Apply GitHub API limitation (max 1000 results accessible)
@@ -624,22 +605,6 @@ export async function fetchRateLimit(token: string): Promise<{
   };
 }
 
-interface GitHubRelease {
-  id: number;
-  tag_name: string;
-  name: string | null;
-  body: string | null;
-  html_url: string;
-  published_at: string | null;
-  created_at: string;
-  prerelease: boolean;
-  draft: boolean;
-  author: {
-    login: string;
-    avatar_url: string;
-  } | null;
-}
-
 /**
  * Fetch releases for a repository (lazy-loaded on detail page)
  * Always fetches 10 releases - callers can slice if fewer needed.
@@ -672,7 +637,18 @@ export async function fetchRepositoryReleases(
 
     const data: GitHubRelease[] = await response.json();
 
-    return data.map((release) => ({ ...release }));
+    return data.map((release) => ({
+      id: release.id,
+      tag_name: release.tag_name,
+      name: release.name,
+      body: release.body ?? null,
+      html_url: release.html_url,
+      published_at: release.published_at,
+      created_at: release.created_at,
+      prerelease: release.prerelease,
+      draft: release.draft,
+      author: release.author,
+    }));
   } catch (error) {
     logger.error('Failed to fetch repository releases:', error);
     throw error;
@@ -709,7 +685,7 @@ export async function fetchRepositoryById(
       throw new Error(result.message);
     }
 
-    const repo: GitHubStarredRepo = await response.json();
+    const repo: GitHubRepository = await response.json();
 
     return mapGitHubRepoToRepository(repo, { is_starred: false });
   } catch (error) {
