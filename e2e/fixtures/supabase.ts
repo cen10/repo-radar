@@ -52,18 +52,46 @@ export async function setupSupabaseMocks(page: Page, mockUserId: string) {
         body: '',
       });
     } else if (method === 'GET') {
-      // Return list of radars with repo counts
-      const radars = Array.from(mockRadars.values());
-      const total = radars.length;
-      const rangeEnd = total > 0 ? total - 1 : 0;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: {
-          'content-range': `0-${rangeEnd}/${total}`,
-        },
-        body: JSON.stringify(radars),
-      });
+      const idParam = url.searchParams.get('id');
+      const acceptHeader = request.headers()['accept'] || '';
+      const isSingleQuery = acceptHeader.includes('application/vnd.pgrst.object+json');
+
+      if (idParam && isSingleQuery) {
+        // Single radar query by ID (e.g., getRadar)
+        const radarId = idParam.replace('eq.', '');
+        const radar = mockRadars.get(radarId);
+
+        if (radar) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(radar),
+          });
+        } else {
+          // Return PostgREST "no rows" error for .single() query
+          await route.fulfill({
+            status: 406,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              code: 'PGRST116',
+              message: 'The result contains 0 rows',
+            }),
+          });
+        }
+      } else {
+        // Return list of radars with repo counts
+        const radars = Array.from(mockRadars.values());
+        const total = radars.length;
+        const rangeEnd = total > 0 ? total - 1 : 0;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          headers: {
+            'content-range': `0-${rangeEnd}/${total}`,
+          },
+          body: JSON.stringify(radars),
+        });
+      }
     } else if (method === 'POST') {
       // Create a new radar
       const body = request.postDataJSON();
@@ -105,7 +133,25 @@ export async function setupSupabaseMocks(page: Page, mockUserId: string) {
     const method = request.method();
     const url = new URL(request.url());
 
-    if (method === 'GET') {
+    if (method === 'HEAD') {
+      // HEAD request for counting repos (used by addRepoToRadar limit check)
+      const radarIdParam = url.searchParams.get('radar_id');
+      let repos = Array.from(mockRadarRepos.values());
+      if (radarIdParam) {
+        const radarId = radarIdParam.replace('eq.', '');
+        repos = repos.filter((r) => r.radar_id === radarId);
+      }
+      const total = repos.length;
+      const rangeEnd = total > 0 ? total - 1 : 0;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'content-range': `0-${rangeEnd}/${total}`,
+        },
+        body: '',
+      });
+    } else if (method === 'GET') {
       // Filter by radar_id if specified
       const radarIdParam = url.searchParams.get('radar_id');
       let repos = Array.from(mockRadarRepos.values());
