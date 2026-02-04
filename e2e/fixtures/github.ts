@@ -57,12 +57,35 @@ export async function setupGitHubMocks(
   page: Page,
   store: GitHubMockStore = createDefaultGitHubMockStore()
 ): Promise<GitHubMockStore> {
-  // Mock GET /user/starred - List starred repositories
+  // Mock /user/starred endpoints (list and check)
   await page.route(`${GITHUB_API_BASE}/user/starred*`, async (route: Route) => {
     const request = route.request();
     const method = request.method();
     const url = new URL(request.url());
+    const pathname = url.pathname;
 
+    // Check if this is GET /user/starred/:owner/:repo (check if repo is starred)
+    const isStarredCheck = pathname !== '/user/starred' && !pathname.endsWith('/user/starred');
+    if (isStarredCheck && method === 'GET') {
+      const parts = pathname.split('/').filter(Boolean); // ['user', 'starred', 'owner', 'repo']
+      const owner = parts[2];
+      const repo = parts[3];
+      const isStarred = store.starredRepos.some(
+        (sr) => sr.repo.owner.login === owner && sr.repo.name === repo
+      );
+      await route.fulfill({
+        status: isStarred ? 204 : 404,
+        headers: {
+          'x-ratelimit-limit': '5000',
+          'x-ratelimit-remaining': '4999',
+          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+        },
+        body: '',
+      });
+      return;
+    }
+
+    // GET /user/starred - List starred repositories
     if (method === 'GET') {
       // Parse pagination params
       const pageNum = parseInt(url.searchParams.get('page') || '1', 10);
