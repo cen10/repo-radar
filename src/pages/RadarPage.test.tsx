@@ -190,7 +190,7 @@ describe('RadarPage', () => {
       renderWithProviders();
 
       // Sort dropdown button (Headless UI Listbox)
-      expect(screen.getByRole('button', { name: /recently updated/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /sort repositories/i })).toBeInTheDocument();
       // Search is collapsible - look for the toggle button instead of the input
       expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
     });
@@ -305,7 +305,7 @@ describe('RadarPage', () => {
       renderWithProviders();
 
       // Click sort dropdown to open it
-      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+      await user.click(screen.getByRole('button', { name: /sort repositories/i }));
       // Select "Most Stars" option
       await user.click(screen.getByRole('option', { name: /most stars/i }));
 

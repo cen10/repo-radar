@@ -19,6 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
+    "generate:github-types": "openapi-typescript schemas/github-api.yaml -o src/types/github-api.generated.ts",
+    "schema:update": "bash scripts/update-github-schema.sh && npm run generate:github-types",
     "prepare": "husky"
   },
   "dependencies": {
@@ -54,6 +56,7 @@
     "jsdom": "^27.3.0",
     "jsdom-testing-mocks": "^1.16.0",
     "lint-staged": "^16.2.7",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.13",
     "typescript": "~5.8.3",

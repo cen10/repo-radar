@@ -26,7 +26,7 @@ export interface Repository {
   html_url: string;
   stargazers_count: number;
   forks_count: number;
-  watchers_count: number; // Note: GitHub API calls this subscribers_count
+  watchers_count?: number; // Only available from full repo fetch (GitHub's subscribers_count)
   open_issues_count: number;
   language: string | null;
   license: RepositoryLicense | null;
