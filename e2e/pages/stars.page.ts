@@ -34,6 +34,10 @@ export class StarsPage extends BasePage {
     const firstRepoCard = this.repositoryCards.first();
     const repoName = await firstRepoCard.getByRole('heading', { level: 3 }).textContent();
 
+    if (!repoName) {
+      throw new Error('Could not find repo name on stars page');
+    }
+
     const addToRadarButton = firstRepoCard.getByRole('button', { name: /add to radar/i });
     await addToRadarButton.click();
 
@@ -50,6 +54,6 @@ export class StarsPage extends BasePage {
     // Wait for dropdown to close
     await radarCheckbox.waitFor({ state: 'hidden', timeout: 5000 });
 
-    return repoName ?? '';
+    return repoName;
   }
 }
