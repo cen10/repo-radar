@@ -3,21 +3,34 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
-import { globalIgnores } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
-export default tseslint.config([
+export default defineConfig(
   globalIgnores(['dist', 'e2e']),
+
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettierConfig,
+
+  // Shared rules for all TypeScript files
   {
-    files: ['src/**/*.{ts,tsx}', 'vite.config.ts', 'vitest.config.ts'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-      prettierConfig,
-    ],
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      prettier,
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+
+  // Source files: React, browser globals, type-aware linting
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs['recommended-latest'], reactRefresh.configs.vite],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
@@ -26,38 +39,18 @@ export default tseslint.config([
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    plugins: {
-      prettier,
-    },
     rules: {
-      'prettier/prettier': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'error',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+
+  // Node config files
   {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-      prettierConfig,
-    ],
+    files: ['vite.config.ts', 'vitest.config.ts'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: globals.node,
     },
-    plugins: {
-      prettier,
-    },
-    rules: {
-      'prettier/prettier': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-    },
-  },
-]);
+  }
+);
