@@ -18,5 +18,9 @@ test.describe('Radar CRUD', () => {
 
     await starsPage.goto();
     await starsPage.addFirstRepoToRadar(radarName);
+
+    // Verify the repo actually appears on the radar
+    await radarsPage.navigateToRadar(radarName);
+    await expect(radarsPage.repositoryCards).toHaveCount(1);
   });
 });
