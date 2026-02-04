@@ -324,12 +324,9 @@ E2E tests use fully mocked GitHub API responses - no real API calls are made. Mo
 
 **Mocked endpoints:**
 
-- `GET /user/starred` - Starred repositories (with pagination)
-- `GET /user/starred/:owner/:repo` - Check if repo is starred
+- `GET /user/starred` - Starred repositories (paginated, with Link headers)
+- `HEAD /user/starred` - Starred repo count via Link header (optimization)
 - `GET /repositories/:id` - Get repo by numeric ID (for radars)
-- `GET /repos/:owner/:repo/releases` - Repository releases
-- `GET /rate_limit` - Rate limit status
-- `GET /search/repositories` - Search (for future use)
 
 **Updating types when GitHub API changes:**
 
