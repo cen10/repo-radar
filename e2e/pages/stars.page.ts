@@ -21,23 +21,13 @@ export class StarsPage extends BasePage {
 
   async goto() {
     await super.goto('/stars');
-    // Wait for content to be ready (positive signal vs absence of spinner)
     await this.createRadarButton.waitFor({ state: 'visible' });
   }
 
   async search(query: string) {
     await this.openSearchButton.click();
-    await expect(this.searchInput).toBeVisible();
+    await this.searchInput.waitFor({ state: 'visible' });
     await this.searchInput.fill(query);
-    // Search is client-side filtering, no network wait needed
-  }
-
-  async getRepositoryCount() {
-    return this.repositoryCards.count();
-  }
-
-  async clickCreateRadar() {
-    await this.createRadarButton.click();
   }
 
   async addFirstRepoToRadar(radarName: string) {
@@ -46,18 +36,16 @@ export class StarsPage extends BasePage {
     await addToRadarButton.click();
 
     const radarCheckbox = this.page.getByRole('checkbox', { name: radarName });
-    await expect(radarCheckbox).toBeVisible({ timeout: 10000 });
+    await radarCheckbox.waitFor({ state: 'visible', timeout: 10000 });
     await radarCheckbox.click();
 
-    // Wait for the checkbox to be checked (indicates API call completed)
-    // Verifying the repo appears on the radar page depends on cache
-    // invalidation timing which is tested at the integration level.
+    // Wait for API call to complete (checkbox becomes checked)
     await expect(radarCheckbox).toBeChecked({ timeout: 5000 });
 
     const doneButton = this.page.getByRole('button', { name: /done/i });
     await doneButton.click();
 
     // Wait for dropdown to close
-    await expect(radarCheckbox).not.toBeVisible({ timeout: 5000 });
+    await radarCheckbox.waitFor({ state: 'hidden', timeout: 5000 });
   }
 }

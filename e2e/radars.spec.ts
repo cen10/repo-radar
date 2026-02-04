@@ -8,7 +8,9 @@ test.describe('Radar CRUD', () => {
     await radarsPage.createRadar(radarName);
     await radarsPage.navigateToRadar(radarName);
     await expect(radarsPage.page).toHaveURL(/\/radar\//);
+
     await radarsPage.deleteCurrentRadar();
+    await expect(radarsPage.page).toHaveURL('/stars');
   });
 
   test('can add a repo to a radar', async ({ starsPage, radarsPage }) => {
