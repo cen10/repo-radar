@@ -1,4 +1,5 @@
 import type { Release, Repository } from '../types';
+import type { components } from '../types/github-api.generated';
 import { logger } from '../utils/logger';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -9,36 +10,17 @@ const GITHUB_API_BASE = 'https://api.github.com';
  */
 export const MAX_STARRED_REPOS = 500;
 
-interface GitHubStarredRepo {
-  id: number;
-  name: string;
-  full_name: string;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
-  description: string | null;
-  html_url: string;
-  stargazers_count: number;
-  forks_count: number;
-  subscribers_count: number; // GitHub calls watchers "subscribers"
-  open_issues_count: number;
-  language: string | null;
-  license: {
-    key: string;
-    name: string;
-    url: string | null;
-  } | null;
-  topics?: string[];
-  updated_at: string;
-  pushed_at: string | null;
-  created_at: string;
-}
+// GitHub API types from OpenAPI spec
+/** Basic repo schema from list endpoints (e.g., /user/starred). No subscribers_count. */
+type GitHubRepoListItem = components['schemas']['repository'];
+/** Full repo schema from detail endpoints (e.g., /repositories/:id). Includes subscribers_count. */
+type GitHubRepoDetail = components['schemas']['full-repository'];
+type GitHubRelease = components['schemas']['release'];
 
 // Response format when using Accept: application/vnd.github.star+json
 interface GitHubStarredRepoWithTimestamp {
   starred_at: string;
-  repo: GitHubStarredRepo;
+  repo: GitHubRepoListItem;
 }
 
 // ============================================================================
@@ -117,12 +99,19 @@ function checkGitHubResponse(response: Response, context?: string): ResponseChec
 interface MapRepoOptions {
   starred_at?: string;
   is_starred?: boolean;
+  subscribers_count?: number; // Real watcher count from full-repository response
 }
 
 /**
  * Transforms GitHub API repository response to our Repository type.
+ * Note: watchers_count is only populated when subscribers_count is provided
+ * (from full-repository responses). The basic repository schema's watchers_count
+ * field is actually the star count due to a GitHub API legacy quirk.
  */
-function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOptions): Repository {
+function mapGitHubRepoToRepository(
+  repo: GitHubRepoListItem | GitHubRepoDetail,
+  options?: MapRepoOptions
+): Repository {
   return {
     id: repo.id,
     name: repo.name,
@@ -132,14 +121,15 @@ function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOpt
     html_url: repo.html_url,
     stargazers_count: repo.stargazers_count,
     forks_count: repo.forks_count,
-    watchers_count: repo.subscribers_count, // GitHub API uses subscribers_count for watchers
+    // Only populated on repo detail page; undefined from list/search endpoints (they lack subscribers_count)
+    watchers_count: options?.subscribers_count,
     open_issues_count: repo.open_issues_count,
     language: repo.language,
     license: repo.license,
     topics: repo.topics || [],
-    updated_at: repo.updated_at,
+    updated_at: repo.updated_at ?? new Date().toISOString(),
     pushed_at: repo.pushed_at,
-    created_at: repo.created_at,
+    created_at: repo.created_at ?? new Date().toISOString(),
     starred_at: options?.starred_at,
     is_starred: options?.is_starred ?? false,
     metrics: {
@@ -163,7 +153,8 @@ function mapGitHubRepoToRepository(repo: GitHubStarredRepo, options?: MapRepoOpt
  * so we infer it from the Link header. By requesting per_page=1, the last page number
  * in the Link header equals the total count (e.g., page=513 means 513 starred repos).
  *
- * This is a lightweight call—we don't use the response body, just the headers.
+ * Uses HEAD request for efficiency (only needs Link header, not body).
+ * Falls back to GET for edge cases (0-1 starred repos where Link header is absent).
  * @param token - GitHub access token
  * @returns Total number of starred repositories
  */
@@ -171,30 +162,34 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
   const params = new URLSearchParams({ per_page: '1' });
   const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
-  const response = await fetch(url, {
+  // Try HEAD first - more efficient since we only need headers
+  const headResponse = await fetch(url, {
+    method: 'HEAD',
     headers: getGitHubHeaders(token),
   });
 
-  const result = checkGitHubResponse(response);
-  if (!result.ok) throw new Error(result.message);
+  const headResult = checkGitHubResponse(headResponse);
+  if (!headResult.ok) throw new Error(headResult.message);
 
-  const linkHeader = response.headers.get('Link');
+  const linkHeader = headResponse.headers.get('Link');
 
-  if (!linkHeader) {
-    // No Link header means everything fits on one page
-    const data = await response.json();
-    return data.length;
+  if (linkHeader) {
+    const lastMatch = linkHeader.match(/<[^>]+[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+    if (lastMatch) {
+      return parseInt(lastMatch[1], 10);
+    }
   }
 
-  const lastMatch = linkHeader.match(/<[^>]+[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+  // Fall back to GET for edge cases (0-1 repos where Link header is absent)
+  const getResponse = await fetch(url, {
+    headers: getGitHubHeaders(token),
+  });
 
-  if (!lastMatch) {
-    // Has Link header but no "last" rel—we're on the only/last page
-    const data = await response.json();
-    return data.length;
-  }
+  const getResult = checkGitHubResponse(getResponse);
+  if (!getResult.ok) throw new Error(getResult.message);
 
-  return parseInt(lastMatch[1], 10);
+  const data = await getResponse.json();
+  return data.length;
 }
 
 /**
@@ -322,15 +317,24 @@ export async function fetchStarredRepositories(
   }
 }
 
+// Minimal type for metrics calculations - only the fields actually used
+interface RepoMetricsInput {
+  id: number;
+  stargazers_count: number;
+  pushed_at: string | null;
+  updated_at: string | null;
+}
+
 /**
  * Simplified growth rate calculation
  * In production, this would compare with historical data
  */
-function calculateGrowthRate(repo: GitHubStarredRepo): number {
+function calculateGrowthRate(repo: RepoMetricsInput): number {
   // This is a placeholder - real implementation would need historical data
   // For now, return a random value for demonstration
-  const recentlyUpdated =
-    new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const dateStr = repo.pushed_at || repo.updated_at;
+  if (!dateStr) return 0;
+  const recentlyUpdated = new Date(dateStr) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   if (!recentlyUpdated) return 0;
 
@@ -352,9 +356,10 @@ function calculateGrowthRate(repo: GitHubStarredRepo): number {
  * Mock stars gained calculation
  * In production, this would come from historical snapshot comparison
  */
-function calculateStarsGained(repo: GitHubStarredRepo): number {
-  const recentlyUpdated =
-    new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+function calculateStarsGained(repo: RepoMetricsInput): number {
+  const dateStr = repo.pushed_at || repo.updated_at;
+  if (!dateStr) return 0;
+  const recentlyUpdated = new Date(dateStr) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   if (!recentlyUpdated) return 0;
 
@@ -374,9 +379,11 @@ function calculateStarsGained(repo: GitHubStarredRepo): number {
  * Simplified trending detection
  * In production, this would analyze recent activity patterns
  */
-function isTrending(repo: GitHubStarredRepo): boolean {
+function isTrending(repo: RepoMetricsInput): boolean {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const recentlyActive = new Date(repo.pushed_at || repo.updated_at) > oneWeekAgo;
+  const lastActivity = repo.pushed_at || repo.updated_at;
+  if (!lastActivity) return false;
+  const recentlyActive = new Date(lastActivity) > oneWeekAgo;
   const highStars = repo.stargazers_count > 1000;
 
   return recentlyActive && highStars;
@@ -452,7 +459,7 @@ export async function searchRepositories(
     if (!result.ok) throw new Error(result.message);
 
     const data = await response.json();
-    const repos: GitHubStarredRepo[] = data.items || [];
+    const repos: GitHubRepoListItem[] = data.items || [];
     const totalCount = data.total_count || 0;
 
     // Apply GitHub API limitation (max 1000 results accessible)
@@ -624,22 +631,6 @@ export async function fetchRateLimit(token: string): Promise<{
   };
 }
 
-interface GitHubRelease {
-  id: number;
-  tag_name: string;
-  name: string | null;
-  body: string | null;
-  html_url: string;
-  published_at: string | null;
-  created_at: string;
-  prerelease: boolean;
-  draft: boolean;
-  author: {
-    login: string;
-    avatar_url: string;
-  } | null;
-}
-
 /**
  * Fetch releases for a repository (lazy-loaded on detail page)
  * Always fetches 10 releases - callers can slice if fewer needed.
@@ -672,7 +663,18 @@ export async function fetchRepositoryReleases(
 
     const data: GitHubRelease[] = await response.json();
 
-    return data.map((release) => ({ ...release }));
+    return data.map((release) => ({
+      id: release.id,
+      tag_name: release.tag_name,
+      name: release.name,
+      body: release.body ?? null,
+      html_url: release.html_url,
+      published_at: release.published_at,
+      created_at: release.created_at,
+      prerelease: release.prerelease,
+      draft: release.draft,
+      author: release.author,
+    }));
   } catch (error) {
     logger.error('Failed to fetch repository releases:', error);
     throw error;
@@ -709,9 +711,12 @@ export async function fetchRepositoryById(
       throw new Error(result.message);
     }
 
-    const repo: GitHubStarredRepo = await response.json();
+    const repo: GitHubRepoDetail = await response.json();
 
-    return mapGitHubRepoToRepository(repo, { is_starred: false });
+    return mapGitHubRepoToRepository(repo, {
+      is_starred: false,
+      subscribers_count: repo.subscribers_count,
+    });
   } catch (error) {
     // Re-throw auth/rate-limit errors
     if (error instanceof Error && error.message.includes('GitHub')) {

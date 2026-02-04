@@ -228,7 +228,7 @@ describe('RepositoryList', () => {
       );
 
       // Click the sort dropdown button to open options
-      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+      await user.click(screen.getByRole('button', { name: /sort repositories/i }));
       // Click the "Recently Starred" option
       await user.click(screen.getByRole('option', { name: /recently starred/i }));
 
@@ -242,7 +242,7 @@ describe('RepositoryList', () => {
       render(<RepositoryList {...defaultProps} repositories={repos} />);
 
       // Click button to open options
-      await user.click(screen.getByRole('button', { name: /recently updated/i }));
+      await user.click(screen.getByRole('button', { name: /sort repositories/i }));
 
       expect(screen.getByRole('option', { name: /recently updated/i })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: /recently starred/i })).toBeInTheDocument();
@@ -253,8 +253,9 @@ describe('RepositoryList', () => {
 
       render(<RepositoryList {...defaultProps} repositories={repos} sortBy="created" />);
 
-      // Button should display the selected value
-      expect(screen.getByRole('button', { name: /recently starred/i })).toBeInTheDocument();
+      // Button displays the selected value as text content
+      const sortButton = screen.getByRole('button', { name: /sort repositories/i });
+      expect(sortButton).toHaveTextContent(/recently starred/i);
     });
 
     it('renders custom sort options', async () => {
@@ -275,7 +276,7 @@ describe('RepositoryList', () => {
       );
 
       // Click button to open options
-      await user.click(screen.getByRole('button', { name: /best match/i }));
+      await user.click(screen.getByRole('button', { name: /sort repositories/i }));
 
       expect(screen.getByRole('option', { name: /best match/i })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: /most stars/i })).toBeInTheDocument();

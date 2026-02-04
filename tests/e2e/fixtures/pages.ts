@@ -1,23 +1,27 @@
 import { test as base, type Page } from '@playwright/test';
 import { setupAuthState, setupAuthMocks, mockSupabaseUser } from './auth';
 import { setupSupabaseMocks } from './supabase';
+import { setupGitHubMocks } from './github';
 import { StarsPage } from '../pages/stars.page';
 import { RadarsPage } from '../pages/radars.page';
+
+/**
+ * Mock token for E2E tests - no real API calls are made.
+ * All GitHub API requests are intercepted by setupGitHubMocks.
+ */
+const MOCK_GITHUB_TOKEN = 'mock-github-token-for-e2e-tests';
 
 export const test = base.extend<{
   authenticatedPage: Page;
   starsPage: StarsPage;
   radarsPage: RadarsPage;
 }>({
-  authenticatedPage: async ({ page }, use, testInfo) => {
-    const githubToken = process.env.VITE_TEST_GITHUB_TOKEN;
-    if (!githubToken) {
-      testInfo.skip(true, 'VITE_TEST_GITHUB_TOKEN not set - skipping authenticated test');
-      return;
-    }
-    await setupAuthState(page, githubToken);
+  // Authenticated page with all mocks set up
+  authenticatedPage: async ({ page }, use) => {
+    await setupAuthState(page, MOCK_GITHUB_TOKEN);
     await setupAuthMocks(page);
     await setupSupabaseMocks(page, mockSupabaseUser.id);
+    await setupGitHubMocks(page);
     await use(page);
   },
 
