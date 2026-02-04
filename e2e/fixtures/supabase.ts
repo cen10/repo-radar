@@ -120,7 +120,14 @@ export async function setupSupabaseMocks(page: Page, mockUserId: string) {
         body: '',
       });
     } else {
-      await route.continue();
+      await route.fulfill({
+        status: 501,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: `Method ${method} not mocked for radars endpoint`,
+          hint: 'Add mock support in e2e/fixtures/supabase.ts',
+        }),
+      });
     }
   });
 
@@ -211,7 +218,14 @@ export async function setupSupabaseMocks(page: Page, mockUserId: string) {
         body: '',
       });
     } else {
-      await route.continue();
+      await route.fulfill({
+        status: 501,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: `Method ${method} not mocked for radar_repos endpoint`,
+          hint: 'Add mock support in e2e/fixtures/supabase.ts',
+        }),
+      });
     }
   });
 }
