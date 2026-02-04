@@ -66,7 +66,7 @@ export async function setupAuthState(page: Page, githubToken: string) {
  * Sets up mock for Supabase auth/user endpoint.
  */
 export async function setupAuthMocks(page: Page) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+  const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
   if (!supabaseUrl) return;
 
   await page.route(`${supabaseUrl}/auth/v1/user`, async (route: Route) => {

@@ -22,7 +22,7 @@ interface MockRadarRepo {
  * Intercepts calls to Supabase REST API and returns mock responses.
  */
 export async function setupSupabaseMocks(page: Page, mockUserId: string) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+  const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
   if (!supabaseUrl) return;
 
   // Per-test mock storage (local to avoid parallel test interference)
