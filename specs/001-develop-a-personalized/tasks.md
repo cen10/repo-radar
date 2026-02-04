@@ -190,10 +190,10 @@ _Priority: Do first to ensure quality during migration_
 
 _Branch: `t100-playwright-setup`_
 
-- [ ] T100 Install Playwright: `npm install -D @playwright/test && npx playwright install`
-- [ ] T101 [P] Create Playwright config in `playwright.config.ts` with projects for chromium, firefox, webkit
-- [ ] T102 [P] Create E2E test directory structure: `e2e/` with page objects in `e2e/pages/`
-- [ ] T105 [P] Add Playwright scripts to package.json: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`
+- [x] T100 Install Playwright: `npm install -D @playwright/test && npx playwright install`
+- [x] T101 [P] Create Playwright config in `playwright.config.ts` with projects for chromium, firefox, webkit
+- [x] T102 [P] Create E2E test directory structure: `e2e/` with page objects in `e2e/pages/`
+- [x] T105 [P] Add Playwright scripts to package.json: `test:e2e`, `test:e2e:ui`, `test:e2e:headed`
 
 **Verify**: `npm run test:e2e` runs smoke test, `npm run test:e2e:ui` opens UI
 
@@ -201,8 +201,8 @@ _Branch: `t100-playwright-setup`_
 
 _Branch: `t103-e2e-auth-tests`_
 
-- [ ] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts` (also consolidate page objects into fixtures to reduce boilerplate)
-- [ ] T104 Create first E2E tests: login flow, view starred repos, create/delete radar
+- [x] T103 Create E2E auth fixtures for GitHub OAuth mock/bypass in `e2e/fixtures/auth.ts` (also consolidate page objects into fixtures to reduce boilerplate)
+- [x] T104 Create first E2E tests: login flow, view starred repos, create/delete radar
 
 **Verify**: E2E tests pass with mocked auth
 
@@ -416,8 +416,11 @@ _Branch: `t142-data-sync`_
 - [ ] T145 Add sync status indicator component (client component)
 - [ ] T146 [P] Add GitHub API rate limit tracking to API calls (log X-RateLimit headers)
 - [ ] T147 Create rate limit alert system using Resend Free Tier (email at 75% and 90% thresholds)
+- [ ] T147a [P] Set up Pact contract testing for internal API routes
+  - See `docs/potential-plans/011-pact-contract-testing.md` for implementation details
+  - Consumer tests for `/api/sync-status`, provider verification script
 
-**Verify**: `/api/sync` collects data, status indicator shows sync state
+**Verify**: `/api/sync` collects data, status indicator shows sync state, Pact contracts generated
 
 ## PR 14: Trend Calculations (T148-T150)
 
@@ -541,7 +544,7 @@ _Branch: `t174-test-updates`_
 | 10  | `t131-rsc-patterns`       | T131-T134       | RSC patterns & loading states   |
 | 11  | `t135-apollo-rsc`         | T135-T137       | Apollo + RSC integration        |
 | 12  | `t138-metrics-schema`     | T138-T141       | Metrics database schema         |
-| 13  | `t142-data-sync`          | T142-T147       | Data sync API routes            |
+| 13  | `t142-data-sync`          | T142-T147a      | Data sync API routes + Pact     |
 | 14  | `t148-trend-calculations` | T148-T150       | Trend calculations              |
 | 15  | `t151-sparkline-charts`   | T151-T155       | Sparkline charts                |
 | 16  | `t156-full-charts`        | T156-T160       | Chart.js & full charts          |
@@ -633,12 +636,12 @@ graph TD
 
 ---
 
-**Total Tasks**: 140
+**Total Tasks**: 141
 **Completed**: 62 tasks (Slices 1-3 complete, T098-T099)
-**Pending**: 78 tasks
+**Pending**: 79 tasks
 
 - Migration: 38 tasks (T100-T137)
-- Features: 40 tasks (T138-T177)
+- Features: 41 tasks (T138-T177, T147a)
 - Technical Debt: 1 task (T097)
 
 ---
