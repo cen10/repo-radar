@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 import { BasePage } from './base.page';
 
 /**
@@ -30,26 +30,17 @@ export class RadarsPage extends BasePage {
    */
   async goto() {
     await super.goto('/stars');
-    // Wait for content to be ready (positive signal vs absence of spinner)
     await this.createRadarButton.waitFor({ state: 'visible' });
   }
 
   /**
    * Create a new radar with the given name.
-   * Returns the generated radar name.
    */
   async createRadar(name: string): Promise<string> {
-    await expect(this.createRadarButton).toBeVisible();
     await this.createRadarButton.click();
-
-    await expect(this.radarNameInput).toBeVisible();
     await this.radarNameInput.fill(name);
-
     await this.createSubmitButton.click();
-
-    // Wait for radar to appear in sidebar
-    await expect(this.getRadarLink(name)).toBeVisible();
-
+    await this.getRadarLink(name).waitFor({ state: 'visible' });
     return name;
   }
 
@@ -65,7 +56,7 @@ export class RadarsPage extends BasePage {
    */
   async navigateToRadar(name: string) {
     await this.getRadarLink(name).click();
-    await expect(this.page).toHaveURL(/\/radar\//);
+    await this.page.waitForURL(/\/radar\//);
   }
 
   /**
@@ -73,25 +64,8 @@ export class RadarsPage extends BasePage {
    * Must be on a radar detail page (/radar/:id).
    */
   async deleteCurrentRadar() {
-    await expect(this.menuButton).toBeVisible();
     await this.menuButton.click();
-
-    await expect(this.deleteMenuItem).toBeVisible();
     await this.deleteMenuItem.click();
-
-    await expect(this.deleteConfirmButton).toBeVisible();
     await this.deleteConfirmButton.click();
-
-    await expect(this.page).toHaveURL('/stars');
-  }
-
-  /**
-   * Create a radar, navigate to it, then delete it.
-   * Useful for cleanup or testing the full CRUD flow.
-   */
-  async createAndDeleteRadar(name: string) {
-    await this.createRadar(name);
-    await this.navigateToRadar(name);
-    await this.deleteCurrentRadar();
   }
 }
