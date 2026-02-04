@@ -11,13 +11,16 @@ const GITHUB_API_BASE = 'https://api.github.com';
 export const MAX_STARRED_REPOS = 500;
 
 // GitHub API types from OpenAPI spec
-type GitHubRepository = components['schemas']['repository'];
+/** Basic repo schema from list endpoints (e.g., /user/starred). No subscribers_count. */
+type GitHubRepoListItem = components['schemas']['repository'];
+/** Full repo schema from detail endpoints (e.g., /repositories/:id). Includes subscribers_count. */
+type GitHubRepoDetail = components['schemas']['full-repository'];
 type GitHubRelease = components['schemas']['release'];
 
 // Response format when using Accept: application/vnd.github.star+json
 interface GitHubStarredRepoWithTimestamp {
   starred_at: string;
-  repo: GitHubRepository;
+  repo: GitHubRepoListItem;
 }
 
 // ============================================================================
@@ -96,12 +99,19 @@ function checkGitHubResponse(response: Response, context?: string): ResponseChec
 interface MapRepoOptions {
   starred_at?: string;
   is_starred?: boolean;
+  subscribers_count?: number; // Real watcher count from full-repository response
 }
 
 /**
  * Transforms GitHub API repository response to our Repository type.
+ * Note: watchers_count is only populated when subscribers_count is provided
+ * (from full-repository responses). The basic repository schema's watchers_count
+ * field is actually the star count due to a GitHub API legacy quirk.
  */
-function mapGitHubRepoToRepository(repo: GitHubRepository, options?: MapRepoOptions): Repository {
+function mapGitHubRepoToRepository(
+  repo: GitHubRepoListItem | GitHubRepoDetail,
+  options?: MapRepoOptions
+): Repository {
   return {
     id: repo.id,
     name: repo.name,
@@ -111,7 +121,8 @@ function mapGitHubRepoToRepository(repo: GitHubRepository, options?: MapRepoOpti
     html_url: repo.html_url,
     stargazers_count: repo.stargazers_count,
     forks_count: repo.forks_count,
-    watchers_count: repo.watchers_count,
+    // Only populated on repo detail page; undefined from list/search endpoints (they lack subscribers_count)
+    watchers_count: options?.subscribers_count,
     open_issues_count: repo.open_issues_count,
     language: repo.language,
     license: repo.license,
@@ -301,15 +312,24 @@ export async function fetchStarredRepositories(
   }
 }
 
+// Minimal type for metrics calculations - only the fields actually used
+interface RepoMetricsInput {
+  id: number;
+  stargazers_count: number;
+  pushed_at: string | null;
+  updated_at: string | null;
+}
+
 /**
  * Simplified growth rate calculation
  * In production, this would compare with historical data
  */
-function calculateGrowthRate(repo: GitHubRepository): number {
+function calculateGrowthRate(repo: RepoMetricsInput): number {
   // This is a placeholder - real implementation would need historical data
   // For now, return a random value for demonstration
-  const recentlyUpdated =
-    new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const dateStr = repo.pushed_at || repo.updated_at;
+  if (!dateStr) return 0;
+  const recentlyUpdated = new Date(dateStr) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   if (!recentlyUpdated) return 0;
 
@@ -331,9 +351,10 @@ function calculateGrowthRate(repo: GitHubRepository): number {
  * Mock stars gained calculation
  * In production, this would come from historical snapshot comparison
  */
-function calculateStarsGained(repo: GitHubRepository): number {
-  const recentlyUpdated =
-    new Date(repo.pushed_at || repo.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+function calculateStarsGained(repo: RepoMetricsInput): number {
+  const dateStr = repo.pushed_at || repo.updated_at;
+  if (!dateStr) return 0;
+  const recentlyUpdated = new Date(dateStr) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   if (!recentlyUpdated) return 0;
 
@@ -353,7 +374,7 @@ function calculateStarsGained(repo: GitHubRepository): number {
  * Simplified trending detection
  * In production, this would analyze recent activity patterns
  */
-function isTrending(repo: GitHubRepository): boolean {
+function isTrending(repo: RepoMetricsInput): boolean {
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const lastActivity = repo.pushed_at || repo.updated_at;
   if (!lastActivity) return false;
@@ -433,7 +454,7 @@ export async function searchRepositories(
     if (!result.ok) throw new Error(result.message);
 
     const data = await response.json();
-    const repos: GitHubRepository[] = data.items || [];
+    const repos: GitHubRepoListItem[] = data.items || [];
     const totalCount = data.total_count || 0;
 
     // Apply GitHub API limitation (max 1000 results accessible)
@@ -685,9 +706,12 @@ export async function fetchRepositoryById(
       throw new Error(result.message);
     }
 
-    const repo: GitHubRepository = await response.json();
+    const repo: GitHubRepoDetail = await response.json();
 
-    return mapGitHubRepoToRepository(repo, { is_starred: false });
+    return mapGitHubRepoToRepository(repo, {
+      is_starred: false,
+      subscribers_count: repo.subscribers_count,
+    });
   } catch (error) {
     // Re-throw auth/rate-limit errors
     if (error instanceof Error && error.message.includes('GitHub')) {

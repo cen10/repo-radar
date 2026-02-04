@@ -19,7 +19,7 @@ interface LinkItem {
 interface StatCounts {
   stargazers_count: number;
   forks_count: number;
-  watchers_count: number;
+  watchers_count?: number;
 }
 
 interface LinkParams {
@@ -28,11 +28,16 @@ interface LinkParams {
 }
 
 export function getStats(counts: StatCounts): StatItem[] {
-  return [
+  const stats: StatItem[] = [
     { key: 'stars', icon: StarIcon, value: counts.stargazers_count, label: 'stars' },
     { key: 'forks', icon: ForkIcon, value: counts.forks_count, label: 'forks' },
-    { key: 'watchers', icon: EyeIcon, value: counts.watchers_count, label: 'watchers' },
   ];
+
+  if (counts.watchers_count !== undefined) {
+    stats.push({ key: 'watchers', icon: EyeIcon, value: counts.watchers_count, label: 'watchers' });
+  }
+
+  return stats;
 }
 
 export function getLinks(params: LinkParams): LinkItem[] {
