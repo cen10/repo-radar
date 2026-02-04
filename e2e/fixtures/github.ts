@@ -10,29 +10,10 @@ const GITHUB_API_BASE = 'https://api.github.com';
 
 /**
  * In-memory store for GitHub mock data.
- * Allows tests to customize the mock data per test.
  */
 export interface GitHubMockStore {
   /** Starred repositories (in starred order, most recent first) */
   starredRepos: GitHubStarredRepoResponse[];
-  /** Releases by repo full_name (e.g., "owner/repo") */
-  releasesByRepo: Map<string, GitHubRelease[]>;
-}
-
-interface GitHubRelease {
-  id: number;
-  tag_name: string;
-  name: string | null;
-  body: string | null;
-  html_url: string;
-  published_at: string | null;
-  created_at: string;
-  prerelease: boolean;
-  draft: boolean;
-  author: {
-    login: string;
-    avatar_url: string;
-  };
 }
 
 /**
@@ -40,11 +21,7 @@ interface GitHubRelease {
  */
 export function createDefaultGitHubMockStore(): GitHubMockStore {
   resetIdCounter();
-
-  return {
-    starredRepos: createMockStarredReposList(5),
-    releasesByRepo: new Map(),
-  };
+  return { starredRepos: createMockStarredReposList(5) };
 }
 
 /**
@@ -197,32 +174,6 @@ export async function setupGitHubMocks(
     });
   });
 
-  // Mock GET /repos/:owner/:repo/releases - Repository releases
-  await page.route(
-    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/repos/[^/]+/[^/]+/releases`),
-    async (route: Route) => {
-      const url = new URL(route.request().url());
-      const pathParts = url.pathname.split('/');
-      // Path is /repos/:owner/:repo/releases
-      const owner = pathParts[2];
-      const repo = pathParts[3];
-      const fullName = `${owner}/${repo}`;
-
-      const releases = store.releasesByRepo.get(fullName) || [];
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: {
-          'x-ratelimit-limit': '5000',
-          'x-ratelimit-remaining': '4999',
-          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
-        },
-        body: JSON.stringify(releases),
-      });
-    }
-  );
-
   // Mock GET /repositories/:id - Get repository by numeric ID
   // Used by radar page to fetch repos that are in a radar
   await page.route(
@@ -255,29 +206,6 @@ export async function setupGitHubMocks(
       }
     }
   );
-
-  // Mock GET /search/repositories - Repository search (for future use)
-  await page.route(`${GITHUB_API_BASE}/search/repositories*`, async (route: Route) => {
-    const url = new URL(route.request().url());
-    const query = url.searchParams.get('q') || '';
-
-    // Simple search implementation - filter starred repos by query
-    const matchingRepos = store.starredRepos.filter((sr) => {
-      const searchText =
-        `${sr.repo.name} ${sr.repo.description || ''} ${sr.repo.full_name}`.toLowerCase();
-      return searchText.includes(query.toLowerCase());
-    });
-
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        total_count: matchingRepos.length,
-        incomplete_results: false,
-        items: matchingRepos.map((sr) => sr.repo),
-      }),
-    });
-  });
 
   return store;
 }
