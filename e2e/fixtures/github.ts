@@ -162,6 +162,11 @@ export async function setupGitHubMocks(
       const starredRepo = store.starredRepos.find((sr) => sr.repo.id === repoId);
 
       if (starredRepo) {
+        // Return full-repository schema (includes subscribers_count for real watcher count)
+        const fullRepo = {
+          ...starredRepo.repo,
+          subscribers_count: Math.floor(starredRepo.repo.stargazers_count * 0.1) + 5,
+        };
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -170,7 +175,7 @@ export async function setupGitHubMocks(
             'x-ratelimit-remaining': '4999',
             'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
           },
-          body: JSON.stringify(starredRepo.repo),
+          body: JSON.stringify(fullRepo),
         });
       } else {
         await route.fulfill({
