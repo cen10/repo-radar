@@ -23,7 +23,7 @@ export class RadarsPage extends BasePage {
     this.menuButton = page.getByRole('button', { name: /menu|options/i });
     this.deleteMenuItem = page.getByRole('menuitem', { name: /delete/i });
     this.deleteConfirmButton = page.getByRole('button', { name: /^delete$/i });
-    this.repositoryCards = page.locator('article').filter({ hasText: /stars:/i });
+    this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
     this.emptyState = page.getByText(/no repositories|add some repos/i);
   }
 
