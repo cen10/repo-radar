@@ -8,7 +8,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default defineConfig(
-  globalIgnores(['dist', 'e2e']),
+  globalIgnores(['dist']),
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -51,6 +51,22 @@ export default defineConfig(
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.node,
+    },
+  },
+
+  // E2E test files: Playwright, Node globals, type-aware linting
+  {
+    files: ['e2e/**/*.ts'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
     },
   }
 );
