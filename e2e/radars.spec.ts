@@ -19,10 +19,10 @@ test.describe('Radar CRUD', () => {
     await radarsPage.createRadar(radarName);
 
     await starsPage.goto();
-    await starsPage.addFirstRepoToRadar(radarName);
+    const repoName = await starsPage.addFirstRepoToRadar(radarName);
 
-    // Verify the repo actually appears on the radar
+    // Verify the specific repo appears on the radar
     await radarsPage.navigateToRadar(radarName);
-    await expect(radarsPage.repositoryCards).toHaveCount(1);
+    await expect(radarsPage.page.getByRole('heading', { name: repoName })).toBeVisible();
   });
 });
