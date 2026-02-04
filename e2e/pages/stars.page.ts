@@ -5,10 +5,8 @@ export class StarsPage extends BasePage {
   readonly heading: Locator;
   readonly openSearchButton: Locator;
   readonly searchInput: Locator;
-  readonly sortButton: Locator;
   readonly repositoryCards: Locator;
   readonly emptyState: Locator;
-  readonly sidebar: Locator;
   readonly createRadarButton: Locator;
 
   constructor(page: Page) {
@@ -16,25 +14,22 @@ export class StarsPage extends BasePage {
     this.heading = page.getByRole('heading', { name: /my stars|starred/i });
     this.openSearchButton = page.getByRole('button', { name: /open search/i });
     this.searchInput = page.getByPlaceholder(/search your starred/i);
-    this.sortButton = page.getByRole('button', { name: /sort|order/i });
     this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
     this.emptyState = page.getByText(/no starred repositories/i);
-    this.sidebar = page.getByRole('navigation');
-    this.createRadarButton = page.getByRole('button', { name: /create radar/i });
+    this.createRadarButton = page.getByRole('button', { name: /create radar|new radar/i });
   }
 
   async goto() {
     await super.goto('/stars');
-    await this.waitForLoadingToFinish();
+    // Wait for content to be ready (positive signal vs absence of spinner)
+    await this.createRadarButton.waitFor({ state: 'visible' });
   }
 
   async search(query: string) {
-    // Click the "Open search" button to expand the collapsible search
     await this.openSearchButton.click();
-    // Wait for the search input to appear
     await expect(this.searchInput).toBeVisible();
     await this.searchInput.fill(query);
-    await this.waitForLoadingToFinish();
+    // Search is client-side filtering, no network wait needed
   }
 
   async getRepositoryCount() {

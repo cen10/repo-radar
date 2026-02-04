@@ -13,18 +13,16 @@ export class RadarsPage extends BasePage {
   readonly deleteMenuItem: Locator;
   readonly deleteConfirmButton: Locator;
   readonly repositoryCards: Locator;
-  readonly emptyState: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.createRadarButton = page.getByRole('button', { name: /create radar/i });
+    this.createRadarButton = page.getByRole('button', { name: /create radar|new radar/i });
     this.radarNameInput = page.getByPlaceholder(/machine learning|web dev/i);
     this.createSubmitButton = page.getByRole('button', { name: /^create$/i });
     this.menuButton = page.getByRole('button', { name: /menu|options/i });
     this.deleteMenuItem = page.getByRole('menuitem', { name: /delete/i });
     this.deleteConfirmButton = page.getByRole('button', { name: /^delete$/i });
     this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
-    this.emptyState = page.getByText(/no repositories|add some repos/i);
   }
 
   /**
@@ -32,7 +30,8 @@ export class RadarsPage extends BasePage {
    */
   async goto() {
     await super.goto('/stars');
-    await this.waitForLoadingToFinish();
+    // Wait for content to be ready (positive signal vs absence of spinner)
+    await this.createRadarButton.waitFor({ state: 'visible' });
   }
 
   /**
