@@ -70,18 +70,18 @@ export async function setupGitHubMocks(
 
     if (method === 'GET') {
       // Parse pagination params
-      const page = parseInt(url.searchParams.get('page') || '1', 10);
+      const pageNum = parseInt(url.searchParams.get('page') || '1', 10);
       const perPage = parseInt(url.searchParams.get('per_page') || '30', 10);
 
       // Calculate pagination
-      const startIdx = (page - 1) * perPage;
+      const startIdx = (pageNum - 1) * perPage;
       const endIdx = startIdx + perPage;
       const pagedRepos = store.starredRepos.slice(startIdx, endIdx);
       const total = store.starredRepos.length;
 
       // Build Link header for pagination (critical for fetchStarredRepoCount)
       const baseUrl = `${GITHUB_API_BASE}/user/starred?per_page=${perPage}`;
-      const linkHeader = buildLinkHeader(total, page, perPage, baseUrl);
+      const linkHeader = buildLinkHeader(total, pageNum, perPage, baseUrl);
 
       const headers: Record<string, string> = {
         'x-ratelimit-limit': '5000',
