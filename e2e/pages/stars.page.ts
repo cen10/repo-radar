@@ -17,7 +17,7 @@ export class StarsPage extends BasePage {
     this.openSearchButton = page.getByRole('button', { name: /open search/i });
     this.searchInput = page.getByPlaceholder(/search your starred/i);
     this.sortButton = page.getByRole('button', { name: /sort|order/i });
-    this.repositoryCards = page.locator('article').filter({ hasText: /stars:/i });
+    this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
     this.emptyState = page.getByText(/no starred repositories/i);
     this.sidebar = page.getByRole('navigation');
     this.createRadarButton = page.getByRole('button', { name: /create radar/i });
