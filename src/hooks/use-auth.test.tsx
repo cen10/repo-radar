@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './use-auth';
 import { AuthProvider } from '../components/AuthProvider';
 import '../test/mocks/supabase';
-import { createTestQueryClient } from '../test/helpers/query-client';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
 
 describe('useAuth', () => {
   it('should throw error when used outside AuthProvider', () => {

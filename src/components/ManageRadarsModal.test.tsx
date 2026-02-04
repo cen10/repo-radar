@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ManageRadarsModal } from './ManageRadarsModal';
 import * as radarService from '../services/radar';
-import { createTestQueryClient } from '../test/helpers/query-client';
-import { createMockRadar } from '../test/mocks/factories';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
+import { createMockRadar } from '../../tests/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import RepositoryList from './RepositoryList';
 import type { Repository } from '../types';
-import { createMockRepository } from '../test/mocks/factories';
+import { createMockRepository } from '../../tests/mocks/factories';
 
 // Mock the intersection observer hook
 vi.mock('../hooks/useIntersectionObserver', () => ({

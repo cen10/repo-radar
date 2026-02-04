@@ -12,7 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './tests/e2e',
 
   fullyParallel: true,
 
@@ -62,7 +62,7 @@ export default defineConfig({
     timeout: 120 * 1000,
   },
 
-  outputDir: 'e2e/test-results',
+  outputDir: 'tests/e2e/test-results',
 
   timeout: 30 * 1000,
 

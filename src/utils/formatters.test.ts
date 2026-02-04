@@ -5,7 +5,7 @@ import {
   formatGrowthRate,
   formatShortDate,
 } from './formatters';
-import { mockLogger } from '../test/mocks/logger';
+import { mockLogger } from '../../tests/mocks/logger';
 
 describe('formatters', () => {
   describe('formatRelativeTime', () => {

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './Home';
-import { createMockUser, createMockAuthContext } from '../test/mocks/factories';
+import { createMockUser, createMockAuthContext } from '../../tests/mocks/factories';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();

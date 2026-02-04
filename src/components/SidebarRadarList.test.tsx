@@ -6,8 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidebarRadarList } from './SidebarRadarList';
 import * as radarService from '../services/radar';
 import * as Sidebar from './Sidebar';
-import { createTestQueryClient } from '../test/helpers/query-client';
-import { createMockRadar } from '../test/mocks/factories';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
+import { createMockRadar } from '../../tests/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({

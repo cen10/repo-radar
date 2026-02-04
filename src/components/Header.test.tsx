@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from './Header';
 import { useAuth } from '../hooks/use-auth';
-import { renderWithRouter } from '../test/helpers/render';
-import { createMockUser, createMockAuthContext } from '../test/mocks/factories';
+import { renderWithRouter } from '../../tests/helpers/render';
+import { createMockUser, createMockAuthContext } from '../../tests/mocks/factories';
 
 vi.mock('../hooks/use-auth');
 

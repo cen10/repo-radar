@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sidebar } from './Sidebar';
-import { renderWithRouter } from '../test/helpers/render';
+import { renderWithRouter } from '../../tests/helpers/render';
 
 // Default props for tests - Sidebar requires isOpen, onClose, isCollapsed, and onToggleCollapsed
 const defaultProps = {

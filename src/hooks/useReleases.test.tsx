@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useReleases } from './useReleases';
 import * as github from '../services/github';
-import { createQueryClientWrapper } from '../test/helpers/render';
-import { createMockRelease } from '../test/mocks/factories';
+import { createQueryClientWrapper } from '../../tests/helpers/render';
+import { createMockRelease } from '../../tests/mocks/factories';
 
 // Mock the github service
 vi.mock('../services/github', () => ({

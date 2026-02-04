@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { RepoStats } from './RepoStats';
-import { createMockRepository } from '../../test/mocks/factories';
+import { createMockRepository } from '../../../tests/mocks/factories';
 
 const defaultRepo = createMockRepository({
   stargazers_count: 12500,

@@ -7,8 +7,8 @@ import RadarPage from './RadarPage';
 import * as useRadarHook from '../hooks/useRadar';
 import * as useRadarRepositoriesHook from '../hooks/useRadarRepositories';
 import * as useAuthHook from '../hooks/useAuth';
-import { createTestQueryClient } from '../test/helpers/query-client';
-import { createMockRepository } from '../test/mocks/factories';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
+import { createMockRepository } from '../../tests/mocks/factories';
 import type { Radar } from '../types/database';
 
 // Mock the hooks

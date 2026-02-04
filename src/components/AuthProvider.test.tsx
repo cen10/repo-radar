@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from '../hooks/use-auth';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../constants/errorMessages';
-import { createTestQueryClient } from '../test/helpers/query-client';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase
 import {
@@ -12,9 +12,9 @@ import {
   mockSession,
   setInitialSession,
   resetAuthMockState,
-} from '../test/mocks/supabase';
-import type { GetSessionResponse } from '../test/mocks/supabase';
-import { mockLogger } from '../test/mocks/logger';
+} from '../../tests/mocks/supabase';
+import type { GetSessionResponse } from '../../tests/mocks/supabase';
+import { mockLogger } from '../../tests/mocks/logger';
 
 // Mock github-token service to control stored token behavior
 vi.mock('../services/github-token', () => ({

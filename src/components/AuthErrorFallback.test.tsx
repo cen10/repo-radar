@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
 import { AuthErrorFallback } from './AuthErrorFallback';
-import { ThrowError } from '../test/helpers/error-boundary';
+import { ThrowError } from '../../tests/helpers/error-boundary';
 
 describe('AuthErrorFallback', () => {
   // Suppress console.error for these tests since we expect errors

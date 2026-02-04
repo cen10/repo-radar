@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RepoReleases } from './RepoReleases';
-import { createMockRelease } from '../../test/mocks/factories';
+import { createMockRelease } from '../../../tests/mocks/factories';
 
 const defaultRelease = createMockRelease();
 

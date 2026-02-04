@@ -5,8 +5,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { RepoCard } from './RepoCard';
 import * as radarService from '../services/radar';
-import { createTestQueryClient } from '../test/helpers/query-client';
-import { createMockRepository } from '../test/mocks/factories';
+import { createTestQueryClient } from '../../tests/helpers/query-client';
+import { createMockRepository } from '../../tests/mocks/factories';
 
 // Mock the radar service
 vi.mock('../services/radar', () => ({

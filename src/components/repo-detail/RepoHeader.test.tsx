@@ -3,8 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RepoHeader } from './RepoHeader';
-import { createTestQueryClient } from '../../test/helpers/query-client';
-import { createMockRepository } from '../../test/mocks/factories';
+import { createTestQueryClient } from '../../../tests/helpers/query-client';
+import { createMockRepository } from '../../../tests/mocks/factories';
 
 // Mock RadarIconButton to avoid radar service dependencies
 vi.mock('../RadarIconButton', () => ({

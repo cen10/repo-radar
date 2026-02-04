@@ -8,7 +8,7 @@ import {
   _resetLogFlags,
 } from './github-token';
 import { GitHubReauthRequiredError } from '../utils/error';
-import { mockLogger } from '../test/mocks/logger';
+import { mockLogger } from '../../tests/mocks/logger';
 
 describe('github-token service', () => {
   const ACCESS_TOKEN_KEY = 'github_access_token';
