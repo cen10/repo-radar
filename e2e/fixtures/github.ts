@@ -134,7 +134,7 @@ export async function setupGitHubMocks(
   // Mock GET /repositories/:id - Get repository by numeric ID
   // Used by radar page to fetch repos that are in a radar
   await page.route(
-    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/repositories/\\d+$`),
+    new RegExp(`${GITHUB_API_BASE.replace(/\./g, '\\.')}/repositories/\\d+$`),
     async (route: Route) => {
       const url = new URL(route.request().url());
       const pathParts = url.pathname.split('/');
