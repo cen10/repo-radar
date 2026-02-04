@@ -324,10 +324,10 @@ E2E tests use fully mocked GitHub API responses - no real API calls are made. Mo
 
 **Mocked endpoints:**
 
-- `GET /user/starred` - Starred repositories (paginated, with Link headers)
+- `HEAD /user/starred` - Starred repo count via Link header (efficient, used by fetchStarredRepoCount)
+- `GET /user/starred` - Starred repositories (paginated, with Link headers; also fallback for count)
 - `GET /user/starred/:owner/:repo` - Check if repo is starred (204 = yes, 404 = no)
-- `HEAD /user/starred` - Starred repo count via Link header (optimization)
-- `GET /repositories/:id` - Get repo by numeric ID (for radars)
+- `GET /repositories/:id` - Get repo by numeric ID (returns full-repository schema with subscribers_count)
 
 **Updating types when GitHub API changes:**
 

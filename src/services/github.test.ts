@@ -308,11 +308,15 @@ describe('GitHub API Service', () => {
         starred_at: '2024-01-10T10:00:00Z',
       });
 
-      // Mock fetchStarredRepoCount call (first call with per_page=1) - single page scenario
+      // Mock fetchStarredRepoCount: HEAD (no Link header) → GET fallback
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [mockRepo], // Single item, no Link header means single page
+          headers: new Headers(), // HEAD: no Link header triggers fallback
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [mockRepo], // GET fallback: count from body
           headers: new Headers(),
         })
         // Mock single page fetch
@@ -324,8 +328,8 @@ describe('GitHub API Service', () => {
 
       const result = await fetchAllStarredRepositories(testToken);
 
-      // Should have made two API calls: 1 for count + 1 for single page fetch
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Should have made 3 API calls: HEAD + GET fallback for count, then 1 page fetch
+      expect(mockFetch).toHaveBeenCalledTimes(3);
       expect(result.repositories).toHaveLength(1);
       expect(result.totalFetched).toBe(1);
       expect(result.repositories[0]).toMatchObject({

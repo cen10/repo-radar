@@ -85,6 +85,28 @@ export async function setupGitHubMocks(
       return;
     }
 
+    // HEAD /user/starred - Used by fetchStarredRepoCount for efficiency
+    if (method === 'HEAD') {
+      const perPage = parseInt(url.searchParams.get('per_page') || '1', 10);
+      const total = store.starredRepos.length;
+      const totalPages = Math.ceil(total / perPage);
+
+      const headers: Record<string, string> = {
+        'x-ratelimit-limit': '5000',
+        'x-ratelimit-remaining': '4999',
+        'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+      };
+
+      // Only include Link header if there are multiple pages
+      if (totalPages > 1) {
+        headers['link'] =
+          `<${GITHUB_API_BASE}/user/starred?page=${totalPages}&per_page=${perPage}>; rel="last"`;
+      }
+
+      await route.fulfill({ status: 200, headers, body: '' });
+      return;
+    }
+
     // GET /user/starred - List starred repositories
     if (method === 'GET') {
       // Parse pagination params
@@ -97,7 +119,7 @@ export async function setupGitHubMocks(
       const pagedRepos = store.starredRepos.slice(startIdx, endIdx);
       const total = store.starredRepos.length;
 
-      // Build Link header for pagination (critical for fetchStarredRepoCount)
+      // Build Link header for pagination
       const baseUrl = `${GITHUB_API_BASE}/user/starred?per_page=${perPage}`;
       const linkHeader = buildLinkHeader(total, pageNum, perPage, baseUrl);
 
@@ -116,33 +138,6 @@ export async function setupGitHubMocks(
         contentType: 'application/json',
         headers,
         body: JSON.stringify(pagedRepos),
-      });
-    } else if (method === 'HEAD') {
-      // HEAD request used by fetchStarredRepoCount
-      const perPage = parseInt(url.searchParams.get('per_page') || '1', 10);
-      const total = store.starredRepos.length;
-      const totalPages = Math.ceil(total / perPage);
-
-      // Build Link header with last page (contains total count)
-      let linkHeader = null;
-      if (totalPages > 1) {
-        linkHeader = `<${GITHUB_API_BASE}/user/starred?page=${totalPages}&per_page=${perPage}>; rel="last"`;
-      }
-
-      const headers: Record<string, string> = {
-        'x-ratelimit-limit': '5000',
-        'x-ratelimit-remaining': '4999',
-        'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
-      };
-
-      if (linkHeader) {
-        headers['link'] = linkHeader;
-      }
-
-      await route.fulfill({
-        status: 200,
-        headers,
-        body: '',
       });
     } else {
       await route.continue();

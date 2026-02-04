@@ -153,7 +153,8 @@ function mapGitHubRepoToRepository(
  * so we infer it from the Link header. By requesting per_page=1, the last page number
  * in the Link header equals the total count (e.g., page=513 means 513 starred repos).
  *
- * This is a lightweight call—we don't use the response body, just the headers.
+ * Uses HEAD request for efficiency (only needs Link header, not body).
+ * Falls back to GET for edge cases (0-1 starred repos where Link header is absent).
  * @param token - GitHub access token
  * @returns Total number of starred repositories
  */
@@ -161,30 +162,34 @@ export async function fetchStarredRepoCount(token: string): Promise<number> {
   const params = new URLSearchParams({ per_page: '1' });
   const url = `${GITHUB_API_BASE}/user/starred?${params}`;
 
-  const response = await fetch(url, {
+  // Try HEAD first - more efficient since we only need headers
+  const headResponse = await fetch(url, {
+    method: 'HEAD',
     headers: getGitHubHeaders(token),
   });
 
-  const result = checkGitHubResponse(response);
-  if (!result.ok) throw new Error(result.message);
+  const headResult = checkGitHubResponse(headResponse);
+  if (!headResult.ok) throw new Error(headResult.message);
 
-  const linkHeader = response.headers.get('Link');
+  const linkHeader = headResponse.headers.get('Link');
 
-  if (!linkHeader) {
-    // No Link header means everything fits on one page
-    const data = await response.json();
-    return data.length;
+  if (linkHeader) {
+    const lastMatch = linkHeader.match(/<[^>]+[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+    if (lastMatch) {
+      return parseInt(lastMatch[1], 10);
+    }
   }
 
-  const lastMatch = linkHeader.match(/<[^>]+[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+  // Fall back to GET for edge cases (0-1 repos where Link header is absent)
+  const getResponse = await fetch(url, {
+    headers: getGitHubHeaders(token),
+  });
 
-  if (!lastMatch) {
-    // Has Link header but no "last" rel—we're on the only/last page
-    const data = await response.json();
-    return data.length;
-  }
+  const getResult = checkGitHubResponse(getResponse);
+  if (!getResult.ok) throw new Error(getResult.message);
 
-  return parseInt(lastMatch[1], 10);
+  const data = await getResponse.json();
+  return data.length;
 }
 
 /**
