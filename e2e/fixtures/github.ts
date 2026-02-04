@@ -48,17 +48,6 @@ export function createDefaultGitHubMockStore(): GitHubMockStore {
 }
 
 /**
- * Create an empty mock store (for tests that need full control).
- */
-export function createEmptyGitHubMockStore(): GitHubMockStore {
-  resetIdCounter();
-  return {
-    starredRepos: [],
-    releasesByRepo: new Map(),
-  };
-}
-
-/**
  * Build GitHub Link header for pagination.
  * GitHub uses RFC 5988 Link headers for pagination.
  */
