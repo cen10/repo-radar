@@ -58,7 +58,9 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run preview      # Preview production build
 npm run test         # Run unit/integration tests
-npm run test:e2e     # Run Playwright E2E tests
+npm run test:e2e     # Run Playwright E2E tests (headless)
+npm run test:e2e:ui  # Run E2E with Playwright UI (debugging)
+npm run test:e2e:headed  # Run E2E with visible browser
 npm run typecheck    # TypeScript type checking
 npm run lint         # Lint code
 npm run lint:fix     # Lint and auto-fix
