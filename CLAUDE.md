@@ -66,6 +66,7 @@ npm run lint         # Lint code
 npm run lint:fix     # Lint and auto-fix
 npm run format       # Format code with Prettier
 npm run format:check # Check formatting
+npm run schema:update  # Update GitHub API types from OpenAPI spec
 ```
 
 ### Multiple Worktrees / Port Conflicts
@@ -204,6 +205,8 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 
     - Avoid creating helper functions just to wrap constructors - keep tests simple.
 
+19. **Avoid eslint-disable comments**: Before using `eslint-disable-next-line`, always look for an alternative solution (e.g., using `_` prefix for unused params, restructuring code). If you determine `eslint-disable` is truly necessary, explicitly flag it to the user and explain why no alternative exists.
+
 17. **Comment sparingly**: Don't add comments that merely restate what the code does - let well-named functions speak for themselves. Add comments only when explaining:
     - **Why** something is done a non-obvious way
     - **Tricky logic** that isn't self-evident (e.g., race condition guards, edge case handling)
@@ -303,8 +306,45 @@ Key points:
 
 - `e2e/` - Test specs and fixtures
 - `e2e/pages/` - Page object models
-- `e2e/fixtures/` - Playwright fixtures (auth, page objects)
+- `e2e/fixtures/` - Playwright fixtures (auth, page objects, API mocks)
 - Run with: `npm run test:e2e` or `npx playwright test`
+
+### GitHub API Mocks for E2E Tests
+
+E2E tests use fully mocked GitHub API responses - no real API calls are made. Mock data factories in `e2e/fixtures/github-mock-data.ts` use TypeScript types generated from GitHub's OpenAPI schema, ensuring type safety catches API drift at compile time.
+
+**Key files:**
+
+| File | Purpose |
+|------|---------|
+| `e2e/fixtures/github-mock-data.ts` | Mock data factories (repos, users, rate limits) |
+| `e2e/fixtures/github.ts` | Playwright route mocks for GitHub API endpoints |
+| `src/test/github-mock-data.test.ts` | Schema validation tests (Vitest) |
+| `src/types/github-api.generated.ts` | TypeScript types from OpenAPI (generated) |
+
+**Mocked endpoints:**
+
+- `GET /user/starred` - Starred repositories (with pagination)
+- `GET /user/starred/:owner/:repo` - Check if repo is starred
+- `GET /repositories/:id` - Get repo by numeric ID (for radars)
+- `GET /repos/:owner/:repo/releases` - Repository releases
+- `GET /rate_limit` - Rate limit status
+- `GET /search/repositories` - Search (for future use)
+
+**Updating types when GitHub API changes:**
+
+```bash
+npm run schema:update
+```
+
+This downloads the latest GitHub OpenAPI spec and regenerates TypeScript types. Run monthly or when noticing unexpected API behavior in production.
+
+**If typecheck fails after schema update:**
+
+1. Check which mock factory fields are causing errors
+2. Update `e2e/fixtures/github-mock-data.ts` to match new schema
+3. Add/remove/rename fields as required by the updated types
+4. Run `npm run test` to verify schema validation tests still pass
 
 ## Accessibility Patterns
 
