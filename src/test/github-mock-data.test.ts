@@ -9,7 +9,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   createMockStarredReposList,
   MOCK_LICENSE,
-  createMockRateLimitResponse,
   resetIdCounter,
 } from '../../e2e/fixtures/github-mock-data';
 
@@ -72,17 +71,6 @@ describe('GitHub Mock Data Factories', () => {
       const list = createMockStarredReposList(1);
       expect(list[0].starred_at).toBeDefined();
       expect(new Date(list[0].starred_at).getTime()).not.toBeNaN();
-    });
-  });
-
-  describe('createMockRateLimitResponse', () => {
-    it('creates valid rate limit structure', () => {
-      const rateLimit = createMockRateLimitResponse();
-
-      expect(rateLimit.rate.limit).toBe(5000);
-      expect(rateLimit.rate.remaining).toBeLessThanOrEqual(rateLimit.rate.limit);
-      expect(rateLimit.resources.core).toBeDefined();
-      expect(rateLimit.resources.search).toBeDefined();
     });
   });
 

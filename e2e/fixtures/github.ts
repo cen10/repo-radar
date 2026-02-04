@@ -1,7 +1,6 @@
 import { type Page, type Route } from '@playwright/test';
 import {
   createMockStarredReposList,
-  createMockRateLimitResponse,
   resetIdCounter,
   type GitHubStarredRepoResponse,
 } from './github-mock-data';
@@ -130,48 +129,6 @@ export async function setupGitHubMocks(
     } else {
       await route.continue();
     }
-  });
-
-  // Mock GET /user/starred/:owner/:repo - Check if repo is starred
-  await page.route(
-    new RegExp(`${GITHUB_API_BASE.replace('.', '\\.')}/user/starred/[^/]+/[^/]+$`),
-    async (route: Route) => {
-      const request = route.request();
-      const method = request.method();
-
-      if (method === 'GET') {
-        const url = new URL(request.url());
-        const pathParts = url.pathname.split('/');
-        const owner = pathParts[pathParts.length - 2];
-        const repo = pathParts[pathParts.length - 1];
-        const fullName = `${owner}/${repo}`;
-
-        const isStarred = store.starredRepos.some((r) => r.repo.full_name === fullName);
-
-        if (isStarred) {
-          await route.fulfill({
-            status: 204, // No content = starred
-            body: '',
-          });
-        } else {
-          await route.fulfill({
-            status: 404, // Not found = not starred
-            body: '',
-          });
-        }
-      } else {
-        await route.continue();
-      }
-    }
-  );
-
-  // Mock GET /rate_limit - Rate limit status
-  await page.route(`${GITHUB_API_BASE}/rate_limit`, async (route: Route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(createMockRateLimitResponse()),
-    });
   });
 
   // Mock GET /repositories/:id - Get repository by numeric ID

@@ -176,16 +176,3 @@ export function createMockStarredReposList(count: number): GitHubStarredRepoResp
 
   return repos;
 }
-
-export function createMockRateLimitResponse() {
-  const resetTime = Math.floor(Date.now() / 1000) + 3600;
-
-  return {
-    resources: {
-      core: { limit: 5000, remaining: 4999, reset: resetTime, used: 1 },
-      search: { limit: 30, remaining: 30, reset: resetTime, used: 0 },
-      graphql: { limit: 5000, remaining: 5000, reset: resetTime, used: 0 },
-    },
-    rate: { limit: 5000, remaining: 4999, reset: resetTime, used: 1 },
-  };
-}
