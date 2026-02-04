@@ -20,12 +20,6 @@ export interface GitHubStarredRepoResponse {
   repo: GitHubRepository;
 }
 
-let repoIdCounter = 1000;
-
-export function resetIdCounter(): void {
-  repoIdCounter = 1000;
-}
-
 // Base URLs for mock data - suffixes show what matters
 const USER_API = 'https://api.github.com/users/mock-user';
 const USER_WEB = 'https://github.com/mock-user';
@@ -157,22 +151,18 @@ function createMockRepository(id: number, name: string): GitHubRepository {
 /**
  * Creates a list of mock starred repositories.
  * Repos are ordered with most recently starred first (decreasing starred_at dates).
+ * IDs are deterministic: 1000 + index (e.g., 1000, 1001, 1002...).
  */
 export function createMockStarredReposList(count: number): GitHubStarredRepoResponse[] {
-  const repos: GitHubStarredRepoResponse[] = [];
   const baseDate = new Date();
 
-  for (let i = 0; i < count; i++) {
-    const id = repoIdCounter++;
+  return Array.from({ length: count }, (_, i) => {
     const starredDate = new Date(baseDate);
-    // Each repo starred one day earlier than the previous
     starredDate.setDate(starredDate.getDate() - i);
 
-    repos.push({
+    return {
       starred_at: starredDate.toISOString(),
-      repo: createMockRepository(id, `repo-${i + 1}`),
-    });
-  }
-
-  return repos;
+      repo: createMockRepository(1000 + i, `repo-${i + 1}`),
+    };
+  });
 }

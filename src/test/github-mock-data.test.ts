@@ -5,18 +5,10 @@
  * use types generated from GitHub's OpenAPI spec. These tests verify runtime
  * behavior and catch issues with required fields.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  createMockStarredReposList,
-  MOCK_LICENSE,
-  resetIdCounter,
-} from '../../e2e/fixtures/github-mock-data';
+import { describe, it, expect } from 'vitest';
+import { createMockStarredReposList, MOCK_LICENSE } from '../../e2e/fixtures/github-mock-data';
 
 describe('GitHub Mock Data Factories', () => {
-  beforeEach(() => {
-    resetIdCounter();
-  });
-
   describe('MOCK_LICENSE', () => {
     it('has required license fields', () => {
       expect(MOCK_LICENSE.key).toBe('mit');
@@ -71,15 +63,6 @@ describe('GitHub Mock Data Factories', () => {
       const list = createMockStarredReposList(1);
       expect(list[0].starred_at).toBeDefined();
       expect(new Date(list[0].starred_at).getTime()).not.toBeNaN();
-    });
-  });
-
-  describe('resetIdCounter', () => {
-    it('resets ID generation', () => {
-      createMockStarredReposList(2);
-      resetIdCounter();
-      const list = createMockStarredReposList(1);
-      expect(list[0].repo.id).toBe(1000);
     });
   });
 });

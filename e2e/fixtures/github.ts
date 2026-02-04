@@ -1,9 +1,5 @@
 import { type Page, type Route } from '@playwright/test';
-import {
-  createMockStarredReposList,
-  resetIdCounter,
-  type GitHubStarredRepoResponse,
-} from './github-mock-data';
+import { createMockStarredReposList, type GitHubStarredRepoResponse } from './github-mock-data';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -19,7 +15,6 @@ export interface GitHubMockStore {
  * Create a default mock store with some sample data.
  */
 export function createDefaultGitHubMockStore(): GitHubMockStore {
-  resetIdCounter();
   return { starredRepos: createMockStarredReposList(5) };
 }
 
