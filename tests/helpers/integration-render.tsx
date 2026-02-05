@@ -1,3 +1,4 @@
+import type { ReactElement, ReactNode } from 'react';
 import { render, type RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -6,20 +7,14 @@ import { createTestQueryClient } from './query-client';
 import { createMockAuthContext } from '../mocks/factories';
 
 interface IntegrationRenderOptions {
-  /** Initial route path */
   route?: string;
-  /** Override auth context values */
   authState?: Partial<AuthContextType>;
-  /** Custom query client (for cache assertions) */
   queryClient?: QueryClient;
-  /** Additional routes to render (for testing navigation) */
-  routes?: Array<{ path: string; element: React.ReactNode }>;
+  routes?: Array<{ path: string; element: ReactNode }>;
 }
 
 interface IntegrationRenderResult extends RenderResult {
-  /** The QueryClient instance for cache assertions */
   queryClient: QueryClient;
-  /** The AuthContext value used */
   authContext: AuthContextType;
 }
 
@@ -45,7 +40,7 @@ interface IntegrationRenderResult extends RenderResult {
  * ```
  */
 export function renderForIntegration(
-  ui: React.ReactElement,
+  ui: ReactElement,
   options: IntegrationRenderOptions = {}
 ): IntegrationRenderResult {
   const { route = '/', authState = {}, queryClient, routes = [] } = options;
@@ -53,16 +48,17 @@ export function renderForIntegration(
   const client = queryClient ?? createTestQueryClient();
   const authContext = createMockAuthContext(authState);
 
-  const routeElements = routes.length > 0 ? (
-    <Routes>
-      <Route path={route.split('?')[0]} element={ui} />
-      {routes.map(({ path, element }) => (
-        <Route key={path} path={path} element={element} />
-      ))}
-    </Routes>
-  ) : (
-    ui
-  );
+  const routeElements =
+    routes.length > 0 ? (
+      <Routes>
+        <Route path={route.split('?')[0]} element={ui} />
+        {routes.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+      </Routes>
+    ) : (
+      ui
+    );
 
   const rendered = render(
     <QueryClientProvider client={client}>
@@ -97,7 +93,7 @@ export function createIntegrationWrapper(options: Omit<IntegrationRenderOptions,
   const client = queryClient ?? createTestQueryClient();
   const authContext = createMockAuthContext(authState);
 
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
+  const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
       <AuthContext.Provider value={authContext}>
         <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
