@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-import type { RadarWithCount, Radar, RadarRepo } from '../../src/types/database';
-import type { Repository, Release } from '../../src/types';
+import type { RadarWithCount, Radar, RadarRepo } from '@/types/database';
+import type { Repository, Release } from '@/types';
 
 function mockWithError<T extends Record<string, unknown>>(
   mock: T,

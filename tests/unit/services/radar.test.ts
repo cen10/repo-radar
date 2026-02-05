@@ -11,7 +11,7 @@ import {
   getAllRadarRepoIds,
   getRadarsContainingRepo,
   RADAR_LIMITS,
-} from '../../../src/services/radar';
+} from '@/services/radar';
 
 // Mock Supabase client
 const mockFrom = vi.fn();

@@ -3,8 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { RepoCard } from '../../../src/components/RepoCard';
-import * as radarService from '../../../src/services/radar';
+import { RepoCard } from '@/components/RepoCard';
+import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
 

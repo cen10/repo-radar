@@ -3,13 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import RadarPage from '../../../src/pages/RadarPage';
-import * as useRadarHook from '../../../src/hooks/useRadar';
-import * as useRadarRepositoriesHook from '../../../src/hooks/useRadarRepositories';
-import * as useAuthHook from '../../../src/hooks/useAuth';
+import RadarPage from '@/pages/RadarPage';
+import * as useRadarHook from '@/hooks/useRadar';
+import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
+import * as useAuthHook from '@/hooks/useAuth';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
-import type { Radar } from '../../../src/types/database';
+import type { Radar } from '@/types/database';
 
 // Mock the hooks
 vi.mock('../../../src/hooks/useRadar');

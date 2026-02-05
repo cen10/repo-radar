@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { StarredBadge } from '../../../src/components/StarredBadge';
+import { StarredBadge } from '@/components/StarredBadge';
 
 describe('StarredBadge', () => {
   it('renders with status role and accessible label', () => {

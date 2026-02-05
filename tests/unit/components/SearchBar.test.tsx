@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SearchBar } from '../../../src/components/SearchBar';
+import { SearchBar } from '@/components/SearchBar';
 
 describe('SearchBar', () => {
   const defaultProps = {

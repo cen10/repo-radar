@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { render, type RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { AuthContext, type AuthContextType } from '../../src/contexts/auth-context';
+import { AuthContext, type AuthContextType } from '@/contexts/auth-context';
 import { createTestQueryClient } from './query-client';
 import { createMockAuthContext } from '../mocks/factories';
 

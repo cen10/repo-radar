@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Repository } from '../../../src/types';
+import type { Repository } from '@/types';
 import {
   createRepositoryComparator,
   sortRepositories,
@@ -7,7 +7,7 @@ import {
   sortByName,
   sortByGrowthRate,
   sortByUpdated,
-} from '../../../src/utils/sort';
+} from '@/utils/sort';
 
 // Factory function for creating test repositories
 function createTestRepo(overrides: Partial<Repository> = {}): Repository {

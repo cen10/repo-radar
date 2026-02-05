@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { HotBadge } from '../../../src/components/HotBadge';
+import { HotBadge } from '@/components/HotBadge';
 import {
   HOT_REPO_MIN_STARS,
   HOT_REPO_MIN_GROWTH_RATE,
   HOT_REPO_MIN_STARS_GAINED,
-} from '../../../src/utils/metrics';
+} from '@/utils/metrics';
 
 describe('HotBadge', () => {
   describe('rendering', () => {

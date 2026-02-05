@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ErrorBoundary } from 'react-error-boundary';
-import { AuthErrorFallback } from '../../../src/components/AuthErrorFallback';
+import { AuthErrorFallback } from '@/components/AuthErrorFallback';
 import { ThrowError } from '../../helpers/error-boundary';
 
 describe('AuthErrorFallback', () => {

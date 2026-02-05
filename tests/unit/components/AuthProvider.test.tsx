@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../../../src/components/AuthProvider';
-import { useAuth } from '../../../src/hooks/use-auth';
-import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '../../../src/constants/errorMessages';
+import { AuthProvider } from '@/components/AuthProvider';
+import { useAuth } from '@/hooks/use-auth';
+import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '@/constants/errorMessages';
 import { createTestQueryClient } from '../../helpers/query-client';
 
 // Importing mockSupabaseClient also executes vi.mock() for ../services/supabase

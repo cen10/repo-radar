@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getStats, getLinks } from '../../../../src/components/repo-detail/repoStatsConfig';
+import { getStats, getLinks } from '@/components/repo-detail/repoStatsConfig';
 
 const defaultCounts = {
   stargazers_count: 100,

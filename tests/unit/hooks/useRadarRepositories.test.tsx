@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useRadarRepositories } from '../../../src/hooks/useRadarRepositories';
-import * as radar from '../../../src/services/radar';
-import * as github from '../../../src/services/github';
-import type { RadarRepo } from '../../../src/types/database';
-import type { Repository } from '../../../src/types';
+import { useRadarRepositories } from '@/hooks/useRadarRepositories';
+import * as radar from '@/services/radar';
+import * as github from '@/services/github';
+import type { RadarRepo } from '@/types/database';
+import type { Repository } from '@/types';
 
 // Mock the services
 vi.mock('../../../src/services/radar', () => ({

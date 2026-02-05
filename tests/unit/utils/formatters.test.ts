@@ -4,7 +4,7 @@ import {
   formatCompactNumber,
   formatGrowthRate,
   formatShortDate,
-} from '../../../src/utils/formatters';
+} from '@/utils/formatters';
 import { mockLogger } from '../../mocks/logger';
 
 describe('formatters', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useReleases } from '../../../src/hooks/useReleases';
-import * as github from '../../../src/services/github';
+import { useReleases } from '@/hooks/useReleases';
+import * as github from '@/services/github';
 import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRelease } from '../../mocks/factories';
 

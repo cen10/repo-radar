@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
-import RepositoryList from '../../../src/components/RepositoryList';
-import type { Repository } from '../../../src/types';
+import RepositoryList from '@/components/RepositoryList';
+import type { Repository } from '@/types';
 import { createMockRepository } from '../../mocks/factories';
 
 // Mock the intersection observer hook

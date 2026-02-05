@@ -5,7 +5,7 @@
  * To update types when GitHub's API changes:
  *   npm run schema:update
  */
-import type { components } from '../../src/types/github-api.generated';
+import type { components } from '@/types/github-api.generated';
 
 type GitHubRepository = components['schemas']['repository'];
 type GitHubSimpleUser = components['schemas']['simple-user'];

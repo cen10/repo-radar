@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { Header } from '../../../src/components/Header';
-import { useAuth } from '../../../src/hooks/use-auth';
+import { Header } from '@/components/Header';
+import { useAuth } from '@/hooks/use-auth';
 import { renderWithRouter } from '../../helpers/render';
 import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 

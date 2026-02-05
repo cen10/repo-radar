@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useRadars } from '../../../src/hooks/useRadars';
-import * as radar from '../../../src/services/radar';
+import { useRadars } from '@/hooks/useRadars';
+import * as radar from '@/services/radar';
 import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRadar } from '../../mocks/factories';
 

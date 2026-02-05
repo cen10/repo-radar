@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  getErrorMessage,
-  isGitHubAuthError,
-  GitHubReauthRequiredError,
-} from '../../../src/utils/error';
+import { getErrorMessage, isGitHubAuthError, GitHubReauthRequiredError } from '@/utils/error';
 
 describe('getErrorMessage', () => {
   const defaultMessage = 'Default error message';

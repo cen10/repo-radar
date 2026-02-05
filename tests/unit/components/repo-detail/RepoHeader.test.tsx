@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { RepoHeader } from '../../../../src/components/repo-detail/RepoHeader';
+import { RepoHeader } from '@/components/repo-detail/RepoHeader';
 import { createTestQueryClient } from '../../../helpers/query-client';
 import { createMockRepository } from '../../../mocks/factories';
 

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
-import Home from '../../../src/pages/Home';
+import Home from '@/pages/Home';
 import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
 // Mock the useAuth hook

@@ -6,8 +6,8 @@ import {
   getValidGitHubToken,
   hasFallbackToken,
   _resetLogFlags,
-} from '../../../src/services/github-token';
-import { GitHubReauthRequiredError } from '../../../src/utils/error';
+} from '@/services/github-token';
+import { GitHubReauthRequiredError } from '@/utils/error';
 import { mockLogger } from '../../mocks/logger';
 
 describe('github-token service', () => {

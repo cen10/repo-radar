@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RepoStats } from '../../../../src/components/repo-detail/RepoStats';
+import { RepoStats } from '@/components/repo-detail/RepoStats';
 import { createMockRepository } from '../../../mocks/factories';
 
 const defaultRepo = createMockRepository({

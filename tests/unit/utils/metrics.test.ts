@@ -6,7 +6,7 @@ import {
   HOT_REPO_MIN_STARS,
   HOT_REPO_MIN_GROWTH_RATE,
   HOT_REPO_MIN_STARS_GAINED,
-} from '../../../src/utils/metrics';
+} from '@/utils/metrics';
 
 describe('metrics utilities', () => {
   describe('calculateGrowthRate', () => {

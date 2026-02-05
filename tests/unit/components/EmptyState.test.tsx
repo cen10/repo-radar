@@ -7,7 +7,7 @@ import {
   EmptyRadarState,
   NoStarredReposState,
   NoSearchResultsState,
-} from '../../../src/components/EmptyState';
+} from '@/components/EmptyState';
 
 const renderWithRouter = (ui: React.ReactElement) => {
   return render(<MemoryRouter>{ui}</MemoryRouter>);

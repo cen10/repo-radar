@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RenameRadarModal } from '../../../src/components/RenameRadarModal';
-import * as radarService from '../../../src/services/radar';
-import type { Radar } from '../../../src/types/database';
+import { RenameRadarModal } from '@/components/RenameRadarModal';
+import * as radarService from '@/services/radar';
+import type { Radar } from '@/types/database';
 
 // Mock the radar service
 vi.mock('../../../src/services/radar', () => ({

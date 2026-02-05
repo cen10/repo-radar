@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useStarredIds } from '../../../src/hooks/useStarredIds';
-import type { AllStarredData } from '../../../src/types';
+import { useStarredIds } from '@/hooks/useStarredIds';
+import type { AllStarredData } from '@/types';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
-import { DynamicRadarIcon } from '../../../src/components/DynamicRadarIcon';
+import { DynamicRadarIcon } from '@/components/DynamicRadarIcon';
 
 describe('DynamicRadarIcon', () => {
   it('renders inactive icon when isActive is false', () => {

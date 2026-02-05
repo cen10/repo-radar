@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AddToRadarSheet } from '../../../src/components/AddToRadarSheet';
-import * as radarService from '../../../src/services/radar';
+import { AddToRadarSheet } from '@/components/AddToRadarSheet';
+import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
 

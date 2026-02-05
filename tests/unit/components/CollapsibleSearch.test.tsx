@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CollapsibleSearch } from '../../../src/components/CollapsibleSearch';
+import { CollapsibleSearch } from '@/components/CollapsibleSearch';
 
 describe('CollapsibleSearch', () => {
   const defaultProps = {

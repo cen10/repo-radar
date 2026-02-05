@@ -7,7 +7,7 @@ import {
   refreshCacheTimestamp,
   cleanupExpiredCache,
   CACHE_CONFIG,
-} from '../../../src/services/cache';
+} from '@/services/cache';
 
 // Mock Supabase client
 const mockFrom = vi.fn();

@@ -6,7 +6,7 @@ import {
   fetchRateLimit,
   fetchRepositoryReleases,
   fetchRepositoriesByIds,
-} from '../../../src/services/github';
+} from '@/services/github';
 
 // Mock fetch globally
 const mockFetch = vi.fn();

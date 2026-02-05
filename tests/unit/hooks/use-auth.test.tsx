@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useAuth } from '../../../src/hooks/use-auth';
-import { AuthProvider } from '../../../src/components/AuthProvider';
+import { useAuth } from '@/hooks/use-auth';
+import { AuthProvider } from '@/components/AuthProvider';
 import '../../mocks/supabase';
 import { createTestQueryClient } from '../../helpers/query-client';
 

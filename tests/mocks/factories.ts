@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
-import type { Repository, Release, User } from '../../src/types';
-import type { RadarWithCount } from '../../src/types/database';
-import type { AuthContextType } from '../../src/contexts/auth-context';
+import type { Repository, Release, User } from '@/types';
+import type { RadarWithCount } from '@/types/database';
+import type { AuthContextType } from '@/contexts/auth-context';
 
 /**
  * Creates a mock Repository object with sensible defaults.

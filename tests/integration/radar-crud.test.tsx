@@ -5,10 +5,10 @@ import '@testing-library/jest-dom/vitest';
 
 import { renderForIntegration } from '../helpers/integration-render';
 import { createMockRadar, createMockUser, createMockRepository } from '../mocks/factories';
-import { CreateRadarModal } from '../../src/components/CreateRadarModal';
-import { SidebarRadarList } from '../../src/components/SidebarRadarList';
-import { ManageRadarsModal } from '../../src/components/ManageRadarsModal';
-import type { RadarWithCount } from '../../src/types/database';
+import { CreateRadarModal } from '@/components/CreateRadarModal';
+import { SidebarRadarList } from '@/components/SidebarRadarList';
+import { ManageRadarsModal } from '@/components/ManageRadarsModal';
+import type { RadarWithCount } from '@/types/database';
 
 // Mock the radar service at the module level
 const mockGetRadars = vi.fn<() => Promise<RadarWithCount[]>>();

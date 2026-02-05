@@ -5,9 +5,9 @@ import '@testing-library/jest-dom/vitest';
 
 import { renderForIntegration } from '../helpers/integration-render';
 import { createMockRepository, createMockUser } from '../mocks/factories';
-import ExplorePage from '../../src/pages/ExplorePage';
-import StarsPage from '../../src/pages/StarsPage';
-import type { Repository, AllStarredData } from '../../src/types';
+import ExplorePage from '@/pages/ExplorePage';
+import StarsPage from '@/pages/StarsPage';
+import type { Repository, AllStarredData } from '@/types';
 
 // Mock GitHub service
 const mockSearchRepositories = vi.fn();
