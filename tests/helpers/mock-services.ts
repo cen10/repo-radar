@@ -2,6 +2,18 @@ import { vi } from 'vitest';
 import type { RadarWithCount, Radar, RadarRepo } from '../../src/types/database';
 import type { Repository, Release } from '../../src/types';
 
+type RadarServiceMethods =
+  | 'getRadars'
+  | 'getRadar'
+  | 'createRadar'
+  | 'updateRadar'
+  | 'deleteRadar'
+  | 'getRadarRepos'
+  | 'getAllRadarRepoIds'
+  | 'addRepoToRadar'
+  | 'removeRepoFromRadar'
+  | 'getRadarsContainingRepo';
+
 /**
  * Creates a mock radar service with all functions as vi.fn() mocks.
  *
@@ -73,7 +85,7 @@ export function createRadarServiceMock() {
       return this;
     },
 
-    withError<K extends keyof typeof mock>(method: K, error: Error) {
+    withError(method: RadarServiceMethods, error: Error) {
       const fn = this[method];
       if (typeof fn === 'function' && 'mockRejectedValue' in fn) {
         (fn as ReturnType<typeof vi.fn>).mockRejectedValue(error);
@@ -101,6 +113,18 @@ interface SearchResult {
   totalCount: number;
   apiSearchResultTotal: number;
 }
+
+type GitHubServiceMethods =
+  | 'fetchStarredRepoCount'
+  | 'fetchAllStarredRepositories'
+  | 'fetchStarredRepositories'
+  | 'searchRepositories'
+  | 'searchStarredRepositories'
+  | 'isRepositoryStarred'
+  | 'fetchRepositoryById'
+  | 'fetchRepositoriesByIds'
+  | 'fetchRepositoryReleases'
+  | 'fetchRateLimit';
 
 /**
  * Creates a mock GitHub service with all functions as vi.fn() mocks.
@@ -203,7 +227,7 @@ export function createGitHubServiceMock() {
       return this;
     },
 
-    withError<K extends keyof typeof mock>(method: K, error: Error) {
+    withError(method: GitHubServiceMethods, error: Error) {
       const fn = this[method];
       if (typeof fn === 'function' && 'mockRejectedValue' in fn) {
         (fn as ReturnType<typeof vi.fn>).mockRejectedValue(error);
