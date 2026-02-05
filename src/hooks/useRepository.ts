@@ -89,10 +89,7 @@ export function useRepository({
         ...cachedData,
         repositories: [...cachedData.repositories, { ...data, is_starred: true }],
         totalFetched: cachedData.totalFetched + 1,
-        // Don't increment totalStarred - it's the authoritative count from GitHub
       });
-      // Invalidate to sync with server - ensures cache doesn't drift
-      void queryClient.invalidateQueries({ queryKey: cacheKey });
     }
   }, [isStarredFromApi, data, token, queryClient]);
 
