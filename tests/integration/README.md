@@ -113,8 +113,8 @@ it('sets isCreating to true', async () => {
 npm run test
 
 # Run only integration tests
-npm run test -- tests/integration
+npm run test:integration
 
 # Run with coverage
-npm run test -- --coverage
+npm run test:coverage
 ```
