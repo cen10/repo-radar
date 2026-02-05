@@ -38,7 +38,7 @@ docs
 schemas/
 
 # Playwright
-/e2e/test-results/
+/tests/e2e/test-results/
 /playwright-report/
 /playwright/.cache/
 /.playwright-mcp/

@@ -56,7 +56,7 @@ export default defineConfig(
 
   // E2E test files: Playwright, Node globals, type-aware linting
   {
-    files: ['e2e/**/*.ts'],
+    files: ['tests/e2e/**/*.ts'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.node,
