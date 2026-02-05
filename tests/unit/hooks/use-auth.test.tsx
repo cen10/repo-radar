@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
@@ -20,7 +21,7 @@ describe('useAuth', () => {
 
   it('should return auth context when used within AuthProvider', () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>
@@ -37,7 +38,7 @@ describe('useAuth', () => {
 
   it('should provide signInWithGitHub function', () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>
@@ -50,7 +51,7 @@ describe('useAuth', () => {
 
   it('should provide signOut function', () => {
     const queryClient = createTestQueryClient();
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
+    const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>{children}</AuthProvider>
       </QueryClientProvider>

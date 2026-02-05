@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -42,7 +43,7 @@ describe('RenameRadarModal', () => {
     vi.clearAllMocks();
   });
 
-  const renderWithProviders = (ui: React.ReactElement, customQueryClient?: QueryClient) => {
+  const renderWithProviders = (ui: ReactElement, customQueryClient?: QueryClient) => {
     const client = customQueryClient ?? queryClient;
     return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
   };

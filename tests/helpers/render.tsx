@@ -1,4 +1,5 @@
 import { render, type RenderResult } from '@testing-library/react';
+import type { ReactElement, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { createTestQueryClient } from './query-client';
@@ -19,7 +20,7 @@ interface RenderWithProvidersResult extends RenderResult {
  * Renders a component wrapped in MemoryRouter for testing components that use routing.
  */
 export const renderWithRouter = (
-  ui: React.ReactElement,
+  ui: ReactElement,
   { route = '/' }: RenderWithRouterOptions = {}
 ): RenderResult => {
   return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
@@ -30,7 +31,7 @@ export const renderWithRouter = (
  * Returns the render result plus the queryClient for cache invalidation testing.
  */
 export const renderWithProviders = (
-  ui: React.ReactElement,
+  ui: ReactElement,
   { route = '/', queryClient }: RenderWithProvidersOptions = {}
 ): RenderWithProvidersResult => {
   const client = queryClient ?? createTestQueryClient();
@@ -51,7 +52,7 @@ export const renderWithProviders = (
 export const createQueryClientWrapper = (queryClient?: QueryClient) => {
   const client = queryClient ?? createTestQueryClient();
   return {
-    wrapper: ({ children }: { children: React.ReactNode }) => (
+    wrapper: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     ),
     queryClient: client,

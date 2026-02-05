@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -9,7 +10,7 @@ import {
   NoSearchResultsState,
 } from '@/components/EmptyState';
 
-const renderWithRouter = (ui: React.ReactElement) => {
+const renderWithRouter = (ui: ReactElement) => {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
 };
 

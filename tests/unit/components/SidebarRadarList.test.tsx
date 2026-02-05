@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -45,7 +46,7 @@ describe('SidebarRadarList', () => {
     setSidebarContext(defaultContextValue);
   });
 
-  const renderWithProviders = (ui: React.ReactElement, { route = '/' } = {}) => {
+  const renderWithProviders = (ui: ReactElement, { route = '/' } = {}) => {
     return render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>

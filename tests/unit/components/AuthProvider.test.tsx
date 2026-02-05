@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/components/AuthProvider';
@@ -63,7 +64,7 @@ function assertDefined<T>(val: T | undefined, name: string): asserts val is T {
 }
 
 // Wrapper component that provides QueryClient context
-const renderWithQueryClient = (ui: React.ReactElement) => {
+const renderWithQueryClient = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return {
     ...render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>),

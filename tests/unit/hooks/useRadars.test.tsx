@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRadars } from '@/hooks/useRadars';
 import * as radar from '@/services/radar';
@@ -11,7 +12,7 @@ vi.mock('../../../src/services/radar', () => ({
 }));
 
 describe('useRadars', () => {
-  let wrapper: ({ children }: { children: React.ReactNode }) => React.ReactNode;
+  let wrapper: ({ children }: { children: ReactNode }) => ReactNode;
 
   beforeEach(() => {
     const result = createQueryClientWrapper();

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
@@ -36,7 +37,7 @@ vi.mock('../../src/services/radar', () => ({
 }));
 
 // Provide SidebarContext for SidebarRadarList
-const SidebarContextProvider = ({ children }: { children: React.ReactNode }) => {
+const SidebarContextProvider = ({ children }: { children: ReactNode }) => {
   // Using a simple wrapper that provides the context value inline
   // The actual context is internal to Sidebar.tsx, so we mock the hook instead
   return <>{children}</>;
@@ -48,7 +49,7 @@ vi.mock('../../src/components/Sidebar', async (importOriginal) => {
   return {
     ...original,
     useSidebarContext: () => ({ collapsed: false, hideText: false }),
-    SidebarTooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SidebarTooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
   };
 });
 

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRepository } from '@/hooks/useRepository';
 import * as github from '@/services/github';
@@ -23,7 +24,7 @@ vi.mock('../../../src/services/github-token', () => ({
 const TEST_TOKEN = 'test-token';
 
 describe('useRepository', () => {
-  let wrapper: ({ children }: { children: React.ReactNode }) => React.ReactNode;
+  let wrapper: ({ children }: { children: ReactNode }) => ReactNode;
 
   beforeEach(() => {
     const result = createQueryClientWrapper();

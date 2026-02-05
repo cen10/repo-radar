@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,7 +29,7 @@ const defaultProps = {
   onClose: vi.fn(),
 };
 
-const renderWithProviders = (ui: React.ReactElement, queryClient?: QueryClient) => {
+const renderWithProviders = (ui: ReactElement, queryClient?: QueryClient) => {
   const client = queryClient ?? createTestQueryClient();
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 };
