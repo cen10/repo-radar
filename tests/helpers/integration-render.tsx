@@ -18,6 +18,12 @@ interface IntegrationRenderResult extends RenderResult {
   authContext: AuthContextType;
 }
 
+interface IntegrationWrapperResult {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement;
+  queryClient: QueryClient;
+  authContext: AuthContextType;
+}
+
 /**
  * Renders a component with all providers needed for integration testing.
  *
@@ -87,7 +93,9 @@ export function renderForIntegration(
  * const { result } = renderHook(() => useMyHook(), { wrapper });
  * ```
  */
-export function createIntegrationWrapper(options: Omit<IntegrationRenderOptions, 'routes'> = {}) {
+export function createIntegrationWrapper(
+  options: Omit<IntegrationRenderOptions, 'routes'> = {}
+): IntegrationWrapperResult {
   const { route = '/', authState = {}, queryClient } = options;
 
   const client = queryClient ?? createTestQueryClient();
