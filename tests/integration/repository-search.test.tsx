@@ -88,8 +88,7 @@ describe('Repository Search Integration', () => {
       expect(screen.getByText(/search across all of github/i)).toBeInTheDocument();
     });
 
-    // TODO: Fix timing issues with infinite query mocking
-    it.skip('searches and displays results', async () => {
+    it('searches and displays results', async () => {
       const user = userEvent.setup();
       const mockRepos = [
         createMockRepository({ id: 1, name: 'react', full_name: 'facebook/react' }),
@@ -106,29 +105,28 @@ describe('Repository Search Integration', () => {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // Enter search query
       const searchInput = screen.getByPlaceholderText(/search all github/i);
       await user.type(searchInput, 'react');
 
-      // Submit search
       const searchButton = screen.getByRole('button', { name: /search/i });
       await user.click(searchButton);
 
-      // Wait for results
-      await waitFor(() => {
-        expect(screen.getByText('facebook/react')).toBeInTheDocument();
-        expect(screen.getByText('vuejs/vue')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'react' })).toBeInTheDocument();
+          expect(screen.getByRole('heading', { name: 'vue' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
-      // Verify service was called with correct params
       expect(mockSearchRepositories).toHaveBeenCalledWith(
         mockToken,
         'react',
-        1, // page
-        30, // items per page
-        'best-match', // default sort
+        1,
+        30,
+        'best-match',
         expect.any(AbortSignal),
-        expect.anything() // starredIds
+        expect.anything()
       );
     });
 
@@ -218,8 +216,7 @@ describe('Repository Search Integration', () => {
   });
 
   describe('Stars Page', () => {
-    // TODO: Fix timing issues with useBrowseStarred mocking
-    it.skip('displays starred repos in browse mode', async () => {
+    it('displays starred repos in browse mode', async () => {
       const starredRepos = [
         createMockRepository({ id: 1, name: 'starred-1', full_name: 'user/starred-1' }),
         createMockRepository({ id: 2, name: 'starred-2', full_name: 'user/starred-2' }),
@@ -232,14 +229,16 @@ describe('Repository Search Integration', () => {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      await waitFor(() => {
-        expect(screen.getByText('user/starred-1')).toBeInTheDocument();
-        expect(screen.getByText('user/starred-2')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'starred-1' })).toBeInTheDocument();
+          expect(screen.getByRole('heading', { name: 'starred-2' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
 
-    // TODO: Fix timing issues with search mode transition mocking
-    it.skip('switches to search mode when query submitted', async () => {
+    it('switches to search mode when query submitted', async () => {
       const user = userEvent.setup();
 
       const starredRepos = [
@@ -265,20 +264,28 @@ describe('Repository Search Integration', () => {
       });
 
       // Wait for browse mode to load
-      await waitFor(() => {
-        expect(screen.getByText('user/react-app')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'react-app' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
-      // Enter search
+      // Open collapsed search and enter query
+      await user.click(screen.getByRole('button', { name: /open search/i }));
       const searchInput = screen.getByPlaceholderText(/search your starred/i);
       await user.type(searchInput, 'react');
-      await user.click(screen.getByRole('button', { name: /search/i }));
+      // Submit the search form
+      await user.keyboard('{Enter}');
 
       // Should show filtered results
-      await waitFor(() => {
-        expect(screen.getByText('user/react-app')).toBeInTheDocument();
-        expect(screen.queryByText('user/vue-app')).not.toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'react-app' })).toBeInTheDocument();
+          expect(screen.queryByRole('heading', { name: 'vue-app' })).not.toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('shows empty state for users with no starred repos', async () => {
@@ -294,8 +301,7 @@ describe('Repository Search Integration', () => {
       });
     });
 
-    // TODO: Fix timing issues with browse mode mocking
-    it.skip('clears search returns to browse mode', async () => {
+    it('clears search returns to browse mode', async () => {
       const user = userEvent.setup();
 
       const starredRepos = [
@@ -310,10 +316,11 @@ describe('Repository Search Integration', () => {
         totalFetched: 2,
         totalStarred: 2,
       });
+      // Return empty results for search to trigger "No repos found" state
       mockSearchStarredRepositories.mockResolvedValue({
-        repositories: [starredRepos[0]],
-        totalCount: 1,
-        apiSearchResultTotal: 1,
+        repositories: [],
+        totalCount: 0,
+        apiSearchResultTotal: 0,
       });
 
       renderForIntegration(<StarsPage />, {
@@ -321,35 +328,44 @@ describe('Repository Search Integration', () => {
       });
 
       // Wait for browse mode
-      await waitFor(() => {
-        expect(screen.getByText('user/repo-1')).toBeInTheDocument();
-        expect(screen.getByText('user/repo-2')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'repo-1' })).toBeInTheDocument();
+          expect(screen.getByRole('heading', { name: 'repo-2' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
-      // Search
+      // Open collapsed search and enter query that returns no results
+      await user.click(screen.getByRole('button', { name: /open search/i }));
       const searchInput = screen.getByPlaceholderText(/search your starred/i);
-      await user.type(searchInput, 'repo-1');
-      await user.click(screen.getByRole('button', { name: /search/i }));
+      await user.type(searchInput, 'nonexistent');
+      await user.keyboard('{Enter}');
 
-      await waitFor(() => {
-        expect(screen.queryByText('user/repo-2')).not.toBeInTheDocument();
-      });
+      // Should show no results state with clear button
+      await waitFor(
+        () => {
+          expect(screen.getByText(/no repos found/i)).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
-      // Clear search using the clear button (in CollapsibleSearch)
-      const clearButton = screen.getByRole('button', { name: /clear/i });
-      await user.click(clearButton);
+      // Click "Clear search" button to return to browse mode
+      await user.click(screen.getByRole('button', { name: /clear search/i }));
 
       // Should return to browse mode showing all repos
-      await waitFor(() => {
-        expect(screen.getByText('user/repo-1')).toBeInTheDocument();
-        expect(screen.getByText('user/repo-2')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'repo-1' })).toBeInTheDocument();
+          expect(screen.getByRole('heading', { name: 'repo-2' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
   });
 
   describe('Search Result Badges', () => {
-    // TODO: Fix timing issues with badge rendering mocking
-    it.skip('marks starred repos with badge in explore results', async () => {
+    it('marks starred repos with badge in explore results', async () => {
       const user = userEvent.setup();
 
       // User has starred repo-1 but not repo-2
@@ -382,18 +398,17 @@ describe('Repository Search Integration', () => {
       await user.click(screen.getByRole('button', { name: /search/i }));
 
       // Wait for results
-      await waitFor(() => {
-        expect(screen.getByText('owner/starred-repo')).toBeInTheDocument();
-        expect(screen.getByText('owner/unstarred-repo')).toBeInTheDocument();
-      });
+      await waitFor(
+        () => {
+          expect(screen.getByRole('heading', { name: 'starred-repo' })).toBeInTheDocument();
+          expect(screen.getByRole('heading', { name: 'unstarred-repo' })).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
 
       // The starred repo should have a star badge
-      // Find the starred badge by looking for it near the starred repo
-      const starredCard = screen.getByText('owner/starred-repo').closest('article');
-      expect(starredCard).toBeInTheDocument();
-      // Check for starred badge within the card
-      const badge = starredCard?.querySelector('[data-testid="starred-badge"]');
-      expect(badge).toBeInTheDocument();
+      const starredBadge = screen.getByRole('status', { name: /starred repository/i });
+      expect(starredBadge).toBeInTheDocument();
     });
   });
 
