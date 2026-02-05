@@ -156,43 +156,67 @@ describe('Repository Search Integration', () => {
 
     it('changes sort and re-fetches', async () => {
       const user = userEvent.setup();
-      const mockRepos = [createMockRepository({ id: 1, name: 'test-repo' })];
 
-      mockSearchRepositories.mockResolvedValue({
-        repositories: mockRepos,
-        totalCount: 1,
-        apiSearchResultTotal: 1,
+      // Two repos with different star counts
+      const lowStarsRepo = createMockRepository({
+        id: 1,
+        name: 'low-stars-repo',
+        stargazers_count: 10,
+      });
+      const highStarsRepo = createMockRepository({
+        id: 2,
+        name: 'high-stars-repo',
+        stargazers_count: 1000,
+      });
+
+      // Mock returns different order based on sort param
+      mockSearchRepositories.mockImplementation(async (_token, _query, _page, _perPage, sort) => {
+        const repos =
+          sort === 'stars'
+            ? [highStarsRepo, lowStarsRepo] // sorted by stars desc
+            : [lowStarsRepo, highStarsRepo]; // default order (best-match)
+        return { repositories: repos, totalCount: 2, apiSearchResultTotal: 2 };
       });
 
       renderForIntegration(<ExplorePage />, {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // First search
+      // First search (default sort: best-match)
       const searchInput = screen.getByPlaceholderText(/search all github/i);
       await user.type(searchInput, 'test');
       await user.click(screen.getByRole('button', { name: /search/i }));
 
+      // Verify initial order: low-stars first (best-match order)
       await waitFor(() => {
-        expect(screen.getByText('test-repo')).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings[0]).toHaveTextContent('low-stars-repo');
+        expect(headings[1]).toHaveTextContent('high-stars-repo');
       });
 
-      // Change sort (button has aria-label="Sort repositories")
+      // Change sort to "Most Stars"
       const sortButton = screen.getByRole('button', { name: /sort repositories/i });
       await user.click(sortButton);
       await user.click(screen.getByRole('option', { name: /most stars/i }));
 
-      // Should re-fetch with new sort
+      // Verify API called with correct sort param
       await waitFor(() => {
         expect(mockSearchRepositories).toHaveBeenLastCalledWith(
           mockToken,
           'test',
           1,
           30,
-          'stars', // new sort
+          'stars',
           expect.any(AbortSignal),
           expect.anything()
         );
+      });
+
+      // Verify UI updated: high-stars now first
+      await waitFor(() => {
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings[0]).toHaveTextContent('high-stars-repo');
+        expect(headings[1]).toHaveTextContent('low-stars-repo');
       });
     });
 
@@ -437,47 +461,81 @@ describe('Repository Search Integration', () => {
   describe('Sort Persistence', () => {
     it('maintains sort selection when clearing and re-searching', async () => {
       const user = userEvent.setup();
-      const mockRepos = [createMockRepository({ id: 1, name: 'test-repo' })];
 
-      mockSearchRepositories.mockResolvedValue({
-        repositories: mockRepos,
-        totalCount: 1,
-        apiSearchResultTotal: 1,
+      // Two repos with different star counts
+      const lowStarsRepo = createMockRepository({
+        id: 1,
+        name: 'low-stars-repo',
+        stargazers_count: 10,
+      });
+      const highStarsRepo = createMockRepository({
+        id: 2,
+        name: 'high-stars-repo',
+        stargazers_count: 1000,
+      });
+
+      // Mock returns different order based on sort param
+      mockSearchRepositories.mockImplementation(async (_token, _query, _page, _perPage, sort) => {
+        const repos =
+          sort === 'stars'
+            ? [highStarsRepo, lowStarsRepo] // sorted by stars desc
+            : [lowStarsRepo, highStarsRepo]; // default order (best-match)
+        return { repositories: repos, totalCount: 2, apiSearchResultTotal: 2 };
       });
 
       renderForIntegration(<ExplorePage />, {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // Search
+      // First search (default sort: best-match)
       const searchInput = screen.getByPlaceholderText(/search all github/i);
       await user.type(searchInput, 'test');
       await user.click(screen.getByRole('button', { name: /search/i }));
 
+      // Verify initial order: low-stars first (best-match order)
       await waitFor(() => {
-        expect(screen.getByText('test-repo')).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings[0]).toHaveTextContent('low-stars-repo');
+        expect(headings[1]).toHaveTextContent('high-stars-repo');
       });
 
-      // Change sort to "Most Stars" (button has aria-label="Sort repositories")
-      await user.click(screen.getByRole('button', { name: /sort repositories/i }));
+      // Change sort to "Most Stars"
+      const sortButton = screen.getByRole('button', { name: /sort repositories/i });
+      await user.click(sortButton);
       await user.click(screen.getByRole('option', { name: /most stars/i }));
 
-      // Clear and search again
+      // Verify sort changed: high-stars now first
+      await waitFor(() => {
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings[0]).toHaveTextContent('high-stars-repo');
+      });
+
+      // Clear and search again with different query
       await user.clear(searchInput);
       await user.type(searchInput, 'another');
       await user.click(screen.getByRole('button', { name: /search/i }));
 
-      // Sort should still be "Most Stars"
+      // Verify sort dropdown still shows "Most Stars"
       await waitFor(() => {
-        expect(mockSearchRepositories).toHaveBeenLastCalledWith(
-          expect.anything(),
-          'another',
-          expect.anything(),
-          expect.anything(),
-          'stars', // Sort should be preserved
-          expect.anything(),
-          expect.anything()
-        );
+        expect(sortButton).toHaveTextContent(/most stars/i);
+      });
+
+      // Verify API called with preserved sort param
+      expect(mockSearchRepositories).toHaveBeenLastCalledWith(
+        expect.anything(),
+        'another',
+        expect.anything(),
+        expect.anything(),
+        'stars', // Sort should be preserved
+        expect.anything(),
+        expect.anything()
+      );
+
+      // Verify results still render in star-sorted order
+      await waitFor(() => {
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings[0]).toHaveTextContent('high-stars-repo');
+        expect(headings[1]).toHaveTextContent('low-stars-repo');
       });
     });
   });
