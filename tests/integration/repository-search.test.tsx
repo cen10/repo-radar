@@ -469,7 +469,6 @@ describe('Repository Search Integration', () => {
     it('maintains sort selection when clearing and re-searching', async () => {
       const user = userEvent.setup();
 
-      // Two repos with different star counts
       const lowStarsRepo = createMockRepository({
         id: 1,
         name: 'low-stars-repo',
@@ -481,12 +480,11 @@ describe('Repository Search Integration', () => {
         stargazers_count: 1000,
       });
 
-      // Mock returns different order based on sort param
       mockSearchRepositories.mockImplementation(async (_token, _query, _page, _perPage, sort) => {
         const repos =
           sort === 'stars'
             ? [highStarsRepo, lowStarsRepo] // sorted by stars desc
-            : [lowStarsRepo, highStarsRepo]; // default order (best-match)
+            : [lowStarsRepo, highStarsRepo]; // sorted by best-match (default)
         return { repositories: repos, totalCount: 2, apiSearchResultTotal: 2 };
       });
 
@@ -494,7 +492,6 @@ describe('Repository Search Integration', () => {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // First search (default sort: best-match)
       const searchInput = screen.getByPlaceholderText(/search all github/i);
       await user.type(searchInput, 'test');
       await user.click(screen.getByRole('button', { name: /search/i }));
@@ -506,7 +503,6 @@ describe('Repository Search Integration', () => {
         expect(headings[1]).toHaveTextContent('high-stars-repo');
       });
 
-      // Change sort to "Most Stars"
       const sortButton = screen.getByRole('button', { name: /sort repositories/i });
       await user.click(sortButton);
       await user.click(screen.getByRole('option', { name: /most stars/i }));
@@ -517,7 +513,6 @@ describe('Repository Search Integration', () => {
         expect(headings[0]).toHaveTextContent('high-stars-repo');
       });
 
-      // Clear and search again with different query
       await user.clear(searchInput);
       await user.type(searchInput, 'another');
       await user.click(screen.getByRole('button', { name: /search/i }));
@@ -528,15 +523,11 @@ describe('Repository Search Integration', () => {
       });
 
       // Verify API called with preserved sort param
-      expect(mockSearchRepositories).toHaveBeenLastCalledWith(
-        expect.anything(),
-        'another',
-        expect.anything(),
-        expect.anything(),
-        'stars', // Sort should be preserved
-        expect.anything(),
-        expect.anything()
-      );
+      // searchRepositories(token, query, page, perPage, sort, signal, starredIds)
+      const lastCall = mockSearchRepositories.mock.calls.at(-1);
+      const [, query, , , sort] = lastCall ?? [];
+      expect(query).toBe('another');
+      expect(sort).toBe('stars');
 
       // Verify results still render in star-sorted order
       await waitFor(() => {
