@@ -158,8 +158,14 @@ export function createGitHubServiceMock() {
     // Starred repos
     fetchStarredRepoCount: vi.fn<(token: string) => Promise<number>>().mockResolvedValue(0),
     fetchAllStarredRepositories: vi
-      .fn<(token: string) => Promise<Repository[]>>()
-      .mockResolvedValue([]),
+      .fn<
+        (token: string) => Promise<{
+          repositories: Repository[];
+          totalFetched: number;
+          totalStarred: number;
+        }>
+      >()
+      .mockResolvedValue({ repositories: [], totalFetched: 0, totalStarred: 0 }),
     fetchStarredRepositories: vi.fn().mockResolvedValue({
       repositories: [],
       totalCount: 0,
@@ -210,7 +216,11 @@ export function createGitHubServiceMock() {
     },
 
     withStarredRepos(repositories: Repository[]) {
-      this.fetchAllStarredRepositories.mockResolvedValue(repositories);
+      this.fetchAllStarredRepositories.mockResolvedValue({
+        repositories,
+        totalFetched: repositories.length,
+        totalStarred: repositories.length,
+      });
       this.fetchStarredRepoCount.mockResolvedValue(repositories.length);
       return this;
     },
