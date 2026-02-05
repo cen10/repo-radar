@@ -7,7 +7,7 @@ import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRadar } from '../../mocks/factories';
 
 // Mock the radar service
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadars: vi.fn(),
 }));
 

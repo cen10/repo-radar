@@ -36,12 +36,12 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock Supabase client globally for all tests
-vi.mock('../src/services/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   supabase: mockSupabaseClient,
 }));
 
 // Mock logger globally to silence console output in tests
-vi.mock('../src/utils/logger', () => ({
+vi.mock('@/utils/logger', () => ({
   logger: mockLogger,
 }));
 

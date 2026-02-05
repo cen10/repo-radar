@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { renderWithRouter } from '../../helpers/render';
 import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
-vi.mock('../../../src/hooks/use-auth');
+vi.mock('@/hooks/use-auth');
 
 const mockUser = createMockUser();
 

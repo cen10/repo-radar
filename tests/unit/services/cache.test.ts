@@ -12,7 +12,7 @@ import {
 // Mock Supabase client
 const mockFrom = vi.fn();
 
-vi.mock('../../../src/services/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
   },

@@ -9,16 +9,16 @@ import type { RadarRepo } from '@/types/database';
 import type { Repository } from '@/types';
 
 // Mock the services
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadarRepos: vi.fn(),
 }));
 
-vi.mock('../../../src/services/github', () => ({
+vi.mock('@/services/github', () => ({
   fetchRepositoriesByIds: vi.fn(),
 }));
 
 // Mock github-token service to prevent fallback token usage in tests
-vi.mock('../../../src/services/github-token', () => ({
+vi.mock('@/services/github-token', () => ({
   getValidGitHubToken: (token: string | null) => token,
   hasFallbackToken: () => false,
 }));

@@ -10,7 +10,7 @@ import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
 
 // Mock the radar service
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadarsContainingRepo: vi.fn(),
   getRadars: vi.fn(),
   addRepoToRadar: vi.fn(),

@@ -20,7 +20,7 @@ const mockRemoveRepoFromRadar = vi.fn<(radarId: string, githubRepoId: number) =>
 const mockGetRadarsContainingRepo = vi.fn<(githubRepoId: number) => Promise<string[]>>();
 const mockGetAllRadarRepoIds = vi.fn<() => Promise<Set<number>>>();
 
-vi.mock('../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadars: () => mockGetRadars(),
   createRadar: (name: string) => mockCreateRadar(name),
   deleteRadar: (id: string) => mockDeleteRadar(id),
@@ -44,7 +44,7 @@ const SidebarContextProvider = ({ children }: { children: ReactNode }) => {
 };
 
 // Mock useSidebarContext since it's not exported
-vi.mock('../../src/components/Sidebar', async (importOriginal) => {
+vi.mock('@/components/Sidebar', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../src/components/Sidebar')>();
   return {
     ...original,

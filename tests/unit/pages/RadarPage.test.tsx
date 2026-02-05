@@ -12,9 +12,9 @@ import { createMockRepository } from '../../mocks/factories';
 import type { Radar } from '@/types/database';
 
 // Mock the hooks
-vi.mock('../../../src/hooks/useRadar');
-vi.mock('../../../src/hooks/useRadarRepositories');
-vi.mock('../../../src/hooks/useAuth');
+vi.mock('@/hooks/useRadar');
+vi.mock('@/hooks/useRadarRepositories');
+vi.mock('@/hooks/useAuth');
 
 // Local factory for Radar type (without repo_count) - useRadar returns Radar, not RadarWithCount
 const createMockRadar = (overrides?: Partial<Radar>): Radar => ({

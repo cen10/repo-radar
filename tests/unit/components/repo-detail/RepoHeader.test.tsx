@@ -8,7 +8,7 @@ import { createTestQueryClient } from '../../../helpers/query-client';
 import { createMockRepository } from '../../../mocks/factories';
 
 // Mock RadarIconButton to avoid radar service dependencies
-vi.mock('../../../../src/components/RadarIconButton', () => ({
+vi.mock('@/components/RadarIconButton', () => ({
   RadarIconButton: ({ githubRepoId }: { githubRepoId: number }) => (
     <button data-testid="radar-icon-button">Radar {githubRepoId}</button>
   ),

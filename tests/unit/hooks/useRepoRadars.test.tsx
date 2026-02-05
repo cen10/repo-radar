@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRepoRadars } from '@/hooks/useRepoRadars';
 import * as radar from '@/services/radar';
 
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadarsContainingRepo: vi.fn(),
 }));
 

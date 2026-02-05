@@ -7,17 +7,17 @@ import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRelease } from '../../mocks/factories';
 
 // Mock the github service
-vi.mock('../../../src/services/github', () => ({
+vi.mock('@/services/github', () => ({
   fetchRepositoryReleases: vi.fn(),
 }));
 
 // Mock useAuthErrorHandler since it requires AuthProvider and Router
-vi.mock('../../../src/hooks/useAuthErrorHandler', () => ({
+vi.mock('@/hooks/useAuthErrorHandler', () => ({
   useAuthErrorHandler: vi.fn(),
 }));
 
 // Mock github-token service to prevent fallback token usage in tests
-vi.mock('../../../src/services/github-token', () => ({
+vi.mock('@/services/github-token', () => ({
   getValidGitHubToken: (token: string | null) => token,
   hasFallbackToken: () => false,
 }));

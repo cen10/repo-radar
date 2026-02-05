@@ -45,7 +45,7 @@ type RadarServiceMethods =
  *   .withRadars([mockRadar])
  *   .withError('createRadar', new Error('Failed'));
  *
- * vi.mock('../../src/services/radar', () => radarService);
+ * vi.mock('@/services/radar', () => radarService);
  * ```
  */
 export function createRadarServiceMock() {
@@ -147,7 +147,7 @@ type GitHubServiceMethods =
  *   .withSearchResults([repo1, repo2], 100)
  *   .withStarredRepos([repo1]);
  *
- * vi.mock('../../src/services/github', () => githubService);
+ * vi.mock('@/services/github', () => githubService);
  * ```
  */
 export function createGitHubServiceMock() {

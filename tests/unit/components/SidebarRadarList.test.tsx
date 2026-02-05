@@ -11,7 +11,7 @@ import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
 
 // Mock the radar service
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadars: vi.fn(),
   RADAR_LIMITS: {
     MAX_RADARS_PER_USER: 5,

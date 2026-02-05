@@ -7,7 +7,7 @@ import * as radar from '@/services/radar';
 import type { Radar } from '@/types/database';
 
 // Mock the radar service
-vi.mock('../../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadar: vi.fn(),
 }));
 

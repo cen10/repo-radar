@@ -16,7 +16,7 @@ const mockFetchAllStarredRepositories = vi.fn<() => Promise<AllStarredData>>();
 const mockFetchStarredRepositories = vi.fn();
 const mockFetchStarredRepoCount = vi.fn();
 
-vi.mock('../../src/services/github', () => ({
+vi.mock('@/services/github', () => ({
   searchRepositories: (...args: unknown[]) => mockSearchRepositories(...args),
   searchStarredRepositories: (...args: unknown[]) => mockSearchStarredRepositories(...args),
   fetchAllStarredRepositories: (token: string) => mockFetchAllStarredRepositories(token),
@@ -26,13 +26,13 @@ vi.mock('../../src/services/github', () => ({
 }));
 
 // Mock github-token service
-vi.mock('../../src/services/github-token', () => ({
+vi.mock('@/services/github-token', () => ({
   getValidGitHubToken: (token: string | null) => token ?? 'fallback-token',
   hasFallbackToken: () => false,
 }));
 
 // Mock radar service (needed by RepoCard)
-vi.mock('../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadars: vi.fn().mockResolvedValue([]),
   getRadarsContainingRepo: vi.fn().mockResolvedValue([]),
   getAllRadarRepoIds: vi.fn().mockResolvedValue(new Set()),
@@ -44,7 +44,7 @@ vi.mock('../../src/services/radar', () => ({
 }));
 
 // Mock intersection observer for infinite scroll
-vi.mock('../../src/hooks/useIntersectionObserver', () => ({
+vi.mock('@/hooks/useIntersectionObserver', () => ({
   useIntersectionObserver: () => ({
     ref: vi.fn(),
     isIntersecting: false,

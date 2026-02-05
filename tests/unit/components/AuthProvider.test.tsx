@@ -18,7 +18,7 @@ import type { GetSessionResponse } from '../../mocks/supabase';
 import { mockLogger } from '../../mocks/logger';
 
 // Mock github-token service to control stored token behavior
-vi.mock('../../../src/services/github-token', () => ({
+vi.mock('@/services/github-token', () => ({
   storeAccessToken: vi.fn(),
   getStoredAccessToken: vi.fn(() => null),
   clearStoredAccessToken: vi.fn(),

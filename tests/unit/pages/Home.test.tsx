@@ -8,7 +8,7 @@ import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();
-vi.mock('../../../src/hooks/useAuth', () => ({
+vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 

@@ -47,7 +47,7 @@ import { createRadarServiceMock, createGitHubServiceMock } from '../helpers/mock
 const radarService = createRadarServiceMock();
 radarService.getRadars.mockResolvedValue([mockRadar]);
 
-vi.mock('../../src/services/radar', () => radarService);
+vi.mock('@/services/radar', () => radarService);
 
 // Render with all providers
 const { queryClient } = renderForIntegration(<App />, {
@@ -62,13 +62,13 @@ Integration tests mock services (not hooks) to test real state management:
 
 ```typescript
 // Good: Mock the service, use real hooks
-vi.mock('../../src/services/radar', () => ({
+vi.mock('@/services/radar', () => ({
   getRadars: vi.fn().mockResolvedValue([]),
   createRadar: vi.fn().mockResolvedValue(newRadar),
 }));
 
 // Bad: Mock the hook (this is for unit tests)
-vi.mock('../../src/hooks/useRadars', () => ({
+vi.mock('@/hooks/useRadars', () => ({
   useRadars: () => ({ data: [], isLoading: false }),
 }));
 ```

@@ -7,7 +7,7 @@ import type { Repository } from '@/types';
 import { createMockRepository } from '../../mocks/factories';
 
 // Mock the intersection observer hook
-vi.mock('../../../src/hooks/useIntersectionObserver', () => ({
+vi.mock('@/hooks/useIntersectionObserver', () => ({
   useIntersectionObserver: () => ({
     ref: vi.fn(),
     isIntersecting: false,
@@ -19,7 +19,7 @@ interface MockRepoCardProps {
 }
 
 // Mock RepoCard component
-vi.mock('../../../src/components/RepoCard', () => ({
+vi.mock('@/components/RepoCard', () => ({
   RepoCard: ({ repository }: MockRepoCardProps) => (
     <div data-testid={`repo-card-${repository.id}`}>
       <h3>{repository.name}</h3>
