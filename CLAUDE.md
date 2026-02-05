@@ -114,9 +114,11 @@ Component → TanStack Query hook → Service function → Data source
 
 ### Cache Invalidation Strategy
 
-**Rule: Always invalidate after mutations.** Never use `setQueryData()` without a corresponding `invalidateQueries()`. Optimistic-only updates are a bug waiting to happen - if the server rejects the write, the UI lies to the user with no mechanism to self-correct.
+**Rule: Always invalidate after mutations.** When using `setQueryData()` for optimistic updates during a write operation, always follow with `invalidateQueries()`. Optimistic-only updates are a bug waiting to happen - if the server rejects the write, the UI lies to the user with no mechanism to self-correct.
 
-**Two patterns based on interaction type:**
+**Exception: Cache enrichment from read operations.** When you learn new information from a read-only API call (not a mutation), you can use `setQueryData()` without invalidation. Example: `useRepository.ts` discovers a repo is starred via `isRepositoryStarred()` (a GET request) and adds it to the `allStarredRepositories` cache. Invalidating here would be wrong - it would trigger a refetch that only returns the first 500 starred repos, potentially losing the repo we just added.
+
+**Two patterns for mutations based on interaction type:**
 
 1. **Inline interactions** (toggles, checkboxes) - Optimistic + Invalidate:
    ```typescript
