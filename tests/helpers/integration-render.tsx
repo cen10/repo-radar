@@ -18,12 +18,6 @@ interface IntegrationRenderResult extends RenderResult {
   authContext: AuthContextType;
 }
 
-interface IntegrationWrapperResult {
-  wrapper: ({ children }: { children: ReactNode }) => ReactElement;
-  queryClient: QueryClient;
-  authContext: AuthContextType;
-}
-
 /**
  * Renders a component with all providers needed for integration testing.
  *
@@ -76,41 +70,6 @@ export function renderForIntegration(
 
   return {
     ...rendered,
-    queryClient: client,
-    authContext,
-  };
-}
-
-/**
- * Creates an integration render wrapper for renderHook.
- *
- * @example
- * ```tsx
- * const { wrapper, queryClient, authContext } = createIntegrationWrapper({
- *   authState: { user: mockUser },
- * });
- *
- * const { result } = renderHook(() => useMyHook(), { wrapper });
- * ```
- */
-export function createIntegrationWrapper(
-  options: Omit<IntegrationRenderOptions, 'routes'> = {}
-): IntegrationWrapperResult {
-  const { route = '/', authState = {}, queryClient } = options;
-
-  const client = queryClient ?? createTestQueryClient();
-  const authContext = createMockAuthContext(authState);
-
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>
-      <AuthContext.Provider value={authContext}>
-        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
-      </AuthContext.Provider>
-    </QueryClientProvider>
-  );
-
-  return {
-    wrapper,
     queryClient: client,
     authContext,
   };
