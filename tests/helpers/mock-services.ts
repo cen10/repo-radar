@@ -2,6 +2,27 @@ import { vi } from 'vitest';
 import type { RadarWithCount, Radar, RadarRepo } from '../../src/types/database';
 import type { Repository, Release } from '../../src/types';
 
+function mockWithError<T extends Record<string, unknown>>(
+  mock: T,
+  method: keyof T,
+  error: Error
+): T {
+  const fn = mock[method];
+  if (typeof fn === 'function' && 'mockRejectedValue' in fn) {
+    (fn as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+  }
+  return mock;
+}
+
+function resetMock<T extends Record<string, unknown>>(mock: T): T {
+  Object.values(mock).forEach((value) => {
+    if (typeof value === 'function' && 'mockReset' in value) {
+      (value as ReturnType<typeof vi.fn>).mockReset();
+    }
+  });
+  return mock;
+}
+
 type RadarServiceMethods =
   | 'getRadars'
   | 'getRadar'
@@ -86,20 +107,11 @@ export function createRadarServiceMock() {
     },
 
     withError(method: RadarServiceMethods, error: Error) {
-      const fn = this[method];
-      if (typeof fn === 'function' && 'mockRejectedValue' in fn) {
-        (fn as ReturnType<typeof vi.fn>).mockRejectedValue(error);
-      }
-      return this;
+      return mockWithError(this, method, error);
     },
 
     reset() {
-      Object.values(this).forEach((value) => {
-        if (typeof value === 'function' && 'mockReset' in value) {
-          (value as ReturnType<typeof vi.fn>).mockReset();
-        }
-      });
-      return this;
+      return resetMock(this);
     },
   };
 
@@ -228,20 +240,11 @@ export function createGitHubServiceMock() {
     },
 
     withError(method: GitHubServiceMethods, error: Error) {
-      const fn = this[method];
-      if (typeof fn === 'function' && 'mockRejectedValue' in fn) {
-        (fn as ReturnType<typeof vi.fn>).mockRejectedValue(error);
-      }
-      return this;
+      return mockWithError(this, method, error);
     },
 
     reset() {
-      Object.values(this).forEach((value) => {
-        if (typeof value === 'function' && 'mockReset' in value) {
-          (value as ReturnType<typeof vi.fn>).mockReset();
-        }
-      });
-      return this;
+      return resetMock(this);
     },
   };
 
