@@ -7,12 +7,12 @@ import { renderForIntegration } from '../helpers/integration-render';
 import { createMockRepository, createMockUser } from '../mocks/factories';
 import ExplorePage from '@/pages/ExplorePage';
 import StarsPage from '@/pages/StarsPage';
-import type { Repository, AllStarredData } from '@/types';
+import type { AllStarredData } from '@/types';
 
 // Mock GitHub service
 const mockSearchRepositories = vi.fn();
 const mockSearchStarredRepositories = vi.fn();
-const mockFetchAllStarredRepositories = vi.fn<() => Promise<AllStarredData>>();
+const mockFetchAllStarredRepositories = vi.fn<(token: string) => Promise<AllStarredData>>();
 const mockFetchStarredRepositories = vi.fn();
 const mockFetchStarredRepoCount = vi.fn();
 
@@ -71,6 +71,7 @@ describe('Repository Search Integration', () => {
     });
     mockFetchAllStarredRepositories.mockResolvedValue({
       repositories: [],
+      totalFetched: 0,
       totalStarred: 0,
     });
     // fetchStarredRepositories returns Repository[] directly
@@ -251,6 +252,7 @@ describe('Repository Search Integration', () => {
       mockFetchStarredRepoCount.mockResolvedValue(2);
       mockFetchAllStarredRepositories.mockResolvedValue({
         repositories: starredRepos,
+        totalFetched: 2,
         totalStarred: 2,
       });
       mockSearchStarredRepositories.mockResolvedValue({
@@ -306,6 +308,7 @@ describe('Repository Search Integration', () => {
       mockFetchStarredRepoCount.mockResolvedValue(2);
       mockFetchAllStarredRepositories.mockResolvedValue({
         repositories: starredRepos,
+        totalFetched: 2,
         totalStarred: 2,
       });
       mockSearchStarredRepositories.mockResolvedValue({
