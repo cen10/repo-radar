@@ -2,7 +2,10 @@ Create a plan document in `docs/potential-plans/` for something we just
 discussed that we're not implementing right now but don't want to lose.
 
 Use the filename format `kebab-case-topic.md` (e.g.,
-`coordinated-loading-states.md`, `button-component.md`). No numeric prefixes.
+`coordinated-loading-states.md`, `button-component.md`). Before creating the file,
+check the existing files in that directory to find the highest numeric prefix
+(e.g., if `003-fixture-chaining-pattern.md` exists, the next file should start with
+`004-`). Zero-pad to three digits.
 
 This doc is a parking lot for future work. I'll come back to it when the time
 is right — either because a related task makes it natural to pick up, a bug
@@ -63,9 +66,11 @@ Brief explanation of the approach, followed by a code snippet showing what
 it would look like in practice.
 
 **Pros:**
+
 - Concrete benefit tied to this specific situation
 
 **Cons:**
+
 - Concrete drawback or trade-off
 
 If we genuinely only discussed one approach and it's clearly the right one,
@@ -93,8 +98,8 @@ Phase 3: Migrate existing usage").
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
+| File                  | Changes                           |
+| --------------------- | --------------------------------- |
 | `src/path/to/file.ts` | Brief description of what changes |
 
 Include both new files to create and existing files to modify.
