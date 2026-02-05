@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 
@@ -351,7 +351,6 @@ describe('Repository Search Integration', () => {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // Wait for browse mode
       await waitFor(
         () => {
           expect(screen.getByRole('heading', { name: 'repo-1' })).toBeInTheDocument();
@@ -366,7 +365,6 @@ describe('Repository Search Integration', () => {
       await user.type(searchInput, 'nonexistent');
       await user.keyboard('{Enter}');
 
-      // Should show no results state with clear button
       await waitFor(
         () => {
           expect(screen.getByText(/no repos found/i)).toBeInTheDocument();
@@ -374,7 +372,6 @@ describe('Repository Search Integration', () => {
         { timeout: 2000 }
       );
 
-      // Click "Clear search" button to return to browse mode
       await user.click(screen.getByRole('button', { name: /clear search/i }));
 
       // Should return to browse mode showing all repos
@@ -416,12 +413,10 @@ describe('Repository Search Integration', () => {
         authState: { user: mockUser, providerToken: mockToken },
       });
 
-      // Search
       const searchInput = screen.getByPlaceholderText(/search all github/i);
       await user.type(searchInput, 'repo');
       await user.click(screen.getByRole('button', { name: /search/i }));
 
-      // Wait for results
       await waitFor(
         () => {
           expect(screen.getByRole('heading', { name: 'starred-repo' })).toBeInTheDocument();
@@ -430,9 +425,21 @@ describe('Repository Search Integration', () => {
         { timeout: 2000 }
       );
 
-      // The starred repo should have a star badge
-      const starredBadge = screen.getByRole('status', { name: /starred repository/i });
-      expect(starredBadge).toBeInTheDocument();
+      // Find each repo card by its heading, then check for badge within
+      const starredCard = screen.getByRole('heading', { name: 'starred-repo' }).closest('article')!;
+      const unstarredCard = screen
+        .getByRole('heading', { name: 'unstarred-repo' })
+        .closest('article')!;
+
+      // Starred repo should have the badge
+      expect(
+        within(starredCard).getByRole('status', { name: /starred repository/i })
+      ).toBeInTheDocument();
+
+      // Unstarred repo should NOT have the badge
+      expect(
+        within(unstarredCard).queryByRole('status', { name: /starred repository/i })
+      ).not.toBeInTheDocument();
     });
   });
 
