@@ -12,16 +12,16 @@ import type { AllStarredData } from '@/types';
 // Mock GitHub service
 const mockSearchRepositories = vi.fn();
 const mockSearchStarredRepositories = vi.fn();
-const mockFetchAllStarredRepositories = vi.fn<(token: string) => Promise<AllStarredData>>();
+const mockFetchAllStarredRepositories = vi.fn<(...args: unknown[]) => Promise<AllStarredData>>();
 const mockFetchStarredRepositories = vi.fn();
 const mockFetchStarredRepoCount = vi.fn();
 
 vi.mock('@/services/github', () => ({
   searchRepositories: (...args: unknown[]) => mockSearchRepositories(...args),
   searchStarredRepositories: (...args: unknown[]) => mockSearchStarredRepositories(...args),
-  fetchAllStarredRepositories: (token: string) => mockFetchAllStarredRepositories(token),
+  fetchAllStarredRepositories: (...args: unknown[]) => mockFetchAllStarredRepositories(...args),
   fetchStarredRepositories: (...args: unknown[]) => mockFetchStarredRepositories(...args),
-  fetchStarredRepoCount: (token: string) => mockFetchStarredRepoCount(token),
+  fetchStarredRepoCount: (...args: unknown[]) => mockFetchStarredRepoCount(...args),
   MAX_STARRED_REPOS: 500,
 }));
 
@@ -74,7 +74,6 @@ describe('Repository Search Integration', () => {
       totalFetched: 0,
       totalStarred: 0,
     });
-    // fetchStarredRepositories returns Repository[] directly
     mockFetchStarredRepositories.mockResolvedValue([]);
     mockFetchStarredRepoCount.mockResolvedValue(0);
   });
