@@ -8,15 +8,15 @@ import { createMockRadar, createMockUser, createMockRepository } from '../mocks/
 import { CreateRadarModal } from '@/components/CreateRadarModal';
 import { SidebarRadarList } from '@/components/SidebarRadarList';
 import { ManageRadarsModal } from '@/components/ManageRadarsModal';
-import type { RadarWithCount } from '@/types/database';
+import type { RadarWithCount, Radar, RadarRepo } from '@/types/database';
 
 // Mock the radar service at the module level
 const mockGetRadars = vi.fn<() => Promise<RadarWithCount[]>>();
-const mockCreateRadar = vi.fn();
-const mockDeleteRadar = vi.fn();
-const mockAddRepoToRadar = vi.fn();
-const mockRemoveRepoFromRadar = vi.fn();
-const mockGetRadarsContainingRepo = vi.fn<() => Promise<string[]>>();
+const mockCreateRadar = vi.fn<(name: string) => Promise<Radar>>();
+const mockDeleteRadar = vi.fn<(radarId: string) => Promise<void>>();
+const mockAddRepoToRadar = vi.fn<(radarId: string, githubRepoId: number) => Promise<RadarRepo>>();
+const mockRemoveRepoFromRadar = vi.fn<(radarId: string, githubRepoId: number) => Promise<void>>();
+const mockGetRadarsContainingRepo = vi.fn<(githubRepoId: number) => Promise<string[]>>();
 const mockGetAllRadarRepoIds = vi.fn<() => Promise<Set<number>>>();
 
 vi.mock('../../src/services/radar', () => ({
@@ -238,7 +238,12 @@ describe('Radar CRUD Integration', () => {
       mockGetRadars.mockResolvedValue([radar]);
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
-      mockAddRepoToRadar.mockResolvedValue({ radar_id: 'radar-1', github_repo_id: 123 });
+      mockAddRepoToRadar.mockResolvedValue({
+        id: 'radar-repo-1',
+        radar_id: 'radar-1',
+        github_repo_id: 123,
+        added_at: new Date().toISOString(),
+      });
 
       const { queryClient } = renderForIntegration(
         <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
@@ -323,7 +328,16 @@ describe('Radar CRUD Integration', () => {
       mockAddRepoToRadar.mockImplementation(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ radar_id: 'radar-1', github_repo_id: 123 }), 100)
+            setTimeout(
+              () =>
+                resolve({
+                  id: 'radar-repo-1',
+                  radar_id: 'radar-1',
+                  github_repo_id: 123,
+                  added_at: new Date().toISOString(),
+                }),
+              100
+            )
           )
       );
 
