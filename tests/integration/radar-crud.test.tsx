@@ -64,7 +64,7 @@ describe('Radar CRUD Integration', () => {
   });
 
   describe('Create Radar Flow', () => {
-    it('creates radar and invalidates cache on success', async () => {
+    it('creates radar and invalidates radars query on success', async () => {
       const user = userEvent.setup();
       const newRadar = createMockRadar({ id: 'new-radar', name: 'My New Radar' });
       mockCreateRadar.mockResolvedValue(newRadar);
@@ -79,15 +79,12 @@ describe('Radar CRUD Integration', () => {
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      // Fill in the form
       const input = screen.getByPlaceholderText(/machine learning/i);
       await user.type(input, 'My New Radar');
 
-      // Submit
       const submitButton = screen.getByRole('button', { name: /create/i });
       await user.click(submitButton);
 
-      // Wait for success
       await waitFor(() => {
         expect(mockCreateRadar).toHaveBeenCalledWith('My New Radar');
       });
@@ -97,7 +94,6 @@ describe('Radar CRUD Integration', () => {
         expect(onClose).toHaveBeenCalled();
       });
 
-      // Verify cache invalidation
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
     });
 
@@ -111,19 +107,16 @@ describe('Radar CRUD Integration', () => {
         authState: { user: mockUser },
       });
 
-      // Fill and submit
       const input = screen.getByPlaceholderText(/machine learning/i);
       await user.type(input, 'Duplicate Name');
 
       const submitButton = screen.getByRole('button', { name: /create/i });
       await user.click(submitButton);
 
-      // Wait for error
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent(/radar name already exists/i);
       });
 
-      // Modal should stay open
       expect(onClose).not.toHaveBeenCalled();
     });
 
@@ -134,15 +127,12 @@ describe('Radar CRUD Integration', () => {
         authState: { user: mockUser },
       });
 
-      // Try to submit with empty input
       const submitButton = screen.getByRole('button', { name: /create/i });
       expect(submitButton).toBeDisabled();
 
-      // Type whitespace only
       const input = screen.getByPlaceholderText(/machine learning/i);
       await user.type(input, '   ');
 
-      // Still disabled
       expect(submitButton).toBeDisabled();
       expect(mockCreateRadar).not.toHaveBeenCalled();
     });
@@ -163,7 +153,6 @@ describe('Radar CRUD Integration', () => {
         { authState: { user: mockUser } }
       );
 
-      // Wait for radars to load
       await waitFor(() => {
         expect(screen.getByText('Frontend Tools')).toBeInTheDocument();
         expect(screen.getByText('Backend Libraries')).toBeInTheDocument();
@@ -223,7 +212,6 @@ describe('Radar CRUD Integration', () => {
         expect(screen.getByText('Radar 0')).toBeInTheDocument();
       });
 
-      // Create button should be disabled
       const createButton = screen.getByRole('button', { name: /new radar/i });
       expect(createButton).toBeDisabled();
     });
@@ -232,7 +220,7 @@ describe('Radar CRUD Integration', () => {
   describe('Add/Remove Repo from Radar', () => {
     const mockRepository = createMockRepository({ id: 123, name: 'test-repo' });
 
-    it('adds repo to radar and invalidates cache', async () => {
+    it('adds repo to radar and invalidates radars and repo-radars queries', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
 
@@ -278,7 +266,7 @@ describe('Radar CRUD Integration', () => {
       });
     });
 
-    it('removes repo from radar and invalidates cache', async () => {
+    it('removes repo from radar and invalidates radars query', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 1 });
 

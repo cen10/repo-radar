@@ -162,7 +162,7 @@ describe('RenameRadarModal', () => {
       });
     });
 
-    it('invalidates radar caches on success', async () => {
+    it('invalidates radars list and specific radar queries on success', async () => {
       const user = userEvent.setup();
       const testQueryClient = createTestQueryClient();
       const invalidateQueriesSpy = vi.spyOn(testQueryClient, 'invalidateQueries');

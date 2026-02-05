@@ -137,7 +137,7 @@ describe('DeleteRadarModal', () => {
       });
     });
 
-    it('invalidates all radar caches on success', async () => {
+    it('invalidates radars list, specific radar, and radar repositories queries on success', async () => {
       const user = userEvent.setup();
       const testQueryClient = createTestQueryClient();
       const invalidateQueriesSpy = vi.spyOn(testQueryClient, 'invalidateQueries');
