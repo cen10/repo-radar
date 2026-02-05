@@ -241,18 +241,15 @@ describe('Radar CRUD Integration', () => {
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      // Wait for radars to load
       await waitFor(() => {
         expect(screen.getByText('My Radar')).toBeInTheDocument();
       });
 
-      // Click checkbox to add repo
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
       expect(checkbox).not.toBeChecked();
 
       await user.click(checkbox);
 
-      // Verify service was called
       await waitFor(() => {
         expect(mockAddRepoToRadar).toHaveBeenCalledWith('radar-1', 123);
       });
@@ -282,24 +279,19 @@ describe('Radar CRUD Integration', () => {
 
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-      // Wait for radars to load
       await waitFor(() => {
         expect(screen.getByText('My Radar')).toBeInTheDocument();
       });
 
-      // Checkbox should be checked
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
       expect(checkbox).toBeChecked();
 
-      // Click to remove
       await user.click(checkbox);
 
-      // Verify service was called
       await waitFor(() => {
         expect(mockRemoveRepoFromRadar).toHaveBeenCalledWith('radar-1', 123);
       });
 
-      // Verify cache invalidation
       await waitFor(() => {
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
       });
@@ -344,10 +336,8 @@ describe('Radar CRUD Integration', () => {
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
       expect(checkbox).not.toBeChecked();
 
-      // Click to add
       await user.click(checkbox);
 
-      // Checkbox should be checked immediately (optimistic update)
       expect(checkbox).toBeChecked();
     });
 
@@ -373,10 +363,8 @@ describe('Radar CRUD Integration', () => {
 
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
 
-      // Click to add
       await user.click(checkbox);
 
-      // Wait for error and revert
       await waitFor(() => {
         expect(checkbox).not.toBeChecked();
       });
