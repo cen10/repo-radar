@@ -400,9 +400,7 @@ describe('Repository Search Integration', () => {
       const user = userEvent.setup();
 
       // Never resolve the search
-      mockSearchRepositories.mockImplementation(
-        () => new Promise(() => {})
-      );
+      mockSearchRepositories.mockImplementation(() => new Promise(() => {}));
 
       renderForIntegration(<ExplorePage />, {
         authState: { user: mockUser, providerToken: mockToken },

@@ -23,5 +23,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["tests"]
+  "include": ["tests"],
+  "exclude": ["tests/e2e"]
 }

@@ -24,7 +24,8 @@ vi.mock('../../src/services/radar', () => ({
   createRadar: (name: string) => mockCreateRadar(name),
   deleteRadar: (id: string) => mockDeleteRadar(id),
   addRepoToRadar: (radarId: string, repoId: number) => mockAddRepoToRadar(radarId, repoId),
-  removeRepoFromRadar: (radarId: string, repoId: number) => mockRemoveRepoFromRadar(radarId, repoId),
+  removeRepoFromRadar: (radarId: string, repoId: number) =>
+    mockRemoveRepoFromRadar(radarId, repoId),
   getRadarsContainingRepo: (repoId: number) => mockGetRadarsContainingRepo(repoId),
   getAllRadarRepoIds: () => mockGetAllRadarRepoIds(),
   RADAR_LIMITS: {
@@ -320,12 +321,18 @@ describe('Radar CRUD Integration', () => {
 
       // Delay the service response to test optimistic update
       mockAddRepoToRadar.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ radar_id: 'radar-1', github_repo_id: 123 }), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ radar_id: 'radar-1', github_repo_id: 123 }), 100)
+          )
       );
 
-      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
-        authState: { user: mockUser },
-      });
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
 
       await waitFor(() => {
         expect(screen.getByText('My Radar')).toBeInTheDocument();
@@ -350,9 +357,12 @@ describe('Radar CRUD Integration', () => {
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
       mockAddRepoToRadar.mockRejectedValue(new Error('Failed to add'));
 
-      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
-        authState: { user: mockUser },
-      });
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
 
       await waitFor(() => {
         expect(screen.getByText('My Radar')).toBeInTheDocument();
@@ -387,9 +397,12 @@ describe('Radar CRUD Integration', () => {
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
-      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
-        authState: { user: mockUser },
-      });
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Full Radar')).toBeInTheDocument();
@@ -412,9 +425,12 @@ describe('Radar CRUD Integration', () => {
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
-      renderForIntegration(<ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />, {
-        authState: { user: mockUser },
-      });
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Has Room')).toBeInTheDocument();
