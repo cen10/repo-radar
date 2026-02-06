@@ -36,14 +36,7 @@ vi.mock('@/services/radar', () => ({
   },
 }));
 
-// Provide SidebarContext for SidebarRadarList
-const SidebarContextProvider = ({ children }: { children: ReactNode }) => {
-  // Using a simple wrapper that provides the context value inline
-  // The actual context is internal to Sidebar.tsx, so we mock the hook instead
-  return <>{children}</>;
-};
-
-// Mock useSidebarContext since it's not exported
+// Mock useSidebarContext since it's not exported from Sidebar.tsx
 vi.mock('@/components/Sidebar', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../src/components/Sidebar')>();
   return {
@@ -146,12 +139,9 @@ describe('Radar CRUD Integration', () => {
       ];
       mockGetRadars.mockResolvedValue(radars);
 
-      renderForIntegration(
-        <SidebarContextProvider>
-          <SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />
-        </SidebarContextProvider>,
-        { authState: { user: mockUser } }
-      );
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
 
       await waitFor(() => {
         expect(screen.getByText('Frontend Tools')).toBeInTheDocument();
@@ -166,12 +156,9 @@ describe('Radar CRUD Integration', () => {
     it('shows empty state when no radars exist', async () => {
       mockGetRadars.mockResolvedValue([]);
 
-      renderForIntegration(
-        <SidebarContextProvider>
-          <SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />
-        </SidebarContextProvider>,
-        { authState: { user: mockUser } }
-      );
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/no radars yet/i)).toBeInTheDocument();
@@ -181,12 +168,9 @@ describe('Radar CRUD Integration', () => {
     it('shows error state with retry button when loading fails', async () => {
       mockGetRadars.mockRejectedValue(new Error('Network error'));
 
-      renderForIntegration(
-        <SidebarContextProvider>
-          <SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />
-        </SidebarContextProvider>,
-        { authState: { user: mockUser } }
-      );
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/failed to load radars/i)).toBeInTheDocument();
@@ -201,12 +185,9 @@ describe('Radar CRUD Integration', () => {
       );
       mockGetRadars.mockResolvedValue(radars);
 
-      renderForIntegration(
-        <SidebarContextProvider>
-          <SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />
-        </SidebarContextProvider>,
-        { authState: { user: mockUser } }
-      );
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
 
       await waitFor(() => {
         expect(screen.getByText('Radar 0')).toBeInTheDocument();
