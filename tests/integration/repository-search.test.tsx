@@ -25,9 +25,12 @@ vi.mock('@/services/github', () => ({
   MAX_STARRED_REPOS: 500,
 }));
 
-// Mock github-token service
+// Mock github-token service - throws if test doesn't provide a token
 vi.mock('@/services/github-token', () => ({
-  getValidGitHubToken: (token: string | null) => token ?? 'fallback-token',
+  getValidGitHubToken: (token: string | null) => {
+    if (!token) throw new Error('Test setup error: no token provided to mock');
+    return token;
+  },
   hasFallbackToken: () => false,
 }));
 
