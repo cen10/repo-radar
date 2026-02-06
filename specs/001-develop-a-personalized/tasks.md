@@ -220,7 +220,7 @@ _Branch: `t106-integration-tests`_
 
 _Branch: `t109-e2e-ci`_
 
-- [ ] T109 Configure CI workflow for E2E tests in `.github/workflows/e2e.yml`
+- [x] T109 Configure CI workflow for E2E tests in `.github/workflows/e2e.yml`
 
 **Note**: E2E test files (`e2e/`) are not included in `npm run typecheck`. Decide whether to:
 1. Add `e2e/tsconfig.json` so typecheck catches E2E type errors, or
@@ -648,11 +648,26 @@ graph TD
 
 ## Migration Summary
 
-| Phase   | Tasks     | Description                                       |
-| ------- | --------- | ------------------------------------------------- |
-| Phase 0 | T100-T109 | Testing Infrastructure (Playwright + Integration) |
-| Phase 1 | T110-T115 | Next.js Foundation (App Router setup)             |
-| Phase 2 | T116-T125 | Apollo Client + GraphQL                           |
-| Phase 3 | T126-T137 | Server Components Conversion                      |
-| Slice 4 | T138-T155 | Trend Detection (with Next.js patterns)           |
-| Slice 5 | T156-T177 | Full Analytics (with Next.js patterns)            |
+---
+
+# DEPLOYMENT PREPARATION (T178+)
+
+_Goal: Polish for public deployment and portfolio presentation_
+
+- [ ] T178 Update README with local development setup instructions:
+  - Environment variables needed (`.env.local.example`)
+  - Supabase project setup steps
+  - GitHub OAuth app configuration
+  - `npm install && npm run dev` workflow
+
+---
+
+| Phase      | Tasks     | Description                                       |
+| ---------- | --------- | ------------------------------------------------- |
+| Phase 0    | T100-T109 | Testing Infrastructure (Playwright + Integration) |
+| Phase 1    | T110-T115 | Next.js Foundation (App Router setup)             |
+| Phase 2    | T116-T125 | Apollo Client + GraphQL                           |
+| Phase 3    | T126-T137 | Server Components Conversion                      |
+| Slice 4    | T138-T155 | Trend Detection (with Next.js patterns)           |
+| Slice 5    | T156-T177 | Full Analytics (with Next.js patterns)            |
+| Deployment | T178+     | Pre-deployment polish                             |
