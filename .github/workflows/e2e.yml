@@ -35,6 +35,10 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
+        env:
+          # Placeholder values - E2E tests mock all Supabase API calls via Playwright route interception
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
