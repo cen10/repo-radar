@@ -18,7 +18,9 @@ If the topic doesn't fit an existing folder, create a new one with a clear,
 lowercase name.
 
 Use the filename format `kebab-case-topic.md` (e.g., `forwardref-explained.md`,
-`intersection-observer.md`). No numeric prefixes for these docs.
+`intersection-observer.md`). Before creating the file, check the existing files in that
+directory to find the highest numeric prefix (e.g., if `003-fixture-chaining-pattern.md`
+exists, the next file should start with `004-`). Zero-pad to three digits.
 
 ---
 
@@ -86,9 +88,11 @@ syntax involved, show them here with the exact signatures.
 ## When Do You Need [This Concept]?
 
 **Good for:**
+
 - Bulleted list of concrete scenarios (not abstract principles)
 
 **Not needed for:**
+
 - Scenarios where the simpler approach works fine
 
 ## Summary
@@ -131,7 +135,7 @@ Include file paths in comments.
 If the system has configuration or key parameters, use a table:
 
 | Parameter | Value | Why |
-|-----------|-------|-----|
+| --------- | ----- | --- |
 
 ## [Specific Subsection Based on What We Discussed]
 
@@ -176,7 +180,7 @@ Brief explanation (1-3 sentences), then code:
 If comparing options, use a table:
 
 | Option | What It Does | When to Use |
-|--------|-------------|-------------|
+| ------ | ------------ | ----------- |
 
 ---
 

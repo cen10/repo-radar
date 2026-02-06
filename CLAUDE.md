@@ -112,29 +112,51 @@ Component → TanStack Query hook → Service function → Data source
 
 **Not used**: TanStack Query for local-only state. Keep server state and client state separate.
 
-### Optimistic Updates
+### Cache Invalidation Strategy
 
-For optimistic updates to server state, use direct cache manipulation via `queryClient.setQueryData()` - never separate `useState`:
+**Rule: Always invalidate after mutations.** When using `setQueryData()` for optimistic updates during a write operation, always follow with `invalidateQueries()`. Optimistic-only updates are a bug waiting to happen - if the server rejects the write, the UI lies to the user with no mechanism to self-correct.
+
+**Exception: Cache enrichment from read operations.** When you learn new information from a read-only API call (not a mutation), you can use `setQueryData()` without invalidation. Example: `useRepository.ts` discovers a repo is starred via `isRepositoryStarred()` (a GET request) and adds it to the `allStarredRepositories` cache. Invalidating here would be wrong - it would trigger a refetch that only returns the first 500 starred repos, potentially losing the repo we just added.
+
+**Two patterns for mutations based on interaction type:**
+
+1. **Inline interactions** (toggles, checkboxes) - Optimistic + Invalidate:
+   ```typescript
+   const handleToggle = async () => {
+     const previousData = queryClient.getQueryData(queryKey);
+     queryClient.setQueryData(queryKey, optimisticData); // Instant UI feedback
+     try {
+       await addRepoToRadar(radarId, repoId); // API call that can fail
+       void queryClient.invalidateQueries({ queryKey }); // Sync with server
+     } catch {
+       queryClient.setQueryData(queryKey, previousData); // Rollback on error
+     }
+   };
+   ```
+
+2. **Modal/form submissions** (create, delete, rename) - Invalidate only:
+   ```typescript
+   const handleDelete = async () => {
+     await deleteRadar(radarId); // Wait for server
+     void queryClient.invalidateQueries({ queryKey }); // Then refresh
+     onClose();
+   };
+   ```
+
+**Why no optimistic updates for modals?** The rollback UX is worse than waiting. Imagine: user deletes something, modal closes, toast shows success, then rollback causes it to reappear. You're paying complexity tax for a scenario where rollback is confusing. Better to show a brief loading state.
+
+**Cache key granularity:** `invalidateQueries({ queryKey: ['radars'] })` invalidates all queries with that prefix, not just exact matches. If you only want to invalidate a specific radar, use `['radar', radarId]`.
+
+**Never use separate `useState` for optimistic state.** The cache _is_ the state - use `setQueryData()` directly:
 
 ```typescript
-// ✓ Good: Direct cache manipulation (single source of truth)
-const handleToggle = async () => {
-  const previousData = queryClient.getQueryData(queryKey);
-  queryClient.setQueryData(queryKey, optimisticData);
-  try {
-    await mutate();
-    void queryClient.invalidateQueries({ queryKey });
-  } catch {
-    queryClient.setQueryData(queryKey, previousData); // Revert on error
-  }
-};
-
-// ✗ Bad: Separate optimistic state (two sources of truth, error-prone)
+// ✗ Bad: Two sources of truth
 const [optimisticData, setOptimisticData] = useState(null);
-const effectiveData = optimisticData ?? serverData; // Complex derivation
-```
+const effectiveData = optimisticData ?? serverData;
 
-The key insight: TanStack Query's cache _is_ the state - it's mutable via `setQueryData()`. Optimistic UI state for server data is NOT "local/UI state" - it belongs in the cache.
+// ✓ Good: Cache is the single source of truth
+queryClient.setQueryData(queryKey, optimisticData);
+```
 
 ## Performance Targets
 

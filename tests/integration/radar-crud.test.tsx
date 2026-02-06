@@ -1,0 +1,429 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactNode } from 'react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom/vitest';
+
+import { renderForIntegration } from '../helpers/integration-render';
+import { createMockRadar, createMockUser, createMockRepository } from '../mocks/factories';
+import { CreateRadarModal } from '@/components/CreateRadarModal';
+import { SidebarRadarList } from '@/components/SidebarRadarList';
+import { ManageRadarsModal } from '@/components/ManageRadarsModal';
+import type { RadarWithCount, Radar, RadarRepo } from '@/types/database';
+
+// Mock the radar service at the module level
+const mockGetRadars = vi.fn<() => Promise<RadarWithCount[]>>();
+const mockCreateRadar = vi.fn<(name: string) => Promise<Radar>>();
+const mockDeleteRadar = vi.fn<(radarId: string) => Promise<void>>();
+const mockAddRepoToRadar = vi.fn<(radarId: string, githubRepoId: number) => Promise<RadarRepo>>();
+const mockRemoveRepoFromRadar = vi.fn<(radarId: string, githubRepoId: number) => Promise<void>>();
+const mockGetRadarsContainingRepo = vi.fn<(githubRepoId: number) => Promise<string[]>>();
+const mockGetAllRadarRepoIds = vi.fn<() => Promise<Set<number>>>();
+
+vi.mock('@/services/radar', () => ({
+  getRadars: () => mockGetRadars(),
+  createRadar: (name: string) => mockCreateRadar(name),
+  deleteRadar: (id: string) => mockDeleteRadar(id),
+  addRepoToRadar: (radarId: string, repoId: number) => mockAddRepoToRadar(radarId, repoId),
+  removeRepoFromRadar: (radarId: string, repoId: number) =>
+    mockRemoveRepoFromRadar(radarId, repoId),
+  getRadarsContainingRepo: (repoId: number) => mockGetRadarsContainingRepo(repoId),
+  getAllRadarRepoIds: () => mockGetAllRadarRepoIds(),
+  RADAR_LIMITS: {
+    MAX_RADARS_PER_USER: 5,
+    MAX_REPOS_PER_RADAR: 25,
+    MAX_TOTAL_REPOS: 50,
+  },
+}));
+
+// Mock useSidebarContext since it's not exported from Sidebar.tsx
+vi.mock('@/components/Sidebar', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../src/components/Sidebar')>();
+  return {
+    ...original,
+    useSidebarContext: () => ({ collapsed: false, hideText: false }),
+    SidebarTooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  };
+});
+
+describe('Radar CRUD Integration', () => {
+  const mockUser = createMockUser({ login: 'testuser' });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetRadars.mockResolvedValue([]);
+    mockGetRadarsContainingRepo.mockResolvedValue([]);
+    mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+  });
+
+  describe('Create Radar Flow', () => {
+    it('creates radar and invalidates radars query on success', async () => {
+      const user = userEvent.setup();
+      const newRadar = createMockRadar({ id: 'new-radar', name: 'My New Radar' });
+      mockCreateRadar.mockResolvedValue(newRadar);
+
+      const onClose = vi.fn();
+      const onSuccess = vi.fn();
+
+      const { queryClient } = renderForIntegration(
+        <CreateRadarModal onClose={onClose} onSuccess={onSuccess} />,
+        { authState: { user: mockUser } }
+      );
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const input = screen.getByPlaceholderText(/machine learning/i);
+      await user.type(input, 'My New Radar');
+
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockCreateRadar).toHaveBeenCalledWith('My New Radar');
+      });
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalledWith(newRadar);
+        expect(onClose).toHaveBeenCalled();
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+    });
+
+    it('shows error message when creation fails', async () => {
+      const user = userEvent.setup();
+      mockCreateRadar.mockRejectedValue(new Error('Radar name already exists'));
+
+      const onClose = vi.fn();
+
+      renderForIntegration(<CreateRadarModal onClose={onClose} />, {
+        authState: { user: mockUser },
+      });
+
+      const input = screen.getByPlaceholderText(/machine learning/i);
+      await user.type(input, 'Duplicate Name');
+
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/radar name already exists/i);
+      });
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('prevents submission with empty name', async () => {
+      const user = userEvent.setup();
+
+      renderForIntegration(<CreateRadarModal onClose={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      const submitButton = screen.getByRole('button', { name: /create/i });
+      expect(submitButton).toBeDisabled();
+
+      const input = screen.getByPlaceholderText(/machine learning/i);
+      await user.type(input, '   ');
+
+      expect(submitButton).toBeDisabled();
+      expect(mockCreateRadar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('SidebarRadarList Integration', () => {
+    it('displays radars from service', async () => {
+      const radars = [
+        createMockRadar({ id: '1', name: 'Frontend Tools', repo_count: 5 }),
+        createMockRadar({ id: '2', name: 'Backend Libraries', repo_count: 3 }),
+      ];
+      mockGetRadars.mockResolvedValue(radars);
+
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Frontend Tools')).toBeInTheDocument();
+        expect(screen.getByText('Backend Libraries')).toBeInTheDocument();
+      });
+
+      // Verify repo counts are displayed
+      expect(screen.getByText('5')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
+    });
+
+    it('shows empty state when no radars exist', async () => {
+      mockGetRadars.mockResolvedValue([]);
+
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/no radars yet/i)).toBeInTheDocument();
+      });
+    });
+
+    it('shows error state with retry button when loading fails', async () => {
+      mockGetRadars.mockRejectedValue(new Error('Network error'));
+
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(/failed to load radars/i)).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    });
+
+    it('disables create button when at radar limit', async () => {
+      const radars = Array.from({ length: 5 }, (_, i) =>
+        createMockRadar({ id: `radar-${i}`, name: `Radar ${i}`, repo_count: 1 })
+      );
+      mockGetRadars.mockResolvedValue(radars);
+
+      renderForIntegration(<SidebarRadarList onLinkClick={vi.fn()} onCreateRadar={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Radar 0')).toBeInTheDocument();
+      });
+
+      const createButton = screen.getByRole('button', { name: /new radar/i });
+      expect(createButton).toBeDisabled();
+    });
+  });
+
+  describe('Add/Remove Repo from Radar', () => {
+    const mockRepository = createMockRepository({ id: 123, name: 'test-repo' });
+
+    it('adds repo to radar and invalidates radars and repo-radars queries', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+      mockAddRepoToRadar.mockResolvedValue({
+        id: 'radar-repo-1',
+        radar_id: 'radar-1',
+        github_repo_id: 123,
+        added_at: new Date().toISOString(),
+      });
+
+      const { queryClient } = renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        { authState: { user: mockUser } }
+      );
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+      expect(checkbox).not.toBeChecked();
+
+      await user.click(checkbox);
+
+      await waitFor(() => {
+        expect(mockAddRepoToRadar).toHaveBeenCalledWith('radar-1', 123);
+      });
+
+      // Verify cache invalidation
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['repo-radars', 123],
+        });
+      });
+    });
+
+    it('removes repo from radar and invalidates radars query', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 1 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue(['radar-1']); // Repo is in radar
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set([123]));
+      mockRemoveRepoFromRadar.mockResolvedValue(undefined);
+
+      const { queryClient } = renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        { authState: { user: mockUser } }
+      );
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+      expect(checkbox).toBeChecked();
+
+      await user.click(checkbox);
+
+      await waitFor(() => {
+        expect(mockRemoveRepoFromRadar).toHaveBeenCalledWith('radar-1', 123);
+      });
+
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+      });
+    });
+
+    it('shows optimistic update immediately', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      // Delay the service response to test optimistic update
+      mockAddRepoToRadar.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  id: 'radar-repo-1',
+                  radar_id: 'radar-1',
+                  github_repo_id: 123,
+                  added_at: new Date().toISOString(),
+                }),
+              100
+            )
+          )
+      );
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+      expect(checkbox).not.toBeChecked();
+
+      await user.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+    });
+
+    it('reverts optimistic update on error', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+      mockAddRepoToRadar.mockRejectedValue(new Error('Failed to add'));
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+
+      await user.click(checkbox);
+
+      await waitFor(() => {
+        expect(checkbox).not.toBeChecked();
+      });
+
+      // Error message should be shown
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  describe('Radar Limits Enforcement', () => {
+    const mockRepository = createMockRepository({ id: 456, name: 'another-repo' });
+
+    it('disables checkbox when radar has max repos', async () => {
+      const radar = createMockRadar({
+        id: 'radar-1',
+        name: 'Full Radar',
+        repo_count: 25, // At per-radar limit
+      });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Full Radar')).toBeInTheDocument();
+      });
+
+      // Checkbox should be disabled due to per-radar limit
+      const checkbox = screen.getByRole('checkbox', { name: /full radar/i });
+      expect(checkbox).toBeDisabled();
+    });
+
+    it('disables checkbox when at total repo limit', async () => {
+      // Multiple radars each under per-radar limit (25), but total reaches 50
+      // This ensures we test the total limit, not the per-radar limit
+      const radar1 = createMockRadar({
+        id: 'radar-1',
+        name: 'Radar A',
+        repo_count: 24, // Under per-radar limit
+      });
+      const radar2 = createMockRadar({
+        id: 'radar-2',
+        name: 'Radar B',
+        repo_count: 24, // Under per-radar limit
+      });
+      const radar3 = createMockRadar({
+        id: 'radar-3',
+        name: 'Has Room',
+        repo_count: 2, // Has room, but total limit reached
+      });
+      // Total: 24 + 24 + 2 = 50 (at MAX_TOTAL_REPOS limit)
+
+      mockGetRadars.mockResolvedValue([radar1, radar2, radar3]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        {
+          authState: { user: mockUser },
+        }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Has Room')).toBeInTheDocument();
+      });
+
+      // "Has Room" has only 2 repos (well under 25), but checkbox should be
+      // disabled because total across all radars (50) is at the limit
+      const checkbox = screen.getByRole('checkbox', { name: /has room/i });
+      expect(checkbox).toBeDisabled();
+    });
+  });
+});
