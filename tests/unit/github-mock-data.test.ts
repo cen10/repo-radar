@@ -6,7 +6,7 @@
  * behavior and catch issues with required fields.
  */
 import { describe, it, expect } from 'vitest';
-import { createMockStarredReposList, MOCK_LICENSE } from '../e2e/fixtures/github-mock-data';
+import { createMockStarredReposList, MOCK_LICENSE } from '../fixtures/github-mock-data';
 
 describe('GitHub Mock Data Factories', () => {
   describe('MOCK_LICENSE', () => {

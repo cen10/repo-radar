@@ -1,5 +1,8 @@
 import { type Page, type Route } from '@playwright/test';
-import { createMockStarredReposList, type GitHubStarredRepoResponse } from './github-mock-data';
+import {
+  createMockStarredReposList,
+  type GitHubStarredRepoResponse,
+} from '../../fixtures/github-mock-data';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
