@@ -15,9 +15,12 @@ vi.mock('@/hooks/useAuthErrorHandler', () => ({
   useAuthErrorHandler: vi.fn(),
 }));
 
-// Mock github-token service to prevent fallback token usage in tests
+// Mock github-token service - throws if test doesn't provide a token
 vi.mock('@/services/github-token', () => ({
-  getValidGitHubToken: (token: string | null) => token,
+  getValidGitHubToken: (token: string | null) => {
+    if (!token) throw new Error('Test setup error: no token provided to mock');
+    return token;
+  },
   hasFallbackToken: () => false,
 }));
 
