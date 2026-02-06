@@ -405,14 +405,26 @@ describe('Radar CRUD Integration', () => {
     });
 
     it('disables checkbox when at total repo limit', async () => {
-      // Create a radar with room, but user is at total limit (50 repos)
-      const radar = createMockRadar({
+      // Multiple radars each under per-radar limit (25), but total reaches 50
+      // This ensures we test the total limit, not the per-radar limit
+      const radar1 = createMockRadar({
         id: 'radar-1',
-        name: 'Has Room',
-        repo_count: 50, // All 50 repos are in this radar
+        name: 'Radar A',
+        repo_count: 24, // Under per-radar limit
       });
+      const radar2 = createMockRadar({
+        id: 'radar-2',
+        name: 'Radar B',
+        repo_count: 24, // Under per-radar limit
+      });
+      const radar3 = createMockRadar({
+        id: 'radar-3',
+        name: 'Has Room',
+        repo_count: 2, // Has room, but total limit reached
+      });
+      // Total: 24 + 24 + 2 = 50 (at MAX_TOTAL_REPOS limit)
 
-      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadars.mockResolvedValue([radar1, radar2, radar3]);
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
@@ -427,7 +439,8 @@ describe('Radar CRUD Integration', () => {
         expect(screen.getByText('Has Room')).toBeInTheDocument();
       });
 
-      // Checkbox should be disabled due to total repo limit
+      // "Has Room" has only 2 repos (well under 25), but checkbox should be
+      // disabled because total across all radars (50) is at the limit
       const checkbox = screen.getByRole('checkbox', { name: /has room/i });
       expect(checkbox).toBeDisabled();
     });
