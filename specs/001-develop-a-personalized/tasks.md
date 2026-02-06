@@ -210,9 +210,9 @@ _Branch: `t103-e2e-auth-tests`_
 
 _Branch: `t106-integration-tests`_
 
-- [ ] T106 Create integration test directory: `src/__integration__/`
-- [ ] T107 [P] Create integration test for radar CRUD flow (real component tree, mocked API)
-- [ ] T108 [P] Create integration test for repository search and filtering
+- [x] T106 Create integration test directory: `tests/integration/`
+- [x] T107 [P] Create integration test for radar CRUD flow (real component tree, mocked API)
+- [x] T108 [P] Create integration test for repository search and filtering
 
 **Verify**: `npm test` runs integration tests alongside unit tests
 
