@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import type { Repository } from '@/types';
 import {
   createRepositoryComparator,
   sortRepositories,
@@ -8,27 +7,7 @@ import {
   sortByGrowthRate,
   sortByUpdated,
 } from '@/utils/sort';
-
-// Factory function for creating test repositories
-function createTestRepo(overrides: Partial<Repository> = {}): Repository {
-  return {
-    id: 1,
-    name: 'test-repo',
-    full_name: 'owner/test-repo',
-    owner: { login: 'owner', avatar_url: 'https://example.com/avatar.png' },
-    description: 'A test repository',
-    html_url: 'https://github.com/owner/test-repo',
-    stargazers_count: 100,
-    open_issues_count: 10,
-    language: 'TypeScript',
-    topics: [],
-    updated_at: '2024-01-15T12:00:00Z',
-    pushed_at: '2024-01-15T12:00:00Z',
-    created_at: '2023-01-01T00:00:00Z',
-    is_starred: true,
-    ...overrides,
-  };
-}
+import { createMockRepository as createTestRepo } from '../../mocks/factories';
 
 describe('sort utilities', () => {
   describe('createRepositoryComparator', () => {

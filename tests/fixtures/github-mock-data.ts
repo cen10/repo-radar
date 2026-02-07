@@ -9,7 +9,6 @@ import type { components } from '@/types/github-api.generated';
 
 type GitHubRepository = components['schemas']['repository'];
 type GitHubSimpleUser = components['schemas']['simple-user'];
-type GitHubNullableLicense = components['schemas']['nullable-license-simple'];
 
 /**
  * Response format when using Accept: application/vnd.github.star+json
@@ -45,7 +44,7 @@ const MOCK_USER: GitHubSimpleUser = {
   site_admin: false,
 };
 
-export const MOCK_LICENSE: GitHubNullableLicense = {
+export const MOCK_LICENSE = {
   key: 'mit',
   name: 'MIT License',
   spdx_id: 'MIT',
