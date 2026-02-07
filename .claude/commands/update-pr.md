@@ -13,7 +13,7 @@ final state of the work.
    - References implementation details that no longer match the diff
    - Is missing changes that are in the diff but not in the description
 
-## How to gather alternatives considered
+## How to gather decisions and alternatives
 
 The diff only shows the final approach, but reviewers benefit from knowing
 what was considered and rejected. Check these sources in order:
@@ -43,54 +43,53 @@ or developer-facing outcome, not the implementation mechanism.
 **Body structure:**
 
 ```
+## Why
+
+1-2 sentences explaining the problem this solves or why the change is needed.
+Focus on motivation, not implementation.
+
 ## What
 
-1-3 sentences explaining what this PR does and why. Focus on the outcome,
-not the implementation journey.
-
-## How
-
-Bulleted list of the key implementation changes. Each bullet should
-reference a specific file or area of the codebase. Group related changes
-together rather than listing every file touched.
+Bulleted list of the key changes. Each bullet should reference a specific
+file or area of the codebase when helpful. Group related changes together
+rather than listing every file touched.
 
 Keep bullets concise — one line each when possible. A reviewer should be
 able to scan this in 30 seconds and understand the shape of the change.
 
-## Testing
+## Decisions
+
+Include when there are non-obvious choices, alternatives considered, or
+tradeoffs worth documenting. For each significant decision:
+
+**[Decision or alternative name]** — 1-2 sentences on what this involves,
+followed by why we chose or rejected it. Keep reasoning concrete and
+specific to this situation, not abstract principles.
+
+If a decision doc or plan doc covers the reasoning in depth, pull the key
+points directly into this section. The docs repo is separate and not
+accessible to reviewers — the PR description is the permanent, visible
+record. Include enough detail that a reader understands the trade-off
+without needing to ask follow-up questions.
+
+Omit this section entirely if there are no meaningful decisions to document.
+
+## Test plan
 
 Brief description of how this was tested. Include:
 - What test files were added or modified
-- Any manual testing steps that are important for the reviewer to know
+- Any manual testing steps important for the reviewer
 - Edge cases that were specifically covered
 
-## Alternatives Considered (include when alternatives exist)
+## Screenshots
 
-For each alternative that was seriously considered:
+Include only for UI changes. Show before/after when relevant.
+Remove this section entirely if there are no UI changes.
 
-**[Alternative name/approach]** — 1-2 sentences on what this would look
-like, followed by why we didn't go with it. Keep the "why not" concrete
-and specific to this situation, not abstract principles.
+## Breaking changes
 
-If a decision doc or plan doc covers the alternatives in depth, pull the
-key reasoning into this section directly. The docs repo is separate and
-not accessible to reviewers — the PR description is the permanent,
-visible record of the reasoning. Include enough detail that a reader
-understands the trade-off without needing to ask follow-up questions.
-A short code snippet showing what the rejected approach would have
-looked like is worth including when it makes the trade-off concrete.
-
-Aim for 2-4 alternatives, 4-6 lines each. This section is one of the
-most valuable parts of the PR for demonstrating engineering judgment —
-give it room to breathe.
-
-## Notes (optional)
-
-Include this section only if there's something the reviewer needs to know
-that doesn't fit above:
-- Trade-offs that were made and why
-- Known limitations or follow-up work
-- Related docs that were created or updated
+Include only if there are breaking changes. Describe what breaks and any
+migration steps needed. Remove this section entirely if none.
 ```
 
 ## Rules
@@ -116,6 +115,10 @@ that doesn't fit above:
 - **Match the diff, not your memory.** If you remember discussing a change
   but it's not in the diff, don't include it. If the diff contains
   something unexpected, include it and flag it for me to review.
+
+- **Remove optional sections when empty.** If there are no screenshots, no
+  breaking changes, or no decisions worth documenting, remove those sections
+  entirely rather than leaving them empty or writing "None."
 
 ## How to apply the update
 

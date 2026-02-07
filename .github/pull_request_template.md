@@ -4,23 +4,23 @@
 
 ## What
 
-<!-- Summary of changes (bullet points) -->
+<!-- Summary of changes (bullet points). Reference specific files or areas when helpful. -->
 
 -
 
 ## Decisions
 
-<!-- Optional: Explain any non-obvious choices or tradeoffs. Remove if none. -->
+<!-- Optional: Explain non-obvious choices, alternatives considered, or tradeoffs. Remove if none. -->
 
 ## Test plan
 
-<!-- How to verify this works -->
+<!-- How to verify this works. Include test files added/modified and any manual steps. -->
 
 -
 
 ## Screenshots
 
-<!-- Optional: Include only for UI changes. Remove this section entirely if no UI changes. -->
+<!-- Optional: Include only for UI changes. Remove this section entirely if none. -->
 
 ## Breaking changes
 
