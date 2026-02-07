@@ -444,6 +444,7 @@ PR descriptions should describe the **final state** of the code, not the journey
 - **Don't**: Narrate interim states or mention bugs that were introduced and fixed within the same PR
 - **Do**: Note design decisions, tradeoffs, or alternatives considered if useful for reviewers
 - **Don't**: Say "Fixed bug where X" if that bug was introduced earlier in the same PR branch
+- **Don't**: Reference files in `docs/` — that directory is gitignored and stored separately, so reviewers can't see those files. Copy relevant reasoning directly into the PR description instead.
 
 Useful sections to include:
 

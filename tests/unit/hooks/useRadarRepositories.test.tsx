@@ -6,7 +6,7 @@ import { useRadarRepositories } from '@/hooks/useRadarRepositories';
 import * as radar from '@/services/radar';
 import * as github from '@/services/github';
 import type { RadarRepo } from '@/types/database';
-import type { Repository } from '@/types';
+import { createMockRepository } from '../../mocks/factories';
 
 // Mock the services
 vi.mock('@/services/radar', () => ({
@@ -40,25 +40,6 @@ const createMockRadarRepo = (overrides?: Partial<RadarRepo>): RadarRepo => ({
   radar_id: 'radar-1',
   github_repo_id: 12345,
   added_at: '2024-01-15T10:00:00Z',
-  ...overrides,
-});
-
-// Helper to create a mock repository
-const createMockRepository = (overrides?: Partial<Repository>): Repository => ({
-  id: 12345,
-  name: 'test-repo',
-  full_name: 'owner/test-repo',
-  owner: { login: 'owner', avatar_url: 'https://example.com/avatar.png' },
-  description: 'A test repository',
-  html_url: 'https://github.com/owner/test-repo',
-  stargazers_count: 100,
-  open_issues_count: 5,
-  language: 'TypeScript',
-  topics: ['testing'],
-  updated_at: '2024-01-15T10:00:00Z',
-  pushed_at: '2024-01-15T10:00:00Z',
-  created_at: '2023-01-01T00:00:00Z',
-  is_starred: false,
   ...overrides,
 });
 
