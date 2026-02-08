@@ -6,6 +6,15 @@
 import { setupWorker } from 'msw/browser';
 import { handlers, resetDemoState } from './handlers';
 
+// Force full page reload on HMR to avoid MSW getting out of sync with React state.
+// Without this, editing demo files causes MSW to stop while React still thinks
+// demo mode is active, resulting in 401 errors hitting the real API.
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    window.location.reload();
+  });
+}
+
 // Lazy-initialized worker instance
 let worker: ReturnType<typeof setupWorker> | null = null;
 let isStarted = false;

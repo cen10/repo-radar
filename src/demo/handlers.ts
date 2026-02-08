@@ -3,6 +3,13 @@
  * Intercepts GitHub and Supabase API calls, returning mock data.
  */
 
+// Force full page reload on HMR to avoid MSW getting out of sync with React state.
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    window.location.reload();
+  });
+}
+
 import { http, HttpResponse } from 'msw';
 import {
   DEMO_USER,
