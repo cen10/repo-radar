@@ -78,10 +78,21 @@ const githubHandlers = [
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const perPage = parseInt(url.searchParams.get('per_page') || '30', 10);
+    const sort = url.searchParams.get('sort') || 'updated';
+    const direction = url.searchParams.get('direction') || 'desc';
+
+    // Sort repos based on parameters
+    const sortedRepos = [...DEMO_STARRED_REPOS].sort((a, b) => {
+      // 'created' sorts by when user starred it, 'updated' by repo's last update
+      const dateA = sort === 'created' ? a.starred_at : a.updated_at;
+      const dateB = sort === 'created' ? b.starred_at : b.updated_at;
+      const comparison = new Date(dateB || 0).getTime() - new Date(dateA || 0).getTime();
+      return direction === 'asc' ? -comparison : comparison;
+    });
 
     const startIndex = (page - 1) * perPage;
     const endIndex = startIndex + perPage;
-    const pageRepos = DEMO_STARRED_REPOS.slice(startIndex, endIndex);
+    const pageRepos = sortedRepos.slice(startIndex, endIndex);
 
     // Check if client wants starred_at timestamps
     const acceptHeader = request.headers.get('Accept') || '';
