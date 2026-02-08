@@ -12,7 +12,7 @@ import {
   storeAccessToken,
   getStoredAccessToken,
 } from '../services/github-token';
-import { isDemoModeActive } from '../demo/demo-context';
+import { isDemoModeActive, useDemoMode } from '../demo/demo-context';
 import { DEMO_USER } from '../demo/demo-data';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
@@ -40,6 +40,7 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const { exitDemoMode } = useDemoMode();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -196,11 +197,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clear query cache first
     queryClient.clear();
 
-    // If in demo mode, just clear demo state (no Supabase session to clear)
+    // If in demo mode, exit demo mode properly (clears localStorage, stops MSW)
     if (isDemoModeActive()) {
       logger.info('signOut: Exiting demo mode');
-      // Demo context will handle stopping MSW and clearing localStorage
-      // We just need to clear our local state
+      exitDemoMode();
       setProviderToken(null);
       setUser(null);
       return;
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     logger.info('signOut: Sign out complete');
-  }, [queryClient]);
+  }, [queryClient, exitDemoMode]);
 
   const value: AuthContextType = useMemo(
     () => ({
