@@ -312,12 +312,18 @@ const supabaseHandlers = [
   http.get(`${getSupabaseUrl()}/rest/v1/radar_repos`, ({ request }) => {
     const url = new URL(request.url);
     const radarIdParam = url.searchParams.get('radar_id');
+    const repoIdParam = url.searchParams.get('github_repo_id');
 
     let repos = [...demoRadarRepos];
 
     if (radarIdParam) {
+      // RadarPage: fetches all repos belonging to this radar
       const radarId = radarIdParam.replace('eq.', '');
       repos = repos.filter((rr) => rr.radar_id === radarId);
+    } else if (repoIdParam) {
+      // RadarIconButton: determines icon state and which radars to pre-check in sheet
+      const repoId = parseInt(repoIdParam.replace('eq.', ''), 10);
+      repos = repos.filter((rr) => rr.github_repo_id === repoId);
     }
 
     return HttpResponse.json(repos);
