@@ -8,12 +8,24 @@ import { handlers, resetDemoState } from './handlers';
 
 // Lazy-initialized worker instance
 let worker: ReturnType<typeof setupWorker> | null = null;
+let isStarted = false;
+let startPromise: Promise<void> | null = null;
 
 /**
  * Start MSW in demo mode.
  * Intercepts all API calls and returns mock data.
  */
 export async function startDemoMode(): Promise<void> {
+  // Prevent double-start (React Strict Mode calls useEffect twice)
+  if (isStarted) {
+    return;
+  }
+
+  // If a start is in progress, wait for it
+  if (startPromise) {
+    return startPromise;
+  }
+
   if (!worker) {
     worker = setupWorker(...handlers);
   }
@@ -21,12 +33,14 @@ export async function startDemoMode(): Promise<void> {
   // Reset demo state to initial values
   resetDemoState();
 
-  await worker.start({
-    // Don't log warnings for unhandled requests - just let them through
+  startPromise = worker.start({
     onUnhandledRequest: 'bypass',
-    // Suppress the "[MSW] Mocking enabled" console message
     quiet: true,
   });
+
+  await startPromise;
+  isStarted = true;
+  startPromise = null;
 }
 
 /**
@@ -36,4 +50,6 @@ export function stopDemoMode(): void {
   if (worker) {
     worker.stop();
   }
+  isStarted = false;
+  startPromise = null;
 }

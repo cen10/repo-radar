@@ -8,6 +8,7 @@ import type {
   RadarWithRepoIdsResponse,
 } from '../types/database';
 import { logger } from '../utils/logger';
+import { isDemoModeActive } from '../demo/demo-context';
 
 // Limit constants
 export const RADAR_LIMITS = {
@@ -79,34 +80,41 @@ export async function createRadar(name: string): Promise<Radar> {
     throw new Error('Radar name cannot exceed 50 characters');
   }
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  // In demo mode, skip auth and limit checks - MSW handles everything
+  let userId: string;
+  if (isDemoModeActive()) {
+    userId = 'demo-user-id';
+  } else {
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+    userId = user.id;
 
-  // Check radar count limit
-  const { count, error: countError } = await supabase
-    .from('radars')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    // Check radar count limit
+    const { count, error: countError } = await supabase
+      .from('radars')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
-  if (countError) {
-    logger.error('Failed to check radar count', countError);
-    throw new Error('Failed to create radar');
-  }
+    if (countError) {
+      logger.error('Failed to check radar count', countError);
+      throw new Error('Failed to create radar');
+    }
 
-  if (count !== null && count >= RADAR_LIMITS.MAX_RADARS_PER_USER) {
-    throw new Error(
-      `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`
-    );
+    if (count !== null && count >= RADAR_LIMITS.MAX_RADARS_PER_USER) {
+      throw new Error(
+        `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`
+      );
+    }
   }
 
   // Create the radar
   const radarInsert: RadarInsert = {
-    user_id: user.id,
+    user_id: userId,
     name: trimmedName,
   };
 
@@ -217,12 +225,14 @@ export async function getAllRadarRepoIds(): Promise<Set<number>> {
  * Enforces limits: max repos per radar and max total repos
  */
 export async function addRepoToRadar(radarId: string, githubRepoId: number): Promise<RadarRepo> {
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
+  // In demo mode, skip auth check - MSW handles the request
+  if (!isDemoModeActive()) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
   }
 
   // Check repos per radar limit
