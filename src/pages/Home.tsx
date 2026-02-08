@@ -3,9 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 import { Button } from '../components/Button';
+import { useDemoMode } from '../demo/demo-context';
 
 const Home = () => {
   const { user, authLoading, signInWithGitHub } = useAuth();
+  const { enterDemoMode, isInitializing: isDemoInitializing } = useDemoMode();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -27,6 +29,12 @@ const Home = () => {
       // Reset button state so user can retry (e.g., network error, popup blocked)
       setIsSigningIn(false);
     }
+  };
+
+  const handleTryDemo = async () => {
+    await enterDemoMode();
+    // Force a page reload to reinitialize auth with demo user
+    window.location.href = '/stars';
   };
 
   useEffect(() => {
@@ -110,6 +118,19 @@ const Home = () => {
         >
           Sign in with GitHub
         </Button>
+
+        <div className="mt-8 text-gray-500">
+          <p className="text-sm mb-3">Just exploring?</p>
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={handleTryDemo}
+            loading={isDemoInitializing}
+            loadingText="Starting demo..."
+          >
+            Try Demo
+          </Button>
+        </div>
       </div>
     </div>
   );

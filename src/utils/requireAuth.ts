@@ -1,10 +1,12 @@
 import { redirect } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { logger } from './logger';
+import { isDemoModeActive } from '../demo/demo-context';
 
 /**
  * Route loader that requires authentication.
  * Redirects to home page if user is not authenticated.
+ * Allows demo mode users through without checking Supabase session.
  *
  * Usage in router config:
  * ```tsx
@@ -17,6 +19,12 @@ import { logger } from './logger';
  */
 export async function requireAuth() {
   logger.debug('requireAuth: Checking session...');
+
+  // Allow demo mode users through
+  if (isDemoModeActive()) {
+    logger.debug('requireAuth: Demo mode active, allowing access');
+    return null;
+  }
 
   const {
     data: { session },

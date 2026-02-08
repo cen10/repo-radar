@@ -10,6 +10,7 @@ import RepoDetailPage from './pages/RepoDetailPage';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
 import { requireAuth } from './utils/requireAuth';
 import { logger } from './utils/logger';
+import { DemoModeProvider } from './demo/demo-context';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,14 +55,16 @@ const router = createBrowserRouter([
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ErrorBoundary
-        FallbackComponent={AuthErrorFallback}
-        onError={(error, errorInfo) => {
-          logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
-        }}
-      >
-        <RouterProvider router={router} />
-      </ErrorBoundary>
+      <DemoModeProvider>
+        <ErrorBoundary
+          FallbackComponent={AuthErrorFallback}
+          onError={(error, errorInfo) => {
+            logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
+          }}
+        >
+          <RouterProvider router={router} />
+        </ErrorBoundary>
+      </DemoModeProvider>
     </QueryClientProvider>
   );
 }

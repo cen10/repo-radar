@@ -5,6 +5,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
 import { CreateRadarModal } from './CreateRadarModal';
+import { DemoBanner } from './DemoBanner';
 import { useAuth } from '../hooks/use-auth';
 
 /**
@@ -48,6 +49,7 @@ function AuthenticatedLayout() {
 
   return (
     <div className="min-h-screen bg-white">
+      <DemoBanner />
       <Header
         onMenuToggle={showSidebar ? handleMenuToggle : undefined}
         sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}
