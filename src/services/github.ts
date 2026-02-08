@@ -326,12 +326,21 @@ interface RepoMetricsInput {
 }
 
 /**
+ * Simple pseudo-random number generator seeded by repo ID.
+ * Returns a deterministic value 0-1 for any given seed.
+ */
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+}
+
+/**
  * Simplified growth rate calculation
  * In production, this would compare with historical data
  */
 function calculateGrowthRate(repo: RepoMetricsInput): number {
   // This is a placeholder - real implementation would need historical data
-  // For now, return a random value for demonstration
+  // Uses seeded random based on repo ID for consistent values across renders
   const dateStr = repo.pushed_at || repo.updated_at;
   if (!dateStr) return 0;
   const recentlyUpdated = new Date(dateStr) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -344,11 +353,11 @@ function calculateGrowthRate(repo: RepoMetricsInput): number {
   // Use repo.id % 3 for consistent "hot candidate" selection across metrics
   const isHotCandidate = repo.stargazers_count >= 100 && repo.id % 3 === 0;
   if (isHotCandidate) {
-    // 25-50% growth for hot candidates
-    return parseFloat((0.25 + Math.random() * 0.25).toFixed(3));
+    // 25-50% growth for hot candidates (deterministic based on repo ID)
+    return parseFloat((0.25 + seededRandom(repo.id) * 0.25).toFixed(3));
   }
   const baseRatePercent = Math.max(1, 20 - Math.log10(repo.stargazers_count + 1) * 3);
-  const ratePercent = baseRatePercent * (0.5 + Math.random());
+  const ratePercent = baseRatePercent * (0.5 + seededRandom(repo.id));
   return parseFloat((ratePercent / 100).toFixed(3)); // Convert to decimal
 }
 
@@ -365,14 +374,14 @@ function calculateStarsGained(repo: RepoMetricsInput): number {
 
   // Mock: higher star repos gain more absolute stars
   // For "hot" badge: need 50+ gained, so make some repos qualify
-  // Use consistent randomness based on repo id so growth rate and stars gained align
+  // Use seeded random based on repo ID for consistent values across renders
   const isHotCandidate = repo.stargazers_count >= 100 && repo.id % 3 === 0;
   if (isHotCandidate) {
-    // 50-150 stars gained for hot candidates
-    return 50 + Math.floor(Math.random() * 100);
+    // 50-150 stars gained for hot candidates (deterministic)
+    return 50 + Math.floor(seededRandom(repo.id + 1) * 100);
   }
-  const baseGain = Math.floor(repo.stargazers_count * 0.005 * Math.random());
-  return Math.max(0, baseGain + Math.floor(Math.random() * 20));
+  const baseGain = Math.floor(repo.stargazers_count * 0.005 * seededRandom(repo.id + 2));
+  return Math.max(0, baseGain + Math.floor(seededRandom(repo.id + 3) * 20));
 }
 
 /**

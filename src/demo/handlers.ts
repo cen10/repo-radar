@@ -129,8 +129,34 @@ const githubHandlers = [
   http.get(`${GITHUB_API_BASE}/search/repositories`, ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || '';
+    const sort = url.searchParams.get('sort'); // null = best-match (relevance)
+    const order = url.searchParams.get('order') || 'desc';
 
-    const results = getDemoSearchResults(query);
+    let results = getDemoSearchResults(query);
+
+    // Sort results based on parameters (GitHub search API sorting)
+    if (sort && results.length > 0) {
+      results = [...results].sort((a, b) => {
+        let comparison = 0;
+        switch (sort) {
+          case 'stars':
+            comparison = b.stargazers_count - a.stargazers_count;
+            break;
+          case 'forks':
+            comparison = b.forks_count - a.forks_count;
+            break;
+          case 'updated':
+            comparison =
+              new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
+            break;
+          default:
+            // 'help-wanted-issues' or unknown - keep original order
+            break;
+        }
+        return order === 'asc' ? -comparison : comparison;
+      });
+    }
+    // No sort param = best-match (GitHub's relevance ranking) - keep original order
 
     return HttpResponse.json({
       total_count: results.length,
