@@ -17,7 +17,7 @@ if (import.meta.hot) {
 // Lazy-initialized worker instance
 let worker: ReturnType<typeof setupWorker> | null = null;
 let isStarted = false;
-let startPromise: Promise<void> | null = null;
+let startPromise: Promise<ServiceWorkerRegistration | undefined> | null = null;
 
 /**
  * Start MSW in demo mode.
@@ -31,7 +31,8 @@ export async function startDemoMode(): Promise<void> {
 
   // If a start is in progress, wait for it
   if (startPromise) {
-    return startPromise;
+    await startPromise;
+    return;
   }
 
   if (!worker) {
