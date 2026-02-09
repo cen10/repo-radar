@@ -37,26 +37,26 @@ export function DemoBanner() {
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center justify-center gap-4 flex-wrap">
+      <div className="flex items-center justify-center gap-3">
         {!isExplorePage && <span>Demo Mode – sample data</span>}
 
-        {isExplorePage && <span>Try searching: react, typescript, python, ai, rust</span>}
+        {isExplorePage && <span>Try: react, typescript, ai, rust</span>}
 
         <button
           onClick={handleExitDemo}
-          className="px-3 py-1 border border-white/50 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600"
+          className="px-1.5 py-1 border border-white/50 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600"
         >
           Exit Demo
         </button>
-
-        <button
-          onClick={dismissBanner}
-          className="p-1 hover:bg-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-white"
-          aria-label="Dismiss demo banner"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
       </div>
+
+      <button
+        onClick={dismissBanner}
+        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-white"
+        aria-label="Dismiss demo banner"
+      >
+        <XMarkIcon className="h-5 w-5" />
+      </button>
     </div>
   );
 }
