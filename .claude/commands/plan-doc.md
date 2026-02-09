@@ -3,9 +3,10 @@ discussed that we're not implementing right now but don't want to lose.
 
 Use the filename format `kebab-case-topic.md` (e.g.,
 `coordinated-loading-states.md`, `button-component.md`). Before creating the file,
-check the existing files in that directory to find the highest numeric prefix
-(e.g., if `003-fixture-chaining-pattern.md` exists, the next file should start with
-`004-`). Zero-pad to three digits.
+use Bash (not Glob) to list existing files in that directory — the docs folder
+is symlinked and Glob doesn't follow symlinks. Run `ls docs/potential-plans/`
+to find the highest numeric prefix (e.g., if `003-fixture-chaining-pattern.md`
+exists, the next file should start with `004-`). Zero-pad to three digits.
 
 This doc is a parking lot for future work. I'll come back to it when the time
 is right — either because a related task makes it natural to pick up, a bug
