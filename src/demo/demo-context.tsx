@@ -7,6 +7,9 @@ interface DemoContextType {
   enterDemoMode: () => Promise<void>;
   exitDemoMode: () => void;
   isInitializing: boolean;
+  isBannerVisible: boolean;
+  dismissBanner: () => void;
+  resetBannerDismissed: () => void;
 }
 
 const DemoContext = createContext<DemoContextType | null>(null);
@@ -25,6 +28,18 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     // If not in demo mode, MSW is "ready" (not needed)
     return localStorage.getItem(DEMO_MODE_KEY) !== 'true';
   });
+  // Track if banner is dismissed (resets on navigation, not persisted)
+  const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+
+  const isBannerVisible = isDemoMode && !isBannerDismissed;
+
+  const dismissBanner = useCallback(() => {
+    setIsBannerDismissed(true);
+  }, []);
+
+  const resetBannerDismissed = useCallback(() => {
+    setIsBannerDismissed(false);
+  }, []);
 
   const enterDemoMode = useCallback(async () => {
     setIsInitializing(true);
@@ -48,9 +63,8 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     });
 
     localStorage.removeItem(DEMO_MODE_KEY);
-    // Clear demo banner dismissed state
-    sessionStorage.removeItem('demo_banner_dismissed');
     setIsDemoMode(false);
+    setIsBannerDismissed(false);
   }, []);
 
   // If already in demo mode on mount, start MSW before rendering app
@@ -71,7 +85,17 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
   }
 
   return (
-    <DemoContext.Provider value={{ isDemoMode, enterDemoMode, exitDemoMode, isInitializing }}>
+    <DemoContext.Provider
+      value={{
+        isDemoMode,
+        enterDemoMode,
+        exitDemoMode,
+        isInitializing,
+        isBannerVisible,
+        dismissBanner,
+        resetBannerDismissed,
+      }}
+    >
       {children}
     </DemoContext.Provider>
   );
@@ -87,6 +111,9 @@ export function useDemoMode(): DemoContextType {
       enterDemoMode: async () => {},
       exitDemoMode: () => {},
       isInitializing: false,
+      isBannerVisible: false,
+      dismissBanner: () => {},
+      resetBannerDismissed: () => {},
     };
   }
   return context;

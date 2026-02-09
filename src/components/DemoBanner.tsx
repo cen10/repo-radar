@@ -1,32 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/20/solid';
 import { useDemoMode } from '../demo/demo-context';
 
-const DISMISSED_KEY = 'demo_banner_dismissed';
-
 export function DemoBanner() {
-  const { isDemoMode, exitDemoMode } = useDemoMode();
+  const { isBannerVisible, exitDemoMode, dismissBanner, resetBannerDismissed } = useDemoMode();
   const location = useLocation();
   const navigate = useNavigate();
   const isExplorePage = location.pathname === '/explore';
+  const prevPathnameRef = useRef(location.pathname);
 
-  const [dismissed, setDismissed] = useState(() => {
-    return sessionStorage.getItem(DISMISSED_KEY) === 'true';
-  });
-
-  // Reset dismissed state when navigating to Explore page
+  // Reset dismissed state when navigating TO /explore from another page
   useEffect(() => {
-    if (isExplorePage && dismissed) {
-      sessionStorage.removeItem(DISMISSED_KEY);
-      setDismissed(false);
-    }
-  }, [isExplorePage, dismissed]);
+    const prevPathname = prevPathnameRef.current;
+    const currentPathname = location.pathname;
 
-  const handleDismiss = useCallback(() => {
-    sessionStorage.setItem(DISMISSED_KEY, 'true');
-    setDismissed(true);
-  }, []);
+    if (prevPathname !== currentPathname && currentPathname === '/explore') {
+      resetBannerDismissed();
+    }
+
+    prevPathnameRef.current = currentPathname;
+  }, [location.pathname, resetBannerDismissed]);
 
   const handleExitDemo = useCallback(() => {
     exitDemoMode();
@@ -35,14 +29,13 @@ export function DemoBanner() {
     window.location.reload();
   }, [exitDemoMode, navigate]);
 
-  // Don't show if not in demo mode or if dismissed
-  if (!isDemoMode || dismissed) {
+  if (!isBannerVisible) {
     return null;
   }
 
   return (
     <div
-      className="bg-indigo-600 text-white text-center py-2 px-4 text-sm fixed top-0 left-0 right-0 z-[60]"
+      className="bg-indigo-600 text-white text-center py-2 px-4 text-sm fixed top-0 left-0 right-0 z-60"
       role="status"
       aria-live="polite"
     >
@@ -61,7 +54,7 @@ export function DemoBanner() {
         </button>
 
         <button
-          onClick={handleDismiss}
+          onClick={dismissBanner}
           className="p-1 hover:bg-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-white"
           aria-label="Dismiss demo banner"
         >

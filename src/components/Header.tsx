@@ -11,6 +11,7 @@ import {
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { Button } from './Button';
+import { useDemoMode } from '../demo/demo-context';
 
 // Helper function to provide user-friendly error messages for sign out
 function getSignOutErrorMessage(error: unknown): string {
@@ -35,10 +36,16 @@ function getSignOutErrorMessage(error: unknown): string {
 interface ErrorBannerProps {
   message: string;
   sidebarCollapsed?: boolean;
+  demoBannerVisible?: boolean;
   onDismiss: () => void;
 }
 
-function ErrorBanner({ message, sidebarCollapsed, onDismiss }: ErrorBannerProps) {
+function ErrorBanner({
+  message,
+  sidebarCollapsed,
+  demoBannerVisible,
+  onDismiss,
+}: ErrorBannerProps) {
   // On desktop (lg+), offset by sidebar width. Mobile has no persistent sidebar.
   const leftClass =
     sidebarCollapsed === undefined
@@ -47,9 +54,12 @@ function ErrorBanner({ message, sidebarCollapsed, onDismiss }: ErrorBannerProps)
         ? 'left-0 lg:left-16' // Collapsed sidebar (64px)
         : 'left-0 lg:left-64'; // Expanded sidebar (256px)
 
+  // Adjust top position when demo banner is visible (36px banner + 64px header = 100px)
+  const topClass = demoBannerVisible ? 'top-25' : 'top-16';
+
   return (
     <div
-      className={`fixed top-16 right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
+      className={`fixed ${topClass} right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
       role="alert"
       aria-live="assertive"
     >
@@ -79,6 +89,7 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
+  const { isBannerVisible } = useDemoMode();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -150,7 +161,9 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed top-0 left-0 right-0 z-50">
+      <header
+        className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${isBannerVisible ? 'top-9' : 'top-0'}`}
+      >
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             {onMenuToggle && (
@@ -233,6 +246,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
         <ErrorBanner
           message={signOutError}
           sidebarCollapsed={sidebarCollapsed}
+          demoBannerVisible={isBannerVisible}
           onDismiss={() => setSignOutError(null)}
         />
       )}

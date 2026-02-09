@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
+import { useDemoMode } from '../demo/demo-context';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
 
@@ -152,10 +153,15 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  demoBannerVisible?: boolean;
   children: React.ReactNode;
 }
 
-function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
+function MobileDrawer({ isOpen, onClose, demoBannerVisible, children }: MobileDrawerProps) {
+  // Adjust top and height when demo banner is visible (banner is 36px)
+  const topClass = demoBannerVisible ? 'top-25' : 'top-16';
+  const heightClass = demoBannerVisible ? 'h-[calc(100vh-6.25rem)]' : 'h-[calc(100vh-4rem)]';
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="lg:hidden">
       <DialogBackdrop
@@ -165,7 +171,7 @@ function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
       />
       <DialogPanel
         transition
-        className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 z-40 transition-transform duration-300 ease-in-out data-closed:-translate-x-full"
+        className={`fixed left-0 ${topClass} ${heightClass} w-64 bg-white border-r border-gray-200 z-40 transition-all duration-300 ease-in-out data-closed:-translate-x-full`}
       >
         <nav aria-label="Main navigation" className="flex flex-col h-full">
           {children}
@@ -178,14 +184,24 @@ function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
 interface DesktopSidebarProps {
   isCollapsed: boolean;
   onToggleCollapsed: () => void;
+  demoBannerVisible?: boolean;
   children: React.ReactNode;
 }
 
-function DesktopSidebar({ isCollapsed, onToggleCollapsed, children }: DesktopSidebarProps) {
+function DesktopSidebar({
+  isCollapsed,
+  onToggleCollapsed,
+  demoBannerVisible,
+  children,
+}: DesktopSidebarProps) {
+  // Adjust top and height when demo banner is visible (banner is 36px)
+  const topClass = demoBannerVisible ? 'top-25' : 'top-16';
+  const heightClass = demoBannerVisible ? 'h-[calc(100vh-6.25rem)]' : 'h-[calc(100vh-4rem)]';
+
   return (
     <div
       className={`
-        hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] z-40
+        hidden lg:block fixed left-0 ${topClass} ${heightClass} z-40
         transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
@@ -222,6 +238,7 @@ export function Sidebar({
   isCollapsed,
   onToggleCollapsed,
 }: SidebarProps) {
+  const { isBannerVisible } = useDemoMode();
   const [hideText, setHideText] = useState(isCollapsed);
 
   useEffect(() => {
@@ -237,13 +254,17 @@ export function Sidebar({
 
   return (
     <>
-      <MobileDrawer isOpen={isOpen} onClose={onClose}>
+      <MobileDrawer isOpen={isOpen} onClose={onClose} demoBannerVisible={isBannerVisible}>
         <NavContent collapsed={false} hideText={false} onLinkClick={onClose}>
           {children}
         </NavContent>
       </MobileDrawer>
 
-      <DesktopSidebar isCollapsed={isCollapsed} onToggleCollapsed={onToggleCollapsed}>
+      <DesktopSidebar
+        isCollapsed={isCollapsed}
+        onToggleCollapsed={onToggleCollapsed}
+        demoBannerVisible={isBannerVisible}
+      >
         <NavContent collapsed={isCollapsed} hideText={hideText} onLinkClick={onClose}>
           {children}
         </NavContent>
