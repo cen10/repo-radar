@@ -202,7 +202,9 @@ export async function getRadarRepos(radarId: string): Promise<RadarRepo[]> {
 /**
  * Fetches all GitHub repo IDs across all of the user's radars.
  * Useful for checking if a repo is already in any radar.
- * RLS on radar_repos restricts results to repos in the current user's radars.
+ *
+ * No explicit user filtering needed here — RLS policy "Users can view repos in own radars"
+ * joins through radars table to verify ownership. See: supabase/migrations/001_create_radars.sql
  */
 export async function getAllRadarRepoIds(): Promise<Set<number>> {
   const { data, error } = await supabase.from('radar_repos').select('github_repo_id');
