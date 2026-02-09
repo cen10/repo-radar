@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/20/solid';
 import { useDemoMode } from '../demo/demo-context';
 
 export function DemoBanner() {
   const { isBannerVisible, exitDemoMode, dismissBanner, resetBannerDismissed } = useDemoMode();
   const location = useLocation();
-  const navigate = useNavigate();
   const isExplorePage = location.pathname === '/explore';
   const prevPathnameRef = useRef(location.pathname);
 
@@ -24,10 +23,9 @@ export function DemoBanner() {
 
   const handleExitDemo = useCallback(() => {
     exitDemoMode();
-    // Navigate to home and reload to clear demo state
-    void navigate('/');
-    window.location.reload();
-  }, [exitDemoMode, navigate]);
+    // Navigate to home and reload to clear demo state in one atomic operation
+    window.location.href = '/';
+  }, [exitDemoMode]);
 
   if (!isBannerVisible) {
     return null;

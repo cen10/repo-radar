@@ -203,6 +203,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       exitDemoMode();
       setProviderToken(null);
       setUser(null);
+      // Navigate to home to avoid staying on protected routes
+      window.location.href = '/';
       return;
     }
 
