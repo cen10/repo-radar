@@ -1596,21 +1596,3 @@ export function getDemoSearchResults(query: string): Repository[] {
   // No match - return empty (matches production "no results" behavior)
   return [];
 }
-
-/**
- * Get repos for a specific radar by ID.
- */
-export function getDemoRadarRepos(radarId: string): Repository[] {
-  const repoIds = DEMO_RADAR_REPOS.filter((rr) => rr.radar_id === radarId).map(
-    (rr) => rr.github_repo_id
-  );
-
-  return DEMO_STARRED_REPOS.filter((repo) => repoIds.includes(repo.id));
-}
-
-/**
- * Check if a repo is in a specific radar.
- */
-export function isRepoInDemoRadar(radarId: string, repoId: number): boolean {
-  return DEMO_RADAR_REPOS.some((rr) => rr.radar_id === radarId && rr.github_repo_id === repoId);
-}
