@@ -304,11 +304,13 @@ const supabaseHandlers = [
       );
     }
 
-    // List all radars with repo counts
-    const radarsWithCounts = demoRadars.map((radar) => ({
-      ...radar,
-      radar_repos: [{ count: getRadarRepoCount(radar.id) }],
-    }));
+    // List all radars with repo counts, sorted by created_at ASC (matches service)
+    const radarsWithCounts = demoRadars
+      .map((radar) => ({
+        ...radar,
+        radar_repos: [{ count: getRadarRepoCount(radar.id) }],
+      }))
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
     return HttpResponse.json(radarsWithCounts);
   }),
