@@ -153,15 +153,12 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  demoBannerVisible?: boolean;
+  topClass: string;
+  heightClass: string;
   children: React.ReactNode;
 }
 
-function MobileDrawer({ isOpen, onClose, demoBannerVisible, children }: MobileDrawerProps) {
-  // Adjust top and height when demo banner is visible (54px banner + 64px header = 118px)
-  const topClass = demoBannerVisible ? 'top-[118px]' : 'top-16';
-  const heightClass = demoBannerVisible ? 'h-[calc(100vh-118px)]' : 'h-[calc(100vh-4rem)]';
-
+function MobileDrawer({ isOpen, onClose, topClass, heightClass, children }: MobileDrawerProps) {
   return (
     <Dialog open={isOpen} onClose={onClose} className="lg:hidden">
       <DialogBackdrop
@@ -184,20 +181,18 @@ function MobileDrawer({ isOpen, onClose, demoBannerVisible, children }: MobileDr
 interface DesktopSidebarProps {
   isCollapsed: boolean;
   onToggleCollapsed: () => void;
-  demoBannerVisible?: boolean;
+  topClass: string;
+  heightClass: string;
   children: React.ReactNode;
 }
 
 function DesktopSidebar({
   isCollapsed,
   onToggleCollapsed,
-  demoBannerVisible,
+  topClass,
+  heightClass,
   children,
 }: DesktopSidebarProps) {
-  // Adjust top and height when demo banner is visible (54px banner + 64px header = 118px)
-  const topClass = demoBannerVisible ? 'top-[118px]' : 'top-16';
-  const heightClass = demoBannerVisible ? 'h-[calc(100vh-118px)]' : 'h-[calc(100vh-4rem)]';
-
   return (
     <div
       className={`
@@ -241,6 +236,11 @@ export function Sidebar({
   const { isBannerVisible } = useDemoMode();
   const [hideText, setHideText] = useState(isCollapsed);
 
+  // Shared by MobileDrawer and DesktopSidebar
+  // Adjusts for demo banner (54px) + header (64px) = 118px when banner visible
+  const topClass = isBannerVisible ? 'top-[118px]' : 'top-16';
+  const heightClass = isBannerVisible ? 'h-[calc(100vh-118px)]' : 'h-[calc(100vh-4rem)]';
+
   useEffect(() => {
     if (isCollapsed) {
       // Collapsing: delay w-0 until animation completes so text slides out
@@ -254,7 +254,7 @@ export function Sidebar({
 
   return (
     <>
-      <MobileDrawer isOpen={isOpen} onClose={onClose} demoBannerVisible={isBannerVisible}>
+      <MobileDrawer isOpen={isOpen} onClose={onClose} topClass={topClass} heightClass={heightClass}>
         <NavContent collapsed={false} hideText={false} onLinkClick={onClose}>
           {children}
         </NavContent>
@@ -263,7 +263,8 @@ export function Sidebar({
       <DesktopSidebar
         isCollapsed={isCollapsed}
         onToggleCollapsed={onToggleCollapsed}
-        demoBannerVisible={isBannerVisible}
+        topClass={topClass}
+        heightClass={heightClass}
       >
         <NavContent collapsed={isCollapsed} hideText={hideText} onLinkClick={onClose}>
           {children}
