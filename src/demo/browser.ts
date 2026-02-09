@@ -47,17 +47,20 @@ export async function startDemoMode(): Promise<void> {
     quiet: true,
   });
 
-  await startPromise;
-  isStarted = true;
-  startPromise = null;
+  try {
+    await startPromise;
+    isStarted = true;
+  } finally {
+    startPromise = null;
+  }
 }
 
 /**
  * Stop MSW and clear the worker.
  */
-export function stopDemoMode(): void {
+export async function stopDemoMode(): Promise<void> {
   if (worker) {
-    worker.stop();
+    await worker.stop();
   }
   isStarted = false;
   startPromise = null;
