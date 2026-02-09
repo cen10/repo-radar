@@ -331,7 +331,7 @@ const supabaseHandlers = [
   }),
 
   // PATCH /rest/v1/radars - update radar
-  // PostgREST returns an array of updated rows
+  // Service uses .single(), so return object not array
   http.patch(`${getSupabaseUrl()}/rest/v1/radars`, async ({ request }) => {
     const url = new URL(request.url);
     const idParam = url.searchParams.get('id');
@@ -344,7 +344,7 @@ const supabaseHandlers = [
       if (radar && body.name) {
         radar.name = body.name;
         radar.updated_at = new Date().toISOString();
-        return HttpResponse.json([radar]);
+        return HttpResponse.json(radar);
       }
     }
 
