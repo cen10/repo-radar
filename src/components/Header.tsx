@@ -160,10 +160,13 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
     return null;
   }
 
+  // Adjust top position when demo banner is visible
+  const headerTopClass = isBannerVisible ? 'top-[54px]' : 'top-0';
+
   return (
     <>
       <header
-        className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${isBannerVisible ? 'top-[54px]' : 'top-0'}`}
+        className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${headerTopClass}`}
       >
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
