@@ -40,7 +40,7 @@ export function DemoBanner() {
       aria-live="polite"
     >
       <div className="flex items-center justify-center gap-4 flex-wrap">
-        {!isExplorePage && <span>Demo Mode — This is sample data.</span>}
+        {!isExplorePage && <span>Demo Mode – sample data</span>}
 
         {isExplorePage && <span>Try searching: react, typescript, python, ai, rust</span>}
 

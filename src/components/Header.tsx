@@ -54,8 +54,8 @@ function ErrorBanner({
         ? 'left-0 lg:left-16' // Collapsed sidebar (64px)
         : 'left-0 lg:left-64'; // Expanded sidebar (256px)
 
-  // Adjust top position when demo banner is visible (mobile: ~80px banner + 64px header, desktop: 44px + 64px)
-  const topClass = demoBannerVisible ? 'top-36 lg:top-[108px]' : 'top-16';
+  // Adjust top position when demo banner is visible (< 400px: ~96px banner + 64px header, ≥ 400px: 54px + 64px)
+  const topClass = demoBannerVisible ? 'top-40 min-[400px]:top-[118px]' : 'top-16';
 
   return (
     <div
@@ -162,7 +162,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   return (
     <>
       <header
-        className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${isBannerVisible ? 'top-20 lg:top-13.5' : 'top-0'}`}
+        className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${isBannerVisible ? 'top-24 min-[400px]:top-[54px]' : 'top-0'}`}
       >
         <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
