@@ -18,6 +18,7 @@ import {
   DEMO_RADARS,
   DEMO_RADAR_REPOS,
   getDemoSearchResults,
+  getAllDemoRepos,
 } from './demo-data';
 import type { RadarWithCount, RadarRepo } from '../types/database';
 
@@ -26,6 +27,8 @@ const GITHUB_API_BASE = 'https://api.github.com';
 // In-memory state for radar mutations (resets on page refresh)
 let demoRadars: RadarWithCount[] = [...DEMO_RADARS];
 let demoRadarRepos: RadarRepo[] = [...DEMO_RADAR_REPOS];
+// Counter for generating deterministic IDs within a session
+let idCounter = 1000;
 
 /**
  * Reset demo state to initial values.
@@ -34,6 +37,7 @@ let demoRadarRepos: RadarRepo[] = [...DEMO_RADAR_REPOS];
 export function resetDemoState() {
   demoRadars = [...DEMO_RADARS];
   demoRadarRepos = [...DEMO_RADAR_REPOS];
+  idCounter = 1000;
 }
 
 // Helper to get radar repo count
@@ -174,9 +178,11 @@ const githubHandlers = [
   }),
 
   // GET /repositories/:id - get repo by ID
+  // Search both starred repos and additional search repos
   http.get(`${GITHUB_API_BASE}/repositories/:id`, ({ params }) => {
     const repoId = parseInt(params.id as string, 10);
-    const repo = DEMO_STARRED_REPOS.find((r) => r.id === repoId);
+    const allRepos = getAllDemoRepos();
+    const repo = allRepos.find((r) => r.id === repoId);
 
     if (repo) {
       return HttpResponse.json({
@@ -189,41 +195,49 @@ const githubHandlers = [
   }),
 
   // GET /repos/:owner/:repo/releases - get releases
-  http.get(`${GITHUB_API_BASE}/repos/:owner/:repo/releases`, () => {
-    // Return mock releases for any repo
+  // Generate varied but deterministic releases based on repo name
+  http.get(`${GITHUB_API_BASE}/repos/:owner/:repo/releases`, ({ params }) => {
+    const { owner, repo } = params;
+    const fullName = `${owner}/${repo}`;
     const now = new Date();
-    const mockReleases = [
-      {
-        id: 1,
-        tag_name: 'v2.0.0',
-        name: 'Version 2.0.0',
-        body: 'Major release with new features and improvements.',
-        html_url: 'https://github.com/example/repo/releases/tag/v2.0.0',
-        published_at: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        prerelease: false,
-        draft: false,
-        author: {
-          login: 'maintainer',
-          avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
-        },
-      },
-      {
-        id: 2,
-        tag_name: 'v1.9.0',
-        name: 'Version 1.9.0',
-        body: 'Bug fixes and performance improvements.',
-        html_url: 'https://github.com/example/repo/releases/tag/v1.9.0',
-        published_at: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        prerelease: false,
-        draft: false,
-        author: {
-          login: 'maintainer',
-          avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
-        },
-      },
+
+    // Simple hash to generate deterministic but varied data per repo
+    const hash = fullName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+    // Some repos have fewer releases, some have more
+    const releaseCount = (hash % 3) + 1; // 1-3 releases
+    const majorVersion = (hash % 5) + 1; // v1-v5
+    const daysAgoLatest = (hash % 14) + 1; // 1-14 days ago
+
+    const releaseDescriptions = [
+      'Major release with new features and performance improvements.',
+      'Bug fixes and stability improvements.',
+      'New API features and documentation updates.',
+      'Security patches and dependency updates.',
+      'Performance optimizations and UI improvements.',
     ];
+
+    const mockReleases = Array.from({ length: releaseCount }, (_, i) => {
+      const version = `${majorVersion}.${Math.max(0, 9 - i)}.${i}`;
+      const daysAgo = daysAgoLatest + i * 21; // Each older release ~3 weeks apart
+      const releaseDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+      return {
+        id: hash * 100 + i + 1,
+        tag_name: `v${version}`,
+        name: `Version ${version}`,
+        body: releaseDescriptions[(hash + i) % releaseDescriptions.length],
+        html_url: `https://github.com/${fullName}/releases/tag/v${version}`,
+        published_at: releaseDate.toISOString(),
+        created_at: releaseDate.toISOString(),
+        prerelease: false,
+        draft: false,
+        author: {
+          login: owner as string,
+          avatar_url: `https://avatars.githubusercontent.com/u/${hash % 1000}?v=4`,
+        },
+      };
+    });
 
     return HttpResponse.json(mockReleases);
   }),
@@ -303,7 +317,7 @@ const supabaseHandlers = [
   http.post(`${getSupabaseUrl()}/rest/v1/radars`, async ({ request }) => {
     const body = (await request.json()) as { name: string };
     const newRadar: RadarWithCount = {
-      id: `demo-radar-${Date.now()}`,
+      id: `demo-radar-${idCounter++}`,
       user_id: DEMO_USER.id,
       name: body.name,
       created_at: new Date().toISOString(),
@@ -317,6 +331,7 @@ const supabaseHandlers = [
   }),
 
   // PATCH /rest/v1/radars - update radar
+  // PostgREST returns an array of updated rows
   http.patch(`${getSupabaseUrl()}/rest/v1/radars`, async ({ request }) => {
     const url = new URL(request.url);
     const idParam = url.searchParams.get('id');
@@ -329,7 +344,7 @@ const supabaseHandlers = [
       if (radar && body.name) {
         radar.name = body.name;
         radar.updated_at = new Date().toISOString();
-        return HttpResponse.json(radar);
+        return HttpResponse.json([radar]);
       }
     }
 
@@ -391,7 +406,7 @@ const supabaseHandlers = [
     }
 
     const newEntry: RadarRepo = {
-      id: `demo-rr-${Date.now()}`,
+      id: `demo-rr-${idCounter++}`,
       radar_id: body.radar_id,
       github_repo_id: body.github_repo_id,
       added_at: new Date().toISOString(),
@@ -429,10 +444,12 @@ const supabaseHandlers = [
   // HEAD requests for count checks
   http.head(`${getSupabaseUrl()}/rest/v1/radars`, () => {
     const total = demoRadars.length;
+    // PostgREST format: "0-N/total" for results, "*/0" for empty
+    const contentRange = total === 0 ? '*/0' : `0-${total - 1}/${total}`;
     return new HttpResponse(null, {
       status: 200,
       headers: {
-        'content-range': `0-${Math.max(0, total - 1)}/${total}`,
+        'content-range': contentRange,
       },
     });
   }),
@@ -448,10 +465,12 @@ const supabaseHandlers = [
     }
 
     const total = repos.length;
+    // PostgREST format: "0-N/total" for results, "*/0" for empty
+    const contentRange = total === 0 ? '*/0' : `0-${total - 1}/${total}`;
     return new HttpResponse(null, {
       status: 200,
       headers: {
-        'content-range': `0-${Math.max(0, total - 1)}/${total}`,
+        'content-range': contentRange,
       },
     });
   }),

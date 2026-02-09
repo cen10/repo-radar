@@ -1571,6 +1571,14 @@ export const DEMO_SEARCH_RESULTS: Record<string, Repository[]> = {
 };
 
 /**
+ * Get all demo repos (starred + additional search repos).
+ * Used for GET /repositories/:id lookups.
+ */
+export function getAllDemoRepos(): Repository[] {
+  return [...DEMO_STARRED_REPOS, ...ADDITIONAL_SEARCH_REPOS];
+}
+
+/**
  * Get demo search results for a query.
  * Returns empty array if no match (matches production behavior).
  */
