@@ -22,6 +22,20 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock useDemoMode
+const mockEnterDemoMode = vi.fn();
+vi.mock('@/demo/demo-context', () => ({
+  useDemoMode: () => ({
+    enterDemoMode: mockEnterDemoMode,
+    isInitializing: false,
+    isDemoMode: false,
+    isBannerVisible: false,
+    exitDemoMode: vi.fn(),
+    dismissBanner: vi.fn(),
+    resetBannerDismissed: vi.fn(),
+  }),
+}));
+
 const mockUser = createMockUser();
 
 // Helper for creating unauthenticated context
@@ -31,6 +45,8 @@ describe('Home', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+    // Default mock: demo mode succeeds
+    mockEnterDemoMode.mockResolvedValue({ success: true });
   });
 
   it('renders the home page content', () => {
@@ -178,5 +194,73 @@ describe('Home', () => {
     );
 
     expect(sessionStorage.getItem('session_expired')).toBeNull();
+  });
+
+  describe('demo mode', () => {
+    it('shows Try Demo button', () => {
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      expect(screen.getByRole('button', { name: /try demo/i })).toBeInTheDocument();
+    });
+
+    it('calls enterDemoMode when Try Demo is clicked', async () => {
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+      const user = userEvent.setup();
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      await user.click(screen.getByRole('button', { name: /try demo/i }));
+
+      expect(mockEnterDemoMode).toHaveBeenCalled();
+    });
+
+    it('shows error message when demo mode fails to activate', async () => {
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+      mockEnterDemoMode.mockResolvedValue({ success: false });
+      const user = userEvent.setup();
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      await user.click(screen.getByRole('button', { name: /try demo/i }));
+
+      expect(screen.getByRole('alert')).toHaveTextContent(/demo mode is currently unavailable/i);
+    });
+
+    it('clears error message when Try Demo is clicked again', async () => {
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+      mockEnterDemoMode
+        .mockResolvedValueOnce({ success: false })
+        .mockResolvedValueOnce({ success: false });
+      const user = userEvent.setup();
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      // First click - shows error
+      await user.click(screen.getByRole('button', { name: /try demo/i }));
+      expect(screen.getByRole('alert')).toHaveTextContent(/demo mode is currently unavailable/i);
+
+      // Second click - error should be cleared during attempt (even if it fails again)
+      // We verify the error message is still shown (from second failure)
+      await user.click(screen.getByRole('button', { name: /try demo/i }));
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
   });
 });

@@ -11,6 +11,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [demoError, setDemoError] = useState(false);
   const signInButtonRef = useRef<HTMLButtonElement>(null);
 
   // Check if user was redirected here due to session expiration
@@ -32,9 +33,14 @@ const Home = () => {
   };
 
   const handleTryDemo = async () => {
-    await enterDemoMode();
-    // Force a page reload to reinitialize auth with demo user
-    window.location.href = '/stars';
+    setDemoError(false);
+    const result = await enterDemoMode();
+    if (result.success) {
+      // Force a page reload to reinitialize auth with demo user
+      window.location.href = '/stars';
+    } else {
+      setDemoError(true);
+    }
   };
 
   useEffect(() => {
@@ -106,6 +112,14 @@ const Home = () => {
         {sessionExpired && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg" role="alert">
             <p className="text-amber-800">Your session has expired. Please sign in again.</p>
+          </div>
+        )}
+
+        {demoError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert">
+            <p className="text-red-800">
+              Demo mode is currently unavailable. Please try again later.
+            </p>
           </div>
         )}
 
