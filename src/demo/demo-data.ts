@@ -3,17 +3,10 @@
  * Stats are approximate snapshots to feel authentic without being stale.
  */
 
-import type { Repository, User } from '../types';
+import type { Repository } from '../types';
 import type { RadarWithCount, RadarRepo } from '../types/database';
 
-// Demo user
-export const DEMO_USER: User = {
-  id: 'demo-user-id',
-  login: 'demo-user',
-  name: 'Demo User',
-  avatar_url: '', // Empty to show generic person icon
-  email: 'demo@example.com',
-};
+import { DEMO_USER } from './demo-user';
 
 // Helper to generate a date within the last N days
 function recentDate(daysAgo: number): string {

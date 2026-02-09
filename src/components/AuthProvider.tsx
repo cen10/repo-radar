@@ -13,7 +13,7 @@ import {
   getStoredAccessToken,
 } from '../services/github-token';
 import { isDemoModeActive, useDemoMode } from '../demo/demo-context';
-import { DEMO_USER } from '../demo/demo-data';
+import { DEMO_USER } from '../demo/demo-user';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;

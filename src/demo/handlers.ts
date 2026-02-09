@@ -12,8 +12,8 @@ if (import.meta.hot) {
 }
 
 import { http, HttpResponse } from 'msw';
+import { DEMO_USER } from './demo-user';
 import {
-  DEMO_USER,
   DEMO_STARRED_REPOS,
   DEMO_RADARS,
   DEMO_RADAR_REPOS,

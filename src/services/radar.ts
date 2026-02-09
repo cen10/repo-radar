@@ -8,7 +8,7 @@ import type {
 } from '../types/database';
 import { logger } from '../utils/logger';
 import { isDemoModeActive } from '../demo/demo-context';
-import { DEMO_USER } from '../demo/demo-data';
+import { DEMO_USER } from '../demo/demo-user';
 
 // Limit constants
 export const RADAR_LIMITS = {
