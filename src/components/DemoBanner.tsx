@@ -35,20 +35,18 @@ export function DemoBanner() {
 
   return (
     <div
-      className="bg-indigo-600 text-white text-center py-2 px-4 text-sm fixed top-0 left-0 right-0 z-60"
+      className="bg-indigo-600 text-white text-center py-3 px-4 text-sm fixed top-0 left-0 right-0 z-60"
       role="status"
       aria-live="polite"
     >
       <div className="flex items-center justify-center gap-4 flex-wrap">
-        <span>Demo Mode — This is sample data, not your real GitHub repos</span>
+        {!isExplorePage && <span>Demo Mode — This is sample data.</span>}
 
-        {isExplorePage && (
-          <span className="opacity-80">Try searching: react, typescript, python, ai, rust</span>
-        )}
+        {isExplorePage && <span>Try searching: react, typescript, python, ai, rust</span>}
 
         <button
           onClick={handleExitDemo}
-          className="underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600 rounded"
+          className="px-3 py-1 border border-white/50 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600"
         >
           Exit Demo
         </button>

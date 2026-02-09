@@ -70,7 +70,7 @@ function AuthenticatedLayout() {
         </Sidebar>
       )}
       <main
-        className={`${isBannerVisible ? 'pt-25' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`${isBannerVisible ? 'pt-36 lg:pt-[108px]' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
       >
         <Outlet />
       </main>

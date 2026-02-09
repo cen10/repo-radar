@@ -158,9 +158,9 @@ interface MobileDrawerProps {
 }
 
 function MobileDrawer({ isOpen, onClose, demoBannerVisible, children }: MobileDrawerProps) {
-  // Adjust top and height when demo banner is visible (banner is 36px)
-  const topClass = demoBannerVisible ? 'top-25' : 'top-16';
-  const heightClass = demoBannerVisible ? 'h-[calc(100vh-6.25rem)]' : 'h-[calc(100vh-4rem)]';
+  // Adjust top and height when demo banner is visible (banner is ~80px on mobile due to wrapping)
+  const topClass = demoBannerVisible ? 'top-36' : 'top-16';
+  const heightClass = demoBannerVisible ? 'h-[calc(100vh-9rem)]' : 'h-[calc(100vh-4rem)]';
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="lg:hidden">
@@ -194,9 +194,9 @@ function DesktopSidebar({
   demoBannerVisible,
   children,
 }: DesktopSidebarProps) {
-  // Adjust top and height when demo banner is visible (banner is 36px)
-  const topClass = demoBannerVisible ? 'top-25' : 'top-16';
-  const heightClass = demoBannerVisible ? 'h-[calc(100vh-6.25rem)]' : 'h-[calc(100vh-4rem)]';
+  // Adjust top and height when demo banner is visible (banner is ~44px on desktop)
+  const topClass = demoBannerVisible ? 'top-[108px]' : 'top-16';
+  const heightClass = demoBannerVisible ? 'h-[calc(100vh-108px)]' : 'h-[calc(100vh-4rem)]';
 
   return (
     <div
