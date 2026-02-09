@@ -158,13 +158,9 @@ interface MobileDrawerProps {
 }
 
 function MobileDrawer({ isOpen, onClose, demoBannerVisible, children }: MobileDrawerProps) {
-  // Adjust top and height when demo banner is visible
-  // < 400px: banner wraps (~96px) + header (64px) = 160px
-  // ≥ 400px: banner single line (54px) + header (64px) = 118px
-  const topClass = demoBannerVisible ? 'top-40 min-[400px]:top-[118px]' : 'top-16';
-  const heightClass = demoBannerVisible
-    ? 'h-[calc(100vh-10rem)] min-[400px]:h-[calc(100vh-118px)]'
-    : 'h-[calc(100vh-4rem)]';
+  // Adjust top and height when demo banner is visible (54px banner + 64px header = 118px)
+  const topClass = demoBannerVisible ? 'top-[118px]' : 'top-16';
+  const heightClass = demoBannerVisible ? 'h-[calc(100vh-118px)]' : 'h-[calc(100vh-4rem)]';
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="lg:hidden">

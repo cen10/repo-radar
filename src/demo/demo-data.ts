@@ -11,7 +11,7 @@ export const DEMO_USER: User = {
   id: 'demo-user-id',
   login: 'demo-user',
   name: 'Demo User',
-  avatar_url: 'https://avatars.githubusercontent.com/u/0?v=4',
+  avatar_url: '', // Empty to show generic person icon
   email: 'demo@example.com',
 };
 
