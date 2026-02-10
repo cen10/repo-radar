@@ -3,14 +3,14 @@
  */
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { setupServer } from 'msw/node';
-import { handlers, resetDemoState } from '../../../src/demo/handlers';
+import { handlers, resetDemoState, getSupabaseUrl } from '../../../src/demo/handlers';
 import { DEMO_RADAR_REPOS, DEMO_STARRED_REPOS } from '../../../src/demo/demo-data';
 
 // Set up MSW server with demo handlers
 const server = setupServer(...handlers);
 
-// Use a test Supabase URL that matches what handlers.ts will use
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://test.supabase.co';
+// Use the same URL that handlers are listening on
+const SUPABASE_URL = getSupabaseUrl();
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'bypass' });

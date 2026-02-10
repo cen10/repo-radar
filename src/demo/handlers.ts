@@ -277,7 +277,7 @@ const githubHandlers = [
 // ============================================================================
 
 // Get Supabase URL from env
-function getSupabaseUrl(): string {
+export function getSupabaseUrl(): string {
   const url = import.meta.env.VITE_SUPABASE_URL || '';
   return url.replace(/\/+$/, '');
 }
