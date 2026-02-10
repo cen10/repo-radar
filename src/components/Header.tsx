@@ -13,6 +13,7 @@ import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { Button } from './Button';
 import { useDemoMode } from '../demo/demo-context';
+import { useOnboarding } from '../contexts/onboarding-context';
 
 // Helper function to provide user-friendly error messages for sign out
 function getSignOutErrorMessage(error: unknown): string {
@@ -91,6 +92,7 @@ interface HeaderProps {
 export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { isBannerVisible } = useDemoMode();
+  const { startTour } = useOnboarding();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -227,10 +229,19 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                     : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
                 }`}
               >
-                <p className="text-sm text-gray-700">
+                <p className="text-sm text-gray-700 mb-3">
                   Not seeing your latest changes from GitHub? Try refreshing the page to sync your
                   starred repositories.
                 </p>
+                <button
+                  onClick={() => {
+                    setIsHelpOpen(false);
+                    startTour();
+                  }}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Take the tour
+                </button>
               </div>
             </div>
 

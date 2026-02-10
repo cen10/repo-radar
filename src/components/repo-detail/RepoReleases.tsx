@@ -50,7 +50,7 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
   const displayedReleases = releases.slice(0, 3);
 
   return (
-    <div className="mb-8">
+    <div className="mb-8" data-tour="releases">
       {heading}
       <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
         {displayedReleases.map((release) => {

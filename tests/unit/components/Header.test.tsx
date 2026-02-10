@@ -7,6 +7,20 @@ import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
 vi.mock('@/hooks/use-auth');
 
+vi.mock('@/contexts/onboarding-context', () => ({
+  useOnboarding: () => ({
+    hasCompletedTour: true,
+    currentStep: 0,
+    isTourActive: false,
+    startTour: vi.fn(),
+    setStep: vi.fn(),
+    nextStep: vi.fn(),
+    prevStep: vi.fn(),
+    completeTour: vi.fn(),
+    skipTour: vi.fn(),
+  }),
+}));
+
 const mockUser = createMockUser();
 
 describe('Header', () => {

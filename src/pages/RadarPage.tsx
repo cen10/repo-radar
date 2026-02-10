@@ -164,7 +164,7 @@ const RadarPage = () => {
           <p className="mt-1 text-sm text-gray-500">{repoText}</p>
         </div>
 
-        <Menu as="div" className="relative">
+        <Menu as="div" className="relative" data-tour="radar-menu">
           <MenuButton className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <span className="sr-only">Open radar menu</span>
             <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
@@ -229,9 +229,12 @@ const RadarPage = () => {
       {/* Repository Grid */}
       {!reposLoading && sortedRepos.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedRepos.map((repo: Repository) => (
-              <RepoCard key={repo.id} repository={repo} />
+          <div
+            data-tour="radar-repos"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {sortedRepos.map((repo: Repository, index: number) => (
+              <RepoCard key={repo.id} repository={repo} isTourTarget={index === 0} />
             ))}
           </div>
 

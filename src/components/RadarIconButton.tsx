@@ -21,6 +21,7 @@ interface RadarIconButtonProps {
   githubRepoId: number;
   className?: string;
   iconClassName?: string;
+  'data-tour'?: string;
 }
 
 /**
@@ -39,6 +40,7 @@ export function RadarIconButton({
   githubRepoId,
   className,
   iconClassName = 'h-7 w-7',
+  'data-tour': dataTour,
 }: RadarIconButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { radarIds, isLoading } = useRepoRadars(githubRepoId);
@@ -93,6 +95,7 @@ export function RadarIconButton({
         onClick={() => setIsModalOpen(true)}
         className={className}
         aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
+        data-tour={dataTour}
       >
         <DynamicRadarIcon
           isActive={displayedActive ?? false}

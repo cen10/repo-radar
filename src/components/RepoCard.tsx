@@ -9,9 +9,11 @@ import { RadarIconButton } from './RadarIconButton';
 
 interface RepoCardProps {
   repository: Repository;
+  /** When true, adds data-tour attributes for onboarding tour targeting */
+  isTourTarget?: boolean;
 }
 
-export function RepoCard({ repository }: RepoCardProps) {
+export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
   const {
     id,
     name,
@@ -69,6 +71,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           <Link
             to={`/repo/${id}`}
             className="group/link no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
+            {...(isTourTarget ? { 'data-tour': 'repo-link' } : {})}
           >
             <span className="group/name relative block z-2">
               <h3 ref={nameRef} className="text-lg font-semibold text-gray-900 truncate">
@@ -90,7 +93,11 @@ export function RepoCard({ repository }: RepoCardProps) {
           </Link>
         </div>
         {/* Radar button - z-2 to sit above the stretched link overlay (z-1) */}
-        <RadarIconButton githubRepoId={id} className="relative z-2 -mt-2" />
+        <RadarIconButton
+          githubRepoId={id}
+          className="relative z-2 -mt-2"
+          {...(isTourTarget ? { 'data-tour': 'radar-icon' } : {})}
+        />
       </div>
 
       {/* Status badges */}

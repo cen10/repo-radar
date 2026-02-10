@@ -243,7 +243,7 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
 
   // Normal state with radars
   return (
-    <div data-testid="radar-list" className="space-y-1">
+    <div data-testid="radar-list" data-tour="sidebar-radars" className="space-y-1">
       {/* Radar list */}
       {radars.map((radar) => (
         <RadarNavItem

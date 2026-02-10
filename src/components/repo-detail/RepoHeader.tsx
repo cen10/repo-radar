@@ -70,7 +70,7 @@ export function RepoHeader({
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8" data-tour="repo-header">
       {/* Top row: Avatar, name, and actions */}
       <div className="flex items-start gap-4 mb-4">
         <img
@@ -191,6 +191,7 @@ export function RepoHeader({
           disabled={showRefreshing}
           className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Refresh data"
+          data-tour="refresh-button"
         >
           <ArrowPathIcon
             className={`h-4 w-4 ${showRefreshing ? 'animate-spin' : ''}`}

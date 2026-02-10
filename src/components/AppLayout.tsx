@@ -6,8 +6,10 @@ import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
 import { CreateRadarModal } from './CreateRadarModal';
 import { DemoBanner } from './DemoBanner';
+import { OnboardingTour } from './OnboardingTour';
 import { useAuth } from '../hooks/use-auth';
 import { useDemoMode } from '../demo/demo-context';
+import { OnboardingProvider } from '../contexts/onboarding-context';
 
 /**
  * Inner layout component that uses auth context.
@@ -77,6 +79,8 @@ function AuthenticatedLayout() {
 
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
+
+      {showSidebar && <OnboardingTour hasStarredRepos={true} />}
     </div>
   );
 }
@@ -90,7 +94,9 @@ function AuthenticatedLayout() {
 export function AppLayout() {
   return (
     <AuthProvider>
-      <AuthenticatedLayout />
+      <OnboardingProvider>
+        <AuthenticatedLayout />
+      </OnboardingProvider>
     </AuthProvider>
   );
 }
