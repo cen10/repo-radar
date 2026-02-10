@@ -8,6 +8,9 @@ interface OnboardingContextType {
   isTourActive: boolean;
   startTour: () => void;
   completeTour: () => void;
+  /** Step ID to start from (for cross-page Back navigation) */
+  startFromStep: string | null;
+  setStartFromStep: (stepId: string | null) => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -34,6 +37,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   });
 
   const [isTourActive, setIsTourActive] = useState(false);
+  const [startFromStep, setStartFromStep] = useState<string | null>(null);
 
   // Persist completion to localStorage (except demo mode)
   useEffect(() => {
@@ -53,7 +57,16 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   }, []);
 
   return (
-    <OnboardingContext.Provider value={{ hasCompletedTour, isTourActive, startTour, completeTour }}>
+    <OnboardingContext.Provider
+      value={{
+        hasCompletedTour,
+        isTourActive,
+        startTour,
+        completeTour,
+        startFromStep,
+        setStartFromStep,
+      }}
+    >
       {children}
     </OnboardingContext.Provider>
   );

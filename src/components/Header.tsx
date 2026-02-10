@@ -204,7 +204,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
             </div>
 
             {/* Help button */}
-            <div className="relative">
+            <div className="relative" data-tour="help-button">
               <Button
                 ref={helpButtonRef}
                 variant="ghost"

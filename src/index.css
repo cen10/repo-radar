@@ -100,7 +100,14 @@
 }
 
 /* Shepherd.js tour customizations to match app styling */
+
+/* Ensure tour elements appear above modals (which use z-50) */
+.shepherd-modal-overlay-container {
+  z-index: 9998 !important;
+}
+
 .shepherd-element {
+  z-index: 9999 !important;
   border-radius: 0.375rem !important; /* rounded-md */
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 0.1),
@@ -188,22 +195,7 @@
     0 0 0 4px #6366f1 !important;
 }
 
-/* Skip button - same as secondary for consistency */
-.shepherd-button-skip {
-  background-color: white !important;
-  color: #374151 !important; /* text-gray-700 */
-  border: 1px solid #d1d5db !important; /* border-gray-300 */
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
-  margin-right: auto !important; /* Push to left side */
-}
-
-.shepherd-button-skip:hover {
-  background-color: #f9fafb !important; /* bg-gray-50 */
-}
-
-.shepherd-button-skip:focus {
-  outline: none !important;
-  box-shadow:
-    0 0 0 2px white,
-    0 0 0 4px #6366f1 !important;
+/* Hide the arrow pointing to target element */
+.shepherd-arrow {
+  display: none !important;
 }

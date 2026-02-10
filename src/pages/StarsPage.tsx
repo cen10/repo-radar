@@ -68,14 +68,17 @@ const StarsPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header with Search and Sort */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
+        <h1
+          className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
+          data-tour="my-stars-heading"
+        >
           <StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />
           My Stars
         </h1>
 
         {showSearchAndSort && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div data-tour="search">
+            <div>
               <CollapsibleSearch
                 id="stars-search"
                 value={searchQuery}
@@ -84,7 +87,7 @@ const StarsPage = () => {
                 placeholder="Search your starred repositories..."
               />
             </div>
-            <div data-tour="sort">
+            <div>
               <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
             </div>
           </div>

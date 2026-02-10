@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/onboarding-context';
 import { getTourStepDefs, toShepherdSteps, getCurrentPage } from './tourSteps';
@@ -11,6 +11,7 @@ interface OnboardingTourProps {
 
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const Shepherd = useShepherd();
   const { isTourActive, completeTour } = useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
@@ -54,23 +55,71 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       },
     });
 
-    const shepherdSteps = toShepherdSteps(pageStepDefs, tour);
+    const handleBackTo = (stepId: string, path: string) => {
+      // Use sessionStorage for reliable cross-navigation state
+      sessionStorage.setItem('tour-start-from-step', stepId);
+      void navigate(path);
+    };
+
+    const shepherdSteps = toShepherdSteps(pageStepDefs, { tour, onBackTo: handleBackTo });
     tour.addSteps(shepherdSteps);
 
     tour.on('complete', handleComplete);
     tour.on('cancel', handleComplete);
 
+    // Check if we should start from a specific step (cross-page Back navigation)
+    const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
+    if (savedStartFromStep) {
+      sessionStorage.removeItem('tour-start-from-step');
+      const stepIndex = pageStepDefs.findIndex((s) => s.id === savedStartFromStep);
+      if (stepIndex >= 0) {
+        // Show the specific step after tour starts
+        setTimeout(() => tour.show(savedStartFromStep), 0);
+      }
+    }
+
+    // Hide tooltip when radar icon is clicked (modal opens)
+    const handleRadarIconClick = (e: Event) => {
+      const target = e.target as Element;
+      const radarIcon = target.closest('[data-tour="radar-icon"]');
+      const currentStep = tour.getCurrentStep();
+
+      if (radarIcon && currentStep?.id === 'radar-icon') {
+        // Hide the tooltip while modal is open
+        currentStep.hide();
+      }
+    };
+    document.addEventListener('click', handleRadarIconClick, true);
+
+    // Manual event listener for Done button in AddToRadar modal
+    // Shepherd's advanceOn doesn't work with Headless UI portals, so we handle it manually
+    const handleDoneClick = (e: Event) => {
+      const target = e.target as Element;
+      const isDoneButton = target.tagName === 'BUTTON' && target.textContent?.trim() === 'Done';
+      const currentStep = tour.getCurrentStep();
+
+      if (isDoneButton && currentStep?.id === 'radar-icon') {
+        setTimeout(() => tour.next(), 0);
+      }
+    };
+    document.addEventListener('pointerdown', handleDoneClick, true);
+
     tourRef.current = tour;
     void tour.start();
 
     return () => {
+      // Detach Shepherd event handlers FIRST, before canceling
+      // This prevents navigation from triggering completeTour()
       tour.off('complete', handleComplete);
       tour.off('cancel', handleComplete);
+      document.removeEventListener('click', handleRadarIconClick, true);
+      document.removeEventListener('pointerdown', handleDoneClick, true);
+      // Now cancel the tour (won't trigger handleComplete since we unsubscribed)
       if (tour.isActive()) {
         void tour.cancel();
       }
     };
-  }, [isTourActive, pageStepDefs, Shepherd, handleComplete]);
+  }, [isTourActive, pageStepDefs, Shepherd, handleComplete, navigate]);
 
   return null;
 }

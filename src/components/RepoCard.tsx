@@ -63,7 +63,10 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
       : description;
 
   return (
-    <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
+    <article
+      className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6"
+      {...(isTourTarget ? { 'data-tour': 'repo-card' } : {})}
+    >
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />

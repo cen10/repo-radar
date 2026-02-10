@@ -1274,10 +1274,10 @@ export const DEMO_RADARS: RadarWithCount[] = [
   {
     id: 'demo-radar-frontend',
     user_id: DEMO_USER.id,
-    name: 'Frontend Tools',
+    name: 'Frontend Frameworks',
     created_at: recentDate(60),
     updated_at: recentDate(2),
-    repo_count: 12,
+    repo_count: 3,
   },
   {
     id: 'demo-radar-learning',
@@ -1291,107 +1291,53 @@ export const DEMO_RADARS: RadarWithCount[] = [
 
 // Radar repo associations
 export const DEMO_RADAR_REPOS: RadarRepo[] = [
-  // Frontend Tools (12 repos)
+  // Frontend Frameworks (3 repos) - actual UI frameworks only
   {
     id: 'rr-1',
     radar_id: 'demo-radar-frontend',
-    github_repo_id: 10270250,
+    github_repo_id: 70107786,
     added_at: recentDate(55),
-  }, // react
+  }, // next.js
   {
     id: 'rr-2',
     radar_id: 'demo-radar-frontend',
-    github_repo_id: 36502473,
+    github_repo_id: 74293321,
     added_at: recentDate(54),
-  }, // vite
+  }, // svelte
   {
     id: 'rr-3',
     radar_id: 'demo-radar-frontend',
-    github_repo_id: 67274736,
+    github_repo_id: 83222441,
     added_at: recentDate(53),
-  }, // tailwindcss
-  {
-    id: 'rr-4',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 70107786,
-    added_at: recentDate(52),
-  }, // next.js
-  {
-    id: 'rr-5',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 36040894,
-    added_at: recentDate(51),
-  }, // tanstack query
-  {
-    id: 'rr-6',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 83827139,
-    added_at: recentDate(50),
-  }, // zustand
-  {
-    id: 'rr-7',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 29028775,
-    added_at: recentDate(49),
-  }, // react-router
-  {
-    id: 'rr-8',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 75396575,
-    added_at: recentDate(48),
-  }, // react-hook-form
-  {
-    id: 'rr-9',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 99766187,
-    added_at: recentDate(47),
-  }, // headlessui
-  {
-    id: 'rr-10',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 143244109,
-    added_at: recentDate(46),
-  }, // trpc
-  {
-    id: 'rr-11',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 157846876,
-    added_at: recentDate(45),
-  }, // vitest
-  {
-    id: 'rr-12',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 111583593,
-    added_at: recentDate(44),
-  }, // storybook
+  }, // remix
 
   // Learning Resources (5 repos)
   {
-    id: 'rr-13',
+    id: 'rr-4',
     radar_id: 'demo-radar-learning',
     github_repo_id: 28457823,
     added_at: recentDate(40),
   }, // freeCodeCamp
   {
-    id: 'rr-14',
+    id: 'rr-5',
     radar_id: 'demo-radar-learning',
     github_repo_id: 63537249,
     added_at: recentDate(39),
   }, // javascript-algorithms
   {
-    id: 'rr-15',
+    id: 'rr-6',
     radar_id: 'demo-radar-learning',
     github_repo_id: 460078,
     added_at: recentDate(38),
   }, // rustlings
   {
-    id: 'rr-16',
+    id: 'rr-7',
     radar_id: 'demo-radar-learning',
     github_repo_id: 20929025,
     added_at: recentDate(37),
   }, // typescript
   {
-    id: 'rr-17',
+    id: 'rr-8',
     radar_id: 'demo-radar-learning',
     github_repo_id: 458058,
     added_at: recentDate(36),

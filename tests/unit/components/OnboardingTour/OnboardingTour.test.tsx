@@ -88,11 +88,12 @@ describe('OnboardingTour', () => {
 
     renderTour('/stars');
 
-    // Stars page has 6 steps (5 visible + 1 desktopOnly) on desktop
+    // Stars page has 5 steps (4 visible + 1 desktopOnly) on desktop
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(6);
+    expect(addedSteps.length).toBe(5);
     expect(addedSteps[0].id).toBe('welcome');
-    expect(addedSteps[1].id).toBe('repo-link');
+    expect(addedSteps[1].id).toBe('help-button');
+    expect(addedSteps[2].id).toBe('repo-link');
   });
 
   it('does not start tour when on a page with no steps', () => {
@@ -118,9 +119,9 @@ describe('OnboardingTour', () => {
 
     renderTour('/stars');
 
-    // Stars page: 6 steps on desktop, 5 on mobile (sidebar-radars removed)
+    // Stars page: 5 steps on desktop, 4 on mobile (sidebar-radars removed)
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(5);
+    expect(addedSteps.length).toBe(4);
     const ids = addedSteps.map((s: { id: string }) => s.id);
     expect(ids).not.toContain('sidebar-radars');
   });

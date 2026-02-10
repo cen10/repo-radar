@@ -89,7 +89,7 @@ export function BottomSheet({
   }, [onClose]);
 
   return (
-    <Dialog open={open} onClose={onClose} className="relative z-50">
+    <Dialog open={open} onClose={onClose} className="relative z-[10000]">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 data-closed:opacity-0"
@@ -99,6 +99,7 @@ export function BottomSheet({
           ref={panelRef}
           transition
           data-testid="bottom-sheet-panel"
+          data-tour="bottom-sheet"
           className="w-full max-h-[calc(100vh-5rem)] rounded-t-2xl bg-white shadow-xl transition-transform duration-300 ease-out data-closed:translate-y-full motion-reduce:transition-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -111,14 +112,24 @@ export function BottomSheet({
           </div>
 
           <div className="px-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 1rem)' }}>
-            <DialogTitle className="text-lg font-semibold text-gray-900">{title}</DialogTitle>
+            <DialogTitle
+              className="text-lg font-semibold text-gray-900"
+              data-tour="bottom-sheet-title"
+            >
+              {title}
+            </DialogTitle>
 
             <div ref={scrollRef} className="mt-4 max-h-[60vh] overflow-y-auto">
               {children}
             </div>
 
             <div className="mt-6 pb-4">
-              <Button variant="primary" className="w-full" onClick={onClose}>
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={onClose}
+                data-tour="bottom-sheet-done"
+              >
                 {doneLabel}
               </Button>
             </div>
