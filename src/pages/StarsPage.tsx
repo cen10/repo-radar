@@ -67,14 +67,14 @@ const StarsPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header with Search and Sort */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
           <StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />
           My Stars
         </h1>
 
         {showSearchAndSort && (
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div data-tour="search">
               <CollapsibleSearch
                 id="stars-search"
