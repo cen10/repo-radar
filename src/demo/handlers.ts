@@ -35,8 +35,9 @@ let idCounter = 1000;
  * Called when entering demo mode.
  */
 export function resetDemoState() {
-  demoRadars = [...DEMO_RADARS];
-  demoRadarRepos = [...DEMO_RADAR_REPOS];
+  // Deep copy to avoid mutating source constants
+  demoRadars = DEMO_RADARS.map((r) => ({ ...r }));
+  demoRadarRepos = DEMO_RADAR_REPOS.map((r) => ({ ...r }));
   idCounter = 1000;
 }
 
