@@ -124,7 +124,7 @@ export function CollapsibleSearch({
 
       {/* Expanded state: Search bar + close button */}
       {isExpanded && (
-        <div id={`${id}-container`} className="flex items-center gap-2 flex-1">
+        <div id={`${id}-container`} className="flex items-center gap-2 flex-1 min-w-[400px]">
           <SearchBar
             id={id}
             value={value}
