@@ -50,14 +50,9 @@ vi.mock('@/services/radar', () => ({
 vi.mock('@/contexts/onboarding-context', () => ({
   useOnboarding: () => ({
     hasCompletedTour: true,
-    currentStep: 0,
     isTourActive: false,
     startTour: vi.fn(),
-    setStep: vi.fn(),
-    nextStep: vi.fn(),
-    prevStep: vi.fn(),
     completeTour: vi.fn(),
-    skipTour: vi.fn(),
   }),
 }));
 

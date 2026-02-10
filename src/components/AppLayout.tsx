@@ -10,6 +10,7 @@ import { OnboardingTour } from './OnboardingTour';
 import { useAuth } from '../hooks/use-auth';
 import { useDemoMode } from '../demo/demo-context';
 import { OnboardingProvider } from '../contexts/onboarding-context';
+import { ShepherdJourneyProvider } from 'react-shepherd';
 
 /**
  * Inner layout component that uses auth context.
@@ -94,9 +95,11 @@ function AuthenticatedLayout() {
 export function AppLayout() {
   return (
     <AuthProvider>
-      <OnboardingProvider>
-        <AuthenticatedLayout />
-      </OnboardingProvider>
+      <ShepherdJourneyProvider>
+        <OnboardingProvider>
+          <AuthenticatedLayout />
+        </OnboardingProvider>
+      </ShepherdJourneyProvider>
     </AuthProvider>
   );
 }

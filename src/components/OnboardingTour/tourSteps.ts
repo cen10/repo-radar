@@ -1,67 +1,70 @@
+import type Tour from 'shepherd.js/src/tour';
+
 export type TourPage = 'stars' | 'radar' | 'repo-detail';
 
-export type TourPlacement = 'top' | 'bottom' | 'left' | 'right' | 'center';
-
-export interface TourStep {
-  /** CSS selector for the target element */
+export interface TourStepDef {
+  id: string;
+  /** CSS selector for the target element (empty string = centered/no target) */
   target: string;
   /** Tooltip content text */
-  content: string;
+  text: string;
   /** Which page this step belongs to */
   page: TourPage;
   /** Tooltip placement relative to target */
-  placement: TourPlacement;
+  placement: string;
   /** Allow clicks on the highlighted element */
-  spotlightClicks?: boolean;
-  /** This step expects the user to navigate to the next page */
-  waitForNavigation?: boolean;
+  canClickTarget?: boolean;
   /** Don't show this step on small screens (< 1024px) */
   desktopOnly?: boolean;
 }
 
-export function getTourSteps(options: { hasStarredRepos: boolean }): TourStep[] {
+export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStepDef[] {
   const { hasStarredRepos } = options;
 
   return [
     // === STARS PAGE ===
     {
+      id: 'welcome',
       target: '',
-      content: hasStarredRepos
+      text: hasStarredRepos
         ? 'Welcome to Repo Radar! These are your starred GitHub repositories. We track their momentum — stars, releases, and activity.'
         : 'Welcome to Repo Radar! Star repositories on GitHub to start tracking their momentum — stars, releases, and activity.',
       page: 'stars',
       placement: 'center',
     },
     {
+      id: 'repo-link',
       target: '[data-tour="repo-link"]',
-      content: 'Click any repo name to see detailed metrics, releases, and more.',
+      text: 'Click any repo name to see detailed metrics, releases, and more.',
       page: 'stars',
       placement: 'bottom',
     },
     {
+      id: 'search',
       target: '[data-tour="search"]',
-      content: 'Search across your starred repositories to quickly find what you need.',
+      text: 'Search across your starred repositories to quickly find what you need.',
       page: 'stars',
       placement: 'bottom',
     },
     {
+      id: 'sort',
       target: '[data-tour="sort"]',
-      content: 'Sort by recent updates, star date, or other criteria to surface what matters most.',
+      text: 'Sort by recent updates, star date, or other criteria to surface what matters most.',
       page: 'stars',
       placement: 'bottom',
     },
     {
+      id: 'radar-icon',
       target: '[data-tour="radar-icon"]',
-      content:
-        'Click the radar icon to organize repos into collections called "radars." Try it now!',
+      text: 'Click the radar icon to organize repos into collections called "radars." Try it now!',
       page: 'stars',
       placement: 'left',
-      spotlightClicks: true,
+      canClickTarget: true,
     },
     {
+      id: 'sidebar-radars',
       target: '[data-tour="sidebar-radars"]',
-      content:
-        'Your radars appear here in the sidebar. Click one to see all repos in that collection.',
+      text: 'Your radars appear here in the sidebar. Click one to see all repos in that collection.',
       page: 'stars',
       placement: 'right',
       desktopOnly: true,
@@ -69,47 +72,96 @@ export function getTourSteps(options: { hasStarredRepos: boolean }): TourStep[] 
 
     // === RADAR PAGE ===
     {
+      id: 'radar-repos',
       target: '[data-tour="radar-repos"]',
-      content: 'All repos in this radar are shown here. Remove any by clicking its radar icon.',
+      text: 'All repos in this radar are shown here. Remove any by clicking its radar icon.',
       page: 'radar',
       placement: 'bottom',
     },
     {
+      id: 'radar-menu',
       target: '[data-tour="radar-menu"]',
-      content:
-        "Use this menu to rename or delete the radar. Deleting a radar doesn't remove the repos themselves.",
+      text: "Use this menu to rename or delete the radar. Deleting a radar doesn't remove the repos themselves.",
       page: 'radar',
       placement: 'bottom',
     },
 
     // === REPO DETAIL PAGE ===
     {
+      id: 'repo-header',
       target: '[data-tour="repo-header"]',
-      content:
-        'The detail page shows comprehensive metrics for any repository — stars, forks, issues, and more.',
+      text: 'The detail page shows comprehensive metrics for any repository — stars, forks, issues, and more.',
       page: 'repo-detail',
       placement: 'bottom',
     },
     {
+      id: 'refresh-button',
       target: '[data-tour="refresh-button"]',
-      content: 'Click refresh to fetch the latest data from GitHub anytime.',
+      text: 'Click refresh to fetch the latest data from GitHub anytime.',
       page: 'repo-detail',
       placement: 'bottom',
     },
     {
+      id: 'releases',
       target: '[data-tour="releases"]',
-      content: 'Expand any release to see version details and release notes.',
+      text: 'Expand any release to see version details and release notes.',
       page: 'repo-detail',
       placement: 'top',
     },
     {
+      id: 'coming-soon',
       target: '[data-tour="coming-soon"]',
-      content:
-        "Coming soon: Historical tracking with sparklines and trend charts. We'll track star growth over time so you can spot repos gaining momentum. Thanks for exploring!",
+      text: "Coming soon: Historical tracking with sparklines and trend charts. We'll track star growth over time so you can spot repos gaining momentum. Thanks for exploring!",
       page: 'repo-detail',
       placement: 'top',
     },
   ];
+}
+
+/**
+ * Convert our step definitions into Shepherd.js step options.
+ */
+export function toShepherdSteps(defs: TourStepDef[], tour: Tour): Tour.StepOptions[] {
+  return defs.map((def, index) => {
+    const isFirst = index === 0;
+    const isLast = index === defs.length - 1;
+
+    const buttons: Tour.StepOptions['buttons'] = [];
+
+    buttons.push({
+      text: 'Skip tour',
+      action: () => tour.cancel(),
+      classes: 'shepherd-button-skip',
+    });
+
+    if (!isFirst) {
+      buttons.push({
+        text: 'Back',
+        action: () => tour.back(),
+        secondary: true,
+      });
+    }
+
+    buttons.push({
+      text: isLast ? 'Finish' : 'Next',
+      action: () => (isLast ? tour.complete() : tour.next()),
+    });
+
+    const step: Tour.StepOptions = {
+      id: def.id,
+      text: def.text,
+      buttons,
+      cancelIcon: { enabled: true },
+      canClickTarget: def.canClickTarget ?? false,
+      scrollTo: { behavior: 'smooth', block: 'center' } as ScrollIntoViewOptions,
+    };
+
+    if (def.target) {
+      step.attachTo = { element: def.target, on: def.placement };
+    }
+
+    return step;
+  });
 }
 
 export function getCurrentPage(pathname: string): TourPage | null {

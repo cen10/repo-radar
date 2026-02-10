@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/onboarding-context';
-import { getTourSteps, getCurrentPage } from './tourSteps';
-import { TourOverlay } from './TourOverlay';
+import { getTourStepDefs, toShepherdSteps, getCurrentPage } from './tourSteps';
+import 'shepherd.js/dist/css/shepherd.css';
 
 interface OnboardingTourProps {
   hasStarredRepos: boolean;
@@ -10,81 +11,66 @@ interface OnboardingTourProps {
 
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
-  const { isTourActive, currentStep, nextStep, prevStep, completeTour, skipTour, setStep } =
-    useOnboarding();
-  const prevPathnameRef = useRef(location.pathname);
+  const Shepherd = useShepherd();
+  const { isTourActive, completeTour } = useOnboarding();
+  const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
 
-  const allSteps = useMemo(() => getTourSteps({ hasStarredRepos }), [hasStarredRepos]);
-
-  const currentPage = getCurrentPage(location.pathname);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
-  // Filter out desktop-only steps on mobile
-  const activeSteps = useMemo(
-    () => (isMobile ? allSteps.filter((s) => !s.desktopOnly) : allSteps),
-    [allSteps, isMobile]
+  const stepDefs = useMemo(() => {
+    const allDefs = getTourStepDefs({ hasStarredRepos });
+    return isMobile ? allDefs.filter((s) => !s.desktopOnly) : allDefs;
+  }, [hasStarredRepos, isMobile]);
+
+  // Filter to only show steps for the current page
+  const currentPage = getCurrentPage(location.pathname);
+
+  const pageStepDefs = useMemo(
+    () => stepDefs.filter((s) => s.page === currentPage),
+    [stepDefs, currentPage]
   );
 
-  // Auto-advance when user navigates to a new page that has tour steps
-  useEffect(() => {
-    if (!isTourActive) return;
-
-    const prevPage = getCurrentPage(prevPathnameRef.current);
-    prevPathnameRef.current = location.pathname;
-
-    if (prevPage === currentPage) return;
-    if (!currentPage) return;
-
-    // Find the first step for the new page
-    const nextPageStepIndex = activeSteps.findIndex((s) => s.page === currentPage);
-    if (nextPageStepIndex !== -1 && nextPageStepIndex > currentStep) {
-      setStep(nextPageStepIndex);
-    }
-  }, [location.pathname, currentPage, isTourActive, activeSteps, currentStep, setStep]);
-
-  if (!isTourActive) return null;
-
-  // Bounds check
-  if (currentStep >= activeSteps.length) {
+  const handleComplete = useCallback(() => {
     completeTour();
-    return null;
-  }
+  }, [completeTour]);
 
-  const step = activeSteps[currentStep];
-
-  // Only show steps for the current page
-  if (step.page !== currentPage) return null;
-
-  const handleNext = () => {
-    if (currentStep >= activeSteps.length - 1) {
-      completeTour();
-    } else {
-      nextStep();
+  // Create and start/stop tour when isTourActive changes
+  useEffect(() => {
+    if (!isTourActive || pageStepDefs.length === 0) {
+      // If tour should stop, cancel any active tour
+      if (tourRef.current?.isActive()) {
+        void tourRef.current.cancel();
+      }
+      tourRef.current = null;
+      return;
     }
-  };
 
-  const handlePrev = () => {
-    // Only go back within the same page
-    const prevStepDef = activeSteps[currentStep - 1];
-    if (prevStepDef && prevStepDef.page === currentPage) {
-      prevStep();
-    }
-  };
+    const tour = new Shepherd.Tour({
+      useModalOverlay: true,
+      defaultStepOptions: {
+        classes: 'shepherd-theme-custom',
+        modalOverlayOpeningPadding: 8,
+        modalOverlayOpeningRadius: 8,
+      },
+    });
 
-  return (
-    <TourOverlay
-      key={`tour-step-${currentStep}`}
-      target={step.target}
-      content={step.content}
-      placement={step.placement}
-      spotlightClicks={step.spotlightClicks}
-      currentStep={currentStep}
-      totalSteps={activeSteps.length}
-      onNext={handleNext}
-      onPrev={handlePrev}
-      onSkip={skipTour}
-      isFirst={currentStep === 0 || activeSteps[currentStep - 1]?.page !== currentPage}
-      isLast={currentStep === activeSteps.length - 1}
-    />
-  );
+    const shepherdSteps = toShepherdSteps(pageStepDefs, tour);
+    tour.addSteps(shepherdSteps);
+
+    tour.on('complete', handleComplete);
+    tour.on('cancel', handleComplete);
+
+    tourRef.current = tour;
+    void tour.start();
+
+    return () => {
+      tour.off('complete', handleComplete);
+      tour.off('cancel', handleComplete);
+      if (tour.isActive()) {
+        void tour.cancel();
+      }
+    };
+  }, [isTourActive, pageStepDefs, Shepherd, handleComplete]);
+
+  return null;
 }

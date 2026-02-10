@@ -1,23 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { getTourSteps, getCurrentPage } from '@/components/OnboardingTour/tourSteps';
+import { getTourStepDefs, getCurrentPage } from '@/components/OnboardingTour/tourSteps';
 
-describe('getTourSteps', () => {
+describe('getTourStepDefs', () => {
   it('returns steps with welcome text when user has starred repos', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
-    expect(steps[0].content).toMatch(/welcome to repo radar/i);
-    expect(steps[0].content).toMatch(/these are your starred/i);
+    expect(steps[0].text).toMatch(/welcome to repo radar/i);
+    expect(steps[0].text).toMatch(/these are your starred/i);
   });
 
   it('returns steps with prompt text when user has no starred repos', () => {
-    const steps = getTourSteps({ hasStarredRepos: false });
+    const steps = getTourStepDefs({ hasStarredRepos: false });
 
-    expect(steps[0].content).toMatch(/welcome to repo radar/i);
-    expect(steps[0].content).toMatch(/star repositories on github/i);
+    expect(steps[0].text).toMatch(/welcome to repo radar/i);
+    expect(steps[0].text).toMatch(/star repositories on github/i);
   });
 
   it('returns steps spanning all three pages', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const pages = new Set(steps.map((s) => s.page));
 
     expect(pages).toContain('stars');
@@ -26,30 +26,30 @@ describe('getTourSteps', () => {
   });
 
   it('has a centered welcome step with no specific target', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
     expect(steps[0].target).toBe('');
     expect(steps[0].placement).toBe('center');
   });
 
   it('marks the sidebar step as desktopOnly', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const sidebarStep = steps.find((s) => s.target === '[data-tour="sidebar-radars"]');
 
     expect(sidebarStep).toBeDefined();
     expect(sidebarStep!.desktopOnly).toBe(true);
   });
 
-  it('marks the radar-icon step as spotlightClicks', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+  it('marks the radar-icon step as canClickTarget', () => {
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const radarIconStep = steps.find((s) => s.target === '[data-tour="radar-icon"]');
 
     expect(radarIconStep).toBeDefined();
-    expect(radarIconStep!.spotlightClicks).toBe(true);
+    expect(radarIconStep!.canClickTarget).toBe(true);
   });
 
   it('has at least one step per page', () => {
-    const steps = getTourSteps({ hasStarredRepos: true });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
     const starsSteps = steps.filter((s) => s.page === 'stars');
     const radarSteps = steps.filter((s) => s.page === 'radar');
@@ -58,6 +58,14 @@ describe('getTourSteps', () => {
     expect(starsSteps.length).toBeGreaterThan(0);
     expect(radarSteps.length).toBeGreaterThan(0);
     expect(repoDetailSteps.length).toBeGreaterThan(0);
+  });
+
+  it('assigns unique IDs to all steps', () => {
+    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const ids = steps.map((s) => s.id);
+    const uniqueIds = new Set(ids);
+
+    expect(uniqueIds.size).toBe(ids.length);
   });
 });
 
