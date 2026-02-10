@@ -5,9 +5,10 @@ import type {
   RadarWithCount,
   RadarInsert,
   RadarWithRepoCountResponse,
-  RadarWithRepoIdsResponse,
 } from '../types/database';
 import { logger } from '../utils/logger';
+import { isDemoModeActive } from '../demo/demo-context';
+import { DEMO_USER } from '../demo/demo-user';
 
 // Limit constants
 export const RADAR_LIMITS = {
@@ -79,34 +80,47 @@ export async function createRadar(name: string): Promise<Radar> {
     throw new Error('Radar name cannot exceed 50 characters');
   }
 
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  // In demo mode, skip auth and limit checks - MSW handles everything.
+  // Demo mode only needs checks here and in addRepoToRadar because these functions
+  // do client-side validation before the API call. Other functions just call
+  // Supabase directly and let MSW intercept.
+  let userId: string;
+  if (isDemoModeActive()) {
+    userId = DEMO_USER.id;
+  } else {
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+    userId = user.id;
 
-  // Check radar count limit
-  const { count, error: countError } = await supabase
-    .from('radars')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+    // Check radar count limit.
+    // Note: This is a soft limit with a potential race condition - concurrent requests
+    // could both pass the check and exceed the limit by 1. Acceptable for UX limits;
+    // use a database trigger if strict enforcement is needed.
+    const { count, error: countError } = await supabase
+      .from('radars')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
-  if (countError) {
-    logger.error('Failed to check radar count', countError);
-    throw new Error('Failed to create radar');
-  }
+    if (countError) {
+      logger.error('Failed to check radar count', countError);
+      throw new Error('Failed to create radar');
+    }
 
-  if (count !== null && count >= RADAR_LIMITS.MAX_RADARS_PER_USER) {
-    throw new Error(
-      `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`
-    );
+    if (count !== null && count >= RADAR_LIMITS.MAX_RADARS_PER_USER) {
+      throw new Error(
+        `You can only have ${RADAR_LIMITS.MAX_RADARS_PER_USER} radars. Delete an existing radar to create a new one.`
+      );
+    }
   }
 
   // Create the radar
   const radarInsert: RadarInsert = {
-    user_id: user.id,
+    user_id: userId,
     name: trimmedName,
   };
 
@@ -186,30 +200,21 @@ export async function getRadarRepos(radarId: string): Promise<RadarRepo[]> {
 }
 
 /**
- * Fetches all GitHub repo IDs across all of the user's radars
- * Useful for checking if a repo is already in any radar
+ * Fetches all GitHub repo IDs across all of the user's radars.
+ * Useful for checking if a repo is already in any radar.
+ *
+ * No explicit user filtering needed here — RLS policy "Users can view repos in own radars"
+ * joins through radars table to verify ownership. See: supabase/migrations/001_create_radars.sql
  */
 export async function getAllRadarRepoIds(): Promise<Set<number>> {
-  const { data, error } = await supabase.from('radars').select(
-    `
-      radar_repos(github_repo_id)
-    `
-  );
+  const { data, error } = await supabase.from('radar_repos').select('github_repo_id');
 
   if (error) {
     logger.error('Failed to fetch radar repo IDs', error);
     throw new Error('Failed to fetch radar repo IDs');
   }
 
-  const repoIds = new Set<number>();
-  const radars = data as RadarWithRepoIdsResponse[] | null;
-  for (const radar of radars || []) {
-    for (const repo of radar.radar_repos) {
-      repoIds.add(repo.github_repo_id);
-    }
-  }
-
-  return repoIds;
+  return new Set((data || []).map((r) => r.github_repo_id));
 }
 
 /**
@@ -217,53 +222,57 @@ export async function getAllRadarRepoIds(): Promise<Set<number>> {
  * Enforces limits: max repos per radar and max total repos
  */
 export async function addRepoToRadar(radarId: string, githubRepoId: number): Promise<RadarRepo> {
-  // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  // In demo mode, skip auth and limit checks - MSW handles everything.
+  // See comment in createRadar for why demo checks are only in these two functions.
+  if (!isDemoModeActive()) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
 
-  // Check repos per radar limit
-  const { count: radarRepoCount, error: radarCountError } = await supabase
-    .from('radar_repos')
-    .select('*', { count: 'exact', head: true })
-    .eq('radar_id', radarId);
+    // Check repos per radar limit.
+    // Note: Soft limit with potential race condition (see createRadar comment).
+    const { count: radarRepoCount, error: radarCountError } = await supabase
+      .from('radar_repos')
+      .select('*', { count: 'exact', head: true })
+      .eq('radar_id', radarId);
 
-  if (radarCountError) {
-    logger.error('Failed to check radar repo count', radarCountError);
-    throw new Error('Failed to add repo to radar');
-  }
+    if (radarCountError) {
+      logger.error('Failed to check radar repo count', radarCountError);
+      throw new Error('Failed to add repo to radar');
+    }
 
-  if (radarRepoCount !== null && radarRepoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) {
-    throw new Error(
-      `This radar already has ${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repositories. Remove some to add more.`
+    if (radarRepoCount !== null && radarRepoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) {
+      throw new Error(
+        `This radar already has ${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repositories. Remove some to add more.`
+      );
+    }
+
+    // Check total repos limit
+    const { data: allRadars, error: totalCountError } = await supabase.from('radars').select(
+      `
+        radar_repos(count)
+      `
     );
-  }
 
-  // Check total repos limit
-  const { data: allRadars, error: totalCountError } = await supabase.from('radars').select(
-    `
-      radar_repos(count)
-    `
-  );
+    if (totalCountError) {
+      logger.error('Failed to check total repo count', totalCountError);
+      throw new Error('Failed to add repo to radar');
+    }
 
-  if (totalCountError) {
-    logger.error('Failed to check total repo count', totalCountError);
-    throw new Error('Failed to add repo to radar');
-  }
+    const radarsWithCounts = allRadars as RadarWithRepoCountResponse[] | null;
+    const totalRepos = (radarsWithCounts || []).reduce((sum, radar) => {
+      const count = radar.radar_repos?.[0]?.count ?? 0;
+      return sum + count;
+    }, 0);
 
-  const radarsWithCounts = allRadars as RadarWithRepoCountResponse[] | null;
-  const totalRepos = (radarsWithCounts || []).reduce((sum, radar) => {
-    const count = radar.radar_repos?.[0]?.count ?? 0;
-    return sum + count;
-  }, 0);
-
-  if (totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS) {
-    throw new Error(
-      `You've reached the limit of ${RADAR_LIMITS.MAX_TOTAL_REPOS} total repositories across all radars.`
-    );
+    if (totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS) {
+      throw new Error(
+        `You've reached the limit of ${RADAR_LIMITS.MAX_TOTAL_REPOS} total repositories across all radars.`
+      );
+    }
   }
 
   // Add the repo

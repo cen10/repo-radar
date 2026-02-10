@@ -420,16 +420,14 @@ describe('Radar Service', () => {
     it('should return all repo IDs across radars', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockResolvedValue({
-          data: [
-            { radar_repos: [{ github_repo_id: 111 }, { github_repo_id: 222 }] },
-            { radar_repos: [{ github_repo_id: 333 }] },
-          ],
+          data: [{ github_repo_id: 111 }, { github_repo_id: 222 }, { github_repo_id: 333 }],
           error: null,
         }),
       });
 
       const result = await getAllRadarRepoIds();
 
+      expect(mockFrom).toHaveBeenCalledWith('radar_repos');
       expect(result).toBeInstanceOf(Set);
       expect(result.size).toBe(3);
       expect(result.has(111)).toBe(true);

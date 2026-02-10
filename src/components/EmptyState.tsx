@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { StarIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
+import { useDemoMode } from '../demo/demo-context';
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -72,11 +73,17 @@ interface NoSearchResultsStateProps {
 }
 
 export function NoSearchResultsState({ onClearSearch }: NoSearchResultsStateProps) {
+  const { isDemoMode } = useDemoMode();
+
   return (
     <EmptyState
       icon={<MagnifyingGlassIcon className="h-12 w-12" aria-hidden="true" />}
       title="No repos found"
-      description="Try adjusting your search or filters."
+      description={
+        isDemoMode
+          ? 'Demo mode supports these search terms: react, typescript, python, ai, rust'
+          : 'Try adjusting your search or filters.'
+      }
       actions={
         <Button variant="link" onClick={onClearSearch}>
           Clear search

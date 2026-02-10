@@ -5,7 +5,9 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
 import { CreateRadarModal } from './CreateRadarModal';
+import { DemoBanner } from './DemoBanner';
 import { useAuth } from '../hooks/use-auth';
+import { useDemoMode } from '../demo/demo-context';
 
 /**
  * Inner layout component that uses auth context.
@@ -13,6 +15,7 @@ import { useAuth } from '../hooks/use-auth';
  */
 function AuthenticatedLayout() {
   const { user } = useAuth();
+  const { isBannerVisible } = useDemoMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCreateRadarModalOpen, setIsCreateRadarModalOpen] = useState(false);
@@ -48,6 +51,7 @@ function AuthenticatedLayout() {
 
   return (
     <div className="min-h-screen bg-white">
+      <DemoBanner />
       <Header
         onMenuToggle={showSidebar ? handleMenuToggle : undefined}
         sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}
@@ -66,7 +70,7 @@ function AuthenticatedLayout() {
         </Sidebar>
       )}
       <main
-        className={`pt-16 ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`${isBannerVisible ? 'pt-[118px]' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
       >
         <Outlet />
       </main>

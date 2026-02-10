@@ -3,12 +3,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 import { Button } from '../components/Button';
+import { useDemoMode } from '../demo/demo-context';
 
 const Home = () => {
   const { user, authLoading, signInWithGitHub } = useAuth();
+  const { enterDemoMode, isInitializing: isDemoInitializing } = useDemoMode();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [demoError, setDemoError] = useState(false);
   const signInButtonRef = useRef<HTMLButtonElement>(null);
 
   // Check if user was redirected here due to session expiration
@@ -26,6 +29,17 @@ const Home = () => {
     } catch {
       // Reset button state so user can retry (e.g., network error, popup blocked)
       setIsSigningIn(false);
+    }
+  };
+
+  const handleTryDemo = async () => {
+    setDemoError(false);
+    const result = await enterDemoMode();
+    if (result.success) {
+      // Force a page reload to reinitialize auth with demo user
+      window.location.href = '/stars';
+    } else {
+      setDemoError(true);
     }
   };
 
@@ -101,6 +115,14 @@ const Home = () => {
           </div>
         )}
 
+        {demoError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert">
+            <p className="text-red-800">
+              Demo mode is currently unavailable. Please try again later.
+            </p>
+          </div>
+        )}
+
         <Button
           ref={signInButtonRef}
           size="lg"
@@ -110,6 +132,19 @@ const Home = () => {
         >
           Sign in with GitHub
         </Button>
+
+        <div className="mt-8 text-gray-500">
+          <p className="text-sm mb-3">Just exploring?</p>
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={handleTryDemo}
+            loading={isDemoInitializing}
+            loadingText="Starting demo..."
+          >
+            Try Demo
+          </Button>
+        </div>
       </div>
     </div>
   );

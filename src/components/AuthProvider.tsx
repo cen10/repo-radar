@@ -12,6 +12,8 @@ import {
   storeAccessToken,
   getStoredAccessToken,
 } from '../services/github-token';
+import { isDemoModeActive, useDemoMode } from '../demo/demo-context';
+import { DEMO_USER } from '../demo/demo-user';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   const { id, email, user_metadata = {} } = supabaseUser;
@@ -38,6 +40,7 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const { exitDemoMode } = useDemoMode();
   const [providerToken, setProviderToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -60,6 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getSession = useCallback(async (): Promise<boolean> => {
     logger.debug('getSession: Starting session check...');
+
+    // Check for demo mode first - skip Supabase auth entirely
+    if (isDemoModeActive()) {
+      logger.info('getSession: Demo mode active, using demo user');
+      setProviderToken('demo-token');
+      setUser(DEMO_USER);
+      setAuthLoading(false);
+      return true;
+    }
+
     try {
       setAuthLoading(true);
       setConnectionError(null);
@@ -97,6 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleAuthStateChange = useCallback(
     (event: AuthChangeEvent, session: Session | null) => {
+      // In demo mode, ignore Supabase auth events
+      if (isDemoModeActive()) {
+        logger.debug('Auth state change ignored in demo mode', { event });
+        return;
+      }
+
       logger.debug('Auth state change event received', {
         event,
         hasSession: !!session,
@@ -131,7 +150,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [applySessionToState]
   );
 
+  // Initialize auth state on mount
   useEffect(() => {
+    // If demo mode is active, set demo user immediately
+    if (isDemoModeActive()) {
+      logger.info('AuthProvider: Demo mode detected, setting demo user');
+      setProviderToken('demo-token');
+      setUser(DEMO_USER);
+      setAuthLoading(false);
+      return;
+    }
+
+    // Otherwise, set up Supabase auth listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthStateChange);
@@ -163,10 +193,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     logger.info('signOut: Starting sign out, clearing local state first...');
-    // Clear local state first to prevent race condition where queries re-run
+
+    // Clear query cache first
+    queryClient.clear();
+
+    // If in demo mode, exit demo mode properly (clears localStorage, stops MSW)
+    if (isDemoModeActive()) {
+      logger.info('signOut: Exiting demo mode');
+      exitDemoMode();
+      setProviderToken(null);
+      setUser(null);
+      // Navigate to home to avoid staying on protected routes
+      window.location.href = '/';
+      return;
+    }
+
+    // Clear local state to prevent race condition where queries re-run
     // with stale localStorage token during Supabase sign-out
     clearStoredAccessToken();
-    queryClient.clear();
 
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -175,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     logger.info('signOut: Sign out complete');
-  }, [queryClient]);
+  }, [queryClient, exitDemoMode]);
 
   const value: AuthContextType = useMemo(
     () => ({

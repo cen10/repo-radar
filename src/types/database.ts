@@ -95,15 +95,11 @@ export interface Database {
 // Convenience type aliases for application use
 export type Radar = Database['public']['Tables']['radars']['Row'];
 export type RadarInsert = Database['public']['Tables']['radars']['Insert'];
-export type RadarUpdate = Database['public']['Tables']['radars']['Update'];
 
 export type RadarRepo = Database['public']['Tables']['radar_repos']['Row'];
-export type RadarRepoInsert = Database['public']['Tables']['radar_repos']['Insert'];
-// No RadarRepoUpdate - these rows are added/removed, not updated
 
 export type RepoCache = Database['public']['Tables']['repo_cache']['Row'];
 export type RepoCacheInsert = Database['public']['Tables']['repo_cache']['Insert'];
-export type RepoCacheUpdate = Database['public']['Tables']['repo_cache']['Update'];
 
 // Extended types for UI consumption (with computed counts)
 export interface RadarWithCount extends Radar {
@@ -113,8 +109,4 @@ export interface RadarWithCount extends Radar {
 // Response types for Supabase relational queries
 export type RadarWithRepoCountResponse = Radar & {
   radar_repos: { count: number }[];
-};
-
-export type RadarWithRepoIdsResponse = {
-  radar_repos: { github_repo_id: number }[];
 };

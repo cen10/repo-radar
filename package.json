@@ -31,6 +31,7 @@
     "@tanstack/react-query": "^5.89.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "msw": "^2.12.9",
     "react-error-boundary": "^6.0.0",
     "react-router-dom": "^7.11.0"
   },
@@ -88,5 +89,10 @@
   "bugs": {
     "url": "https://github.com/cen10/repo-radar/issues"
   },
-  "homepage": "https://github.com/cen10/repo-radar#readme"
+  "homepage": "https://github.com/cen10/repo-radar#readme",
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }
