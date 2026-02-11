@@ -132,7 +132,7 @@ const RadarPage = () => {
       {/* Header with radar name */}
       <div className="mb-6">
         <h1
-          className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
+          className="inline-flex items-center gap-2 text-2xl font-semibold text-gray-900"
           data-tour="radar-name"
         >
           <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
