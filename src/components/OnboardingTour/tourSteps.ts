@@ -118,7 +118,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
     {
       id: 'repo-header',
       target: '[data-tour="repo-name"]',
-      text: 'The detail page is a WIP. It will be able to collect data for the repo over time and use that data to generate metrics and insights.',
+      text: 'The repository page is a WIP. Coming soon: star trends and maintainer activity metrics.',
       page: 'repo-detail',
       placement: 'bottom',
       showDelay: 100, // Wait for page to render before positioning
