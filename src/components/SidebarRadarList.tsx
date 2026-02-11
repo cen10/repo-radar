@@ -233,10 +233,7 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
   return (
     <SidebarTooltip label={tooltipLabel} show={showTooltip} position={tooltipPosition}>
       {/* Hover background on wrapper so margin for alignment doesn't offset the highlight */}
-      <div
-        className={`rounded-lg transition-colors ${disabled ? '' : 'hover:bg-indigo-200'}`}
-        data-tour="create-radar"
-      >
+      <div className={`rounded-lg transition-colors ${disabled ? '' : 'hover:bg-indigo-200'}`}>
         <button
           onClick={onClick}
           disabled={disabled}

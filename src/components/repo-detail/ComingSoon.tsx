@@ -2,10 +2,7 @@ import { ChartBarIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outli
 
 export function ComingSoon() {
   return (
-    <div
-      data-tour="coming-soon"
-      className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-6"
-    >
+    <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-6">
       <h2 className="text-lg font-semibold text-indigo-900 mb-3 flex items-center gap-2">
         <SparklesIcon className="h-5 w-5" aria-hidden="true" />
         Coming Soon

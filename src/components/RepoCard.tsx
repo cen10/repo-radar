@@ -79,7 +79,6 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
           <Link
             to={`/repo/${id}`}
             className="group/link no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
-            {...(isTourTarget ? { 'data-tour': 'repo-link' } : {})}
           >
             <span className="group/name relative block z-2">
               <h3 ref={nameRef} className="text-lg font-semibold text-gray-900 truncate">
