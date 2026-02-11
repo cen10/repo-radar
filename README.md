@@ -6,8 +6,11 @@
 **[Live Demo](https://the-repo-radar.vercel.app)**
 
 Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum.
+This is a portfolio project built to explore modern React patterns, API integration, and comprehensive testing strategies.
 
 ![Repo Radar - My Stars view](public/starred-repos-screenshot.png)
+
+
 
 ## Features
 
