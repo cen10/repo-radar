@@ -157,7 +157,10 @@ const RadarPage = () => {
       {/* Header with radar name and kebab menu */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
+          <h1
+            className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
+            data-tour="radar-name"
+          >
             <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
             {radar?.name}
           </h1>

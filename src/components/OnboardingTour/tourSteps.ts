@@ -24,6 +24,8 @@ export interface TourStepDef {
   disableOverlay?: boolean;
   /** Hide Next/Back buttons (for steps where navigation continues tour) */
   hideButtons?: boolean;
+  /** Hide only the Next button (for cross-page transitions where Back should still work) */
+  hideNextOnly?: boolean;
   /** For cross-page Back: { stepId, path } to navigate to */
   backTo?: { stepId: string; path: string };
 }
@@ -36,7 +38,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
     {
       id: 'welcome',
       target: '',
-      text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.',
+      text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
       page: 'stars',
       placement: 'center',
     },
@@ -72,7 +74,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
     {
       id: 'radar-icon',
       target: '[data-tour="repo-card"]',
-      text: 'Click the radar icon to organize repos into collections called "Radars." Select a Radar and click Done to continue!',
+      text: 'You can organize repos into collections called "Radars" via the radar icon. Click the icon now to make a change and then select "Done" to continue the tour.',
       page: 'stars',
       placement: 'right-start',
       canClickTarget: true,
@@ -87,7 +89,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       desktopOnly: true,
       showDelay: 350, // Wait for sheet to close
       canClickTarget: true,
-      hideButtons: true, // No Next button - navigation continues tour on radar page
+      hideNextOnly: true, // Navigation continues tour on radar page
     },
   ];
 
@@ -98,18 +100,27 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
     // === RADAR PAGE ===
     {
       id: 'radar-intro',
-      target: '',
+      target: '[data-tour="radar-name"]',
       text: 'Use Radars to collect individual repositories. This lets you keep repos organized by your interests and gives you more flexibility than simply adding to the starred repos bucket on GitHub.',
       page: 'radar',
-      placement: 'center',
+      placement: 'bottom',
       backTo: { stepId: 'sidebar-radars', path: '/stars' },
+      showDelay: 100, // Wait for page to render before positioning
+    },
+    {
+      id: 'create-radar',
+      target: '[data-tour="create-radar"]',
+      text: 'Create new Radars anytime to organize repos by project, technology, or whatever makes sense for you.',
+      page: 'radar',
+      placement: 'right',
+      desktopOnly: true,
     },
     {
       id: 'radar-repos',
-      target: '',
-      text: 'All repos in this Radar are shown here. They can be individually removed by clicking the radar icon.',
+      target: '[data-tour="radar-icon"]',
+      text: 'A repo can be individually removed from a Radar by clicking the radar icon. The repo will continue to be tracked on any other Radar that contains it.',
       page: 'radar',
-      placement: 'center',
+      placement: 'left',
     },
     {
       id: 'radar-menu',
@@ -118,11 +129,20 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       page: 'radar',
       placement: 'bottom',
     },
+    {
+      id: 'click-repo',
+      target: '[data-tour="repo-card"]',
+      text: 'Click on the repo card to see detailed metrics, releases, and more.',
+      page: 'radar',
+      placement: 'right',
+      canClickTarget: true,
+      hideNextOnly: true, // Navigation continues tour on detail page
+    },
 
     // === REPO DETAIL PAGE ===
     {
       id: 'repo-header',
-      target: '[data-tour="repo-header"]',
+      target: '[data-tour="repo-name"]',
       text: 'The detail page shows comprehensive metrics for any repository — stars, forks, issues, and more.',
       page: 'repo-detail',
       placement: 'bottom',
@@ -179,8 +199,9 @@ export function toShepherdSteps(
         secondary: true,
       });
     }
-    // Only show Back button if not auto-advancing, not hiding buttons, and not first step
-    else if (!isFirst && !def.advanceOn && !def.hideButtons) {
+    // Show Back button if not hiding buttons and not first step
+    // (advanceOn only hides Next button, not Back)
+    else if (!isFirst && !def.hideButtons) {
       buttons.push({
         text: 'Back',
         action: () => tour.back(),
@@ -188,8 +209,8 @@ export function toShepherdSteps(
       });
     }
 
-    // Only show Next/Finish button if not auto-advancing and not hiding buttons
-    if (!def.advanceOn && !def.hideButtons) {
+    // Only show Next/Finish button if not auto-advancing, not hiding buttons, and not hideNextOnly
+    if (!def.advanceOn && !def.hideButtons && !def.hideNextOnly) {
       buttons.push({
         text: isLast ? 'Finish' : 'Next',
         action: () => (isLast ? tour.complete() : tour.next()),

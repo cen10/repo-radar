@@ -99,6 +99,23 @@
   }
 }
 
+/* Pulsing border animation for onboarding tour */
+@keyframes pulse-border {
+  0%,
+  100% {
+    border-color: rgb(199 210 254); /* indigo-200 */
+  }
+  50% {
+    border-color: rgb(99 102 241); /* indigo-500 */
+  }
+}
+
+.animate-pulse-border {
+  border: 3px solid rgb(165 180 252); /* indigo-300 */
+  border-radius: 0.5rem;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
 /* Shepherd.js tour customizations to match app styling */
 
 /* Ensure tour elements appear above modals (which use z-50) */

@@ -60,12 +60,15 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
             <Disclosure key={release.id}>
               {({ open }) => (
                 <>
-                  <DisclosureButton className="w-full p-4 text-left hover:bg-gray-50 transition-colors cursor-pointer">
+                  <DisclosureButton className="group w-full p-4 text-left hover:bg-indigo-50 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <TagIcon className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
-                          <span className="font-medium text-gray-900 truncate">
+                          <TagIcon
+                            className="h-4 w-4 text-gray-400 group-hover:text-indigo-400 shrink-0 transition-colors"
+                            aria-hidden="true"
+                          />
+                          <span className="font-medium text-gray-900 group-hover:text-indigo-900 truncate transition-colors">
                             {release.name || release.tag_name}
                           </span>
                           {release.prerelease && (
@@ -74,7 +77,7 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 group-hover:text-indigo-700 mt-1 transition-colors">
                           {release.published_at
                             ? `Published ${formatRelativeTime(release.published_at)}`
                             : `Created ${formatShortDate(release.created_at)}`}
@@ -82,7 +85,7 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
                         </p>
                       </div>
                       <ChevronDownIcon
-                        className={`h-5 w-5 text-gray-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+                        className={`h-5 w-5 text-gray-400 group-hover:text-indigo-400 shrink-0 transition-all ${open ? 'rotate-180' : ''}`}
                         aria-hidden="true"
                       />
                     </div>
@@ -90,7 +93,7 @@ export function RepoReleases({ releases, isLoading, releasesUrl }: RepoReleasesP
 
                   <DisclosurePanel className="px-4 py-4">
                     {hasBody ? (
-                      <div className="bg-indigo-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap">
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
                         {release.body}
                       </div>
                     ) : (

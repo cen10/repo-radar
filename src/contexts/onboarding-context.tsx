@@ -11,6 +11,9 @@ interface OnboardingContextType {
   /** Step ID to start from (for cross-page Back navigation) */
   startFromStep: string | null;
   setStartFromStep: (stepId: string | null) => void;
+  /** Current active step ID (for conditional styling) */
+  currentStepId: string | null;
+  setCurrentStepId: (stepId: string | null) => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -38,6 +41,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   const [isTourActive, setIsTourActive] = useState(false);
   const [startFromStep, setStartFromStep] = useState<string | null>(null);
+  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
 
   // Persist completion to localStorage (except demo mode)
   useEffect(() => {
@@ -54,6 +58,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const completeTour = useCallback(() => {
     setHasCompletedTour(true);
     setIsTourActive(false);
+    setCurrentStepId(null);
   }, []);
 
   return (
@@ -65,6 +70,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         completeTour,
         startFromStep,
         setStartFromStep,
+        currentStepId,
+        setCurrentStepId,
       }}
     >
       {children}

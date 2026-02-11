@@ -13,7 +13,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const Shepherd = useShepherd();
-  const { isTourActive, completeTour } = useOnboarding();
+  const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
@@ -67,6 +67,45 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     tour.on('complete', handleComplete);
     tour.on('cancel', handleComplete);
 
+    // Track current step for conditional styling (e.g., radar icon pulse)
+    // Also auto-focus the primary button for keyboard navigation
+    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleStepShow = () => {
+      const step = tour.getCurrentStep();
+      setCurrentStepId(step?.id ?? null);
+
+      // Clear any pending focus timeout from previous step
+      if (focusTimeout) {
+        clearTimeout(focusTimeout);
+      }
+
+      // Focus the Next/Finish button for keyboard navigation
+      const focusButton = () => {
+        const primaryButton = document.querySelector(
+          '.shepherd-element .shepherd-button:not(.shepherd-button-secondary)'
+        ) as HTMLButtonElement | null;
+        if (primaryButton) {
+          primaryButton.focus();
+        }
+      };
+      focusTimeout = setTimeout(focusButton, 500);
+    };
+    tour.on('show', handleStepShow);
+
+    // Block right arrow navigation on steps that hide the Next button
+    // (these steps expect a click action to navigate to another page)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        const currentStep = tour.getCurrentStep();
+        const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
+        if (stepDef?.hideNextOnly || stepDef?.advanceOn) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown, true);
+
     // Check if we should start from a specific step (cross-page Back navigation)
     const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
     if (savedStartFromStep) {
@@ -112,14 +151,20 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       // This prevents navigation from triggering completeTour()
       tour.off('complete', handleComplete);
       tour.off('cancel', handleComplete);
+      tour.off('show', handleStepShow);
+      document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleRadarIconClick, true);
       document.removeEventListener('pointerdown', handleDoneClick, true);
+      if (focusTimeout) {
+        clearTimeout(focusTimeout);
+      }
+      setCurrentStepId(null);
       // Now cancel the tour (won't trigger handleComplete since we unsubscribed)
       if (tour.isActive()) {
         void tour.cancel();
       }
     };
-  }, [isTourActive, pageStepDefs, Shepherd, handleComplete, navigate]);
+  }, [isTourActive, pageStepDefs, Shepherd, handleComplete, navigate, setCurrentStepId]);
 
   return null;
 }

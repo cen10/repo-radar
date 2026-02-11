@@ -6,6 +6,7 @@ import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 import { StarredBadge } from './StarredBadge';
 import { RadarIconButton } from './RadarIconButton';
+import { useOnboarding } from '../contexts/onboarding-context';
 
 interface RepoCardProps {
   repository: Repository;
@@ -26,6 +27,10 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
     metrics,
     is_starred,
   } = repository;
+
+  const { currentStepId } = useOnboarding();
+  const showRadarIconPulse = isTourTarget && currentStepId === 'radar-icon';
+  const showCardPulse = isTourTarget && currentStepId === 'click-repo';
 
   const [isNameTruncated, setIsNameTruncated] = useState(false);
   const nameRef = useRef<HTMLHeadingElement>(null);
@@ -64,7 +69,7 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
 
   return (
     <article
-      className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6"
+      className={`relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6 ${showCardPulse ? 'animate-pulse-border' : ''}`}
       {...(isTourTarget ? { 'data-tour': 'repo-card' } : {})}
     >
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
@@ -99,6 +104,7 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
         <RadarIconButton
           githubRepoId={id}
           className="relative z-2 -mt-2"
+          showPulse={showRadarIconPulse}
           {...(isTourTarget ? { 'data-tour': 'radar-icon' } : {})}
         />
       </div>
@@ -135,7 +141,7 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-800"
               aria-hidden="true"
             >
               {topic}
