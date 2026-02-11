@@ -92,9 +92,17 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     };
     tour.on('show', handleStepShow);
 
-    // Block right arrow navigation on steps that hide the Next button
-    // (these steps expect a click action to navigate to another page)
+    // Handle keyboard navigation
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape key cancels the tour
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        void tour.cancel();
+        return;
+      }
+
+      // Block right arrow navigation on steps that hide the Next button
+      // (these steps expect a click action to navigate to another page)
       if (e.key === 'ArrowRight') {
         const currentStep = tour.getCurrentStep();
         const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
@@ -105,6 +113,24 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       }
     };
     document.addEventListener('keydown', handleKeyDown, true);
+
+    // Click outside the tooltip cancels the tour
+    const handleOverlayClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      // Check if click is inside the shepherd tooltip
+      const isInsideTooltip = target.closest('.shepherd-element');
+      // Check if click is on the highlighted target element (canClickTarget steps)
+      const currentStep = tour.getCurrentStep();
+      const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
+      const targetSelector = stepDef?.target;
+      const isOnTarget = targetSelector && target.closest(targetSelector);
+
+      // Cancel tour if clicking outside tooltip and not on an interactive target
+      if (!isInsideTooltip && !(stepDef?.canClickTarget && isOnTarget)) {
+        void tour.cancel();
+      }
+    };
+    document.addEventListener('click', handleOverlayClick, true);
 
     // Check if we should start from a specific step (cross-page Back navigation)
     const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
@@ -153,6 +179,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       tour.off('cancel', handleComplete);
       tour.off('show', handleStepShow);
       document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('click', handleOverlayClick, true);
       document.removeEventListener('click', handleRadarIconClick, true);
       document.removeEventListener('pointerdown', handleDoneClick, true);
       if (focusTimeout) {
