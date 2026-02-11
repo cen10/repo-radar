@@ -98,17 +98,9 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       showDelay: 100, // Wait for page to render before positioning
     },
     {
-      id: 'create-radar',
-      target: '[data-tour="create-radar"]',
-      text: 'Create new Radars anytime to organize repos by project, technology, or whatever makes sense for you.',
-      page: 'radar',
-      placement: 'right',
-      desktopOnly: true,
-    },
-    {
       id: 'radar-repos',
       target: '[data-tour="radar-icon"]',
-      text: 'You can organize repos into collections called "Radars" with the radar icon. If you remove a repo from one radar it will continue to be tracked on any other Radar that contains it.',
+      text: 'Use the radar icon to manage which Radars contain this repo. It will still stay tracked on any other Radars you have it on.',
       page: 'radar',
       placement: 'left',
     },
