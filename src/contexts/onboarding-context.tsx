@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 
 const STORAGE_KEY = 'repo-radar-onboarding';
 

@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { createTestQueryClient } from './query-client';
+import { OnboardingProvider } from '../../src/contexts/onboarding-context';
 
 interface RenderWithRouterOptions {
   route?: string;
@@ -23,7 +24,11 @@ export const renderWithRouter = (
   ui: ReactElement,
   { route = '/' }: RenderWithRouterOptions = {}
 ): RenderResult => {
-  return render(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
+  return render(
+    <OnboardingProvider>
+      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+    </OnboardingProvider>
+  );
 };
 
 /**
@@ -37,9 +42,11 @@ export const renderWithProviders = (
   const client = queryClient ?? createTestQueryClient();
   return {
     ...render(
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-      </QueryClientProvider>
+      <OnboardingProvider>
+        <QueryClientProvider client={client}>
+          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+        </QueryClientProvider>
+      </OnboardingProvider>
     ),
     queryClient: client,
   };

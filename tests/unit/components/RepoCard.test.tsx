@@ -8,6 +8,7 @@ import { RepoCard } from '@/components/RepoCard';
 import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
 
 // Mock the radar service
 vi.mock('@/services/radar', () => ({
@@ -33,9 +34,11 @@ Object.defineProperty(window, 'open', {
 const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
-    <MemoryRouter>
-      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-    </MemoryRouter>
+    <OnboardingProvider>
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+      </MemoryRouter>
+    </OnboardingProvider>
   );
 };
 

@@ -6,14 +6,19 @@ describe('getTourStepDefs', () => {
     const steps = getTourStepDefs({ hasStarredRepos: true });
 
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
-    expect(steps[0].text).toMatch(/these are your starred/i);
+    // Welcome text mentions tracking star growth, releases, and activity
+    expect(steps[0].text).toMatch(/track.*momentum/i);
   });
 
   it('returns steps with prompt text when user has no starred repos', () => {
     const steps = getTourStepDefs({ hasStarredRepos: false });
 
+    // First step is still welcome
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
-    expect(steps[0].text).toMatch(/star repositories on github/i);
+    // Empty state step prompts user to star repos on GitHub
+    const emptyStateStep = steps.find((s) => s.id === 'my-stars-heading');
+    expect(emptyStateStep).toBeDefined();
+    expect(emptyStateStep!.text).toMatch(/star repositories on github/i);
   });
 
   it('returns steps spanning all three pages', () => {
@@ -29,7 +34,7 @@ describe('getTourStepDefs', () => {
     const steps = getTourStepDefs({ hasStarredRepos: true });
 
     expect(steps[0].target).toBe('');
-    expect(steps[0].placement).toBe('center');
+    expect(steps[0].placement).toBeUndefined(); // Centered steps don't need placement
   });
 
   it('marks the sidebar step as desktopOnly', () => {
@@ -40,12 +45,12 @@ describe('getTourStepDefs', () => {
     expect(sidebarStep!.desktopOnly).toBe(true);
   });
 
-  it('marks the radar-icon step as canClickTarget', () => {
+  it('marks the click-repo step as canClickTarget for navigation', () => {
     const steps = getTourStepDefs({ hasStarredRepos: true });
-    const radarIconStep = steps.find((s) => s.target === '[data-tour="radar-icon"]');
+    const clickRepoStep = steps.find((s) => s.id === 'click-repo');
 
-    expect(radarIconStep).toBeDefined();
-    expect(radarIconStep!.canClickTarget).toBe(true);
+    expect(clickRepoStep).toBeDefined();
+    expect(clickRepoStep!.canClickTarget).toBe(true);
   });
 
   it('has at least one step per page', () => {

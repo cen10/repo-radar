@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 import { Button } from '../components/Button';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 
 const Home = () => {
   const { user, authLoading, signInWithGitHub } = useAuth();

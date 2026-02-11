@@ -12,7 +12,7 @@ import {
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { Button } from './Button';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 import { useOnboarding } from '../contexts/onboarding-context';
 
 // Helper function to provide user-friendly error messages for sign out

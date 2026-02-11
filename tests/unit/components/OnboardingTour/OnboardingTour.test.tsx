@@ -7,8 +7,10 @@ import { OnboardingTour } from '@/components/OnboardingTour/OnboardingTour';
 const mockOnboarding = {
   isTourActive: false,
   hasCompletedTour: false,
+  currentStepId: null as string | null,
   completeTour: vi.fn(),
   startTour: vi.fn(),
+  setCurrentStepId: vi.fn(),
 };
 
 vi.mock('@/contexts/onboarding-context', () => ({
@@ -32,7 +34,9 @@ class MockTour {
   on = mockTourOn;
   off = mockTourOff;
   isActive = mockTourIsActive;
-  constructor(public options: Record<string, unknown>) {
+  options: Record<string, unknown>;
+  constructor(options: Record<string, unknown>) {
+    this.options = options;
     tourInstances.push(this);
   }
 }
@@ -88,12 +92,14 @@ describe('OnboardingTour', () => {
 
     renderTour('/stars');
 
-    // Stars page has 5 steps (4 visible + 1 desktopOnly) on desktop
+    // Stars page has 4 steps on desktop when user has starred repos:
+    // welcome, help-button, repo-link, sidebar-radars
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(5);
+    expect(addedSteps.length).toBe(4);
     expect(addedSteps[0].id).toBe('welcome');
     expect(addedSteps[1].id).toBe('help-button');
     expect(addedSteps[2].id).toBe('repo-link');
+    expect(addedSteps[3].id).toBe('sidebar-radars');
   });
 
   it('does not start tour when on a page with no steps', () => {
@@ -119,9 +125,9 @@ describe('OnboardingTour', () => {
 
     renderTour('/stars');
 
-    // Stars page: 5 steps on desktop, 4 on mobile (sidebar-radars removed)
+    // Stars page: 4 steps on desktop, 3 on mobile (sidebar-radars removed)
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(4);
+    expect(addedSteps.length).toBe(3);
     const ids = addedSteps.map((s: { id: string }) => s.id);
     expect(ids).not.toContain('sidebar-radars');
   });
@@ -143,5 +149,33 @@ describe('OnboardingTour', () => {
     const { container } = renderTour('/stars');
 
     expect(container.innerHTML).toBe('');
+  });
+
+  it('registers keydown and click event listeners for tour cancellation', () => {
+    const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
+    mockOnboarding.isTourActive = true;
+
+    renderTour('/stars');
+
+    // Should register keydown listener for escape key
+    expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
+    // Should register click listener for click-outside behavior
+    expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), true);
+
+    addEventListenerSpy.mockRestore();
+  });
+
+  it('removes event listeners on cleanup', () => {
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+    mockOnboarding.isTourActive = true;
+
+    const { unmount } = renderTour('/stars');
+    unmount();
+
+    // Should remove keydown and click listeners
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), true);
+
+    removeEventListenerSpy.mockRestore();
   });
 });

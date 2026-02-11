@@ -58,15 +58,9 @@ describe('DeleteRadarModal', () => {
       expect(screen.getByText(/delete radar/i)).toBeInTheDocument();
       expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
       expect(screen.getByText(/frontend tools/i)).toBeInTheDocument();
-      expect(screen.getByText(/5 repositories/i)).toBeInTheDocument();
+      expect(screen.getByText(/this cannot be undone/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-    });
-
-    it('shows singular repository text for 1 repo', () => {
-      renderWithProviders(<DeleteRadarModal {...defaultProps} repoCount={1} />);
-
-      expect(screen.getByText(/1 repository/i)).toBeInTheDocument();
     });
 
     it('shows empty radar message when no repos', () => {

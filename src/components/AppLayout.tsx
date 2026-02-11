@@ -8,7 +8,7 @@ import { CreateRadarModal } from './CreateRadarModal';
 import { DemoBanner } from './DemoBanner';
 import { OnboardingTour } from './OnboardingTour';
 import { useAuth } from '../hooks/use-auth';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingProvider } from '../contexts/onboarding-context';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 

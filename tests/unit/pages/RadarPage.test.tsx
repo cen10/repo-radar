@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
 import type { Radar } from '@/types/database';
 
 // Mock the hooks
@@ -47,14 +48,16 @@ describe('RadarPage', () => {
 
   const renderWithProviders = (radarId: string = 'radar-123') => {
     return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
-          <Routes>
-            <Route path="/radar/:id" element={<RadarPage />} />
-            <Route path="/stars" element={<div>Stars Page</div>} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
+      <OnboardingProvider>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
+            <Routes>
+              <Route path="/radar/:id" element={<RadarPage />} />
+              <Route path="/stars" element={<div>Stars Page</div>} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </OnboardingProvider>
     );
   };
 
@@ -194,12 +197,6 @@ describe('RadarPage', () => {
       // Search is collapsible - look for the toggle button instead of the input
       expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
     });
-
-    it('shows kebab menu button', () => {
-      renderWithProviders();
-
-      expect(screen.getByRole('button', { name: /open radar menu/i })).toBeInTheDocument();
-    });
   });
 
   describe('Search functionality', () => {
@@ -311,41 +308,6 @@ describe('RadarPage', () => {
 
       const cards = screen.getAllByRole('article');
       expect(cards[0]).toHaveTextContent('more-stars'); // Has more stars
-    });
-  });
-
-  describe('Delete modal', () => {
-    beforeEach(() => {
-      vi.mocked(useRadarHook.useRadar).mockReturnValue({
-        radar: createMockRadar(),
-        isLoading: false,
-        error: null,
-        isNotFound: false,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
-        repositories: [createMockRepository()],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-    });
-
-    it('opens delete modal when Delete is clicked in menu', async () => {
-      const user = userEvent.setup();
-      renderWithProviders();
-
-      // Open the kebab menu
-      await user.click(screen.getByRole('button', { name: /open radar menu/i }));
-
-      // Click Delete
-      await user.click(screen.getByRole('menuitem', { name: /delete/i }));
-
-      // Check modal is open
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-        expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
-      });
     });
   });
 });

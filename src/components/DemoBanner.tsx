@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { XMarkIcon } from '@heroicons/react/20/solid';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 
 export function DemoBanner() {
   const { isBannerVisible, exitDemoMode, dismissBanner, resetBannerDismissed } = useDemoMode();

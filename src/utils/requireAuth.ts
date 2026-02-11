@@ -1,7 +1,7 @@
 import { redirect } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { logger } from './logger';
-import { isDemoModeActive } from '../demo/demo-context';
+import { isDemoModeActive } from '../demo/is-demo-mode-active';
 
 /**
  * Route loader that requires authentication.

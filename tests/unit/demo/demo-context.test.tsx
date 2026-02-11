@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DemoModeProvider, useDemoMode } from '@/demo/demo-context';
+import { DemoModeProvider } from '@/demo/demo-context';
+import { useDemoMode } from '@/demo/use-demo-mode';
 
 // Mock the browser module to avoid MSW setup in tests
 vi.mock('@/demo/browser', () => ({

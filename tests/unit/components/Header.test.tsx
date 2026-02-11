@@ -7,14 +7,18 @@ import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
 vi.mock('@/hooks/use-auth');
 
-vi.mock('@/contexts/onboarding-context', () => ({
-  useOnboarding: () => ({
-    hasCompletedTour: true,
-    isTourActive: false,
-    startTour: vi.fn(),
-    completeTour: vi.fn(),
-  }),
-}));
+vi.mock('@/contexts/onboarding-context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/contexts/onboarding-context')>();
+  return {
+    ...actual,
+    useOnboarding: () => ({
+      hasCompletedTour: true,
+      isTourActive: false,
+      startTour: vi.fn(),
+      completeTour: vi.fn(),
+    }),
+  };
+});
 
 const mockUser = createMockUser();
 

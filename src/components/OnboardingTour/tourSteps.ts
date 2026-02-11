@@ -1,4 +1,4 @@
-import type Tour from 'shepherd.js/src/tour';
+import type { Tour, StepOptions, StepOptionsButton, PopperPlacement } from 'shepherd.js';
 
 export type TourPage = 'stars' | 'radar' | 'repo-detail';
 
@@ -10,8 +10,8 @@ export interface TourStepDef {
   text: string;
   /** Which page this step belongs to */
   page: TourPage;
-  /** Tooltip placement relative to target */
-  placement: string;
+  /** Tooltip placement relative to target (not needed for centered steps) */
+  placement?: PopperPlacement;
   /** Allow clicks on the highlighted element */
   canClickTarget?: boolean;
   /** Don't show this step on small screens (< 1024px) */
@@ -40,7 +40,6 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       target: '',
       text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
       page: 'stars',
-      placement: 'center',
     },
     {
       id: 'help-button',
@@ -144,14 +143,14 @@ interface ToShepherdStepsOptions {
 export function toShepherdSteps(
   defs: TourStepDef[],
   options: ToShepherdStepsOptions
-): Tour.StepOptions[] {
+): StepOptions[] {
   const { tour, onBackTo } = options;
 
   return defs.map((def, index) => {
     const isFirst = index === 0;
     const isLast = index === defs.length - 1;
 
-    const buttons: Tour.StepOptions['buttons'] = [];
+    const buttons: StepOptionsButton[] = [];
 
     // Show Back button for cross-page navigation
     if (def.backTo && onBackTo) {
@@ -179,7 +178,7 @@ export function toShepherdSteps(
       });
     }
 
-    const step: Tour.StepOptions = {
+    const step: StepOptions = {
       id: def.id,
       text: def.text,
       buttons,

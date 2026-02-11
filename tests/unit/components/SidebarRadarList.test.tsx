@@ -10,6 +10,45 @@ import * as Sidebar from '@/components/Sidebar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
 
+// Mock the onboarding context
+vi.mock('@/contexts/onboarding-context', () => ({
+  useOnboarding: () => ({
+    isTourActive: false,
+    hasCompletedTour: false,
+    currentStepId: null,
+    completeTour: vi.fn(),
+    startTour: vi.fn(),
+    setCurrentStepId: vi.fn(),
+  }),
+}));
+
+// Mock the modal components
+vi.mock('@/components/RenameRadarModal', () => ({
+  RenameRadarModal: ({ radar, onClose }: { radar: { name: string }; onClose: () => void }) => (
+    <div data-testid="rename-modal">
+      Rename {radar.name}
+      <button onClick={onClose}>Close</button>
+    </div>
+  ),
+}));
+
+vi.mock('@/components/DeleteRadarModal', () => ({
+  DeleteRadarModal: ({
+    radar,
+    onClose,
+  }: {
+    radar: { name: string };
+    onClose: () => void;
+    onDeleted: () => void;
+    repoCount: number;
+  }) => (
+    <div data-testid="delete-modal">
+      Delete {radar.name}
+      <button onClick={onClose}>Close</button>
+    </div>
+  ),
+}));
+
 // Mock the radar service
 vi.mock('@/services/radar', () => ({
   getRadars: vi.fn(),
@@ -349,6 +388,132 @@ describe('SidebarRadarList', () => {
       icons.forEach((icon) => {
         expect(icon).toHaveAttribute('aria-hidden', 'true');
       });
+    });
+  });
+
+  describe('Kebab menu', () => {
+    it('renders a menu button for each radar', async () => {
+      const mockRadars = [
+        createMockRadar({ id: 'r1', name: 'First Radar' }),
+        createMockRadar({ id: 'r2', name: 'Second Radar' }),
+      ];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link', { name: /first radar/i });
+
+      const menuButtons = screen.getAllByRole('button', { name: /open menu for/i });
+      expect(menuButtons).toHaveLength(2);
+      expect(menuButtons[0]).toHaveAccessibleName('Open menu for First Radar');
+      expect(menuButtons[1]).toHaveAccessibleName('Open menu for Second Radar');
+    });
+
+    it('opens rename modal when Rename is clicked', async () => {
+      const user = userEvent.setup();
+      const mockRadars = [createMockRadar({ name: 'Test Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link', { name: /test radar/i });
+
+      // Click the menu button
+      const menuButton = screen.getByRole('button', { name: /open menu for/i });
+      await user.click(menuButton);
+
+      // Click rename option
+      const renameButton = await screen.findByRole('menuitem', { name: /rename/i });
+      await user.click(renameButton);
+
+      // Verify rename modal is shown
+      expect(screen.getByTestId('rename-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('rename-modal')).toHaveTextContent('Rename Test Radar');
+    });
+
+    it('opens delete modal when Delete is clicked', async () => {
+      const user = userEvent.setup();
+      const mockRadars = [createMockRadar({ name: 'Test Radar', repo_count: 5 })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link', { name: /test radar/i });
+
+      // Click the menu button
+      const menuButton = screen.getByRole('button', { name: /open menu for/i });
+      await user.click(menuButton);
+
+      // Click delete option
+      const deleteButton = await screen.findByRole('menuitem', { name: /delete/i });
+      await user.click(deleteButton);
+
+      // Verify delete modal is shown
+      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('delete-modal')).toHaveTextContent('Delete Test Radar');
+    });
+
+    it('closes rename modal when onClose is called', async () => {
+      const user = userEvent.setup();
+      const mockRadars = [createMockRadar({ name: 'Test Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link', { name: /test radar/i });
+
+      // Open menu and click rename
+      const menuButton = screen.getByRole('button', { name: /open menu for/i });
+      await user.click(menuButton);
+      const renameButton = await screen.findByRole('menuitem', { name: /rename/i });
+      await user.click(renameButton);
+
+      // Verify modal is shown
+      expect(screen.getByTestId('rename-modal')).toBeInTheDocument();
+
+      // Close the modal
+      await user.click(screen.getByRole('button', { name: /close/i }));
+
+      // Verify modal is gone
+      expect(screen.queryByTestId('rename-modal')).not.toBeInTheDocument();
+    });
+
+    it('closes delete modal when onClose is called', async () => {
+      const user = userEvent.setup();
+      const mockRadars = [createMockRadar({ name: 'Test Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link', { name: /test radar/i });
+
+      // Open menu and click delete
+      const menuButton = screen.getByRole('button', { name: /open menu for/i });
+      await user.click(menuButton);
+      const deleteButton = await screen.findByRole('menuitem', { name: /delete/i });
+      await user.click(deleteButton);
+
+      // Verify modal is shown
+      expect(screen.getByTestId('delete-modal')).toBeInTheDocument();
+
+      // Close the modal
+      await user.click(screen.getByRole('button', { name: /close/i }));
+
+      // Verify modal is gone
+      expect(screen.queryByTestId('delete-modal')).not.toBeInTheDocument();
+    });
+
+    it('does not show menu button when sidebar is collapsed', async () => {
+      const mockRadars = [createMockRadar({ name: 'Test Radar' })];
+      vi.mocked(radarService.getRadars).mockResolvedValue(mockRadars);
+      setSidebarContext({ collapsed: true, hideText: true });
+
+      renderWithProviders(<SidebarRadarList {...defaultProps} />);
+
+      await screen.findByRole('link');
+
+      // Menu button should not be rendered when collapsed (hideText=true)
+      expect(screen.queryByRole('button', { name: /open menu for/i })).not.toBeInTheDocument();
     });
   });
 });
