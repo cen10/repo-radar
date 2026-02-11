@@ -97,7 +97,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   };
 
   const baseClasses = [
-    'inline-flex items-center justify-center rounded-md font-medium',
+    'inline-flex items-center justify-center rounded-md font-medium cursor-pointer',
     variantStyles[variant],
     textSizeStyles[size],
     getPaddingClass(),
