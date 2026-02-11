@@ -146,6 +146,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       text: 'The detail page shows comprehensive metrics for any repository — stars, forks, issues, and more.',
       page: 'repo-detail',
       placement: 'bottom',
+      showDelay: 100, // Wait for page to render before positioning
     },
     {
       id: 'refresh-button',
