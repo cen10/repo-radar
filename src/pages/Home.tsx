@@ -138,7 +138,8 @@ const Home = () => {
           Sign in with GitHub
         </Button>
 
-        <div className="mt-4 text-gray-500">
+        {/* Demo mode hidden on mobile since onboarding tour is desktop-only */}
+        <div className="mt-4 text-gray-500 hidden lg:block">
           <p className="text-sm mb-1.5">Just exploring?</p>
           <Button
             variant="secondary"
@@ -150,6 +151,11 @@ const Home = () => {
             Try Demo
           </Button>
         </div>
+
+        {/* Mobile-only tip about desktop experience */}
+        <p className="mt-8 text-xs text-gray-500 lg:hidden">
+          For a guided tour in demo mode, visit on desktop.
+        </p>
       </div>
     </div>
   );

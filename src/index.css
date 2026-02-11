@@ -221,3 +221,11 @@ body {
 .shepherd-arrow {
   display: none !important;
 }
+
+/* Position tooltip at bottom of screen (used for mobile sidebar step) */
+.tour-step-bottom {
+  top: auto !important;
+  bottom: 15% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}

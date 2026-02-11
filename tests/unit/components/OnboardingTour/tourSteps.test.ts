@@ -41,12 +41,12 @@ describe('getTourStepDefs', () => {
     expect(steps[0].placement).toBeUndefined(); // Centered steps don't need placement
   });
 
-  it('marks the sidebar step as desktopOnly', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
-    const sidebarStep = steps.find((s) => s.target === '[data-tour="sidebar-radars"]');
+  it('marks the menu-button step as mobileOnly', () => {
+    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: true });
+    const menuStep = steps.find((s) => s.id === 'menu-button');
 
-    expect(sidebarStep).toBeDefined();
-    expect(sidebarStep!.desktopOnly).toBe(true);
+    expect(menuStep).toBeDefined();
+    expect(menuStep!.mobileOnly).toBe(true);
   });
 
   it('marks the click-repo step as canClickTarget for navigation', () => {

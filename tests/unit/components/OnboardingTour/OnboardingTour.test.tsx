@@ -119,27 +119,27 @@ describe('OnboardingTour', () => {
     expect(mockTourOn).toHaveBeenCalledWith('cancel', expect.any(Function));
   });
 
-  it('filters out desktopOnly steps on mobile', () => {
+  it('does not create tour on mobile (tour is desktop-only)', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, value: 375 });
     mockOnboarding.isTourActive = true;
 
     renderTour('/stars');
 
-    // Stars page: 4 steps on desktop, 3 on mobile (sidebar-radars removed)
-    const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(3);
-    const ids = addedSteps.map((s: { id: string }) => s.id);
-    expect(ids).not.toContain('sidebar-radars');
+    // On mobile, no tour is created because stepDefs returns empty array
+    expect(tourInstances).toHaveLength(0);
   });
 
-  it('includes desktopOnly steps on desktop', () => {
+  it('filters out mobileOnly steps on desktop', () => {
     Object.defineProperty(window, 'innerWidth', { writable: true, value: 1280 });
     mockOnboarding.isTourActive = true;
 
     renderTour('/stars');
 
+    // Stars page on desktop: welcome, help-button, repo-link, sidebar-radars (no menu-button)
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
+    expect(addedSteps.length).toBe(4);
     const ids = addedSteps.map((s: { id: string }) => s.id);
+    expect(ids).not.toContain('menu-button'); // Mobile-only step is filtered out
     expect(ids).toContain('sidebar-radars');
   });
 
