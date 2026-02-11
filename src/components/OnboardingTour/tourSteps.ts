@@ -124,23 +124,9 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       showDelay: 100, // Wait for page to render before positioning
     },
     {
-      id: 'refresh-button',
-      target: '[data-tour="refresh-button"]',
-      text: 'Click refresh to fetch the latest data from GitHub anytime.',
-      page: 'repo-detail',
-      placement: 'bottom',
-    },
-    {
       id: 'releases',
       target: '[data-tour="releases"]',
-      text: 'Expand any release to see version details and release notes.',
-      page: 'repo-detail',
-      placement: 'top',
-    },
-    {
-      id: 'coming-soon',
-      target: '[data-tour="coming-soon"]',
-      text: "Coming soon: Historical tracking with sparklines and trend charts. We'll track star growth over time so you can spot repos gaining momentum. Thanks for exploring!",
+      text: 'Expand any release to see version details and release notes. Thanks for exploring!',
       page: 'repo-detail',
       placement: 'top',
     },
