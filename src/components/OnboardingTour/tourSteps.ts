@@ -105,13 +105,6 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       placement: 'left',
     },
     {
-      id: 'radar-menu',
-      target: '[data-tour="radar-menu"]',
-      text: "Use this menu to rename or delete the Radar. Deleting a Radar doesn't delete any repos! They remain on other Radars and findable on the My Stars page and the Explore page.",
-      page: 'radar',
-      placement: 'bottom',
-    },
-    {
       id: 'click-repo',
       target: '[data-tour="repo-card"]',
       text: 'Click on the repo card to see detailed metrics, releases, and more.',

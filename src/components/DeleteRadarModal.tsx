@@ -44,8 +44,6 @@ export function DeleteRadarModal({ radar, repoCount, onClose, onDeleted }: Delet
     }
   };
 
-  const repoText = repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
-
   return (
     <Dialog open={true} onClose={handleClose} className="relative z-50">
       <DialogBackdrop
@@ -67,9 +65,7 @@ export function DeleteRadarModal({ radar, repoCount, onClose, onDeleted }: Delet
               </DialogTitle>
               <p className="mt-2 text-sm text-gray-600">
                 {`Are you sure you want to delete "${radar.name}"? `}
-                {repoCount > 0
-                  ? `This will remove ${repoText} from this collection.`
-                  : 'This radar is empty.'}
+                {repoCount > 0 ? `This cannot be undone.` : 'This radar is empty.'}
               </p>
               <p className="mt-2 text-sm text-gray-500">This action cannot be undone.</p>
 
