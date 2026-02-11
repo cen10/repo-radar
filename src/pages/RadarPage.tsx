@@ -168,9 +168,9 @@ const RadarPage = () => {
         </div>
 
         <Menu as="div" className="relative" data-tour="radar-menu">
-          <MenuButton className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <MenuButton className="p-2 rounded-md text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <span className="sr-only">Open radar menu</span>
-            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+            <EllipsisVerticalIcon className="h-7 w-7 stroke-2" aria-hidden="true" />
           </MenuButton>
 
           <MenuItems
@@ -180,7 +180,7 @@ const RadarPage = () => {
             <MenuItem>
               <button
                 onClick={handleRenameClick}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100"
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 data-focus:bg-indigo-50"
               >
                 <PencilIcon className="h-4 w-4" aria-hidden="true" />
                 Rename
@@ -189,7 +189,7 @@ const RadarPage = () => {
             <MenuItem>
               <button
                 onClick={handleDeleteClick}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 data-focus:bg-gray-100"
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 data-focus:bg-indigo-50"
               >
                 <TrashIcon className="h-4 w-4" aria-hidden="true" />
                 Delete

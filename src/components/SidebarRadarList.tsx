@@ -34,12 +34,10 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-4 rounded-lg ${
+          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
             collapsed ? 'outline-none' : ''
           } ${hideText ? '' : 'overflow-hidden'} ${
-            isActive
-              ? 'border-indigo-600 text-indigo-700'
-              : 'border-transparent text-gray-700 hover:bg-indigo-50'
+            isActive ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-indigo-50'
           }`
         }
       >
