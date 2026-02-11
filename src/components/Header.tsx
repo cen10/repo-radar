@@ -229,18 +229,19 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                     : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
                 }`}
               >
-                <p className="text-sm text-gray-700 mb-3">
+                <p className="text-sm text-gray-700">
                   Not seeing your latest changes from GitHub? Try refreshing the page to sync your
                   starred repositories.
                 </p>
+                <div className="border-t border-gray-200 mt-3 -mx-4 w-[calc(100%+2rem)]" />
                 <button
                   onClick={() => {
                     setIsHelpOpen(false);
                     startTour();
                   }}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="block w-[calc(100%+2rem)] text-left text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer px-4 py-2 -mx-4 -mb-4 rounded-b-lg hover:bg-indigo-200 transition-colors"
                 >
-                  Take the tour
+                  Take the onboarding tour
                 </button>
               </div>
             </div>
