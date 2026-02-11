@@ -72,22 +72,12 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
       placement: 'bottom',
     },
     {
-      id: 'radar-icon',
-      target: '[data-tour="repo-card"]',
-      text: 'You can organize repos into collections called "Radars" via the radar icon. Click the icon now to make a change and then select "Done" to continue the tour.',
-      page: 'stars',
-      placement: 'right-start',
-      canClickTarget: true,
-      advanceOn: { selector: '[data-tour="bottom-sheet-done"]', event: 'click' }, // Hides buttons; actual advance handled in OnboardingTour.tsx
-    },
-    {
       id: 'sidebar-radars',
       target: '[data-tour="sidebar-radars"]',
       text: 'Your Radars and the number of repos they contain appear in the sidebar. Click any Radar to continue!',
       page: 'stars',
       placement: 'right',
       desktopOnly: true,
-      showDelay: 350, // Wait for sheet to close
       canClickTarget: true,
       hideNextOnly: true, // Navigation continues tour on radar page
     },
@@ -118,7 +108,7 @@ export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStep
     {
       id: 'radar-repos',
       target: '[data-tour="radar-icon"]',
-      text: 'A repo can be individually removed from a Radar by clicking the radar icon. The repo will continue to be tracked on any other Radar that contains it.',
+      text: 'You can organize repos into collections called "Radars" with the radar icon. If you remove a repo from one radar it will continue to be tracked on any other Radar that contains it.',
       page: 'radar',
       placement: 'left',
     },
