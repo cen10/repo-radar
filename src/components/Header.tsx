@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import {
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
   Bars3Icon,
@@ -253,7 +253,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               loading={isSigningOut}
               loadingText="Signing out..."
             >
-              <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+              <ArrowRightStartOnRectangleIcon className="mr-2 h-4 w-4" />
               Sign out
             </Button>
           </div>
