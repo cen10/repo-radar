@@ -204,7 +204,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
             </div>
 
             {/* Help button */}
-            <div className="relative" data-tour="help-button">
+            <div className="relative">
               <Button
                 ref={helpButtonRef}
                 variant="ghost"
@@ -213,6 +213,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                 aria-label="Help"
                 aria-expanded={isHelpOpen}
                 aria-controls="help-panel"
+                data-tour="help-button"
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </Button>
