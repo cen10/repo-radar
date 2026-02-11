@@ -21,7 +21,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
   const stepDefs = useMemo(() => {
-    const allDefs = getTourStepDefs({ hasStarredRepos });
+    const allDefs = getTourStepDefs({ hasStarredRepos, isMobile });
     return isMobile ? allDefs.filter((s) => !s.desktopOnly) : allDefs;
   }, [hasStarredRepos, isMobile]);
 

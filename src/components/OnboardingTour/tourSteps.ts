@@ -30,15 +30,22 @@ export interface TourStepDef {
   backTo?: { stepId: string; path: string };
 }
 
-export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStepDef[] {
-  const { hasStarredRepos } = options;
+export function getTourStepDefs(options: {
+  hasStarredRepos: boolean;
+  isMobile: boolean;
+}): TourStepDef[] {
+  const { hasStarredRepos, isMobile } = options;
+
+  const welcomeText = isMobile
+    ? 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.'
+    : 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>';
 
   // Steps shown to all users on stars page
   const starsCommonSteps: TourStepDef[] = [
     {
       id: 'welcome',
       target: '',
-      text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
+      text: welcomeText,
       page: 'stars',
     },
     {
