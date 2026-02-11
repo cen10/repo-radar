@@ -34,8 +34,8 @@ function RadarNavItem({ radar, collapsed, hideText, onLinkClick }: RadarNavItemP
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
-            collapsed ? 'outline-none' : ''
+          `flex items-center py-2 text-sm font-medium transition-colors rounded-lg ${
+            collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3'
           } ${hideText ? '' : 'overflow-hidden'} ${
             isActive ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-indigo-50'
           }`
@@ -169,15 +169,15 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
     <SidebarTooltip label={tooltipLabel} show={showTooltip} position={tooltipPosition}>
       {/* Hover background on wrapper so margin for alignment doesn't offset the highlight */}
       <div
-        className={`ml-[3.5px] rounded-lg transition-colors ${disabled ? '' : 'hover:bg-indigo-200'}`}
+        className={`rounded-lg transition-colors ${disabled ? '' : 'hover:bg-indigo-200'}`}
         data-tour="create-radar"
       >
         <button
           onClick={onClick}
           disabled={disabled}
           aria-label={ariaLabel}
-          className={`group flex items-center gap-3 w-full px-3 py-2 text-sm font-medium transition-colors ${
-            collapsed ? 'outline-none' : 'rounded'
+          className={`group flex items-center w-full py-2 text-sm font-medium transition-colors ${
+            collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3 rounded'
           } ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
         >
           <span

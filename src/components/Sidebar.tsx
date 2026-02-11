@@ -81,8 +81,8 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors overflow-hidden rounded-lg ${
-                collapsed ? 'outline-none' : ''
+              `flex items-center py-2 text-sm font-medium transition-colors overflow-hidden rounded-lg ${
+                collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3'
               } ${isActive ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-indigo-50'}`
             }
           >
@@ -133,7 +133,7 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
   return (
     <button
       onClick={onToggle}
-      className="absolute right-0 translate-x-1/2 top-2 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 transition-colors"
+      className="absolute right-0 translate-x-1/2 top-2 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer"
       aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       aria-expanded={!isCollapsed}
     >

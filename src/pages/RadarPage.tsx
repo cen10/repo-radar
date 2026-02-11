@@ -168,7 +168,7 @@ const RadarPage = () => {
         </div>
 
         <Menu as="div" className="relative" data-tour="radar-menu">
-          <MenuButton className="p-2 rounded-md text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <MenuButton className="p-2 rounded-md text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <span className="sr-only">Open radar menu</span>
             <EllipsisVerticalIcon className="h-7 w-7 stroke-2" aria-hidden="true" />
           </MenuButton>
