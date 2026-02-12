@@ -98,7 +98,7 @@ export function getTourStepDefs(options: {
       target: isMobile ? '' : '[data-tour="sidebar-radars"]',
       text: isMobile
         ? 'Tap any Radar in the sidebar to continue!'
-        : 'Your Radars and the number of repos they contain appear in the sidebar. Click any Radar to continue!',
+        : 'Your Radars appear in the sidebar. <strong>Click any Radar to continue.</strong>',
       page: 'stars',
       placement: isMobile ? undefined : 'right',
       showDelay: isMobile ? 400 : undefined, // Wait for sidebar slide-in animation on mobile
@@ -133,7 +133,7 @@ export function getTourStepDefs(options: {
     {
       id: 'click-repo',
       target: '[data-tour="repo-card"]',
-      text: 'Click on the repo card to see detailed metrics, releases, and more.',
+      text: '<strong>Click on the repo card</strong> to see detailed metrics, releases, and more.',
       page: 'radar',
       placement: 'right',
       canClickTarget: true,
