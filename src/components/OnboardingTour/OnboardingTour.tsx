@@ -118,32 +118,6 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       }
     }
 
-    // Hide tooltip when radar icon is clicked (modal opens)
-    const handleRadarIconClick = (e: Event) => {
-      const target = e.target as Element;
-      const radarIcon = target.closest('[data-tour="radar-icon"]');
-      const currentStep = tour.getCurrentStep();
-
-      if (radarIcon && currentStep?.id === 'radar-icon') {
-        // Hide the tooltip while modal is open
-        currentStep.hide();
-      }
-    };
-    document.addEventListener('click', handleRadarIconClick, true);
-
-    // Manual event listener for Done button in AddToRadar modal
-    // Shepherd's advanceOn doesn't work with Headless UI portals, so we handle it manually
-    const handleDoneClick = (e: Event) => {
-      const target = e.target as Element;
-      const isDoneButton = target.tagName === 'BUTTON' && target.textContent?.trim() === 'Done';
-      const currentStep = tour.getCurrentStep();
-
-      if (isDoneButton && currentStep?.id === 'radar-icon') {
-        setTimeout(() => tour.next(), 0);
-      }
-    };
-    document.addEventListener('pointerdown', handleDoneClick, true);
-
     tourRef.current = tour;
     void tour.start();
 
@@ -155,8 +129,6 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       tour.off('show', handleStepShow);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleOverlayClick, true);
-      document.removeEventListener('click', handleRadarIconClick, true);
-      document.removeEventListener('pointerdown', handleDoneClick, true);
       setCurrentStepId(null);
       // Now cancel the tour (won't trigger handleComplete since we unsubscribed)
       if (tour.isActive()) {
