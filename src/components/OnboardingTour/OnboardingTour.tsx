@@ -72,27 +72,9 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     tour.on('cancel', handleComplete);
 
     // Track current step for conditional styling (e.g., radar icon pulse)
-    // Also auto-focus the primary button for keyboard navigation
-    let focusTimeout: ReturnType<typeof setTimeout> | null = null;
     const handleStepShow = () => {
       const step = tour.getCurrentStep();
       setCurrentStepId(step?.id ?? null);
-
-      // Clear any pending focus timeout from previous step
-      if (focusTimeout) {
-        clearTimeout(focusTimeout);
-      }
-
-      // Focus the Next/Finish button for keyboard navigation
-      const focusButton = () => {
-        const primaryButton = document.querySelector(
-          '.shepherd-element .shepherd-button:not(.shepherd-button-secondary)'
-        ) as HTMLButtonElement | null;
-        if (primaryButton) {
-          primaryButton.focus();
-        }
-      };
-      focusTimeout = setTimeout(focusButton, 500);
     };
     tour.on('show', handleStepShow);
 
@@ -186,9 +168,6 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
       document.removeEventListener('click', handleOverlayClick, true);
       document.removeEventListener('click', handleRadarIconClick, true);
       document.removeEventListener('pointerdown', handleDoneClick, true);
-      if (focusTimeout) {
-        clearTimeout(focusTimeout);
-      }
       setCurrentStepId(null);
       // Now cancel the tour (won't trigger handleComplete since we unsubscribed)
       if (tour.isActive()) {
