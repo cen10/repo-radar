@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useShepherd } from 'react-shepherd';
-import { useOnboarding } from '../../contexts/onboarding-context';
-import { getTourStepDefs, toShepherdSteps, getCurrentPage } from './tourSteps';
+import { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { getTourStepDefs, getCurrentPage } from './tourSteps';
+import { useShepherdTour } from './useShepherdTour';
 // Base Shepherd styles for structural layout (positioning, modal overlay, element attachment).
 // Visual customizations (colors, buttons, spacing) are in src/index.css.
 import 'shepherd.js/dist/css/shepherd.css';
@@ -13,14 +12,9 @@ interface OnboardingTourProps {
 
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const Shepherd = useShepherd();
-  const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
-  const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
 
   const stepDefs = useMemo(() => getTourStepDefs({ hasStarredRepos }), [hasStarredRepos]);
 
-  // Filter to only show steps for the current page
   const currentPage = getCurrentPage(location.pathname);
 
   const pageStepDefs = useMemo(
@@ -28,114 +22,8 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     [stepDefs, currentPage]
   );
 
-  // Create and start/stop tour when isTourActive changes
-  useEffect(() => {
-    if (!isTourActive || pageStepDefs.length === 0) {
-      // If tour should stop, cancel any active tour
-      if (tourRef.current?.isActive()) {
-        void tourRef.current.cancel();
-      }
-      tourRef.current = null;
-      return;
-    }
+  useShepherdTour(pageStepDefs);
 
-    const tour = new Shepherd.Tour({
-      useModalOverlay: true,
-      defaultStepOptions: {
-        classes: 'shepherd-theme-custom',
-        modalOverlayOpeningPadding: 8,
-        modalOverlayOpeningRadius: 8,
-      },
-    });
-
-    const handleBackTo = (stepId: string, path: string) => {
-      // Use sessionStorage for reliable cross-navigation state
-      sessionStorage.setItem('tour-start-from-step', stepId);
-      void navigate(path);
-    };
-
-    const shepherdSteps = toShepherdSteps(pageStepDefs, { tour, onBackTo: handleBackTo });
-    tour.addSteps(shepherdSteps);
-
-    tour.on('complete', completeTour);
-    tour.on('cancel', completeTour);
-
-    // Track current step for conditional styling (e.g., radar icon pulse)
-    const handleStepShow = () => {
-      const step = tour.getCurrentStep();
-      setCurrentStepId(step?.id ?? null);
-    };
-    tour.on('show', handleStepShow);
-
-    // Handle keyboard navigation
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape key cancels the tour
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        void tour.cancel();
-        return;
-      }
-
-      // Block right arrow navigation on steps that hide the Next button
-      // (these steps expect a click action to navigate to another page)
-      if (e.key === 'ArrowRight') {
-        const currentStep = tour.getCurrentStep();
-        const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
-        if (stepDef?.hideNextOnly || stepDef?.advanceOn) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown, true);
-
-    // Click outside the tooltip cancels the tour
-    const handleOverlayClick = (e: MouseEvent) => {
-      const target = e.target as Element;
-      // Check if click is inside the shepherd tooltip
-      const isInsideTooltip = target.closest('.shepherd-element');
-      // Check if click is on the highlighted target element (canClickTarget steps)
-      const currentStep = tour.getCurrentStep();
-      const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
-      const targetSelector = stepDef?.target;
-      const isOnTarget = targetSelector && target.closest(targetSelector);
-
-      // Cancel tour if clicking outside tooltip and not on an interactive target
-      if (!isInsideTooltip && !(stepDef?.canClickTarget && isOnTarget)) {
-        void tour.cancel();
-      }
-    };
-    document.addEventListener('click', handleOverlayClick, true);
-
-    // Check if we should start from a specific step (cross-page Back navigation)
-    const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
-    if (savedStartFromStep) {
-      sessionStorage.removeItem('tour-start-from-step');
-      const stepIndex = pageStepDefs.findIndex((s) => s.id === savedStartFromStep);
-      if (stepIndex >= 0) {
-        // Show the specific step after tour starts
-        setTimeout(() => tour.show(savedStartFromStep), 0);
-      }
-    }
-
-    tourRef.current = tour;
-    void tour.start();
-
-    return () => {
-      // Detach Shepherd event handlers FIRST, before canceling
-      // This prevents navigation from triggering completeTour()
-      tour.off('complete', completeTour);
-      tour.off('cancel', completeTour);
-      tour.off('show', handleStepShow);
-      document.removeEventListener('keydown', handleKeyDown, true);
-      document.removeEventListener('click', handleOverlayClick, true);
-      setCurrentStepId(null);
-      // Now cancel the tour (won't trigger handleComplete since we unsubscribed)
-      if (tour.isActive()) {
-        void tour.cancel();
-      }
-    };
-  }, [isTourActive, pageStepDefs, Shepherd, completeTour, navigate, setCurrentStepId]);
-
+  // Shepherd.js manages its own DOM (tooltips, overlay) outside React
   return null;
 }
