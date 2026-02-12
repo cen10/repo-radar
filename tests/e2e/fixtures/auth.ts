@@ -1,6 +1,7 @@
 import { type Page, type Route } from '@playwright/test';
 
 const GITHUB_TOKEN_KEY = 'github_access_token';
+const ONBOARDING_KEY = 'repo-radar-onboarding';
 
 export const mockSupabaseUser = {
   id: 'e2e-test-user-id',
@@ -48,17 +49,20 @@ function getSupabaseStorageKey(): string {
 /**
  * Sets up authenticated state in browser localStorage.
  * Injects a mock Supabase session and GitHub token.
+ * Also marks onboarding tour as completed to prevent it from blocking E2E tests.
  */
 export async function setupAuthState(page: Page, githubToken: string) {
   const session = createMockSession(githubToken);
   const storageKey = getSupabaseStorageKey();
 
   await page.addInitScript(
-    ({ storageKey, session, githubToken, tokenKey }) => {
+    ({ storageKey, session, githubToken, tokenKey, onboardingKey }) => {
       localStorage.setItem(storageKey, JSON.stringify(session));
       localStorage.setItem(tokenKey, githubToken);
+      // Mark onboarding tour as completed to prevent overlay from blocking tests
+      localStorage.setItem(onboardingKey, JSON.stringify({ hasCompletedTour: true }));
     },
-    { storageKey, session, githubToken, tokenKey: GITHUB_TOKEN_KEY }
+    { storageKey, session, githubToken, tokenKey: GITHUB_TOKEN_KEY, onboardingKey: ONBOARDING_KEY }
   );
 }
 
