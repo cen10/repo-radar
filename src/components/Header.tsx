@@ -179,7 +179,6 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                 onClick={onMenuToggle}
                 className="lg:hidden"
                 aria-label="Open navigation menu"
-                data-tour="menu-button"
               >
                 <Bars3Icon className="h-6 w-6" />
               </Button>

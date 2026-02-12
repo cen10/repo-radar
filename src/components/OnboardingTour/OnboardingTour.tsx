@@ -23,8 +23,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const stepDefs = useMemo(() => {
     // Skip tour entirely on mobile - the experience is desktop-optimized
     if (isMobile) return [];
-    const allDefs = getTourStepDefs({ hasStarredRepos, isMobile: false });
-    return allDefs.filter((s) => !s.mobileOnly);
+    return getTourStepDefs({ hasStarredRepos });
   }, [hasStarredRepos, isMobile]);
 
   // Filter to only show steps for the current page

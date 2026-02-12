@@ -7,7 +7,7 @@ import {
 
 describe('getTourStepDefs', () => {
   it('returns steps with welcome text when user has starred repos', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
     // Welcome text mentions tracking star growth, releases, and activity
@@ -15,7 +15,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('returns steps with prompt text when user has no starred repos', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: false, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: false });
 
     // First step is still welcome
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
@@ -26,7 +26,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('returns steps spanning all three pages', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const pages = new Set(steps.map((s) => s.page));
 
     expect(pages).toContain('stars');
@@ -35,22 +35,21 @@ describe('getTourStepDefs', () => {
   });
 
   it('has a centered welcome step with no specific target', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
     expect(steps[0].target).toBe('');
     expect(steps[0].placement).toBeUndefined(); // Centered steps don't need placement
   });
 
-  it('marks the menu-button step as mobileOnly', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: true });
-    const menuStep = steps.find((s) => s.id === 'menu-button');
+  it('includes keyboard tip in welcome text', () => {
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
-    expect(menuStep).toBeDefined();
-    expect(menuStep!.mobileOnly).toBe(true);
+    expect(steps[0].text).toMatch(/arrow keys/i);
+    expect(steps[0].text).toMatch(/tab/i);
   });
 
   it('marks the click-repo step as canClickTarget for navigation', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const clickRepoStep = steps.find((s) => s.id === 'click-repo');
 
     expect(clickRepoStep).toBeDefined();
@@ -58,7 +57,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('has at least one step per page', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
 
     const starsSteps = steps.filter((s) => s.page === 'stars');
     const radarSteps = steps.filter((s) => s.page === 'radar');
@@ -70,27 +69,11 @@ describe('getTourStepDefs', () => {
   });
 
   it('assigns unique IDs to all steps', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const steps = getTourStepDefs({ hasStarredRepos: true });
     const ids = steps.map((s) => s.id);
     const uniqueIds = new Set(ids);
 
     expect(uniqueIds.size).toBe(ids.length);
-  });
-
-  describe('isMobile parameter', () => {
-    it('excludes keyboard tip from welcome text on mobile', () => {
-      const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: true });
-
-      expect(steps[0].text).not.toMatch(/arrow keys/i);
-      expect(steps[0].text).not.toMatch(/tab to navigate/i);
-    });
-
-    it('includes keyboard tip in welcome text on desktop', () => {
-      const steps = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
-
-      expect(steps[0].text).toMatch(/arrow keys/i);
-      expect(steps[0].text).toMatch(/tab/i);
-    });
   });
 });
 
@@ -102,7 +85,7 @@ describe('toShepherdSteps', () => {
   });
 
   it('converts step definitions to Shepherd step options', () => {
-    const defs = getTourStepDefs({ hasStarredRepos: true, isMobile: false });
+    const defs = getTourStepDefs({ hasStarredRepos: true });
     const starsSteps = defs.filter((s) => s.page === 'stars');
     const tour = createMockTour();
 

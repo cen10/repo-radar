@@ -129,20 +129,6 @@ describe('OnboardingTour', () => {
     expect(tourInstances).toHaveLength(0);
   });
 
-  it('filters out mobileOnly steps on desktop', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, value: 1280 });
-    mockOnboarding.isTourActive = true;
-
-    renderTour('/stars');
-
-    // Stars page on desktop: welcome, help-button, repo-link, sidebar-radars (no menu-button)
-    const addedSteps = mockTourAddSteps.mock.calls[0][0];
-    expect(addedSteps.length).toBe(4);
-    const ids = addedSteps.map((s: { id: string }) => s.id);
-    expect(ids).not.toContain('menu-button'); // Mobile-only step is filtered out
-    expect(ids).toContain('sidebar-radars');
-  });
-
   it('renders null (no DOM output)', () => {
     mockOnboarding.isTourActive = true;
 

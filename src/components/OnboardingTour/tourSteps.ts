@@ -14,10 +14,6 @@ export interface TourStepDef {
   placement?: PopperPlacement;
   /** Allow clicks on the highlighted element */
   canClickTarget?: boolean;
-  /** Don't show this step on small screens (< 1024px) */
-  desktopOnly?: boolean;
-  /** Only show this step on small screens (< 1024px) */
-  mobileOnly?: boolean;
   /** Auto-advance when this selector is clicked (hides Next button) */
   advanceOn?: { selector: string; event: string };
   /** Delay in ms before showing this step (useful after animations) */
@@ -30,26 +26,17 @@ export interface TourStepDef {
   hideNextOnly?: boolean;
   /** For cross-page Back: { stepId, path } to navigate to */
   backTo?: { stepId: string; path: string };
-  /** Additional CSS classes for the step tooltip */
-  extraClasses?: string;
 }
 
-export function getTourStepDefs(options: {
-  hasStarredRepos: boolean;
-  isMobile: boolean;
-}): TourStepDef[] {
-  const { hasStarredRepos, isMobile } = options;
-
-  const welcomeText = isMobile
-    ? 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.'
-    : 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>';
+export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStepDef[] {
+  const { hasStarredRepos } = options;
 
   // Steps shown to all users on stars page
   const starsCommonSteps: TourStepDef[] = [
     {
       id: 'welcome',
       target: '',
-      text: welcomeText,
+      text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
       page: 'stars',
     },
     {
@@ -82,28 +69,11 @@ export function getTourStepDefs(options: {
       placement: 'bottom',
     },
     {
-      id: 'menu-button',
-      target: '[data-tour="menu-button"]',
-      text: 'Tap the menu to open the sidebar and see your Radars.',
-      page: 'stars',
-      placement: 'bottom',
-      mobileOnly: true,
-      canClickTarget: true,
-      advanceOn: { selector: '[data-tour="menu-button"]', event: 'click' },
-    },
-    {
       id: 'sidebar-radars',
-      // On mobile, use centered tooltip (no target) since Dialog portals break Floating UI positioning.
-      // CSS positions it at bottom of screen. Overlay is disabled so radars are visible/clickable.
-      target: isMobile ? '' : '[data-tour="sidebar-radars"]',
-      text: isMobile
-        ? 'Tap any Radar in the sidebar to continue!'
-        : 'Your Radars appear in the sidebar. <strong>Click any Radar to continue.</strong>',
+      target: '[data-tour="sidebar-radars"]',
+      text: 'Your Radars appear in the sidebar. <strong>Click any Radar to continue.</strong>',
       page: 'stars',
-      placement: isMobile ? undefined : 'right',
-      showDelay: isMobile ? 400 : undefined, // Wait for sidebar slide-in animation on mobile
-      disableOverlay: isMobile, // Disable overlay on mobile so radars are visible/clickable
-      extraClasses: isMobile ? 'tour-step-bottom' : undefined, // Position at bottom on mobile
+      placement: 'right',
       canClickTarget: true,
       hideNextOnly: true, // Navigation continues tour on radar page
     },
@@ -209,7 +179,6 @@ export function toShepherdSteps(
       id: def.id,
       text: def.text,
       buttons,
-      classes: def.extraClasses,
       cancelIcon: { enabled: true },
       canClickTarget: def.canClickTarget ?? false,
       scrollTo: { behavior: 'smooth', block: 'center' } as ScrollIntoViewOptions,
