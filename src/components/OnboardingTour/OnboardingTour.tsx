@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/onboarding-context';
@@ -27,10 +27,6 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     () => stepDefs.filter((s) => s.page === currentPage),
     [stepDefs, currentPage]
   );
-
-  const handleComplete = useCallback(() => {
-    completeTour();
-  }, [completeTour]);
 
   // Create and start/stop tour when isTourActive changes
   useEffect(() => {
@@ -61,8 +57,8 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     const shepherdSteps = toShepherdSteps(pageStepDefs, { tour, onBackTo: handleBackTo });
     tour.addSteps(shepherdSteps);
 
-    tour.on('complete', handleComplete);
-    tour.on('cancel', handleComplete);
+    tour.on('complete', completeTour);
+    tour.on('cancel', completeTour);
 
     // Track current step for conditional styling (e.g., radar icon pulse)
     const handleStepShow = () => {
@@ -154,8 +150,8 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
     return () => {
       // Detach Shepherd event handlers FIRST, before canceling
       // This prevents navigation from triggering completeTour()
-      tour.off('complete', handleComplete);
-      tour.off('cancel', handleComplete);
+      tour.off('complete', completeTour);
+      tour.off('cancel', completeTour);
       tour.off('show', handleStepShow);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleOverlayClick, true);
@@ -167,7 +163,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
         void tour.cancel();
       }
     };
-  }, [isTourActive, pageStepDefs, Shepherd, handleComplete, navigate, setCurrentStepId]);
+  }, [isTourActive, pageStepDefs, Shepherd, completeTour, navigate, setCurrentStepId]);
 
   return null;
 }
