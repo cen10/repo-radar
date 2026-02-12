@@ -17,17 +17,49 @@ interface MockRadarRepo {
   added_at: string;
 }
 
+interface SetupSupabaseMocksOptions {
+  /** Seed a default radar for testing flows that require existing radars */
+  seedDefaultRadar?: boolean;
+}
+
 /**
  * Sets up mock Supabase API routes for E2E testing.
  * Intercepts calls to Supabase REST API and returns mock responses.
  */
-export async function setupSupabaseMocks(page: Page, mockUserId: string) {
+export async function setupSupabaseMocks(
+  page: Page,
+  mockUserId: string,
+  options: SetupSupabaseMocksOptions = {}
+) {
+  const { seedDefaultRadar = false } = options;
   const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
   if (!supabaseUrl) return;
 
   // Per-test mock storage (local to avoid parallel test interference)
   const mockRadars = new Map<string, MockRadar>();
   const mockRadarRepos = new Map<string, MockRadarRepo>();
+
+  // Optionally seed a default radar for tests that need existing data
+  if (seedDefaultRadar) {
+    const defaultRadar: MockRadar = {
+      id: 'default-radar-for-tour',
+      user_id: mockUserId,
+      name: 'My First Radar',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      radar_repos: [{ count: 1 }],
+    };
+    mockRadars.set(defaultRadar.id, defaultRadar);
+
+    // Add a repo to the default radar so the radar page has content
+    const defaultRadarRepo: MockRadarRepo = {
+      id: 'default-radar-repo',
+      radar_id: defaultRadar.id,
+      github_repo_id: 1000, // First mock repo from github.ts (IDs start at 1000)
+      added_at: new Date().toISOString(),
+    };
+    mockRadarRepos.set(defaultRadarRepo.id, defaultRadarRepo);
+  }
 
   // Mock Supabase radars endpoint
   await page.route(`${supabaseUrl}/rest/v1/radars*`, async (route: Route) => {

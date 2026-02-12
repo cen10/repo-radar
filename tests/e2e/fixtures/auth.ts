@@ -46,23 +46,43 @@ function getSupabaseStorageKey(): string {
   }
 }
 
+interface SetupAuthOptions {
+  /** Skip marking onboarding tour as completed (for testing the tour itself) */
+  skipOnboardingCompletion?: boolean;
+}
+
 /**
  * Sets up authenticated state in browser localStorage.
  * Injects a mock Supabase session and GitHub token.
- * Also marks onboarding tour as completed to prevent it from blocking E2E tests.
+ * By default, marks onboarding tour as completed to prevent it from blocking E2E tests.
  */
-export async function setupAuthState(page: Page, githubToken: string) {
+export async function setupAuthState(
+  page: Page,
+  githubToken: string,
+  options: SetupAuthOptions = {}
+) {
+  const { skipOnboardingCompletion = false } = options;
   const session = createMockSession(githubToken);
   const storageKey = getSupabaseStorageKey();
 
   await page.addInitScript(
-    ({ storageKey, session, githubToken, tokenKey, onboardingKey }) => {
+    ({ storageKey, session, githubToken, tokenKey, onboardingKey, skipOnboarding }) => {
       localStorage.setItem(storageKey, JSON.stringify(session));
       localStorage.setItem(tokenKey, githubToken);
       // Mark onboarding tour as completed to prevent overlay from blocking tests
-      localStorage.setItem(onboardingKey, JSON.stringify({ hasCompletedTour: true }));
+      // (unless explicitly testing the tour itself)
+      if (!skipOnboarding) {
+        localStorage.setItem(onboardingKey, JSON.stringify({ hasCompletedTour: true }));
+      }
     },
-    { storageKey, session, githubToken, tokenKey: GITHUB_TOKEN_KEY, onboardingKey: ONBOARDING_KEY }
+    {
+      storageKey,
+      session,
+      githubToken,
+      tokenKey: GITHUB_TOKEN_KEY,
+      onboardingKey: ONBOARDING_KEY,
+      skipOnboarding: skipOnboardingCompletion,
+    }
   );
 }
 

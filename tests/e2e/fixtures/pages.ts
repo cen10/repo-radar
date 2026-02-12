@@ -13,14 +13,24 @@ const MOCK_GITHUB_TOKEN = 'mock-github-token-for-e2e-tests';
 
 export const test = base.extend<{
   authenticatedPage: Page;
+  newUserPage: Page;
   starsPage: StarsPage;
   radarsPage: RadarsPage;
 }>({
-  // Authenticated page with all mocks set up
+  // Authenticated page with all mocks set up (tour completed)
   authenticatedPage: async ({ page }, use) => {
     await setupAuthState(page, MOCK_GITHUB_TOKEN);
     await setupAuthMocks(page);
     await setupSupabaseMocks(page, mockSupabaseUser.id);
+    await setupGitHubMocks(page);
+    await use(page);
+  },
+
+  // Authenticated page for new users (tour NOT completed, with seeded data)
+  newUserPage: async ({ page }, use) => {
+    await setupAuthState(page, MOCK_GITHUB_TOKEN, { skipOnboardingCompletion: true });
+    await setupAuthMocks(page);
+    await setupSupabaseMocks(page, mockSupabaseUser.id, { seedDefaultRadar: true });
     await setupGitHubMocks(page);
     await use(page);
   },
