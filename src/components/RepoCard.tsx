@@ -29,7 +29,6 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
   } = repository;
 
   const { currentStepId } = useOnboarding();
-  const showRadarIconPulse = isTourTarget && currentStepId === 'radar-icon';
   const showCardPulse = isTourTarget && currentStepId === 'click-repo';
 
   const [isNameTruncated, setIsNameTruncated] = useState(false);
@@ -103,7 +102,6 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
         <RadarIconButton
           githubRepoId={id}
           className="relative z-2 -mt-2"
-          showPulse={showRadarIconPulse}
           {...(isTourTarget ? { 'data-tour': 'radar-icon' } : {})}
         />
       </div>

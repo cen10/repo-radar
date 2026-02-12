@@ -22,8 +22,6 @@ interface RadarIconButtonProps {
   className?: string;
   iconClassName?: string;
   'data-tour'?: string;
-  /** Show pulsing border animation (for onboarding) */
-  showPulse?: boolean;
 }
 
 /**
@@ -43,7 +41,6 @@ export function RadarIconButton({
   className,
   iconClassName = 'h-7 w-7',
   'data-tour': dataTour,
-  showPulse,
 }: RadarIconButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { radarIds, isLoading } = useRepoRadars(githubRepoId);
@@ -96,7 +93,7 @@ export function RadarIconButton({
         variant="ghost-primary"
         size="sm"
         onClick={() => setIsModalOpen(true)}
-        className={`${className ?? ''} ${showPulse ? 'animate-pulse-border' : ''}`}
+        className={className}
         aria-label={isInAnyRadar ? 'Manage radars for this repo' : 'Add to radar'}
         data-tour={dataTour}
       >
