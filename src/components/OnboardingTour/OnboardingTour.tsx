@@ -18,13 +18,7 @@ export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-
-  const stepDefs = useMemo(() => {
-    // Skip tour entirely on mobile - the experience is desktop-optimized
-    if (isMobile) return [];
-    return getTourStepDefs({ hasStarredRepos });
-  }, [hasStarredRepos, isMobile]);
+  const stepDefs = useMemo(() => getTourStepDefs({ hasStarredRepos }), [hasStarredRepos]);
 
   // Filter to only show steps for the current page
   const currentPage = getCurrentPage(location.pathname);

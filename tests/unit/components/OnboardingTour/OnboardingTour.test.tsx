@@ -119,16 +119,6 @@ describe('OnboardingTour', () => {
     expect(mockTourOn).toHaveBeenCalledWith('cancel', expect.any(Function));
   });
 
-  it('does not create tour on mobile (tour is desktop-only)', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, value: 375 });
-    mockOnboarding.isTourActive = true;
-
-    renderTour('/stars');
-
-    // On mobile, no tour is created because stepDefs returns empty array
-    expect(tourInstances).toHaveLength(0);
-  });
-
   it('renders null (no DOM output)', () => {
     mockOnboarding.isTourActive = true;
 

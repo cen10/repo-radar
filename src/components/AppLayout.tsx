@@ -52,6 +52,9 @@ function AuthenticatedLayout() {
   // Only show sidebar for authenticated users
   const showSidebar = !!user;
 
+  // Skip onboarding tour on mobile - the experience is desktop-optimized
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
   return (
     <div className="min-h-screen bg-white">
       <DemoBanner />
@@ -81,7 +84,7 @@ function AuthenticatedLayout() {
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
 
-      {showSidebar && <OnboardingTour hasStarredRepos={true} />}
+      {showSidebar && isDesktop && <OnboardingTour hasStarredRepos={true} />}
     </div>
   );
 }
