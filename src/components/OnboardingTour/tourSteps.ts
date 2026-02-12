@@ -14,14 +14,8 @@ export interface TourStepDef {
   placement?: PopperPlacement;
   /** Allow clicks on the highlighted element */
   canClickTarget?: boolean;
-  /** Auto-advance when this selector is clicked (hides Next button) */
-  advanceOn?: { selector: string; event: string };
   /** Delay in ms before showing this step (useful after animations) */
   showDelay?: number;
-  /** Disable modal overlay for this step (allows interaction with page) */
-  disableOverlay?: boolean;
-  /** Hide Next/Back buttons (for steps where navigation continues tour) */
-  hideButtons?: boolean;
   /** Hide only the Next button (for cross-page transitions where Back should still work) */
   hideNextOnly?: boolean;
   /** For cross-page Back: { stepId, path } to navigate to */
@@ -156,10 +150,7 @@ export function toShepherdSteps(
         action: () => onBackTo(def.backTo!.stepId, def.backTo!.path),
         secondary: true,
       });
-    }
-    // Show Back button if not hiding buttons and not first step
-    // (advanceOn only hides Next button, not Back)
-    else if (!isFirst && !def.hideButtons) {
+    } else if (!isFirst) {
       buttons.push({
         text: 'Back',
         action: () => tour.back(),
@@ -167,8 +158,8 @@ export function toShepherdSteps(
       });
     }
 
-    // Only show Next/Finish button if not auto-advancing, not hiding buttons, and not hideNextOnly
-    if (!def.advanceOn && !def.hideButtons && !def.hideNextOnly) {
+    // Hide Next button for steps where clicking the target navigates to another page
+    if (!def.hideNextOnly) {
       buttons.push({
         text: isLast ? 'Finish' : 'Next',
         action: () => (isLast ? tour.complete() : tour.next()),
@@ -188,17 +179,9 @@ export function toShepherdSteps(
       step.attachTo = { element: def.target, on: def.placement };
     }
 
-    if (def.advanceOn) {
-      step.advanceOn = def.advanceOn;
-    }
-
     if (def.showDelay) {
       const delay = def.showDelay;
       step.beforeShowPromise = () => new Promise((resolve) => setTimeout(resolve, delay));
-    }
-
-    if (def.disableOverlay) {
-      step.modalOverlayOpeningPadding = 5000;
     }
 
     return step;

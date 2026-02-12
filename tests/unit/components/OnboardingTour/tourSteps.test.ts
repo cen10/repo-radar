@@ -159,17 +159,6 @@ describe('toShepherdSteps', () => {
     expect(step2Buttons.some((b) => b.text === 'Back')).toBe(true);
   });
 
-  it('hides all buttons when hideButtons is true', () => {
-    const defs = [
-      { id: 'step1', target: '', text: 'No buttons', page: 'stars' as const, hideButtons: true },
-    ];
-    const tour = createMockTour();
-
-    const shepherdSteps = toShepherdSteps(defs, { tour: tour as never });
-
-    expect(shepherdSteps[0].buttons).toHaveLength(0);
-  });
-
   it('sets attachTo for steps with targets', () => {
     const defs = [
       {
@@ -197,18 +186,6 @@ describe('toShepherdSteps', () => {
     const shepherdSteps = toShepherdSteps(defs, { tour: tour as never });
 
     expect(shepherdSteps[0].attachTo).toBeUndefined();
-  });
-
-  it('sets advanceOn when specified', () => {
-    const advanceOn = { selector: '.my-button', event: 'click' };
-    const defs = [
-      { id: 'step1', target: '', text: 'Auto-advance', page: 'stars' as const, advanceOn },
-    ];
-    const tour = createMockTour();
-
-    const shepherdSteps = toShepherdSteps(defs, { tour: tour as never });
-
-    expect(shepherdSteps[0].advanceOn).toEqual(advanceOn);
   });
 
   it('adds beforeShowPromise for showDelay', () => {
