@@ -9,7 +9,7 @@ export interface TourStepDef {
   page: TourPage;
   placement?: PopperPlacement;
   canClickTarget?: boolean;
-  showDelay?: number;
+  tooltipDelayMs?: number;
   advanceByClickingTarget?: boolean;
   backTo?: { stepId: string; path: string };
 }
@@ -76,8 +76,9 @@ export function toShepherdSteps(
       step.attachTo = { element: def.target, on: def.placement };
     }
 
-    if (def.showDelay) {
-      step.beforeShowPromise = () => new Promise((r) => setTimeout(r, def.showDelay));
+    // Delay tooltip after page navigation to let the DOM settle before attaching
+    if (def.tooltipDelayMs) {
+      step.beforeShowPromise = () => new Promise((r) => setTimeout(r, def.tooltipDelayMs));
     }
 
     return step;

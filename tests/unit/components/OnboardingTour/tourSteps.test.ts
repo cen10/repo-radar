@@ -185,9 +185,9 @@ describe('toShepherdSteps', () => {
     expect(shepherdSteps[0].attachTo).toBeUndefined();
   });
 
-  it('adds beforeShowPromise for showDelay', () => {
+  it('delays tooltip display when tooltipDelayMs is set', () => {
     const defs = [
-      { id: 'step1', target: '', text: 'Delayed', page: 'stars' as const, showDelay: 100 },
+      { id: 'step1', target: '', text: 'Delayed', page: 'stars' as const, tooltipDelayMs: 100 },
     ];
     const tour = createMockTour();
 

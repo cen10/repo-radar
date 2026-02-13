@@ -53,7 +53,7 @@ const radarSteps: TourStepDef[] = [
     page: 'radar',
     placement: 'bottom',
     backTo: { stepId: 'sidebar-radars', path: '/stars' },
-    showDelay: 100,
+    tooltipDelayMs: 100,
   },
   {
     id: 'radar-repos',
@@ -80,7 +80,7 @@ const repoDetailSteps: TourStepDef[] = [
     text: 'The repository page is a WIP. Coming soon: star trends and maintainer activity metrics.',
     page: 'repo-detail',
     placement: 'bottom',
-    showDelay: 100,
+    tooltipDelayMs: 100,
   },
   {
     id: 'releases',
