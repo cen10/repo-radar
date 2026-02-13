@@ -17,15 +17,15 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
 
   const isBannerVisible = isDemoMode && !isBannerDismissed;
 
-  const dismissBanner = useCallback(() => {
+  const dismissBanner = () => {
     setIsBannerDismissed(true);
-  }, []);
+  };
 
   const resetBannerDismissed = useCallback(() => {
     setIsBannerDismissed(false);
   }, []);
 
-  const enterDemoMode = useCallback(async () => {
+  const enterDemoMode = async () => {
     if (isInitializing || isDemoMode) return { success: false };
 
     setIsInitializing(true);
@@ -43,7 +43,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     } finally {
       setIsInitializing(false);
     }
-  }, [isInitializing, isDemoMode]);
+  };
 
   const exitDemoMode = useCallback(() => {
     // Stop MSW (fire-and-forget since page reloads after)
