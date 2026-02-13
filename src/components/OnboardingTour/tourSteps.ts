@@ -2,7 +2,7 @@ import type { Tour, StepOptions, StepOptionsButton, PopperPlacement } from 'shep
 
 export type TourPage = 'stars' | 'radar' | 'repo-detail';
 
-export interface TourStepDef {
+export interface TourStep {
   id: string;
   target: string;
   text: string;
@@ -14,27 +14,25 @@ export interface TourStepDef {
   backTo?: { stepId: string; path: string };
 }
 
-interface ToShepherdStepsOptions {
+interface AddShepherdOptionsConfig {
   tour: Tour;
   onBackTo?: (stepId: string, path: string) => void;
 }
 
 function buildButtons(
-  def: TourStepDef,
-  index: number,
-  total: number,
+  step: TourStep,
+  isFirstStep: boolean,
+  isLastStep: boolean,
   tour: Tour,
   onBackTo?: (stepId: string, path: string) => void
 ): StepOptionsButton[] {
   const buttons: StepOptionsButton[] = [];
-  const isFirstStep = index === 0;
-  const isLastStep = index === total - 1;
-  const isCrossPageNav = def.backTo && onBackTo;
+  const isCrossPageNav = step.backTo && onBackTo;
 
   if (isCrossPageNav) {
     buttons.push({
       text: 'Back',
-      action: () => onBackTo(def.backTo!.stepId, def.backTo!.path),
+      action: () => onBackTo(step.backTo!.stepId, step.backTo!.path),
       secondary: true,
     });
   } else if (!isFirstStep) {
@@ -46,7 +44,7 @@ function buildButtons(
   }
 
   // Next/Finish: hidden when user must click the target to advance
-  if (!def.advanceByClickingTarget) {
+  if (!step.advanceByClickingTarget) {
     buttons.push({
       text: isLastStep ? 'Finish' : 'Next',
       action: () => (isLastStep ? tour.complete() : tour.next()),
@@ -56,32 +54,35 @@ function buildButtons(
   return buttons;
 }
 
-export function toShepherdSteps(
-  defs: TourStepDef[],
-  options: ToShepherdStepsOptions
+export function addShepherdOptions(
+  steps: TourStep[],
+  config: AddShepherdOptionsConfig
 ): StepOptions[] {
-  const { tour, onBackTo } = options;
+  const { tour, onBackTo } = config;
 
-  return defs.map((def, index) => {
-    const step: StepOptions = {
-      id: def.id,
-      text: def.text,
-      buttons: buildButtons(def, index, defs.length, tour, onBackTo),
+  return steps.map((step, index) => {
+    const isFirstStep = index === 0;
+    const isLastStep = index === steps.length - 1;
+
+    const options: StepOptions = {
+      id: step.id,
+      text: step.text,
+      buttons: buildButtons(step, isFirstStep, isLastStep, tour, onBackTo),
       cancelIcon: { enabled: true },
-      canClickTarget: def.canClickTarget ?? false,
+      canClickTarget: step.canClickTarget ?? false,
       scrollTo: { behavior: 'smooth', block: 'center' } as ScrollIntoViewOptions,
     };
 
-    if (def.target) {
-      step.attachTo = { element: def.target, on: def.placement };
+    if (step.target) {
+      options.attachTo = { element: step.target, on: step.placement };
     }
 
     // Delay tooltip after page navigation to let the DOM settle before attaching
-    if (def.tooltipDelayMs) {
-      step.beforeShowPromise = () => new Promise((r) => setTimeout(r, def.tooltipDelayMs));
+    if (step.tooltipDelayMs) {
+      options.beforeShowPromise = () => new Promise((r) => setTimeout(r, step.tooltipDelayMs));
     }
 
-    return step;
+    return options;
   });
 }
 

@@ -1,6 +1,6 @@
-import type { TourStepDef } from './tourSteps';
+import type { TourStep } from './tourSteps';
 
-const starsCommonSteps: TourStepDef[] = [
+const starsCommonSteps: TourStep[] = [
   {
     id: 'welcome',
     target: '',
@@ -16,7 +16,7 @@ const starsCommonSteps: TourStepDef[] = [
   },
 ];
 
-const starsEmptySteps: TourStepDef[] = [
+const starsEmptySteps: TourStep[] = [
   {
     id: 'my-stars-heading',
     target: '[data-tour="my-stars-heading"]',
@@ -26,7 +26,7 @@ const starsEmptySteps: TourStepDef[] = [
   },
 ];
 
-const starsWithReposSteps: TourStepDef[] = [
+const starsWithReposSteps: TourStep[] = [
   {
     id: 'repo-link',
     target: '[data-tour="my-stars-heading"]',
@@ -45,7 +45,7 @@ const starsWithReposSteps: TourStepDef[] = [
   },
 ];
 
-const radarSteps: TourStepDef[] = [
+const radarSteps: TourStep[] = [
   {
     id: 'radar-intro',
     target: '[data-tour="radar-name"]',
@@ -73,7 +73,7 @@ const radarSteps: TourStepDef[] = [
   },
 ];
 
-const repoDetailSteps: TourStepDef[] = [
+const repoDetailSteps: TourStep[] = [
   {
     id: 'repo-header',
     target: '[data-tour="repo-name"]',
@@ -91,7 +91,7 @@ const repoDetailSteps: TourStepDef[] = [
   },
 ];
 
-export function getTourStepDefs(hasStarredRepos: boolean): TourStepDef[] {
+export function getTourSteps(hasStarredRepos: boolean): TourStep[] {
   return [
     ...starsCommonSteps,
     ...(hasStarredRepos ? starsWithReposSteps : starsEmptySteps),

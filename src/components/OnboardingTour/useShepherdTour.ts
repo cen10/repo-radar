@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/onboarding-context';
-import { toShepherdSteps, type TourStepDef } from './tourSteps';
+import { addShepherdOptions, type TourStep } from './tourSteps';
 
 /**
  * Custom hook that manages a Shepherd.js tour lifecycle.
@@ -11,14 +11,14 @@ import { toShepherdSteps, type TourStepDef } from './tourSteps';
  * click-outside behavior, and cleanup. The tour is controlled
  * by the onboarding context's isTourActive state.
  */
-export function useShepherdTour(pageStepDefs: TourStepDef[]) {
+export function useShepherdTour(pageSteps: TourStep[]) {
   const navigate = useNavigate();
   const Shepherd = useShepherd();
   const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
 
   useEffect(() => {
-    if (!isTourActive || pageStepDefs.length === 0) {
+    if (!isTourActive || pageSteps.length === 0) {
       if (tourRef.current?.isActive()) {
         void tourRef.current.cancel();
       }
@@ -40,8 +40,8 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
       void navigate(path);
     };
 
-    const shepherdSteps = toShepherdSteps(pageStepDefs, { tour, onBackTo: handleBackTo });
-    tour.addSteps(shepherdSteps);
+    const stepOptions = addShepherdOptions(pageSteps, { tour, onBackTo: handleBackTo });
+    tour.addSteps(stepOptions);
 
     tour.on('complete', completeTour);
     tour.on('cancel', completeTour);
@@ -61,8 +61,8 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
 
       if (e.key === 'ArrowRight') {
         const currentStep = tour.getCurrentStep();
-        const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
-        if (stepDef?.advanceByClickingTarget) {
+        const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
+        if (tourStep?.advanceByClickingTarget) {
           e.preventDefault();
           e.stopPropagation();
         }
@@ -74,11 +74,11 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
       const target = e.target as Element;
       const isInsideTooltip = target.closest('.shepherd-element');
       const currentStep = tour.getCurrentStep();
-      const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
-      const targetSelector = stepDef?.target;
+      const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
+      const targetSelector = tourStep?.target;
       const isOnTarget = targetSelector && target.closest(targetSelector);
 
-      if (!isInsideTooltip && !(stepDef?.canClickTarget && isOnTarget)) {
+      if (!isInsideTooltip && !(tourStep?.canClickTarget && isOnTarget)) {
         void tour.cancel();
       }
     };
@@ -87,7 +87,7 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
     const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
     if (savedStartFromStep) {
       sessionStorage.removeItem('tour-start-from-step');
-      const stepIndex = pageStepDefs.findIndex((s) => s.id === savedStartFromStep);
+      const stepIndex = pageSteps.findIndex((s) => s.id === savedStartFromStep);
       if (stepIndex >= 0) {
         setTimeout(() => tour.show(savedStartFromStep), 0);
       }
@@ -107,5 +107,5 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
         void tour.cancel();
       }
     };
-  }, [isTourActive, pageStepDefs, Shepherd, completeTour, navigate, setCurrentStepId]);
+  }, [isTourActive, pageSteps, Shepherd, completeTour, navigate, setCurrentStepId]);
 }
