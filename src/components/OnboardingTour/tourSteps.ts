@@ -54,8 +54,8 @@ function buildButtons(
   return buttons;
 }
 
-/** Adds Shepherd-specific options (buttons, callbacks) to our tour steps. */
-export function addShepherdOptions(
+/** Converts our tour steps to Shepherd-compatible steps with buttons and callbacks. */
+export function configureStepsForShepherd(
   steps: TourStep[],
   config: AddShepherdOptionsConfig
 ): StepOptions[] {
@@ -65,7 +65,7 @@ export function addShepherdOptions(
     const isFirstStep = index === 0;
     const isLastStep = index === steps.length - 1;
 
-    const options: StepOptions = {
+    const configuredStep: StepOptions = {
       id: step.id,
       text: step.text,
       buttons: buildButtons(step, isFirstStep, isLastStep, tour, onBackTo),
@@ -75,15 +75,16 @@ export function addShepherdOptions(
     };
 
     if (step.target) {
-      options.attachTo = { element: step.target, on: step.placement };
+      configuredStep.attachTo = { element: step.target, on: step.placement };
     }
 
     // Delay tooltip after page navigation to let the DOM settle before attaching
     if (step.tooltipDelayMs) {
-      options.beforeShowPromise = () => new Promise((r) => setTimeout(r, step.tooltipDelayMs));
+      configuredStep.beforeShowPromise = () =>
+        new Promise((r) => setTimeout(r, step.tooltipDelayMs));
     }
 
-    return options;
+    return configuredStep;
   });
 }
 

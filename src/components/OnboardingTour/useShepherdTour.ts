@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/onboarding-context';
-import { addShepherdOptions, type TourStep } from './tourSteps';
+import { configureStepsForShepherd, type TourStep } from './tourSteps';
 
 /**
  * Custom hook that manages a Shepherd.js tour lifecycle.
@@ -40,7 +40,7 @@ export function useShepherdTour(pageSteps: TourStep[]) {
       void navigate(path);
     };
 
-    const configuredSteps = addShepherdOptions(pageSteps, { tour, onBackTo: handleBackTo });
+    const configuredSteps = configureStepsForShepherd(pageSteps, { tour, onBackTo: handleBackTo });
     tour.addSteps(configuredSteps);
 
     tour.on('complete', completeTour);
