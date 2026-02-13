@@ -54,6 +54,7 @@ function buildButtons(
   return buttons;
 }
 
+/** Adds Shepherd-specific options (buttons, callbacks) to our tour steps. */
 export function addShepherdOptions(
   steps: TourStep[],
   config: AddShepherdOptionsConfig
