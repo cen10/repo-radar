@@ -19,7 +19,9 @@ The diff only shows the final approach, but reviewers benefit from knowing
 what was considered and rejected. Check these sources in order:
 
 1. **Decision docs and plan docs.** Check `docs/decisions/` and
-   `docs/potential-plans/` for files related to this work. These docs are
+   `docs/potential-plans/` for files related to this work. (Note: The `docs/`
+   folder is symlinked and not in git. Use `ls $CWD/docs/decisions/` and
+   `ls $CWD/docs/potential-plans/` to find files.) These docs are
    not committed to the main repo, so reviewers can't access them — copy
    the relevant reasoning directly into the PR description. Don't just
    link to them.

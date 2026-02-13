@@ -1,12 +1,16 @@
 Create a plan document in `docs/potential-plans/` for something we just
 discussed that we're not implementing right now but don't want to lose.
 
+**Important:** The `docs/` folder is symlinked and not checked into git. It
+exists locally at the workspace root but glob/grep won't find it through the
+worktree. To check existing files, use bash directly with the current working
+directory: `ls $CWD/docs/potential-plans/`
+
 Use the filename format `kebab-case-topic.md` (e.g.,
 `coordinated-loading-states.md`, `button-component.md`). Before creating the file,
-use Bash (not Glob) to list existing files in that directory — the docs folder
-is symlinked and Glob doesn't follow symlinks. Run `ls docs/potential-plans/`
-to find the highest numeric prefix (e.g., if `003-fixture-chaining-pattern.md`
-exists, the next file should start with `004-`). Zero-pad to three digits.
+list existing files to find the highest numeric prefix (e.g., if
+`003-fixture-chaining-pattern.md` exists, the next file should start with `004-`).
+Zero-pad to three digits.
 
 This doc is a parking lot for future work. I'll come back to it when the time
 is right — either because a related task makes it natural to pick up, a bug

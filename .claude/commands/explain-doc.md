@@ -2,6 +2,11 @@ Create an explanatory reference document based on what we just discussed. This
 is a doc I'll come back to when I've forgotten how something works or need to
 quickly refresh my understanding before working on related code.
 
+**Important:** The `docs/` folder is symlinked and not checked into git. It
+exists locally at the workspace root but glob/grep won't find it through the
+worktree. To check existing files, use bash directly with the current working
+directory: `ls $CWD/docs/<category>/`
+
 Before creating the file, determine which category folder under `docs/` it
 belongs in based on the primary topic. Current folders include:
 
