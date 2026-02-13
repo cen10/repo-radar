@@ -46,11 +46,11 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     tour.on('complete', completeTour);
     tour.on('cancel', completeTour);
 
-    const handleStepShow = () => {
+    const updateCurrentStepId = () => {
       const step = tour.getCurrentStep();
       setCurrentStepId(step?.id ?? null);
     };
-    tour.on('show', handleStepShow);
+    tour.on('show', updateCurrentStepId);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -99,7 +99,7 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     return () => {
       tour.off('complete', completeTour);
       tour.off('cancel', completeTour);
-      tour.off('show', handleStepShow);
+      tour.off('show', updateCurrentStepId);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleOverlayClick, true);
       setCurrentStepId(null);
