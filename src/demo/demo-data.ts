@@ -332,7 +332,6 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     created_at: '2016-10-05T23:32:51Z',
     starred_at: STARRED_DATES[7],
     is_starred: true,
-    isTourTarget: true,
   },
   {
     id: 67274736,

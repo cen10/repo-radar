@@ -8,7 +8,6 @@ test.describe('Onboarding Tour', () => {
   test('shows tour for new users on first visit', async ({ newUserPage }) => {
     await newUserPage.goto('/stars');
 
-    // Welcome step should be visible
     await expect(visibleStep(newUserPage)).toBeVisible();
     await expect(visibleStep(newUserPage)).toContainText(/welcome to repo radar/i);
   });
@@ -31,7 +30,6 @@ test.describe('Onboarding Tour', () => {
     // Step 4: Sidebar radars - need to click a radar to continue
     await expect(visibleStep(newUserPage)).toContainText(/click any radar/i);
 
-    // Click the first radar in sidebar to continue tour
     await newUserPage.locator('[data-tour="sidebar-radars"] a').first().click();
     await newUserPage.waitForURL(/\/radar\//);
 
@@ -46,7 +44,6 @@ test.describe('Onboarding Tour', () => {
     // Step 7: Click repo card - need to click to continue
     await expect(visibleStep(newUserPage)).toContainText(/click on the repo card/i);
 
-    // Click the first repo card to continue tour
     await newUserPage.locator('[data-tour="repo-card"]').first().click();
     await newUserPage.waitForURL(/\/repo\//);
 
@@ -58,7 +55,6 @@ test.describe('Onboarding Tour', () => {
     await expect(visibleStep(newUserPage)).toContainText(/release/i);
     await newUserPage.getByRole('button', { name: 'Finish' }).click();
 
-    // Tour should be dismissed
     await expect(visibleStep(newUserPage)).not.toBeVisible();
   });
 
@@ -70,10 +66,8 @@ test.describe('Onboarding Tour', () => {
     await newUserPage.keyboard.press('Escape');
     await expect(visibleStep(newUserPage)).not.toBeVisible();
 
-    // Refresh the page
     await newUserPage.reload();
 
-    // Tour should not appear again
     await expect(visibleStep(newUserPage)).not.toBeVisible();
   });
 
@@ -96,11 +90,9 @@ test.describe('Onboarding Tour', () => {
   test('can navigate back during tour', async ({ newUserPage }) => {
     await newUserPage.goto('/stars');
 
-    // Navigate forward
     await newUserPage.getByRole('button', { name: 'Next' }).click();
     await expect(visibleStep(newUserPage)).toContainText(/help menu/i);
 
-    // Navigate back
     await newUserPage.getByRole('button', { name: 'Back' }).click();
     await expect(visibleStep(newUserPage)).toContainText(/welcome to repo radar/i);
   });
@@ -108,7 +100,6 @@ test.describe('Onboarding Tour', () => {
   test('does not show tour for returning users', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/stars');
 
-    // Tour should not appear for users who have completed it
     await expect(visibleStep(authenticatedPage)).not.toBeVisible();
   });
 });
