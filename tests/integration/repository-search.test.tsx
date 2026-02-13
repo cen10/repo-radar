@@ -46,20 +46,6 @@ vi.mock('@/services/radar', () => ({
   },
 }));
 
-// Mock onboarding context (used by StarsPage)
-vi.mock('@/contexts/onboarding-context', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/contexts/onboarding-context')>();
-  return {
-    ...actual,
-    useOnboarding: () => ({
-      hasCompletedTour: true,
-      isTourActive: false,
-      startTour: vi.fn(),
-      completeTour: vi.fn(),
-    }),
-  };
-});
-
 // Mock intersection observer for infinite scroll
 vi.mock('@/hooks/useIntersectionObserver', () => ({
   useIntersectionObserver: () => ({
