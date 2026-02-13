@@ -3,9 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { getCurrentPage } from './tourSteps';
 import { getTourSteps } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
-// Base Shepherd styles for structural layout (positioning, modal overlay, element attachment).
-// Visual customizations (colors, buttons, spacing) are in src/index.css.
-import 'shepherd.js/dist/css/shepherd.css';
 
 interface OnboardingTourProps {
   hasStarredRepos: boolean;

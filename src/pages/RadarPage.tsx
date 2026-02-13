@@ -176,7 +176,7 @@ const RadarPage = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedRepos.map((repo: Repository, index: number) => (
-              <RepoCard key={repo.id} repository={repo} isTourTarget={index === 0} />
+              <RepoCard key={repo.id} repository={{ ...repo, isTourTarget: index === 0 }} />
             ))}
           </div>
 
