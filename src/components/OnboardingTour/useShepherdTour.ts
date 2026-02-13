@@ -62,7 +62,7 @@ export function useShepherdTour(pageStepDefs: TourStepDef[]) {
       if (e.key === 'ArrowRight') {
         const currentStep = tour.getCurrentStep();
         const stepDef = pageStepDefs.find((s) => s.id === currentStep?.id);
-        if (stepDef?.hideNextOnly) {
+        if (stepDef?.advanceByClickingTarget) {
           e.preventDefault();
           e.stopPropagation();
         }

@@ -135,7 +135,7 @@ describe('toShepherdSteps', () => {
     expect(secondStepButtons.some((b) => b.text === 'Back')).toBe(true);
   });
 
-  it('hides Next button when hideNextOnly is true', () => {
+  it('hides Next button when user must click target to advance', () => {
     const defs = [
       { id: 'step1', target: '', text: 'First', page: 'stars' as const },
       {
@@ -143,7 +143,7 @@ describe('toShepherdSteps', () => {
         target: '',
         text: 'Click to continue',
         page: 'stars' as const,
-        hideNextOnly: true,
+        advanceByClickingTarget: true,
       },
       { id: 'step3', target: '', text: 'Last', page: 'stars' as const },
     ];

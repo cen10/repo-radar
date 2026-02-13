@@ -41,7 +41,7 @@ const starsWithReposSteps: TourStepDef[] = [
     page: 'stars',
     placement: 'right',
     canClickTarget: true,
-    hideNextOnly: true,
+    advanceByClickingTarget: true,
   },
 ];
 
@@ -69,7 +69,7 @@ const radarSteps: TourStepDef[] = [
     page: 'radar',
     placement: 'right',
     canClickTarget: true,
-    hideNextOnly: true,
+    advanceByClickingTarget: true,
   },
 ];
 

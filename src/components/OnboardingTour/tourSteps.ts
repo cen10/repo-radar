@@ -10,7 +10,7 @@ export interface TourStepDef {
   placement?: PopperPlacement;
   canClickTarget?: boolean;
   showDelay?: number;
-  hideNextOnly?: boolean;
+  advanceByClickingTarget?: boolean;
   backTo?: { stepId: string; path: string };
 }
 
@@ -27,16 +27,17 @@ function buildButtons(
   onBackTo?: (stepId: string, path: string) => void
 ): StepOptionsButton[] {
   const buttons: StepOptionsButton[] = [];
-  const isFirst = index === 0;
-  const isLast = index === total - 1;
+  const isFirstStep = index === 0;
+  const isLastStep = index === total - 1;
+  const isCrossPageNav = def.backTo && onBackTo;
 
-  if (def.backTo && onBackTo) {
+  if (isCrossPageNav) {
     buttons.push({
       text: 'Back',
       action: () => onBackTo(def.backTo!.stepId, def.backTo!.path),
       secondary: true,
     });
-  } else if (!isFirst) {
+  } else if (!isFirstStep) {
     buttons.push({
       text: 'Back',
       action: () => tour.back(),
@@ -44,10 +45,11 @@ function buildButtons(
     });
   }
 
-  if (!def.hideNextOnly) {
+  // Next/Finish: hidden when user must click the target to advance
+  if (!def.advanceByClickingTarget) {
     buttons.push({
-      text: isLast ? 'Finish' : 'Next',
-      action: () => (isLast ? tour.complete() : tour.next()),
+      text: isLastStep ? 'Finish' : 'Next',
+      action: () => (isLastStep ? tour.complete() : tour.next()),
     });
   }
 
