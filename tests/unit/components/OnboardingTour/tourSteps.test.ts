@@ -1,9 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import {
-  getTourStepDefs,
-  toShepherdSteps,
-  getCurrentPage,
-} from '@/components/OnboardingTour/tourSteps';
+import { toShepherdSteps, getCurrentPage } from '@/components/OnboardingTour/tourSteps';
+import { getTourStepDefs } from '@/components/OnboardingTour/tourContent';
 
 describe('getTourStepDefs', () => {
   it('returns steps with welcome text when user has starred repos', () => {

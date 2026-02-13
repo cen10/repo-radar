@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { getTourStepDefs, getCurrentPage } from './tourSteps';
+import { getCurrentPage } from './tourSteps';
+import { getTourStepDefs } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
 // Base Shepherd styles for structural layout (positioning, modal overlay, element attachment).
 // Visual customizations (colors, buttons, spacing) are in src/index.css.
