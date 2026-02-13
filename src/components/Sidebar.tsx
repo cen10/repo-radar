@@ -4,6 +4,7 @@ import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
 import { useDemoMode } from '../demo/use-demo-mode';
+import clsx from 'clsx';
 
 const SIDEBAR_ANIMATION_DURATION = 300;
 
@@ -29,25 +30,26 @@ interface SidebarTooltipProps {
 }
 
 export function SidebarTooltip({ label, show, children, position = 'right' }: SidebarTooltipProps) {
-  const positionClasses =
-    position === 'right' ? 'left-full top-1/2 -translate-y-1/2 ml-2' : 'top-full left-0 mt-1';
-
-  const arrowClasses =
-    position === 'right'
-      ? 'absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900'
-      : 'absolute bottom-full left-[22px] border-4 border-transparent border-b-gray-900';
+  const isRight = position === 'right';
+  const tooltipBase =
+    'pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50';
+  const tooltipRight = 'left-full top-1/2 -translate-y-1/2 ml-2';
+  const tooltipBottom = 'top-full left-0 mt-1';
+  const arrowBase = 'absolute border-4 border-transparent';
+  const arrowRight = 'right-full top-1/2 -translate-y-1/2 border-r-gray-900';
+  const arrowBottom = 'bottom-full left-[22px] border-b-gray-900';
 
   return (
     <div className="group relative">
       {children}
       {show && (
         <span
-          className={`pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50 ${positionClasses}`}
+          className={clsx(tooltipBase, isRight && tooltipRight, !isRight && tooltipBottom)}
           role="tooltip"
           aria-hidden="true"
         >
           {label}
-          <span className={arrowClasses} />
+          <span className={clsx(arrowBase, isRight && arrowRight, !isRight && arrowBottom)} />
         </span>
       )}
     </div>
@@ -73,6 +75,16 @@ interface NavContentProps {
 }
 
 function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentProps) {
+  const navLinkBase =
+    'flex items-center py-2 text-sm font-medium transition-colors overflow-hidden rounded-lg';
+  const navLinkLayout = collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3';
+  const navLinkActive = 'bg-indigo-100 text-indigo-700';
+  const navLinkInactive = 'text-gray-700 hover:bg-indigo-50';
+  const iconWrapperFocus =
+    'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2';
+  const labelBase =
+    'whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none';
+
   return (
     <div className="space-y-1 pt-8 pb-4 px-2">
       {navItems.map(({ to, label, icon: Icon }) => (
@@ -81,33 +93,24 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
             to={to}
             onClick={onLinkClick}
             className={({ isActive }) =>
-              `flex items-center py-2 text-sm font-medium transition-colors overflow-hidden rounded-lg ${
-                collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3'
-              } ${isActive ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-indigo-50'}`
+              clsx(
+                navLinkBase,
+                navLinkLayout,
+                isActive && navLinkActive,
+                !isActive && navLinkInactive
+              )
             }
           >
             {({ isActive }) => (
               <>
                 {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-                <span
-                  className={`shrink-0 ${
-                    collapsed
-                      ? 'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2'
-                      : ''
-                  }`}
-                >
+                <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
                   <Icon
-                    className={`h-5 w-5 ${isActive ? 'text-indigo-600' : ''}`}
+                    className={clsx('h-5 w-5', isActive && 'text-indigo-600')}
                     aria-hidden="true"
                   />
                 </span>
-                <span
-                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-                    hideText ? 'w-0' : 'w-auto'
-                  }`}
-                >
-                  {label}
-                </span>
+                <span className={clsx(labelBase, hideText ? 'w-0' : 'w-auto')}>{label}</span>
               </>
             )}
           </NavLink>
