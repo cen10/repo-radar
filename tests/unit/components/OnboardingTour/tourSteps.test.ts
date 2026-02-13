@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { addShepherdOptions, getCurrentPage } from '@/components/OnboardingTour/tourSteps';
+import { configureStepsForShepherd, getCurrentPage } from '@/components/OnboardingTour/tourSteps';
 import { getTourSteps } from '@/components/OnboardingTour/tourContent';
 
 describe('getTourSteps', () => {
@@ -74,7 +74,7 @@ describe('getTourSteps', () => {
   });
 });
 
-describe('addShepherdOptions', () => {
+describe('configureStepsForShepherd', () => {
   const createMockTour = () => ({
     back: vi.fn(),
     next: vi.fn(),
@@ -86,7 +86,7 @@ describe('addShepherdOptions', () => {
     const starsSteps = steps.filter((s) => s.page === 'stars');
     const tour = createMockTour();
 
-    const options = addShepherdOptions(starsSteps, { tour: tour as never });
+    const options = configureStepsForShepherd(starsSteps, { tour: tour as never });
 
     expect(options).toHaveLength(starsSteps.length);
     expect(options[0].id).toBe('welcome');
@@ -100,7 +100,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     const firstStepButtons = options[0].buttons as Array<{ text: string }>;
     expect(firstStepButtons.some((b) => b.text === 'Next')).toBe(true);
@@ -113,7 +113,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     const lastStepButtons = options[1].buttons as Array<{ text: string }>;
     expect(lastStepButtons.some((b) => b.text === 'Finish')).toBe(true);
@@ -126,7 +126,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     const firstStepButtons = options[0].buttons as Array<{ text: string }>;
     const secondStepButtons = options[1].buttons as Array<{ text: string }>;
@@ -149,7 +149,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     const step2Buttons = options[1].buttons as Array<{ text: string }>;
     expect(step2Buttons.some((b) => b.text === 'Next')).toBe(false);
@@ -168,7 +168,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     expect(options[0].attachTo).toEqual({
       element: '[data-tour="test"]',
@@ -180,7 +180,7 @@ describe('addShepherdOptions', () => {
     const steps = [{ id: 'step1', target: '', text: 'Centered', page: 'stars' as const }];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     expect(options[0].attachTo).toBeUndefined();
   });
@@ -191,7 +191,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     expect(options[0].beforeShowPromise).toBeDefined();
     expect(typeof options[0].beforeShowPromise).toBe('function');
@@ -210,7 +210,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never, onBackTo });
+    const options = configureStepsForShepherd(steps, { tour: tour as never, onBackTo });
 
     const buttons = options[0].buttons as Array<{ text: string; action: () => void }>;
     const backButton = buttons.find((b) => b.text === 'Back');
@@ -224,7 +224,7 @@ describe('addShepherdOptions', () => {
     const steps = [{ id: 'step1', target: '', text: 'Test', page: 'stars' as const }];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     expect(options[0].cancelIcon).toEqual({ enabled: true });
   });
@@ -242,7 +242,7 @@ describe('addShepherdOptions', () => {
     ];
     const tour = createMockTour();
 
-    const options = addShepherdOptions(steps, { tour: tour as never });
+    const options = configureStepsForShepherd(steps, { tour: tour as never });
 
     expect(options[0].canClickTarget).toBe(true);
     expect(options[1].canClickTarget).toBe(false);

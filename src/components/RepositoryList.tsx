@@ -204,8 +204,8 @@ const RepositoryList = ({
             <span className="ml-3 text-gray-500">Searching...</span>
           </div>
         )}
-        {repositories.map((repo, index) => (
-          <RepoCard key={repo.id} repository={repo} isTourTarget={index === 0} />
+        {repositories.map((repo) => (
+          <RepoCard key={repo.id} repository={repo} />
         ))}
       </div>
 

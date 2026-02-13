@@ -10,11 +10,9 @@ import { useOnboarding } from '../contexts/onboarding-context';
 
 interface RepoCardProps {
   repository: Repository;
-  /** When true, adds data-tour attributes for onboarding tour targeting */
-  isTourTarget?: boolean;
 }
 
-export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
+export function RepoCard({ repository }: RepoCardProps) {
   const {
     id,
     name,
@@ -26,6 +24,7 @@ export function RepoCard({ repository, isTourTarget }: RepoCardProps) {
     topics,
     metrics,
     is_starred,
+    isTourTarget,
   } = repository;
 
   const { currentStepId } = useOnboarding();
