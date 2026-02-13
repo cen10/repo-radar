@@ -9,6 +9,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
+import clsx from 'clsx';
 import { getRadars, RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip, useSidebarContext } from './Sidebar';
@@ -46,6 +47,14 @@ function RadarNavItem({
   // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
 
+  const navLinkBase =
+    'group/radar flex items-center py-2 text-sm font-medium transition-colors rounded-lg';
+  const navLinkLayout = collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3';
+  const navLinkActive = 'bg-indigo-100 text-indigo-700';
+  const navLinkInactive = 'text-gray-700 hover:bg-indigo-50';
+  const iconWrapperFocus =
+    'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2';
+
   return (
     <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
       <NavLink
@@ -53,25 +62,25 @@ function RadarNavItem({
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
         className={({ isActive }) =>
-          `group/radar flex items-center py-2 text-sm font-medium transition-colors rounded-lg ${
-            collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3'
-          } ${hideText ? '' : 'overflow-hidden'} ${
-            isActive ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-indigo-50'
-          }`
+          clsx(
+            navLinkBase,
+            navLinkLayout,
+            !hideText && 'overflow-hidden',
+            isActive && navLinkActive,
+            !isActive && navLinkInactive
+          )
         }
       >
         {({ isActive }) => (
           <>
             {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-            <span
-              className={`shrink-0 ${
-                collapsed
-                  ? 'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2'
-                  : ''
-              }`}
-            >
+            <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
               <StaticRadarIcon
-                className={`h-5 w-5 ${isActive ? 'text-indigo-600' : 'text-gray-400'}`}
+                className={clsx(
+                  'h-5 w-5',
+                  isActive && 'text-indigo-600',
+                  !isActive && 'text-gray-400'
+                )}
               />
             </span>
             {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
@@ -86,7 +95,7 @@ function RadarNavItem({
                   {/* Repo count - hidden on hover/focus-within */}
                   <span
                     aria-hidden="true"
-                    className="text-gray-400 text-xs whitespace-nowrap group-hover/radar:opacity-0 group-focus-within/radar:opacity-0 transition-opacity"
+                    className="text-gray-400 text-xs whitespace-nowrap transition-opacity group-hover/radar:opacity-0 group-focus-within/radar:opacity-0"
                   >
                     {radar.repo_count}
                   </span>
@@ -95,7 +104,7 @@ function RadarNavItem({
                   <Menu as="div" className="absolute -right-1">
                     <MenuButton
                       onClick={(e: React.MouseEvent) => e.preventDefault()}
-                      className="text-gray-400 cursor-pointer opacity-0 group-hover/radar:opacity-100 group-focus-within/radar:opacity-100 focus:opacity-100 transition-opacity"
+                      className="text-gray-400 cursor-pointer opacity-0 transition-opacity focus:opacity-100 group-hover/radar:opacity-100 group-focus-within/radar:opacity-100"
                     >
                       <span className="sr-only">Open menu for {radar.name}</span>
                       <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
@@ -189,20 +198,27 @@ function EmptyState({ hideText, onCreateRadar }: EmptyStateProps) {
   // Intentionally hidden when collapsed (unlike CreateButton which shows an icon).
   // New users benefit from seeing the expanded "No radars yet" onboarding message.
   // pl-11 = 44px (12px nav padding + 20px icon + 12px gap) to align with nav text
+  const collapseTransition =
+    'whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none';
+
   return (
     <div className="pl-11 pr-3 py-4">
       <p
-        className={`text-sm text-gray-500 mb-3 whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+        className={clsx(
+          'text-sm text-gray-500 mb-3',
+          collapseTransition,
           hideText ? 'w-0' : 'w-auto'
-        }`}
+        )}
       >
         No radars yet.
       </p>
       <button
         onClick={onCreateRadar}
-        className={`inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
+        className={clsx(
+          'inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500 font-medium',
+          collapseTransition,
           hideText ? 'w-0' : 'w-auto'
-        }`}
+        )}
       >
         <PlusIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
         Create Radar
@@ -230,34 +246,34 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
   // Provide accessible label explaining why button is disabled
   const ariaLabel = disabled ? `New Radar (limit reached, delete one to create more)` : undefined;
 
+  const buttonBase = 'group flex items-center w-full py-2 text-sm font-medium transition-colors';
+  const buttonLayout = collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3 rounded';
+  const buttonDisabled = 'text-gray-400 cursor-not-allowed';
+  const buttonEnabled = 'text-gray-600 hover:text-gray-900';
+  const iconWrapperFocus =
+    'p-1 -m-1 rounded-lg group-focus-visible:ring-2 group-focus-visible:ring-indigo-600 group-focus-visible:ring-offset-2';
+  const collapseTransition =
+    'whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none';
+
   return (
     <SidebarTooltip label={tooltipLabel} show={showTooltip} position={tooltipPosition}>
       {/* Hover background on wrapper so margin for alignment doesn't offset the highlight */}
-      <div className={`rounded-lg transition-colors ${disabled ? '' : 'hover:bg-indigo-200'}`}>
+      <div className={clsx('rounded-lg transition-colors', !disabled && 'hover:bg-indigo-200')}>
         <button
           onClick={onClick}
           disabled={disabled}
           aria-label={ariaLabel}
-          className={`group flex items-center w-full py-2 text-sm font-medium transition-colors ${
-            collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3 rounded'
-          } ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
+          className={clsx(
+            buttonBase,
+            buttonLayout,
+            disabled && buttonDisabled,
+            !disabled && buttonEnabled
+          )}
         >
-          <span
-            className={`shrink-0 ${
-              collapsed
-                ? 'p-1 -m-1 rounded-lg group-focus-visible:ring-2 group-focus-visible:ring-indigo-600 group-focus-visible:ring-offset-2'
-                : ''
-            }`}
-          >
+          <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
             <PlusIcon className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span
-            className={`whitespace-nowrap overflow-hidden transition-all duration-300 motion-reduce:transition-none ${
-              hideText ? 'w-0' : 'w-auto'
-            }`}
-          >
-            New Radar
-          </span>
+          <span className={clsx(collapseTransition, hideText ? 'w-0' : 'w-auto')}>New Radar</span>
         </button>
       </div>
     </SidebarTooltip>
