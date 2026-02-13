@@ -14,7 +14,7 @@ interface OnboardingTourProps {
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
 
-  const stepDefs = useMemo(() => getTourStepDefs({ hasStarredRepos }), [hasStarredRepos]);
+  const stepDefs = useMemo(() => getTourStepDefs(hasStarredRepos), [hasStarredRepos]);
 
   const currentPage = getCurrentPage(location.pathname);
 

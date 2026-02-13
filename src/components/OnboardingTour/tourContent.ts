@@ -91,9 +91,7 @@ const repoDetailSteps: TourStepDef[] = [
   },
 ];
 
-export function getTourStepDefs(options: { hasStarredRepos: boolean }): TourStepDef[] {
-  const { hasStarredRepos } = options;
-
+export function getTourStepDefs(hasStarredRepos: boolean): TourStepDef[] {
   return [
     ...starsCommonSteps,
     ...(hasStarredRepos ? starsWithReposSteps : starsEmptySteps),

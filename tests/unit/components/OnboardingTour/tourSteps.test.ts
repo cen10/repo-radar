@@ -4,7 +4,7 @@ import { getTourStepDefs } from '@/components/OnboardingTour/tourContent';
 
 describe('getTourStepDefs', () => {
   it('returns steps with welcome text when user has starred repos', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
 
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
     // Welcome text mentions tracking star growth, releases, and activity
@@ -12,7 +12,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('returns steps with prompt text when user has no starred repos', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: false });
+    const steps = getTourStepDefs(false);
 
     // First step is still welcome
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
@@ -23,7 +23,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('returns steps spanning all three pages', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
     const pages = new Set(steps.map((s) => s.page));
 
     expect(pages).toContain('stars');
@@ -32,21 +32,21 @@ describe('getTourStepDefs', () => {
   });
 
   it('has a centered welcome step with no specific target', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
 
     expect(steps[0].target).toBe('');
     expect(steps[0].placement).toBeUndefined(); // Centered steps don't need placement
   });
 
   it('includes keyboard tip in welcome text', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
 
     expect(steps[0].text).toMatch(/arrow keys/i);
     expect(steps[0].text).toMatch(/tab/i);
   });
 
   it('marks the click-repo step as canClickTarget for navigation', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
     const clickRepoStep = steps.find((s) => s.id === 'click-repo');
 
     expect(clickRepoStep).toBeDefined();
@@ -54,7 +54,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('has at least one step per page', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
 
     const starsSteps = steps.filter((s) => s.page === 'stars');
     const radarSteps = steps.filter((s) => s.page === 'radar');
@@ -66,7 +66,7 @@ describe('getTourStepDefs', () => {
   });
 
   it('assigns unique IDs to all steps', () => {
-    const steps = getTourStepDefs({ hasStarredRepos: true });
+    const steps = getTourStepDefs(true);
     const ids = steps.map((s) => s.id);
     const uniqueIds = new Set(ids);
 
@@ -82,7 +82,7 @@ describe('toShepherdSteps', () => {
   });
 
   it('converts step definitions to Shepherd step options', () => {
-    const defs = getTourStepDefs({ hasStarredRepos: true });
+    const defs = getTourStepDefs(true);
     const starsSteps = defs.filter((s) => s.page === 'stars');
     const tour = createMockTour();
 
