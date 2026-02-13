@@ -40,8 +40,8 @@ export function useShepherdTour(pageSteps: TourStep[]) {
       void navigate(path);
     };
 
-    const stepOptions = addShepherdOptions(pageSteps, { tour, onBackTo: handleBackTo });
-    tour.addSteps(stepOptions);
+    const configuredSteps = addShepherdOptions(pageSteps, { tour, onBackTo: handleBackTo });
+    tour.addSteps(configuredSteps);
 
     tour.on('complete', completeTour);
     tour.on('cancel', completeTour);
