@@ -42,11 +42,11 @@ export const renderWithProviders = (
   const client = queryClient ?? createTestQueryClient();
   return {
     ...render(
-      <OnboardingProvider>
-        <QueryClientProvider client={client}>
+      <QueryClientProvider client={client}>
+        <OnboardingProvider>
           <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-        </QueryClientProvider>
-      </OnboardingProvider>
+        </OnboardingProvider>
+      </QueryClientProvider>
     ),
     queryClient: client,
   };

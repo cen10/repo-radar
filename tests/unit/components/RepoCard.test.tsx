@@ -34,11 +34,11 @@ Object.defineProperty(window, 'open', {
 const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
-    <OnboardingProvider>
-      <MemoryRouter>
-        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-      </MemoryRouter>
-    </OnboardingProvider>
+    <QueryClientProvider client={queryClient}>
+      <OnboardingProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </OnboardingProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -38,9 +38,9 @@ vi.mock('@/services/radar', () => ({
 
 // Mock useSidebarContext since it's not exported from Sidebar.tsx
 vi.mock('@/components/Sidebar', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../../src/components/Sidebar')>();
+  const actual = await importOriginal<typeof import('../../src/components/Sidebar')>();
   return {
-    ...original,
+    ...actual,
     useSidebarContext: () => ({ collapsed: false, hideText: false }),
     SidebarTooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
   };
