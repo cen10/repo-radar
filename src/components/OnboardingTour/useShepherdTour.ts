@@ -84,12 +84,13 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     };
     document.addEventListener('click', handleOverlayClick, true);
 
-    const savedStartFromStep = sessionStorage.getItem('tour-start-from-step');
-    if (savedStartFromStep) {
+    // Resume tour from saved step after cross-page navigation
+    const stepToStartOn = sessionStorage.getItem('tour-start-from-step');
+    if (stepToStartOn) {
       sessionStorage.removeItem('tour-start-from-step');
-      const stepIndex = pageSteps.findIndex((s) => s.id === savedStartFromStep);
-      if (stepIndex >= 0) {
-        setTimeout(() => tour.show(savedStartFromStep), 0);
+      const stepExists = pageSteps.some((s) => s.id === stepToStartOn);
+      if (stepExists) {
+        setTimeout(() => tour.show(stepToStartOn), 0);
       }
     }
 
