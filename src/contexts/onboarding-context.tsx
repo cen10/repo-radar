@@ -1,22 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useDemoMode } from '../demo/use-demo-mode';
-
-const STORAGE_KEY = 'repo-radar-onboarding';
-
-interface OnboardingContextType {
-  hasCompletedTour: boolean;
-  isTourActive: boolean;
-  startTour: () => void;
-  completeTour: () => void;
-  /** Step ID to start from (for cross-page Back navigation) */
-  startFromStep: string | null;
-  setStartFromStep: (stepId: string | null) => void;
-  /** Current active step ID (for conditional styling) */
-  currentStepId: string | null;
-  setCurrentStepId: (stepId: string | null) => void;
-}
-
-const OnboardingContext = createContext<OnboardingContextType | null>(null);
+import { OnboardingContext, ONBOARDING_STORAGE_KEY } from './OnboardingContext';
 
 interface OnboardingProviderProps {
   children: ReactNode;
@@ -28,7 +12,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const [hasCompletedTour, setHasCompletedTour] = useState(() => {
     if (isDemoMode) return false;
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as { hasCompletedTour: boolean };
         return parsed.hasCompletedTour;
@@ -47,7 +31,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   // Demo mode skips persistence so each demo session shows a fresh tour.
   useEffect(() => {
     if (!isDemoMode && hasCompletedTour) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ hasCompletedTour: true }));
+      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({ hasCompletedTour: true }));
     }
   }, [hasCompletedTour, isDemoMode]);
 
@@ -78,13 +62,4 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       {children}
     </OnboardingContext.Provider>
   );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components -- one-liner tightly coupled to OnboardingProvider
-export function useOnboarding(): OnboardingContextType {
-  const context = useContext(OnboardingContext);
-  if (!context) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
-  }
-  return context;
 }

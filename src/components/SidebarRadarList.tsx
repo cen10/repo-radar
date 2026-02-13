@@ -15,7 +15,7 @@ import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip, useSidebarContext } from './Sidebar';
 import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
-import { useOnboarding } from '../contexts/onboarding-context';
+import { useOnboarding } from '../contexts/use-onboarding';
 import { RenameRadarModal } from './RenameRadarModal';
 import { DeleteRadarModal } from './DeleteRadarModal';
 

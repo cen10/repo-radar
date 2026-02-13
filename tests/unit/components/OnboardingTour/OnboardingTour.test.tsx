@@ -13,7 +13,7 @@ const mockOnboarding = {
   setCurrentStepId: vi.fn(),
 };
 
-vi.mock('@/contexts/onboarding-context', () => ({
+vi.mock('@/contexts/use-onboarding', () => ({
   useOnboarding: () => mockOnboarding,
 }));
 

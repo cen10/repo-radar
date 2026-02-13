@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OnboardingProvider, useOnboarding } from '@/contexts/onboarding-context';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
+import { useOnboarding } from '@/contexts/use-onboarding';
 import { DemoModeProvider } from '@/demo/demo-context';
 
 // Mock the browser module to avoid MSW setup

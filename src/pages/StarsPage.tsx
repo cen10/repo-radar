@@ -3,7 +3,7 @@ import { StarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
-import { useOnboarding } from '../contexts/onboarding-context';
+import { useOnboarding } from '../contexts/use-onboarding';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { NoStarredReposState } from '../components/EmptyState';
 import { CollapsibleSearch } from '../components/CollapsibleSearch';

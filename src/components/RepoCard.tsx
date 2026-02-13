@@ -6,7 +6,7 @@ import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 import { StarredBadge } from './StarredBadge';
 import { RadarIconButton } from './RadarIconButton';
-import { useOnboarding } from '../contexts/onboarding-context';
+import { useOnboarding } from '../contexts/use-onboarding';
 
 interface RepoCardProps {
   repository: Repository;

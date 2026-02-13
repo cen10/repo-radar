@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShepherd } from 'react-shepherd';
-import { useOnboarding } from '../../contexts/onboarding-context';
+import { useOnboarding } from '../../contexts/use-onboarding';
 import { configureStepsForShepherd, type TourStep } from './tourSteps';
 
 /**

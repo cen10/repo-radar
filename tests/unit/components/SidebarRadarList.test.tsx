@@ -11,7 +11,7 @@ import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
 
 // Mock the onboarding context
-vi.mock('@/contexts/onboarding-context', () => ({
+vi.mock('@/contexts/use-onboarding', () => ({
   useOnboarding: () => ({
     isTourActive: false,
     hasCompletedTour: false,
