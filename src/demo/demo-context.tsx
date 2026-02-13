@@ -75,7 +75,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
   }
 
   return (
-    <DemoContext.Provider
+    <DemoContext
       value={{
         isDemoMode,
         enterDemoMode,
@@ -87,6 +87,6 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
       }}
     >
       {children}
-    </DemoContext.Provider>
+    </DemoContext>
   );
 }
