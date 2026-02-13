@@ -283,6 +283,7 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
 export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarListProps) {
   const { collapsed, hideText } = useSidebarContext();
   const { currentStepId } = useOnboarding();
+  // Pulse animation draws attention to radar list during onboarding tour
   const showPulse = currentStepId === 'sidebar-radars';
   const navigate = useNavigate();
   const { id: currentRadarId } = useParams<{ id: string }>();
