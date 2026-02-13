@@ -43,7 +43,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const [startFromStep, setStartFromStep] = useState<string | null>(null);
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
 
-  // Persist completion to localStorage (except demo mode)
+  // Persist completion to localStorage for real users only.
+  // Demo mode skips persistence so each demo session shows a fresh tour.
   useEffect(() => {
     if (!isDemoMode && hasCompletedTour) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ hasCompletedTour: true }));
