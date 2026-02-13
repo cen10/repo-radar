@@ -8,19 +8,94 @@ import type { RadarWithCount, RadarRepo } from '../types/database';
 
 import { DEMO_USER } from './demo-user';
 
-// Helper to generate a date within the last N days
-function recentDate(daysAgo: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return date.toISOString();
-}
+// Static timestamps for deterministic demo data.
+// Using fixed dates ensures consistent sort order across sessions.
+const DATES = {
+  // Recent activity (within last week)
+  day0: '2025-01-15T14:30:00Z',
+  day1: '2025-01-14T10:15:00Z',
+  day2: '2025-01-13T16:45:00Z',
+  day3: '2025-01-12T09:00:00Z',
+  day5: '2025-01-10T11:30:00Z',
+  day7: '2025-01-08T08:00:00Z',
+  day10: '2025-01-05T15:20:00Z',
+  day14: '2025-01-01T12:00:00Z',
+  day30: '2024-12-16T10:00:00Z',
+  // Older
+  day36: '2024-12-10T14:00:00Z',
+  day37: '2024-12-09T11:00:00Z',
+  day38: '2024-12-08T09:30:00Z',
+  day39: '2024-12-07T16:00:00Z',
+  day40: '2024-12-06T10:45:00Z',
+  day45: '2024-12-01T08:00:00Z',
+  day53: '2024-11-23T14:30:00Z',
+  day54: '2024-11-22T11:15:00Z',
+  day55: '2024-11-21T09:00:00Z',
+  day60: '2024-11-16T12:00:00Z',
+  // Radar-specific dates
+  radarFrontendCreated: '2024-11-16T09:00:00Z',
+  radarLearningCreated: '2024-12-01T11:00:00Z',
+  radarFrontendUpdated: '2025-01-13T08:00:00Z',
+  radarLearningUpdated: '2025-01-10T14:00:00Z',
+  // Radar repo added_at dates
+  rrAdded1: '2024-11-21T10:00:00Z',
+  rrAdded2: '2024-11-22T14:30:00Z',
+  rrAdded3: '2024-11-23T09:15:00Z',
+  rrAdded4: '2024-12-06T11:00:00Z',
+  rrAdded5: '2024-12-07T15:30:00Z',
+  rrAdded6: '2024-12-08T10:45:00Z',
+  rrAdded7: '2024-12-09T14:00:00Z',
+  rrAdded8: '2024-12-10T09:30:00Z',
+};
 
-// Helper to generate starred_at dates spread over time
-function starredDate(index: number): string {
-  // Spread stars over the last 180 days
-  const daysAgo = Math.floor((index / 45) * 180);
-  return recentDate(daysAgo);
-}
+// Starred dates spread over ~180 days for realistic history
+const STARRED_DATES = [
+  '2025-01-15T10:00:00Z', // 0
+  '2025-01-11T14:30:00Z', // 1
+  '2025-01-07T09:15:00Z', // 2
+  '2025-01-03T16:00:00Z', // 3
+  '2024-12-30T11:30:00Z', // 4
+  '2024-12-26T08:45:00Z', // 5
+  '2024-12-22T15:00:00Z', // 6
+  '2024-12-18T10:30:00Z', // 7
+  '2024-12-14T13:15:00Z', // 8
+  '2024-12-10T09:00:00Z', // 9
+  '2024-12-06T16:45:00Z', // 10
+  '2024-12-02T11:00:00Z', // 11
+  '2024-11-28T14:30:00Z', // 12
+  '2024-11-24T08:15:00Z', // 13
+  '2024-11-20T12:00:00Z', // 14
+  '2024-11-16T15:30:00Z', // 15
+  '2024-11-12T09:45:00Z', // 16
+  '2024-11-08T13:00:00Z', // 17
+  '2024-11-04T10:15:00Z', // 18
+  '2024-10-31T16:30:00Z', // 19
+  '2024-10-27T11:45:00Z', // 20
+  '2024-10-23T08:00:00Z', // 21
+  '2024-10-19T14:15:00Z', // 22
+  '2024-10-15T09:30:00Z', // 23
+  '2024-10-11T12:45:00Z', // 24
+  '2024-10-07T15:00:00Z', // 25
+  '2024-10-03T10:30:00Z', // 26
+  '2024-09-29T13:45:00Z', // 27
+  '2024-09-25T08:15:00Z', // 28
+  '2024-09-21T11:30:00Z', // 29
+  '2024-09-17T14:45:00Z', // 30
+  '2024-09-13T09:00:00Z', // 31
+  '2024-09-09T12:15:00Z', // 32
+  '2024-09-05T15:30:00Z', // 33
+  '2024-09-01T10:45:00Z', // 34
+  '2024-08-28T13:00:00Z', // 35
+  '2024-08-24T08:30:00Z', // 36
+  '2024-08-20T11:45:00Z', // 37
+  '2024-08-16T14:00:00Z', // 38
+  '2024-08-12T09:15:00Z', // 39
+  '2024-08-08T12:30:00Z', // 40
+  '2024-08-04T15:45:00Z', // 41
+  '2024-07-31T10:00:00Z', // 42
+  '2024-07-27T13:15:00Z', // 43
+  '2024-07-23T08:45:00Z', // 44
+];
 
 /**
  * 45 starred repos - real popular repos with realistic stats.
@@ -43,17 +118,17 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'JavaScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['declarative', 'frontend', 'javascript', 'library', 'react', 'ui'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2013-05-24T16:15:54Z',
-    starred_at: starredDate(0),
+    starred_at: STARRED_DATES[0],
     is_starred: true,
     metrics: {
       is_trending: true,
       stars_growth_rate: 0.018,
       stars_gained: 4200,
       releases_count: 18,
-      last_release_date: recentDate(3),
+      last_release_date: DATES.day3,
     },
   },
   {
@@ -78,17 +153,17 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/apache-2.0',
     },
     topics: ['database', 'firebase-alternative', 'postgres', 'realtime', 'supabase'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day1,
     created_at: '2020-01-08T17:05:12Z',
-    starred_at: starredDate(1),
+    starred_at: STARRED_DATES[1],
     is_starred: true,
     metrics: {
       is_trending: true,
       stars_growth_rate: 0.028,
       stars_gained: 2100,
       releases_count: 15,
-      last_release_date: recentDate(2),
+      last_release_date: DATES.day2,
     },
   },
   {
@@ -105,17 +180,17 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Python',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['ai', 'machine-learning', 'pytorch', 'speech-recognition', 'transformer'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(5),
+    updated_at: DATES.day2,
+    pushed_at: DATES.day5,
     created_at: '2022-09-16T21:04:31Z',
-    starred_at: starredDate(2),
+    starred_at: STARRED_DATES[2],
     is_starred: true,
     metrics: {
       is_trending: true,
       stars_growth_rate: 0.032,
       stars_gained: 2400,
       releases_count: 8,
-      last_release_date: recentDate(14),
+      last_release_date: DATES.day14,
     },
   },
   {
@@ -132,17 +207,17 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['build-tool', 'dev-server', 'esm', 'frontend', 'hmr', 'vite'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day3,
+    pushed_at: DATES.day3,
     created_at: '2020-04-21T08:45:01Z',
-    starred_at: starredDate(3),
+    starred_at: STARRED_DATES[3],
     is_starred: true,
     metrics: {
       is_trending: true,
       stars_growth_rate: 0.022,
       stars_gained: 1560,
       releases_count: 22,
-      last_release_date: recentDate(1),
+      last_release_date: DATES.day1,
     },
   },
   {
@@ -160,17 +235,17 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Go',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['ai', 'go', 'llama', 'llm', 'local-llm', 'machine-learning'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day5,
+    pushed_at: DATES.day5,
     created_at: '2023-06-26T17:45:12Z',
-    starred_at: starredDate(4),
+    starred_at: STARRED_DATES[4],
     is_starred: true,
     metrics: {
       is_trending: true,
       stars_growth_rate: 0.045,
       stars_gained: 5200,
       releases_count: 35,
-      last_release_date: recentDate(1),
+      last_release_date: DATES.day1,
     },
   },
 
@@ -192,10 +267,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['editor', 'electron', 'typescript', 'visual-studio-code'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day7,
+    pushed_at: DATES.day7,
     created_at: '2015-09-03T20:23:38Z',
-    starred_at: starredDate(5),
+    starred_at: STARRED_DATES[5],
     is_starred: true,
   },
   {
@@ -219,10 +294,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/apache-2.0',
     },
     topics: ['javascript', 'language', 'typechecker', 'typescript'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day10,
+    pushed_at: DATES.day10,
     created_at: '2014-06-17T15:28:39Z',
-    starred_at: starredDate(6),
+    starred_at: STARRED_DATES[6],
     is_starred: true,
   },
   {
@@ -252,10 +327,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'universal',
       'vercel',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day14,
+    pushed_at: DATES.day14,
     created_at: '2016-10-05T23:32:51Z',
-    starred_at: starredDate(7),
+    starred_at: STARRED_DATES[7],
     is_starred: true,
   },
   {
@@ -275,10 +350,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['css', 'css-framework', 'postcss', 'tailwindcss'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day30,
+    pushed_at: DATES.day30,
     created_at: '2016-08-15T15:09:46Z',
-    starred_at: starredDate(8),
+    starred_at: STARRED_DATES[8],
     is_starred: true,
   },
   {
@@ -310,10 +385,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'stale-while-revalidate',
       'typescript',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day36,
+    pushed_at: DATES.day37,
     created_at: '2019-02-08T21:37:04Z',
-    starred_at: starredDate(9),
+    starred_at: STARRED_DATES[9],
     is_starred: true,
   },
   {
@@ -333,10 +408,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Rust',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['deno', 'javascript', 'rust', 'typescript', 'v8'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day38,
+    pushed_at: DATES.day38,
     created_at: '2018-05-14T09:00:22Z',
-    starred_at: starredDate(10),
+    starred_at: STARRED_DATES[10],
     is_starred: true,
   },
   {
@@ -356,10 +431,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'JavaScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['compiler', 'javascript', 'svelte', 'ui'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day39,
+    pushed_at: DATES.day39,
     created_at: '2016-11-20T18:13:05Z',
-    starred_at: starredDate(11),
+    starred_at: STARRED_DATES[11],
     is_starred: true,
   },
   {
@@ -380,10 +455,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['framework', 'nested-routes', 'react', 'remix', 'remix-run', 'ssr', 'web'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day40,
+    pushed_at: DATES.day40,
     created_at: '2020-10-26T20:55:36Z',
-    starred_at: starredDate(12),
+    starred_at: STARRED_DATES[12],
     is_starred: true,
   },
   {
@@ -400,10 +475,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['flux', 'hooks', 'react', 'state', 'store', 'zustand'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(3),
+    updated_at: DATES.day45,
+    pushed_at: DATES.day45,
     created_at: '2019-04-09T07:40:13Z',
-    starred_at: starredDate(13),
+    starred_at: STARRED_DATES[13],
     is_starred: true,
   },
   {
@@ -423,10 +498,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['schema', 'typescript', 'validation', 'zod'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(2),
+    updated_at: DATES.day53,
+    pushed_at: DATES.day53,
     created_at: '2020-03-07T02:14:55Z',
-    starred_at: starredDate(14),
+    starred_at: STARRED_DATES[14],
     is_starred: true,
   },
   {
@@ -447,10 +522,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/bsd-3-clause',
     },
     topics: ['apps', 'django', 'framework', 'models', 'orm', 'python', 'templates', 'views', 'web'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2012-04-28T02:47:18Z',
-    starred_at: starredDate(15),
+    starred_at: STARRED_DATES[15],
     is_starred: true,
   },
   {
@@ -471,10 +546,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/bsd-3-clause',
     },
     topics: ['flask', 'jinja', 'pallets', 'python', 'web-framework', 'werkzeug', 'wsgi'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(5),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day5,
     created_at: '2010-04-06T11:11:59Z',
-    starred_at: starredDate(16),
+    starred_at: STARRED_DATES[16],
     is_starred: true,
   },
   {
@@ -510,10 +585,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'uvicorn',
       'web',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day1,
     created_at: '2018-12-08T14:02:29Z',
-    starred_at: starredDate(17),
+    starred_at: STARRED_DATES[17],
     is_starred: true,
   },
   {
@@ -543,10 +618,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'python-requests',
       'requests',
     ],
-    updated_at: recentDate(2),
-    pushed_at: recentDate(7),
+    updated_at: DATES.day2,
+    pushed_at: DATES.day7,
     created_at: '2011-02-13T18:38:17Z',
-    starred_at: starredDate(18),
+    starred_at: STARRED_DATES[18],
     is_starred: true,
   },
   {
@@ -566,10 +641,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Rust',
     license: { key: 'other', name: 'Other', url: null },
     topics: ['compiler', 'language', 'rust'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2010-06-16T20:39:03Z',
-    starred_at: starredDate(19),
+    starred_at: STARRED_DATES[19],
     is_starred: true,
   },
   {
@@ -594,10 +669,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/unlicense',
     },
     topics: ['cli', 'grep', 'regex', 'ripgrep', 'rust', 'search', 'tool'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(14),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day14,
     created_at: '2016-03-11T05:36:49Z',
-    starred_at: starredDate(20),
+    starred_at: STARRED_DATES[20],
     is_starred: true,
   },
   {
@@ -622,10 +697,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/apache-2.0',
     },
     topics: ['desktop-app', 'electron-alternative', 'mobile', 'rust', 'tauri', 'webview'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2019-10-17T22:47:21Z',
-    starred_at: starredDate(21),
+    starred_at: STARRED_DATES[21],
     is_starred: true,
   },
   {
@@ -646,10 +721,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/bsd-3-clause',
     },
     topics: ['go', 'golang', 'language', 'programming-language'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2014-08-19T04:33:40Z',
-    starred_at: starredDate(22),
+    starred_at: STARRED_DATES[22],
     is_starred: true,
   },
   {
@@ -687,10 +762,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'tensorflow',
       'transformer',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2018-10-29T13:56:00Z',
-    starred_at: starredDate(23),
+    starred_at: STARRED_DATES[23],
     is_starred: true,
   },
   {
@@ -710,10 +785,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Python',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['agents', 'ai', 'composability', 'gpt', 'langchain', 'llm', 'openai', 'python', 'rag'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2022-10-17T02:58:36Z',
-    starred_at: starredDate(24),
+    starred_at: STARRED_DATES[24],
     is_starred: true,
   },
   {
@@ -750,10 +825,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'programming',
       'teachers',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2014-12-24T17:49:19Z',
-    starred_at: starredDate(25),
+    starred_at: STARRED_DATES[25],
     is_starred: true,
   },
   {
@@ -780,10 +855,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'javascript',
       'javascript-algorithms',
     ],
-    updated_at: recentDate(2),
-    pushed_at: recentDate(10),
+    updated_at: DATES.day2,
+    pushed_at: DATES.day10,
     created_at: '2018-03-24T07:47:05Z',
-    starred_at: starredDate(26),
+    starred_at: STARRED_DATES[26],
     is_starred: true,
   },
   {
@@ -803,10 +878,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['react', 'react-router', 'routing'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day1,
     created_at: '2014-05-16T22:22:51Z',
-    starred_at: starredDate(27),
+    starred_at: STARRED_DATES[27],
     is_starred: true,
   },
   {
@@ -823,10 +898,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['flux', 'predictable', 'react', 'redux', 'state', 'state-management'],
-    updated_at: recentDate(3),
-    pushed_at: recentDate(14),
+    updated_at: DATES.day3,
+    pushed_at: DATES.day14,
     created_at: '2015-05-29T23:53:15Z',
-    starred_at: starredDate(28),
+    starred_at: STARRED_DATES[28],
     is_starred: true,
   },
   {
@@ -860,10 +935,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'ux',
       'validation',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(2),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day2,
     created_at: '2019-03-13T15:04:34Z',
-    starred_at: starredDate(29),
+    starred_at: STARRED_DATES[29],
     is_starred: true,
   },
   {
@@ -901,10 +976,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'vue',
       'yaml',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day1,
     created_at: '2016-01-29T00:00:00Z',
-    starred_at: starredDate(30),
+    starred_at: STARRED_DATES[30],
     is_starred: true,
   },
   {
@@ -921,10 +996,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'JavaScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['ecmascript', 'eslint', 'javascript', 'linter', 'nodejs', 'static-analysis'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2013-07-25T03:44:24Z',
-    starred_at: starredDate(31),
+    starred_at: STARRED_DATES[31],
     is_starred: true,
   },
   {
@@ -957,10 +1032,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'testing',
       'webkit',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2020-01-22T16:00:00Z',
-    starred_at: starredDate(32),
+    starred_at: STARRED_DATES[32],
     is_starred: true,
   },
   {
@@ -980,10 +1055,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['coverage', 'jest', 'snapshot', 'test', 'testing', 'typescript', 'vite', 'vitest'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2021-12-03T06:48:38Z',
-    starred_at: starredDate(33),
+    starred_at: STARRED_DATES[33],
     is_starred: true,
   },
   {
@@ -1004,10 +1079,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['accessibility', 'headless', 'react', 'tailwindcss', 'ui-components', 'vue'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(3),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day3,
     created_at: '2020-08-12T03:59:13Z',
-    starred_at: starredDate(34),
+    starred_at: STARRED_DATES[34],
     is_starred: true,
   },
   {
@@ -1024,10 +1099,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['api', 'nextjs', 'react', 'rpc', 'trpc', 'typescript'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(1),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day1,
     created_at: '2020-07-18T03:11:02Z',
-    starred_at: starredDate(35),
+    starred_at: STARRED_DATES[35],
     is_starred: true,
   },
   {
@@ -1045,10 +1120,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'JavaScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['javascript', 'lodash', 'modules', 'utilities'],
-    updated_at: recentDate(5),
-    pushed_at: recentDate(30),
+    updated_at: DATES.day5,
+    pushed_at: DATES.day30,
     created_at: '2012-04-07T04:01:32Z',
-    starred_at: starredDate(36),
+    starred_at: STARRED_DATES[36],
     is_starred: true,
   },
   {
@@ -1065,10 +1140,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'JavaScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['http', 'http-client', 'javascript', 'nodejs', 'promise', 'xhr'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(3),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day3,
     created_at: '2014-08-18T22:30:27Z',
-    starred_at: starredDate(37),
+    starred_at: STARRED_DATES[37],
     is_starred: true,
   },
   {
@@ -1085,10 +1160,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Ruby',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['activejob', 'activerecord', 'framework', 'html', 'mvc', 'rails', 'ruby'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2008-04-11T02:19:47Z',
-    starred_at: starredDate(38),
+    starred_at: STARRED_DATES[38],
     is_starred: true,
   },
   {
@@ -1108,10 +1183,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'Rust',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['beginner-friendly', 'education', 'exercises', 'rust', 'rustlings'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(5),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day5,
     created_at: '2018-01-23T09:00:00Z',
-    starred_at: starredDate(39),
+    starred_at: STARRED_DATES[39],
     is_starred: true,
   },
   {
@@ -1144,10 +1219,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'ui',
       'vue',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2016-04-06T04:08:24Z',
-    starred_at: starredDate(40),
+    starred_at: STARRED_DATES[40],
     is_starred: true,
   },
   {
@@ -1178,10 +1253,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'sketch',
       'whiteboard',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2020-01-01T20:14:35Z',
-    starred_at: starredDate(41),
+    starred_at: STARRED_DATES[41],
     is_starred: true,
   },
   {
@@ -1201,10 +1276,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['javascript', 'nodejs', 'realtime', 'socket', 'websocket'],
-    updated_at: recentDate(2),
-    pushed_at: recentDate(7),
+    updated_at: DATES.day2,
+    pushed_at: DATES.day7,
     created_at: '2010-03-11T18:24:48Z',
-    starred_at: starredDate(42),
+    starred_at: STARRED_DATES[42],
     is_starred: true,
   },
   {
@@ -1236,10 +1311,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       'sql',
       'typescript',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2018-06-08T08:41:58Z',
-    starred_at: starredDate(43),
+    starred_at: STARRED_DATES[43],
     is_starred: true,
   },
   {
@@ -1261,10 +1336,10 @@ export const DEMO_STARRED_REPOS: Repository[] = [
       url: 'https://api.github.com/licenses/apache-2.0',
     },
     topics: ['containers', 'docker', 'go', 'moby'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2013-01-18T18:10:57Z',
-    starred_at: starredDate(44),
+    starred_at: STARRED_DATES[44],
     is_starred: true,
   },
 ];
@@ -1275,16 +1350,16 @@ export const DEMO_RADARS: RadarWithCount[] = [
     id: 'demo-radar-frontend',
     user_id: DEMO_USER.id,
     name: 'Frontend Frameworks',
-    created_at: recentDate(60),
-    updated_at: recentDate(2),
+    created_at: DATES.radarFrontendCreated,
+    updated_at: DATES.radarFrontendUpdated,
     repo_count: 3,
   },
   {
     id: 'demo-radar-learning',
     user_id: DEMO_USER.id,
     name: 'Learning Resources',
-    created_at: recentDate(45),
-    updated_at: recentDate(5),
+    created_at: DATES.radarLearningCreated,
+    updated_at: DATES.radarLearningUpdated,
     repo_count: 5,
   },
 ];
@@ -1296,19 +1371,19 @@ export const DEMO_RADAR_REPOS: RadarRepo[] = [
     id: 'rr-1',
     radar_id: 'demo-radar-frontend',
     github_repo_id: 70107786,
-    added_at: recentDate(55),
+    added_at: DATES.rrAdded1,
   }, // next.js
   {
     id: 'rr-2',
     radar_id: 'demo-radar-frontend',
     github_repo_id: 74293321,
-    added_at: recentDate(54),
+    added_at: DATES.rrAdded2,
   }, // svelte
   {
     id: 'rr-3',
     radar_id: 'demo-radar-frontend',
     github_repo_id: 83222441,
-    added_at: recentDate(53),
+    added_at: DATES.rrAdded3,
   }, // remix
 
   // Learning Resources (5 repos)
@@ -1316,31 +1391,31 @@ export const DEMO_RADAR_REPOS: RadarRepo[] = [
     id: 'rr-4',
     radar_id: 'demo-radar-learning',
     github_repo_id: 28457823,
-    added_at: recentDate(40),
+    added_at: DATES.rrAdded4,
   }, // freeCodeCamp
   {
     id: 'rr-5',
     radar_id: 'demo-radar-learning',
     github_repo_id: 63537249,
-    added_at: recentDate(39),
+    added_at: DATES.rrAdded5,
   }, // javascript-algorithms
   {
     id: 'rr-6',
     radar_id: 'demo-radar-learning',
     github_repo_id: 460078,
-    added_at: recentDate(38),
+    added_at: DATES.rrAdded6,
   }, // rustlings
   {
     id: 'rr-7',
     radar_id: 'demo-radar-learning',
     github_repo_id: 20929025,
-    added_at: recentDate(37),
+    added_at: DATES.rrAdded7,
   }, // typescript
   {
     id: 'rr-8',
     radar_id: 'demo-radar-learning',
     github_repo_id: 458058,
-    added_at: recentDate(36),
+    added_at: DATES.rrAdded8,
   }, // rust
 ];
 
@@ -1362,8 +1437,8 @@ const ADDITIONAL_SEARCH_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['framework', 'frontend', 'javascript', 'vue'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2018-09-25T00:00:00Z',
     is_starred: false,
   },
@@ -1381,8 +1456,8 @@ const ADDITIONAL_SEARCH_REPOS: Repository[] = [
     language: 'TypeScript',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['angular', 'framework', 'javascript', 'typescript', 'web'],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2014-09-18T16:12:01Z',
     is_starred: false,
   },
@@ -1410,8 +1485,8 @@ const ADDITIONAL_SEARCH_REPOS: Repository[] = [
       'pytorch',
       'tensor',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2016-08-13T05:26:41Z',
     is_starred: false,
   },
@@ -1445,8 +1520,8 @@ const ADDITIONAL_SEARCH_REPOS: Repository[] = [
       'python',
       'tensorflow',
     ],
-    updated_at: recentDate(0),
-    pushed_at: recentDate(0),
+    updated_at: DATES.day0,
+    pushed_at: DATES.day0,
     created_at: '2015-11-07T01:19:20Z',
     is_starred: false,
   },
@@ -1467,8 +1542,8 @@ const ADDITIONAL_SEARCH_REPOS: Repository[] = [
     language: 'Go',
     license: { key: 'mit', name: 'MIT License', url: 'https://api.github.com/licenses/mit' },
     topics: ['gin', 'go', 'golang', 'http', 'web', 'web-framework'],
-    updated_at: recentDate(1),
-    pushed_at: recentDate(5),
+    updated_at: DATES.day1,
+    pushed_at: DATES.day5,
     created_at: '2014-06-16T23:57:25Z',
     is_starred: false,
   },
