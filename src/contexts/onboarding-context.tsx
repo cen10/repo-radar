@@ -47,7 +47,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   }, []);
 
   return (
-    <OnboardingContext.Provider
+    <OnboardingContext
       value={{
         hasCompletedTour,
         isTourActive,
@@ -60,6 +60,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       }}
     >
       {children}
-    </OnboardingContext.Provider>
+    </OnboardingContext>
   );
 }

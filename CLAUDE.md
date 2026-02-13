@@ -276,6 +276,20 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     };
     ```
 
+21. **React 19 context syntax**: Use `<Context>` directly instead of `<Context.Provider>`. React 19 allows rendering context as a provider without the `.Provider` suffix.
+
+    ```tsx
+    // ✗ Legacy (React 18)
+    <MyContext.Provider value={value}>
+      {children}
+    </MyContext.Provider>
+
+    // ✓ React 19
+    <MyContext value={value}>
+      {children}
+    </MyContext>
+    ```
+
 ## Testing Best Practices
 
 ### Logger Mocking Pattern
