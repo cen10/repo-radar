@@ -24,13 +24,6 @@ vi.mock('@/services/radar', () => ({
   },
 }));
 
-// Mock window.open
-const mockWindowOpen = vi.fn();
-Object.defineProperty(window, 'open', {
-  value: mockWindowOpen,
-  writable: true,
-});
-
 const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
