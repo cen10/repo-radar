@@ -25,15 +25,6 @@ vi.mock('@/services/github', () => ({
   MAX_STARRED_REPOS: 500,
 }));
 
-// Mock github-token service - throws if test doesn't provide a token
-vi.mock('@/services/github-token', () => ({
-  getValidGitHubToken: (token: string | null) => {
-    if (!token) throw new Error('Test setup error: no token provided to mock');
-    return token;
-  },
-  hasFallbackToken: () => false,
-}));
-
 // Mock radar service (needed by RepoCard)
 vi.mock('@/services/radar', () => ({
   getRadars: vi.fn().mockResolvedValue([]),
@@ -44,14 +35,6 @@ vi.mock('@/services/radar', () => ({
     MAX_REPOS_PER_RADAR: 25,
     MAX_TOTAL_REPOS: 50,
   },
-}));
-
-// Mock intersection observer for infinite scroll
-vi.mock('@/hooks/useIntersectionObserver', () => ({
-  useIntersectionObserver: () => ({
-    ref: vi.fn(),
-    isIntersecting: false,
-  }),
 }));
 
 describe('Repository Search Integration', () => {
