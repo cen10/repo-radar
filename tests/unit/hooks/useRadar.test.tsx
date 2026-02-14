@@ -4,11 +4,18 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRadar } from '@/hooks/useRadar';
 import * as radar from '@/services/radar';
+import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
 import type { Radar } from '@/types/database';
 
 // Mock the radar service
 vi.mock('@/services/radar', () => ({
   getRadar: vi.fn(),
+}));
+
+// Mock onboarding context
+const mockIsTourActive = vi.fn(() => false);
+vi.mock('@/contexts/use-onboarding', () => ({
+  useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
 }));
 
 // Helper to create a test QueryClient
@@ -114,6 +121,37 @@ describe('useRadar', () => {
 
     await waitFor(() => {
       expect(result.current.radar?.name).toBe('Updated');
+    });
+  });
+
+  describe('React Ecosystem radar during tour', () => {
+    it('returns tour radar when fetching tour-demo-radar during active tour', async () => {
+      mockIsTourActive.mockReturnValue(true);
+
+      const { result } = renderHook(() => useRadar({ radarId: TOUR_DEMO_RADAR_ID }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.radar).not.toBeNull();
+      expect(result.current.radar?.id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radar?.name).toBe('React Ecosystem');
+      expect(result.current.isNotFound).toBe(false);
+      expect(radar.getRadar).not.toHaveBeenCalled();
+    });
+
+    it('returns not found for tour-demo-radar when tour is not active', async () => {
+      mockIsTourActive.mockReturnValue(false);
+      vi.mocked(radar.getRadar).mockResolvedValue(null);
+
+      const { result } = renderHook(() => useRadar({ radarId: TOUR_DEMO_RADAR_ID }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.isNotFound).toBe(true);
     });
   });
 });

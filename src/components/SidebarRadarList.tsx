@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import {
   PlusIcon,
@@ -10,12 +9,13 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { getRadars, RADAR_LIMITS } from '../services/radar';
+import { RADAR_LIMITS } from '../services/radar';
 import type { RadarWithCount } from '../types/database';
 import { SidebarTooltip, useSidebarContext } from './Sidebar';
 import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
 import { useOnboarding } from '../contexts/use-onboarding';
+import { useRadars } from '../hooks/useRadars';
 import { RenameRadarModal } from './RenameRadarModal';
 import { DeleteRadarModal } from './DeleteRadarModal';
 
@@ -292,16 +292,7 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
   const [radarToRename, setRadarToRename] = useState<RadarWithCount | null>(null);
   const [radarToDelete, setRadarToDelete] = useState<RadarWithCount | null>(null);
 
-  const {
-    data: radars = [],
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['radars'],
-    queryFn: getRadars,
-  });
+  const { radars, isLoading, isFetching, error, refetch } = useRadars();
 
   const isAtLimit = radars.length >= RADAR_LIMITS.MAX_RADARS_PER_USER;
 
@@ -338,23 +329,24 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
 
   // Normal state with radars
   return (
-    <div
-      data-testid="radar-list"
-      data-tour="sidebar-radars"
-      className={`space-y-1 ${showPulse ? 'animate-pulse-border' : ''}`}
-    >
-      {/* Radar list */}
-      {radars.map((radar) => (
-        <RadarNavItem
-          key={radar.id}
-          radar={radar}
-          collapsed={collapsed}
-          hideText={hideText}
-          onLinkClick={onLinkClick}
-          onRename={setRadarToRename}
-          onDelete={setRadarToDelete}
-        />
-      ))}
+    <div data-testid="radar-list" className="space-y-1">
+      {/* Radar list - wrapped for tour targeting (excludes create button) */}
+      <div
+        data-tour="sidebar-radars"
+        className={`space-y-1 ${showPulse ? 'animate-pulse-border' : ''}`}
+      >
+        {radars.map((radar) => (
+          <RadarNavItem
+            key={radar.id}
+            radar={radar}
+            collapsed={collapsed}
+            hideText={hideText}
+            onLinkClick={onLinkClick}
+            onRename={setRadarToRename}
+            onDelete={setRadarToDelete}
+          />
+        ))}
+      </div>
 
       {/* Create button */}
       <CreateButton

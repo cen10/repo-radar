@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
+import { useOnboarding } from '../contexts/use-onboarding';
+import { TOUR_DEMO_RADAR_ID } from '../demo/demo-data';
 import { RepoCard } from '../components/RepoCard';
 import { CollapsibleSearch } from '../components/CollapsibleSearch';
 import { SortDropdown } from '../components/SortDropdown';
@@ -21,6 +23,7 @@ const SORT_OPTIONS = [
 const RadarPage = () => {
   const { id } = useParams<{ id: string }>();
   const { providerToken } = useAuth();
+  const { isTourActive } = useOnboarding();
 
   // Data fetching
   const {
@@ -66,6 +69,11 @@ const RadarPage = () => {
         : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
   }, [filteredRepos, sortBy]);
+
+  // Redirect away from tour demo radar when tour is not active (after all hooks)
+  if (id === TOUR_DEMO_RADAR_ID && !isTourActive) {
+    return <Navigate to="/stars" replace />;
+  }
 
   const handleClearSearch = () => {
     setSearchQuery('');

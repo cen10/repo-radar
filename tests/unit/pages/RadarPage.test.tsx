@@ -7,6 +7,7 @@ import RadarPage from '@/pages/RadarPage';
 import * as useRadarHook from '@/hooks/useRadar';
 import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
+import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
@@ -16,6 +17,12 @@ import type { Radar } from '@/types/database';
 vi.mock('@/hooks/useRadar');
 vi.mock('@/hooks/useRadarRepositories');
 vi.mock('@/hooks/useAuth');
+
+// Mock useOnboarding to control isTourActive
+const mockIsTourActive = vi.fn(() => false);
+vi.mock('@/contexts/use-onboarding', () => ({
+  useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
+}));
 
 // Local factory for Radar type (without repo_count) - useRadar returns Radar, not RadarWithCount
 const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
@@ -308,6 +315,16 @@ describe('RadarPage', () => {
 
       const cards = screen.getAllByRole('article');
       expect(cards[0]).toHaveTextContent('more-stars'); // Has more stars
+    });
+  });
+
+  describe('React Ecosystem redirect guard', () => {
+    it('redirects to /stars when accessing React Ecosystem outside of tour', () => {
+      mockIsTourActive.mockReturnValue(false);
+
+      renderWithProviders(TOUR_DEMO_RADAR_ID);
+
+      expect(screen.getByText('Stars Page')).toBeInTheDocument();
     });
   });
 });

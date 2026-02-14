@@ -59,6 +59,22 @@ export function useShepherdTour(pageSteps: TourStep[]) {
         return;
       }
 
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const currentStep = tour.getCurrentStep();
+        const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
+        const isFirstStepOnPage = tourStep?.id === pageSteps[0]?.id;
+
+        if (tourStep?.backTo) {
+          // Cross-page back navigation
+          handleBackTo(tourStep.backTo.stepId, tourStep.backTo.path);
+        } else if (!isFirstStepOnPage) {
+          // Same-page back navigation
+          void tour.back();
+        }
+        return;
+      }
+
       if (e.key === 'ArrowRight') {
         const currentStep = tour.getCurrentStep();
         const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
@@ -84,18 +100,22 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     };
     document.addEventListener('click', handleOverlayClick, true);
 
-    // Resume tour from saved step after cross-page navigation
-    const stepToStartOn = sessionStorage.getItem('tour-start-from-step');
-    if (stepToStartOn) {
-      sessionStorage.removeItem('tour-start-from-step');
-      const stepExists = pageSteps.some((s) => s.id === stepToStartOn);
-      if (stepExists) {
-        setTimeout(() => tour.show(stepToStartOn), 0);
-      }
-    }
-
     tourRef.current = tour;
-    void tour.start();
+
+    // Check for cross-page back navigation (e.g., Back button on repo-detail → radar page)
+    const stepToResume = sessionStorage.getItem('tour-start-from-step');
+    sessionStorage.removeItem('tour-start-from-step');
+    const canResume = stepToResume && pageSteps.some((s) => s.id === stepToResume);
+
+    if (canResume) {
+      // Resume at the specific step (avoids race condition with first step's tooltipDelayMs)
+      void tour.start();
+      // Wait for first step's tooltipDelayMs (100ms) to resolve before switching
+      setTimeout(() => void tour.show(stepToResume), 150);
+    } else {
+      // Normal forward navigation: start from first step on this page
+      void tour.start();
+    }
 
     return () => {
       tour.off('complete', completeTour);

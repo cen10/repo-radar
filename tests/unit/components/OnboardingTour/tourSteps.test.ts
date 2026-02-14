@@ -73,22 +73,57 @@ describe('getTourSteps', () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 
-  // BUG: Tour gets stuck for users without radars
-  //
-  // When hasStarredRepos=true (hardcoded in AppLayout.tsx:87), the tour includes
-  // the sidebar-radars step with advanceByClickingTarget=true. This hides the
-  // Next button, requiring the user to click a radar link to advance.
-  //
-  // However, the [data-tour="sidebar-radars"] element only exists when
-  // radars.length > 0 (SidebarRadarList.tsx:343). For new users with no radars,
-  // the target element doesn't exist and there's no Next button, leaving the
-  // user stuck with only a Back button and no way to advance the tour.
-  //
-  // Fix options:
-  // 1. Always show a Next button on this step as a fallback
-  // 2. Skip this step entirely when user has no radars
-  // 3. Pass actual radar count to tour and conditionally include the step
-  it.todo('sidebar-radars step should have a Next button when user has no radars');
+  describe('React Ecosystem flow (authenticated users with no radars)', () => {
+    it('includes tour-complete step when using React Ecosystem', () => {
+      const steps = getTourSteps(true, true); // hasStarredRepos=true, isUsingExampleRadar=true
+      const tourCompleteStep = steps.find((s) => s.id === 'tour-complete');
+
+      expect(tourCompleteStep).toBeDefined();
+      expect(tourCompleteStep!.text).toMatch(/react ecosystem radar will disappear/i);
+      expect(tourCompleteStep!.page).toBe('repo-detail');
+    });
+
+    it('does not include tour-complete step when not using React Ecosystem', () => {
+      const steps = getTourSteps(true, false); // hasStarredRepos=true, isUsingExampleRadar=false
+      const tourCompleteStep = steps.find((s) => s.id === 'tour-complete');
+
+      expect(tourCompleteStep).toBeUndefined();
+    });
+
+    it('shows React Ecosystem-specific text in sidebar-radars step', () => {
+      const steps = getTourSteps(true, true);
+      const sidebarStep = steps.find((s) => s.id === 'sidebar-radars');
+
+      expect(sidebarStep!.text).toMatch(/react ecosystem/i);
+      expect(sidebarStep!.text).toMatch(/click it to continue/i);
+    });
+
+    it('shows generic text in sidebar-radars step when user has real radars', () => {
+      const steps = getTourSteps(true, false);
+      const sidebarStep = steps.find((s) => s.id === 'sidebar-radars');
+
+      expect(sidebarStep!.text).not.toMatch(/example radar/i);
+      expect(sidebarStep!.text).toMatch(/click any radar/i);
+    });
+
+    it('shows React Ecosystem-specific text in radar-intro step', () => {
+      const steps = getTourSteps(true, true);
+      const radarIntroStep = steps.find((s) => s.id === 'radar-intro');
+
+      expect(radarIntroStep!.text).toMatch(/react ecosystem radar contains demo data/i);
+    });
+  });
+
+  describe('backTo navigation', () => {
+    it('uses tour demo radar path for repo-header backTo', () => {
+      const steps = getTourSteps(true, false);
+      const repoHeaderStep = steps.find((s) => s.id === 'repo-header');
+
+      expect(repoHeaderStep).toBeDefined();
+      expect(repoHeaderStep!.backTo).toBeDefined();
+      expect(repoHeaderStep!.backTo!.path).toBe('/radar/tour-demo-radar');
+    });
+  });
 });
 
 describe('configureStepsForShepherd', () => {
@@ -235,6 +270,34 @@ describe('configureStepsForShepherd', () => {
     expect(backButton).toBeDefined();
     backButton!.action();
     expect(onBackTo).toHaveBeenCalledWith('sidebar-radars', '/stars');
+  });
+
+  it('shows Back button on first page step when backTo is defined', () => {
+    // This tests the fix for the bug where repo-header (first step on repo-detail page)
+    // had no Back button even though it had a backTo pointing to the radar page
+    const onBackTo = vi.fn();
+    const steps = [
+      {
+        id: 'repo-header',
+        target: '[data-tour="repo-name"]',
+        text: 'First step on this page',
+        page: 'repo-detail' as const,
+        backTo: { stepId: 'click-repo', path: '/radar/tour-demo-radar' },
+      },
+      {
+        id: 'releases',
+        target: '[data-tour="releases"]',
+        text: 'Second step',
+        page: 'repo-detail' as const,
+      },
+    ];
+    const tour = createMockTour();
+
+    const options = configureStepsForShepherd(steps, { tour: tour as never, onBackTo });
+
+    // First step (index 0) should still have Back button because backTo is defined
+    const firstStepButtons = options[0].buttons as Array<{ text: string }>;
+    expect(firstStepButtons.some((b) => b.text === 'Back')).toBe(true);
   });
 
   it('enables cancel icon on all steps', () => {

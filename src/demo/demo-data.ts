@@ -1344,6 +1344,36 @@ export const DEMO_STARRED_REPOS: Repository[] = [
   },
 ];
 
+// === TOUR DEMO RADAR ===
+// Used during onboarding tour for authenticated users with no radars.
+// Injected client-side only — never touches the database.
+export const TOUR_DEMO_RADAR_ID = 'tour-demo-radar';
+
+const TOUR_DEMO_RADAR: RadarWithCount = {
+  id: TOUR_DEMO_RADAR_ID,
+  user_id: 'tour-user',
+  name: 'React Ecosystem',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  repo_count: 1,
+};
+
+/**
+ * Get the demo radar shown during onboarding tour.
+ * Only used when tour is active and user has no real radars.
+ */
+export function getTourDemoRadar(): RadarWithCount {
+  return TOUR_DEMO_RADAR;
+}
+
+/**
+ * Get the demo repo for the tour demo radar.
+ * Returns the React repo for the tour example.
+ */
+export function getTourDemoRepo(): Repository {
+  return DEMO_STARRED_REPOS[0]; // facebook/react
+}
+
 // === RADARS ===
 export const DEMO_RADARS: RadarWithCount[] = [
   {

@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { OnboardingTour } from '@/components/OnboardingTour/OnboardingTour';
+import { createTestQueryClient } from '../../../helpers/query-client';
+
+// Mock demo mode
+vi.mock('@/demo/use-demo-mode', () => ({
+  useDemoMode: () => ({ isDemoMode: false }),
+}));
 
 // Mock onboarding context
 const mockOnboarding = {
@@ -24,6 +31,8 @@ const mockTourAddSteps = vi.fn();
 const mockTourOn = vi.fn();
 const mockTourOff = vi.fn();
 const mockTourIsActive = vi.fn().mockReturnValue(false);
+const mockTourBack = vi.fn();
+const mockTourGetCurrentStep = vi.fn();
 
 const tourInstances: object[] = [];
 
@@ -34,12 +43,24 @@ class MockTour {
   on = mockTourOn;
   off = mockTourOff;
   isActive = mockTourIsActive;
+  back = mockTourBack;
+  getCurrentStep = mockTourGetCurrentStep;
   options: Record<string, unknown>;
   constructor(options: Record<string, unknown>) {
     this.options = options;
     tourInstances.push(this);
   }
 }
+
+// Mock navigate for cross-page navigation tests
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock('react-shepherd', () => ({
   useShepherd: () => ({ Tour: MockTour }),
@@ -48,10 +69,13 @@ vi.mock('react-shepherd', () => ({
 vi.mock('shepherd.js/dist/css/shepherd.css', () => ({}));
 
 function renderTour(route = '/stars') {
+  const queryClient = createTestQueryClient();
   return render(
-    <MemoryRouter initialEntries={[route]}>
-      <OnboardingTour hasStarredRepos={true} />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[route]}>
+        <OnboardingTour hasStarredRepos={true} />
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -61,6 +85,8 @@ describe('OnboardingTour', () => {
     tourInstances.length = 0;
     mockOnboarding.isTourActive = false;
     mockOnboarding.hasCompletedTour = false;
+    mockTourGetCurrentStep.mockReturnValue(null);
+    sessionStorage.clear();
 
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
@@ -153,5 +179,53 @@ describe('OnboardingTour', () => {
     expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), true);
 
     removeEventListenerSpy.mockRestore();
+  });
+
+  describe('ArrowLeft keyboard navigation', () => {
+    it('triggers cross-page navigation when step has backTo config', () => {
+      mockOnboarding.isTourActive = true;
+      // Simulate being on the radar-intro step (first step on radar page, has backTo)
+      mockTourGetCurrentStep.mockReturnValue({ id: 'radar-intro' });
+
+      renderTour('/radar/test-radar');
+
+      // Dispatch ArrowLeft keydown event
+      const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+      document.dispatchEvent(event);
+
+      // Should navigate to the backTo path and set sessionStorage
+      expect(mockNavigate).toHaveBeenCalledWith('/stars');
+      expect(sessionStorage.getItem('tour-start-from-step')).toBe('sidebar-radars');
+    });
+
+    it('calls tour.back() for same-page navigation on non-first step', () => {
+      mockOnboarding.isTourActive = true;
+      // Simulate being on help-button step (second step on stars page, no backTo)
+      mockTourGetCurrentStep.mockReturnValue({ id: 'help-button' });
+
+      renderTour('/stars');
+
+      const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+      document.dispatchEvent(event);
+
+      // Should call tour.back() for same-page navigation
+      expect(mockTourBack).toHaveBeenCalledOnce();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('does nothing on first step without backTo config', () => {
+      mockOnboarding.isTourActive = true;
+      // Simulate being on the welcome step (first step on stars page, no backTo)
+      mockTourGetCurrentStep.mockReturnValue({ id: 'welcome' });
+
+      renderTour('/stars');
+
+      const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
+      document.dispatchEvent(event);
+
+      // Should not navigate or call back
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockTourBack).not.toHaveBeenCalled();
+    });
   });
 });

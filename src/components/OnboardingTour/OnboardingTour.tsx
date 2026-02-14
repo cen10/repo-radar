@@ -3,6 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { getCurrentPage } from './tourSteps';
 import { getTourSteps } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
+import { useOnboarding } from '../../contexts/use-onboarding';
+import { useRadars } from '../../hooks/useRadars';
+import { TOUR_DEMO_RADAR_ID } from '../../demo/demo-data';
 
 interface OnboardingTourProps {
   hasStarredRepos: boolean;
@@ -10,8 +13,17 @@ interface OnboardingTourProps {
 
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
+  const { isTourActive } = useOnboarding();
+  const { radars } = useRadars();
 
-  const steps = useMemo(() => getTourSteps(hasStarredRepos), [hasStarredRepos]);
+  // True when showing the React Ecosystem radar (injected for tour in both demo and auth modes)
+  const isUsingExampleRadar =
+    isTourActive && radars.length === 1 && radars[0].id === TOUR_DEMO_RADAR_ID;
+
+  const steps = useMemo(
+    () => getTourSteps(hasStarredRepos, isUsingExampleRadar),
+    [hasStarredRepos, isUsingExampleRadar]
+  );
 
   const currentPage = getCurrentPage(location.pathname);
 

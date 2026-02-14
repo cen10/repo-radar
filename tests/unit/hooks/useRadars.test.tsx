@@ -3,12 +3,25 @@ import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRadars } from '@/hooks/useRadars';
 import * as radar from '@/services/radar';
+import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
 import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRadar } from '../../mocks/factories';
 
 // Mock the radar service
 vi.mock('@/services/radar', () => ({
   getRadars: vi.fn(),
+}));
+
+// Mock the onboarding context
+const mockIsTourActive = vi.fn(() => false);
+vi.mock('@/contexts/use-onboarding', () => ({
+  useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
+}));
+
+// Mock the demo mode hook
+const mockIsDemoMode = vi.fn(() => false);
+vi.mock('@/demo/use-demo-mode', () => ({
+  useDemoMode: () => ({ isDemoMode: mockIsDemoMode() }),
 }));
 
 describe('useRadars', () => {
@@ -113,6 +126,70 @@ describe('useRadars', () => {
 
     await waitFor(() => {
       expect(result.current.radars[0].name).toBe('Updated');
+    });
+  });
+
+  describe('React Ecosystem for authenticated users with no radars', () => {
+    it('injects React Ecosystem when tour is active and user has no real radars', async () => {
+      mockIsTourActive.mockReturnValue(true);
+      mockIsDemoMode.mockReturnValue(false);
+      vi.mocked(radar.getRadars).mockResolvedValue([]);
+
+      const { result } = renderHook(() => useRadars(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.radars).toHaveLength(1);
+      expect(result.current.radars[0].id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radars[0].name).toBe('React Ecosystem');
+    });
+
+    it('does not inject demo radar when user has real radars', async () => {
+      mockIsTourActive.mockReturnValue(true);
+      mockIsDemoMode.mockReturnValue(false);
+      const mockRadars = [createMockRadar({ id: 'real-radar', name: 'My Radar' })];
+      vi.mocked(radar.getRadars).mockResolvedValue(mockRadars);
+
+      const { result } = renderHook(() => useRadars(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.radars).toHaveLength(1);
+      expect(result.current.radars[0].id).toBe('real-radar');
+    });
+
+    it('does not inject demo radar when tour is not active', async () => {
+      mockIsTourActive.mockReturnValue(false);
+      mockIsDemoMode.mockReturnValue(false);
+      vi.mocked(radar.getRadars).mockResolvedValue([]);
+
+      const { result } = renderHook(() => useRadars(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.radars).toEqual([]);
+    });
+
+    it('injects React Ecosystem radar in demo mode during tour', async () => {
+      mockIsTourActive.mockReturnValue(true);
+      mockIsDemoMode.mockReturnValue(true);
+      vi.mocked(radar.getRadars).mockResolvedValue([]);
+
+      const { result } = renderHook(() => useRadars(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.radars).toHaveLength(1);
+      expect(result.current.radars[0].id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radars[0].name).toBe('React Ecosystem');
     });
   });
 });
