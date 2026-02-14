@@ -12,12 +12,13 @@ vi.mock('@/demo/browser', () => ({
 
 // Test component that uses the hook
 function TestConsumer() {
-  const { isDemoMode, enterDemoMode, isInitializing } = useDemoMode();
+  const { isDemoMode, enterDemoMode, exitDemoMode, isInitializing } = useDemoMode();
   return (
     <div>
       <span data-testid="is-demo-mode">{isDemoMode ? 'true' : 'false'}</span>
       <span data-testid="is-initializing">{isInitializing ? 'true' : 'false'}</span>
       <button onClick={() => void enterDemoMode()}>Enter Demo</button>
+      <button onClick={exitDemoMode}>Exit Demo</button>
     </div>
   );
 }
@@ -161,6 +162,66 @@ describe('useDemoMode', () => {
 
       await waitFor(() => {
         expect(result).toEqual({ success: false });
+      });
+    });
+
+    it('exitDemoMode sets isDemoMode back to false', async () => {
+      const user = userEvent.setup();
+      render(
+        <DemoModeProvider>
+          <TestConsumer />
+        </DemoModeProvider>
+      );
+
+      await user.click(screen.getByRole('button', { name: /enter demo/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('is-demo-mode')).toHaveTextContent('true');
+      });
+
+      await user.click(screen.getByRole('button', { name: /exit demo/i }));
+
+      expect(screen.getByTestId('is-demo-mode')).toHaveTextContent('false');
+    });
+
+    it('exitDemoMode removes demo mode from localStorage', async () => {
+      const user = userEvent.setup();
+      render(
+        <DemoModeProvider>
+          <TestConsumer />
+        </DemoModeProvider>
+      );
+
+      await user.click(screen.getByRole('button', { name: /enter demo/i }));
+      await waitFor(() => {
+        expect(localStorage.getItem('repo_radar_demo_mode')).toBe('true');
+      });
+
+      await user.click(screen.getByRole('button', { name: /exit demo/i }));
+
+      expect(localStorage.getItem('repo_radar_demo_mode')).toBeNull();
+    });
+
+    it('exitDemoMode calls stopDemoMode', async () => {
+      const { stopDemoMode } = await import('@/demo/browser');
+      vi.mocked(stopDemoMode).mockClear();
+
+      const user = userEvent.setup();
+      render(
+        <DemoModeProvider>
+          <TestConsumer />
+        </DemoModeProvider>
+      );
+
+      await user.click(screen.getByRole('button', { name: /enter demo/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('is-demo-mode')).toHaveTextContent('true');
+      });
+
+      await user.click(screen.getByRole('button', { name: /exit demo/i }));
+
+      // stopDemoMode is called via dynamic import (fire-and-forget)
+      await waitFor(() => {
+        expect(stopDemoMode).toHaveBeenCalled();
       });
     });
   });
