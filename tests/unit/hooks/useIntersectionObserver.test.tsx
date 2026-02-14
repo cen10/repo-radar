@@ -70,10 +70,9 @@ describe('useIntersectionObserver', () => {
   });
 
   it('starts observing when enabled changes from false to true', () => {
-    const { result, rerender } = renderHook(
-      ({ enabled }) => useIntersectionObserver({ enabled }),
-      { initialProps: { enabled: false } }
-    );
+    const { result, rerender } = renderHook(({ enabled }) => useIntersectionObserver({ enabled }), {
+      initialProps: { enabled: false },
+    });
 
     const node = document.createElement('div');
     act(() => {
@@ -91,10 +90,9 @@ describe('useIntersectionObserver', () => {
   });
 
   it('stops observing when enabled changes from true to false', () => {
-    const { result, rerender } = renderHook(
-      ({ enabled }) => useIntersectionObserver({ enabled }),
-      { initialProps: { enabled: true } }
-    );
+    const { result, rerender } = renderHook(({ enabled }) => useIntersectionObserver({ enabled }), {
+      initialProps: { enabled: true },
+    });
 
     const node = document.createElement('div');
     act(() => {
