@@ -72,6 +72,23 @@ describe('getTourSteps', () => {
 
     expect(uniqueIds.size).toBe(ids.length);
   });
+
+  // BUG: Tour gets stuck for users without radars
+  //
+  // When hasStarredRepos=true (hardcoded in AppLayout.tsx:87), the tour includes
+  // the sidebar-radars step with advanceByClickingTarget=true. This hides the
+  // Next button, requiring the user to click a radar link to advance.
+  //
+  // However, the [data-tour="sidebar-radars"] element only exists when
+  // radars.length > 0 (SidebarRadarList.tsx:343). For new users with no radars,
+  // the target element doesn't exist and there's no Next button, leaving the
+  // user stuck with only a Back button and no way to advance the tour.
+  //
+  // Fix options:
+  // 1. Always show a Next button on this step as a fallback
+  // 2. Skip this step entirely when user has no radars
+  // 3. Pass actual radar count to tour and conditionally include the step
+  it.todo('sidebar-radars step should have a Next button when user has no radars');
 });
 
 describe('configureStepsForShepherd', () => {
