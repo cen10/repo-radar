@@ -59,6 +59,15 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         setCurrentStepId,
       }}
     >
+      {/* Fallback overlay - visible during page transitions when Shepherd's overlay
+          is absent. Instantly hidden via CSS :has() when Shepherd's overlay appears. */}
+      {isTourActive && (
+        <div
+          className="tour-fallback-overlay fixed inset-0 bg-black/50 pointer-events-none"
+          style={{ zIndex: 9996 }}
+          aria-hidden="true"
+        />
+      )}
       {children}
     </OnboardingContext>
   );

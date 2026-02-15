@@ -230,4 +230,23 @@ body {
   .shepherd-arrow {
     display: none;
   }
+
+  /* Disable Shepherd's overlay fade transitions.
+     Our body::before overlay fills in during page transitions - we need instant
+     switches between overlays to avoid double-darkness flash. */
+  .shepherd-modal-overlay-container {
+    transition: none;
+  }
+}
+
+/*
+ * Tour overlay system - instant switch between our overlay and Shepherd's.
+ *
+ * Our React-rendered overlay fills in during page transitions when Shepherd's
+ * overlay is absent. When Shepherd's overlay becomes visible, we instantly hide
+ * ours via :has() to avoid double-darkness. Shepherd's fade transitions are
+ * disabled above to make the switch truly instant.
+ */
+body:has(.shepherd-modal-overlay-container.shepherd-modal-is-visible) .tour-fallback-overlay {
+  opacity: 0;
 }

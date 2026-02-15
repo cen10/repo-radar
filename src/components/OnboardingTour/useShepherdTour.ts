@@ -108,10 +108,8 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     const canResume = stepToResume && pageSteps.some((s) => s.id === stepToResume);
 
     if (canResume) {
-      // Resume at the specific step (avoids race condition with first step's tooltipDelayMs)
-      void tour.start();
-      // Wait for first step's tooltipDelayMs (100ms) to resolve before switching
-      setTimeout(() => void tour.show(stepToResume), 150);
+      // Resume directly at the target step (no flash of first step)
+      void tour.show(stepToResume);
     } else {
       // Normal forward navigation: start from first step on this page
       void tour.start();
