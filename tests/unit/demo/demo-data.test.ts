@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { DEMO_STARRED_REPOS } from '../../../src/demo/demo-data';
-import { getTourRadar, getTourRepo, TOUR_RADAR_ID } from '../../../src/demo/tour-data';
+import { getTourRadar, getTourRepos, TOUR_RADAR_ID } from '../../../src/demo/tour-data';
 
 describe('Demo Data Consistency', () => {
   describe('DEMO_STARRED_REPOS', () => {
@@ -29,25 +29,32 @@ describe('Demo Data Consistency', () => {
 
       expect(radar.id).toBe(TOUR_RADAR_ID);
       expect(radar.name).toBe('React Ecosystem');
-      expect(radar.repo_count).toBe(1);
+      expect(radar.repo_count).toBe(4);
     });
 
-    it('getTourRepo returns the React repo', () => {
-      const repo = getTourRepo();
+    it('getTourRepos returns 4 React ecosystem repos', () => {
+      const repos = getTourRepos();
 
-      expect(repo.full_name).toBe('facebook/react');
-      expect(repo.id).toBe(10270250);
+      expect(repos).toHaveLength(4);
+      expect(repos.map((r) => r.full_name)).toEqual([
+        'facebook/react',
+        'vercel/next.js',
+        'remix-run/react-router',
+        'pmndrs/zustand',
+      ]);
     });
 
-    it('tour radar and repo are consistent', () => {
+    it('tour radar and repos are consistent', () => {
       const radar = getTourRadar();
-      const repo = getTourRepo();
+      const repos = getTourRepos();
 
-      // The tour radar should have repo_count matching the number of tour repos (1)
-      expect(radar.repo_count).toBe(1);
-      // The repo should be a valid GitHub repo
-      expect(repo.id).toBeGreaterThan(0);
-      expect(repo.full_name).toMatch(/^[^/]+\/[^/]+$/);
+      // The tour radar repo_count should match the number of tour repos
+      expect(radar.repo_count).toBe(repos.length);
+      // All repos should be valid GitHub repos
+      for (const repo of repos) {
+        expect(repo.id).toBeGreaterThan(0);
+        expect(repo.full_name).toMatch(/^[^/]+\/[^/]+$/);
+      }
     });
   });
 });

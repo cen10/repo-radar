@@ -3,7 +3,7 @@ import { getRadarRepos } from '../services/radar';
 import { fetchRepositoriesByIds } from '../services/github';
 import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import { useOnboarding } from '../contexts/use-onboarding';
-import { getTourRepo, TOUR_RADAR_ID } from '../demo/tour-data';
+import { getTourRepos, TOUR_RADAR_ID } from '../demo/tour-data';
 import type { Repository } from '../types';
 
 interface UseRadarRepositoriesOptions {
@@ -49,7 +49,7 @@ export function useRadarRepositories({
 
       // Tour demo radar uses client-side demo data, no API calls
       if (isTourDemoRadar) {
-        return [getTourRepo()];
+        return getTourRepos();
       }
 
       const validToken = getValidGitHubToken(token);

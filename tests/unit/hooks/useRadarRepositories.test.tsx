@@ -188,9 +188,10 @@ describe('useRadarRepositories', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      // Should return the demo repo without calling the API
-      expect(result.current.repositories).toHaveLength(1);
+      // Should return all 4 demo repos without calling the API
+      expect(result.current.repositories).toHaveLength(4);
       expect(result.current.repositories[0].full_name).toBe('facebook/react');
+      expect(result.current.repositories[1].full_name).toBe('vercel/next.js');
       expect(radar.getRadarRepos).not.toHaveBeenCalled();
       expect(github.fetchRepositoriesByIds).not.toHaveBeenCalled();
     });

@@ -14,25 +14,25 @@ if (import.meta.hot) {
 import { http, HttpResponse } from 'msw';
 import { DEMO_USER } from './demo-user';
 import { DEMO_STARRED_REPOS, getDemoSearchResults, getAllDemoRepos } from './demo-data';
-import { getTourRadar, getTourRepo, TOUR_RADAR_ID } from './tour-data';
+import { getTourRadar, getTourRepos, TOUR_RADAR_ID } from './tour-data';
 import type { RadarWithCount, RadarRepo } from '../types/database';
 
-// Create initial tour radar repo entry (called at init and reset)
-function createTourRadarRepo(): RadarRepo {
-  return {
-    id: 'tour-rr-1',
+// Create initial tour radar repo entries (called at init and reset)
+function createTourRadarRepos(): RadarRepo[] {
+  return getTourRepos().map((repo, index) => ({
+    id: `tour-rr-${index + 1}`,
     radar_id: TOUR_RADAR_ID,
-    github_repo_id: getTourRepo().id,
+    github_repo_id: repo.id,
     added_at: new Date().toISOString(),
-  };
+  }));
 }
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
 // In-memory state for radar mutations (resets on page refresh)
-// Demo mode starts with tour radar pre-configured (React Ecosystem with 1 repo)
+// Demo mode starts with tour radar pre-configured (React Ecosystem with 4 repos)
 let demoRadars: RadarWithCount[] = [getTourRadar()];
-let demoRadarRepos: RadarRepo[] = [createTourRadarRepo()];
+let demoRadarRepos: RadarRepo[] = createTourRadarRepos();
 // Counter for generating deterministic IDs within a session
 let idCounter = 1000;
 
@@ -42,7 +42,7 @@ let idCounter = 1000;
  */
 export function resetDemoState() {
   demoRadars = [getTourRadar()];
-  demoRadarRepos = [createTourRadarRepo()];
+  demoRadarRepos = createTourRadarRepos();
   idCounter = 1000;
 }
 

@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { setupServer } from 'msw/node';
 import { handlers, resetDemoState, getSupabaseUrl } from '../../../src/demo/handlers';
 import { DEMO_STARRED_REPOS } from '../../../src/demo/demo-data';
-import { getTourRepo, TOUR_RADAR_ID } from '../../../src/demo/tour-data';
+import { getTourRepos, TOUR_RADAR_ID } from '../../../src/demo/tour-data';
 
 // Set up MSW server with demo handlers
 const server = setupServer(...handlers);
@@ -28,7 +28,7 @@ afterAll(() => {
 describe('Demo Handlers - radar_repos', () => {
   describe('GET /rest/v1/radar_repos with github_repo_id', () => {
     it('returns radar_repos for the React repo (tour radar repo)', async () => {
-      const reactId = getTourRepo().id;
+      const reactId = getTourRepos()[0].id; // React is first
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/radar_repos?github_repo_id=eq.${reactId}`
       );
@@ -41,12 +41,12 @@ describe('Demo Handlers - radar_repos', () => {
     });
 
     it('returns empty array for repo not on any radar', async () => {
-      // Find a starred repo that is NOT the React repo (tour radar repo)
-      const tourRepoId = getTourRepo().id;
-      const repoNotOnRadar = DEMO_STARRED_REPOS.find((r) => r.id !== tourRepoId);
+      // Find a starred repo that is NOT in the tour radar
+      const tourRepoIds = new Set(getTourRepos().map((r) => r.id));
+      const repoNotOnRadar = DEMO_STARRED_REPOS.find((r) => !tourRepoIds.has(r.id));
 
       if (!repoNotOnRadar) {
-        throw new Error('Test setup error: only React repo in starred repos');
+        throw new Error('Test setup error: all starred repos are in tour radar');
       }
 
       const response = await fetch(
@@ -61,8 +61,8 @@ describe('Demo Handlers - radar_repos', () => {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/radar_repos`);
       const data = await response.json();
 
-      // Demo mode starts with 1 radar_repo entry (React in tour radar)
-      expect(data).toHaveLength(1);
+      // Demo mode starts with 4 radar_repo entries (React Ecosystem tour radar)
+      expect(data).toHaveLength(4);
     });
   });
 
@@ -73,8 +73,8 @@ describe('Demo Handlers - radar_repos', () => {
       );
       const data = await response.json();
 
-      expect(data).toHaveLength(1);
-      expect(data[0].radar_id).toBe(TOUR_RADAR_ID);
+      expect(data).toHaveLength(4);
+      expect(data.every((rr: { radar_id: string }) => rr.radar_id === TOUR_RADAR_ID)).toBe(true);
     });
   });
 });
