@@ -24,7 +24,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   });
 
   const [isTourActive, setIsTourActive] = useState(false);
-  const [startFromStep, setStartFromStep] = useState<string | null>(null);
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
 
   // Persist completion to localStorage for real users only.
@@ -53,8 +52,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         isTourActive,
         startTour,
         completeTour,
-        startFromStep,
-        setStartFromStep,
         currentStepId,
         setCurrentStepId,
       }}
