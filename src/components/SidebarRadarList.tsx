@@ -98,7 +98,7 @@ function RadarNavItem({
                   {/* Repo count - hidden on hover/focus-within */}
                   <span
                     aria-hidden="true"
-                    className="text-gray-400 text-xs whitespace-nowrap transition-opacity group-hover/radar:opacity-0 group-focus-within/radar:opacity-0"
+                    className="text-gray-400 text-xs whitespace-nowrap transition-opacity opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:group-focus-within/radar:opacity-0"
                   >
                     {radar.repo_count}
                   </span>
@@ -107,7 +107,7 @@ function RadarNavItem({
                   <Menu as="div" className="absolute -right-1">
                     <MenuButton
                       onClick={(e: React.MouseEvent) => e.preventDefault()}
-                      className="text-gray-400 cursor-pointer opacity-0 transition-opacity focus:opacity-100 group-hover/radar:opacity-100 group-focus-within/radar:opacity-100"
+                      className="text-gray-400 cursor-pointer lg:opacity-0 transition-opacity focus:opacity-100 lg:group-hover/radar:opacity-100 lg:group-focus-within/radar:opacity-100"
                     >
                       <span className="sr-only">Open menu for {radar.name}</span>
                       <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
