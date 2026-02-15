@@ -57,102 +57,94 @@ function RadarNavItem({
   const iconWrapperFocus =
     'p-1 -m-1 rounded-lg group-has-focus-visible:ring-2 group-has-focus-visible:ring-indigo-600 group-has-focus-visible:ring-offset-2';
 
+  // Wrapper div with group class so hover state applies to both NavLink and Menu
   return (
-    <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
-      <NavLink
-        to={`/radar/${radar.id}`}
-        onClick={onLinkClick}
-        aria-label={`${radar.name}, ${radar.repo_count} repositories`}
-        data-tour={dataTour}
-        className={({ isActive }) =>
-          clsx(
-            navLinkBase,
-            navLinkLayout,
-            !hideText && 'overflow-hidden',
-            isActive && navLinkActive,
-            !isActive && navLinkInactive
-          )
-        }
-      >
-        {({ isActive }) => (
-          <>
-            {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-            <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
-              <StaticRadarIcon
-                className={clsx(
-                  'h-5 w-5',
-                  isActive && 'text-indigo-600',
-                  !isActive && 'text-gray-400'
-                )}
-              />
-            </span>
-            {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
-            {!hideText && (
-              <div className="flex items-center gap-3 shrink-0 w-[168px]">
-                <span aria-hidden="true" className="flex-1 truncate min-w-0">
-                  {radar.name}
-                </span>
-
-                {/* Repo count (visible) / Kebab menu (on hover/focus) */}
-                <div className="shrink-0 w-6 flex justify-end relative">
-                  {/* Repo count - hidden on hover/focus-within */}
-                  <span
-                    aria-hidden="true"
-                    className="text-gray-400 text-xs whitespace-nowrap transition-opacity opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:group-focus-within/radar:opacity-0"
-                  >
-                    {radar.repo_count}
+    <div className="group/radar relative">
+      <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
+        <NavLink
+          to={`/radar/${radar.id}`}
+          onClick={onLinkClick}
+          aria-label={`${radar.name}, ${radar.repo_count} repositories`}
+          data-tour={dataTour}
+          className={({ isActive }) =>
+            clsx(
+              navLinkBase,
+              navLinkLayout,
+              !hideText && 'overflow-hidden',
+              isActive && navLinkActive,
+              !isActive && navLinkInactive
+            )
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+              <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
+                <StaticRadarIcon
+                  className={clsx(
+                    'h-5 w-5',
+                    isActive && 'text-indigo-600',
+                    !isActive && 'text-gray-400'
+                  )}
+                />
+              </span>
+              {/* Name and count in fixed-width wrapper so text doesn't reflow during collapse */}
+              {!hideText && (
+                <div className="flex items-center gap-3 shrink-0 w-[168px]">
+                  <span aria-hidden="true" className="flex-1 truncate min-w-0">
+                    {radar.name}
                   </span>
 
-                  {/* Kebab menu - visually hidden but accessible, shown on hover/focus */}
-                  <Menu as="div" className="absolute -right-1">
-                    <MenuButton
-                      onClick={(e: React.MouseEvent) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="text-gray-400 cursor-pointer lg:opacity-0 transition-opacity focus:opacity-100 lg:group-hover/radar:opacity-100 lg:group-focus-within/radar:opacity-100"
+                  {/* Repo count - hidden on hover/focus-within */}
+                  <div className="shrink-0 w-6 flex justify-end">
+                    <span
+                      aria-hidden="true"
+                      className="text-gray-400 text-xs whitespace-nowrap transition-opacity opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:group-focus-within/radar:opacity-0"
                     >
-                      <span className="sr-only">Open menu for {radar.name}</span>
-                      <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-                    </MenuButton>
-
-                    <MenuItems
-                      transition
-                      className="absolute right-0 z-50 mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
-                    >
-                      <MenuItem>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onRename(radar);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 data-focus:bg-indigo-50"
-                        >
-                          <PencilIcon className="h-4 w-4" aria-hidden="true" />
-                          Rename
-                        </button>
-                      </MenuItem>
-                      <MenuItem>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onDelete(radar);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 data-focus:bg-indigo-50"
-                        >
-                          <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                          Delete
-                        </button>
-                      </MenuItem>
-                    </MenuItems>
-                  </Menu>
+                      {radar.repo_count}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </NavLink>
-    </SidebarTooltip>
+              )}
+            </>
+          )}
+        </NavLink>
+      </SidebarTooltip>
+
+      {/* Kebab menu - positioned outside NavLink to avoid click interference */}
+      {!hideText && (
+        <Menu as="div" className="absolute right-3 top-1/2 -translate-y-1/2 z-50">
+          <MenuButton className="text-gray-400 cursor-pointer lg:opacity-0 transition-opacity focus:opacity-100 lg:group-hover/radar:opacity-100 lg:group-focus-within/radar:opacity-100">
+            <span className="sr-only">Open menu for {radar.name}</span>
+            <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+          </MenuButton>
+
+          <MenuItems
+            transition
+            className="absolute right-0 z-50 mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
+          >
+            <MenuItem>
+              <button
+                onClick={() => onRename(radar)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 data-focus:bg-indigo-50"
+              >
+                <PencilIcon className="h-4 w-4" aria-hidden="true" />
+                Rename
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button
+                onClick={() => onDelete(radar)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 data-focus:bg-indigo-50"
+              >
+                <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                Delete
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
+      )}
+    </div>
   );
 }
 
