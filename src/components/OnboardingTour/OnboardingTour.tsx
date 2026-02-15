@@ -6,17 +6,23 @@ import { useShepherdTour } from './useShepherdTour';
 import { useOnboarding } from '../../contexts/use-onboarding';
 import { useDemoMode } from '../../demo/use-demo-mode';
 import { useRadars } from '../../hooks/useRadars';
+import { useAllStarredRepositories } from '../../hooks/useAllStarredRepositories';
+import { useAuth } from '../../hooks/use-auth';
 import { TOUR_RADAR_ID } from '../../demo/tour-data';
 
-interface OnboardingTourProps {
-  hasStarredRepos: boolean;
-}
-
-export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
+export function OnboardingTour() {
   const location = useLocation();
   const { isTourActive } = useOnboarding();
   const { isDemoMode } = useDemoMode();
   const { radars } = useRadars();
+  const { providerToken } = useAuth();
+
+  // Fetch starred repos to determine if user has any (affects tour messaging)
+  const { totalStarred } = useAllStarredRepositories({
+    token: providerToken,
+    enabled: isTourActive,
+  });
+  const hasStarredRepos = isDemoMode || totalStarred > 0;
 
   // True when showing the injected tour radar (React Ecosystem)
   const isUsingTourRadar = isTourActive && radars.length === 1 && radars[0].id === TOUR_RADAR_ID;

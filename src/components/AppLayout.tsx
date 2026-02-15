@@ -84,7 +84,7 @@ function AuthenticatedLayout() {
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
 
-      {showSidebar && isDesktop && <OnboardingTour hasStarredRepos={true} />}
+      {showSidebar && isDesktop && <OnboardingTour />}
     </div>
   );
 }

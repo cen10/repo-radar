@@ -10,6 +10,16 @@ vi.mock('@/demo/use-demo-mode', () => ({
   useDemoMode: () => ({ isDemoMode: false }),
 }));
 
+// Mock useAuth
+vi.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({ providerToken: 'test-token', user: { id: 'test-user' } }),
+}));
+
+// Mock useAllStarredRepositories
+vi.mock('@/hooks/useAllStarredRepositories', () => ({
+  useAllStarredRepositories: () => ({ totalStarred: 10, repositories: [], isLoading: false }),
+}));
+
 // Mock onboarding context
 const mockOnboarding = {
   isTourActive: false,
@@ -73,7 +83,7 @@ function renderTour(route = '/stars') {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[route]}>
-        <OnboardingTour hasStarredRepos={true} />
+        <OnboardingTour />
       </MemoryRouter>
     </QueryClientProvider>
   );
