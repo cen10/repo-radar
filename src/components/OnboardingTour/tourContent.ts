@@ -69,7 +69,7 @@ function getRadarSteps(isUsingTourRadar: boolean): TourStep[] {
     {
       id: 'radar-repos',
       target: '[data-tour="radar-icon"]',
-      text: 'Use the radar icon to manage which Radars contain this repo. It will still stay tracked on any other Radars you have it on.',
+      text: "Use the radar icon to manage which Radars contain this repo. Removing a repo from one Radar will not remove it from any other Radar you've saved it to.",
       page: 'radar',
       placement: 'left',
     },
