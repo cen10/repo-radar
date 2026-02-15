@@ -65,7 +65,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           Instantly hidden via CSS :has() when Shepherd's overlay appears. */}
       {(isTourActive || (isDemoMode && !hasCompletedTour)) && (
         <div
-          className="tour-fallback-overlay fixed inset-0 bg-black/50 pointer-events-none"
+          className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none"
           style={{ zIndex: 9996 }}
           aria-hidden="true"
         />

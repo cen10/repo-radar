@@ -237,6 +237,11 @@ body {
   .shepherd-modal-overlay-container {
     transition: none;
   }
+
+  /* Lighten Shepherd's overlay (default is 0.5) */
+  .shepherd-modal-overlay-container.shepherd-modal-is-visible {
+    opacity: 0.2;
+  }
 }
 
 /*
