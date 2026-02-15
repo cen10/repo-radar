@@ -4,9 +4,6 @@
  */
 
 import type { Repository } from '../types';
-import type { RadarWithCount, RadarRepo } from '../types/database';
-
-import { DEMO_USER } from './demo-user';
 
 // Static timestamps for deterministic demo data.
 // Using fixed dates ensures consistent sort order across sessions.
@@ -1342,111 +1339,6 @@ export const DEMO_STARRED_REPOS: Repository[] = [
     starred_at: STARRED_DATES[44],
     is_starred: true,
   },
-];
-
-// === TOUR DEMO RADAR ===
-// Used during onboarding tour for authenticated users with no radars.
-// Injected client-side only — never touches the database.
-export const TOUR_DEMO_RADAR_ID = 'tour-demo-radar';
-
-const TOUR_DEMO_RADAR: RadarWithCount = {
-  id: TOUR_DEMO_RADAR_ID,
-  user_id: 'tour-user',
-  name: 'React Ecosystem',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  repo_count: 1,
-};
-
-/**
- * Get the demo radar shown during onboarding tour.
- * Only used when tour is active and user has no real radars.
- */
-export function getTourDemoRadar(): RadarWithCount {
-  return TOUR_DEMO_RADAR;
-}
-
-/**
- * Get the demo repo for the tour demo radar.
- * Returns the React repo for the tour example.
- */
-export function getTourDemoRepo(): Repository {
-  return DEMO_STARRED_REPOS[0]; // facebook/react
-}
-
-// === RADARS ===
-export const DEMO_RADARS: RadarWithCount[] = [
-  {
-    id: 'demo-radar-frontend',
-    user_id: DEMO_USER.id,
-    name: 'Frontend Frameworks',
-    created_at: DATES.radarFrontendCreated,
-    updated_at: DATES.radarFrontendUpdated,
-    repo_count: 3,
-  },
-  {
-    id: 'demo-radar-learning',
-    user_id: DEMO_USER.id,
-    name: 'Learning Resources',
-    created_at: DATES.radarLearningCreated,
-    updated_at: DATES.radarLearningUpdated,
-    repo_count: 5,
-  },
-];
-
-// Radar repo associations
-export const DEMO_RADAR_REPOS: RadarRepo[] = [
-  // Frontend Frameworks (3 repos) - actual UI frameworks only
-  {
-    id: 'rr-1',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 70107786,
-    added_at: DATES.rrAdded1,
-  }, // next.js
-  {
-    id: 'rr-2',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 74293321,
-    added_at: DATES.rrAdded2,
-  }, // svelte
-  {
-    id: 'rr-3',
-    radar_id: 'demo-radar-frontend',
-    github_repo_id: 83222441,
-    added_at: DATES.rrAdded3,
-  }, // remix
-
-  // Learning Resources (5 repos)
-  {
-    id: 'rr-4',
-    radar_id: 'demo-radar-learning',
-    github_repo_id: 28457823,
-    added_at: DATES.rrAdded4,
-  }, // freeCodeCamp
-  {
-    id: 'rr-5',
-    radar_id: 'demo-radar-learning',
-    github_repo_id: 63537249,
-    added_at: DATES.rrAdded5,
-  }, // javascript-algorithms
-  {
-    id: 'rr-6',
-    radar_id: 'demo-radar-learning',
-    github_repo_id: 460078,
-    added_at: DATES.rrAdded6,
-  }, // rustlings
-  {
-    id: 'rr-7',
-    radar_id: 'demo-radar-learning',
-    github_repo_id: 20929025,
-    added_at: DATES.rrAdded7,
-  }, // typescript
-  {
-    id: 'rr-8',
-    radar_id: 'demo-radar-learning',
-    github_repo_id: 458058,
-    added_at: DATES.rrAdded8,
-  }, // rust
 ];
 
 // === SEARCH RESULTS ===

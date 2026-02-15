@@ -31,6 +31,7 @@ interface RadarNavItemProps {
   onLinkClick: () => void;
   onRename: (radar: RadarWithCount) => void;
   onDelete: (radar: RadarWithCount) => void;
+  dataTour?: string;
 }
 
 // Approximate characters that fit in one line of the sidebar (for tooltip detection)
@@ -43,6 +44,7 @@ function RadarNavItem({
   onLinkClick,
   onRename,
   onDelete,
+  dataTour,
 }: RadarNavItemProps) {
   // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
@@ -61,6 +63,7 @@ function RadarNavItem({
         to={`/radar/${radar.id}`}
         onClick={onLinkClick}
         aria-label={`${radar.name}, ${radar.repo_count} repositories`}
+        data-tour={dataTour}
         className={({ isActive }) =>
           clsx(
             navLinkBase,

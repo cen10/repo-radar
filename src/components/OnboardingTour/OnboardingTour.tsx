@@ -4,8 +4,9 @@ import { getCurrentPage } from './tourSteps';
 import { getTourSteps } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
 import { useOnboarding } from '../../contexts/use-onboarding';
+import { useDemoMode } from '../../demo/use-demo-mode';
 import { useRadars } from '../../hooks/useRadars';
-import { TOUR_DEMO_RADAR_ID } from '../../demo/demo-data';
+import { TOUR_RADAR_ID } from '../../demo/tour-data';
 
 interface OnboardingTourProps {
   hasStarredRepos: boolean;
@@ -14,15 +15,15 @@ interface OnboardingTourProps {
 export function OnboardingTour({ hasStarredRepos }: OnboardingTourProps) {
   const location = useLocation();
   const { isTourActive } = useOnboarding();
+  const { isDemoMode } = useDemoMode();
   const { radars } = useRadars();
 
-  // True when showing the React Ecosystem radar (injected for tour in both demo and auth modes)
-  const isUsingExampleRadar =
-    isTourActive && radars.length === 1 && radars[0].id === TOUR_DEMO_RADAR_ID;
+  // True when showing the injected tour radar (React Ecosystem)
+  const isUsingTourRadar = isTourActive && radars.length === 1 && radars[0].id === TOUR_RADAR_ID;
 
   const steps = useMemo(
-    () => getTourSteps(hasStarredRepos, isUsingExampleRadar),
-    [hasStarredRepos, isUsingExampleRadar]
+    () => getTourSteps(hasStarredRepos, isUsingTourRadar, isDemoMode),
+    [hasStarredRepos, isUsingTourRadar, isDemoMode]
   );
 
   const currentPage = getCurrentPage(location.pathname);

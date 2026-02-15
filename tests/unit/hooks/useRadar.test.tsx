@@ -4,7 +4,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRadar } from '@/hooks/useRadar';
 import * as radar from '@/services/radar';
-import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import type { Radar } from '@/types/database';
 
 // Mock the radar service
@@ -128,14 +128,14 @@ describe('useRadar', () => {
     it('returns tour radar when fetching tour-demo-radar during active tour', async () => {
       mockIsTourActive.mockReturnValue(true);
 
-      const { result } = renderHook(() => useRadar({ radarId: TOUR_DEMO_RADAR_ID }), { wrapper });
+      const { result } = renderHook(() => useRadar({ radarId: TOUR_RADAR_ID }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       expect(result.current.radar).not.toBeNull();
-      expect(result.current.radar?.id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radar?.id).toBe(TOUR_RADAR_ID);
       expect(result.current.radar?.name).toBe('React Ecosystem');
       expect(result.current.isNotFound).toBe(false);
       expect(radar.getRadar).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe('useRadar', () => {
       mockIsTourActive.mockReturnValue(false);
       vi.mocked(radar.getRadar).mockResolvedValue(null);
 
-      const { result } = renderHook(() => useRadar({ radarId: TOUR_DEMO_RADAR_ID }), { wrapper });
+      const { result } = renderHook(() => useRadar({ radarId: TOUR_RADAR_ID }), { wrapper });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);

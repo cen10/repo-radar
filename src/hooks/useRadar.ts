@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRadar } from '../services/radar';
 import { useOnboarding } from '../contexts/use-onboarding';
-import { getTourDemoRadar, TOUR_DEMO_RADAR_ID } from '../demo/demo-data';
+import { getTourRadar, TOUR_RADAR_ID } from '../demo/tour-data';
 import type { Radar } from '../types/database';
 
 interface UseRadarOptions {
@@ -30,7 +30,7 @@ export function useRadar({ radarId, enabled = true }: UseRadarOptions): UseRadar
   const { isTourActive } = useOnboarding();
 
   // Return the tour radar directly during active tour (it only exists client-side)
-  const isTourRadar = radarId === TOUR_DEMO_RADAR_ID && isTourActive;
+  const isTourRadar = radarId === TOUR_RADAR_ID && isTourActive;
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['radar', radarId],
@@ -44,7 +44,7 @@ export function useRadar({ radarId, enabled = true }: UseRadarOptions): UseRadar
   });
 
   if (isTourRadar) {
-    const tourRadar = getTourDemoRadar();
+    const tourRadar = getTourRadar();
     return {
       radar: tourRadar,
       isLoading: false,

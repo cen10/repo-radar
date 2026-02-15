@@ -26,8 +26,8 @@ const starsEmptySteps: TourStep[] = [
   },
 ];
 
-function getStarsWithReposSteps(isUsingExampleRadar: boolean): TourStep[] {
-  const sidebarRadarsText = isUsingExampleRadar
+function getStarsWithReposSteps(isUsingTourRadar: boolean): TourStep[] {
+  const sidebarRadarsText = isUsingTourRadar
     ? "Your Radars appear in the sidebar. We've added a <strong>React Ecosystem</strong> radar for this tour. <strong>Click it to continue.</strong>"
     : 'Your Radars appear in the sidebar. <strong>Click any Radar to continue.</strong>';
 
@@ -51,8 +51,8 @@ function getStarsWithReposSteps(isUsingExampleRadar: boolean): TourStep[] {
   ];
 }
 
-function getRadarSteps(isUsingExampleRadar: boolean): TourStep[] {
-  const radarIntroText = isUsingExampleRadar
+function getRadarSteps(isUsingTourRadar: boolean): TourStep[] {
+  const radarIntroText = isUsingTourRadar
     ? 'This React Ecosystem radar contains demo data for the tour. Create your own Radars to organize repos by your interests — more flexible than just starring on GitHub.'
     : 'Use Radars to collect individual repositories. This lets you keep repos organized by your interests and gives you more flexibility than simply adding to the starred repos bucket on GitHub.';
 
@@ -85,7 +85,7 @@ function getRadarSteps(isUsingExampleRadar: boolean): TourStep[] {
   ];
 }
 
-function getRepoDetailSteps(isUsingExampleRadar: boolean): TourStep[] {
+function getRepoDetailSteps(isUsingTourRadar: boolean, isDemoMode: boolean): TourStep[] {
   const steps: TourStep[] = [
     {
       id: 'repo-header',
@@ -105,8 +105,18 @@ function getRepoDetailSteps(isUsingExampleRadar: boolean): TourStep[] {
     },
   ];
 
-  // Add tour-complete step only when using the tour's React Ecosystem radar
-  if (isUsingExampleRadar) {
+  // Final step messaging depends on context:
+  // - Demo mode: simple thank you, radar persists
+  // - Auth user with no radars: radar disappears, prompt to create their own
+  // - Auth user with existing radars: no extra step needed
+  if (isDemoMode) {
+    steps.push({
+      id: 'tour-complete',
+      target: '',
+      text: 'Thanks for taking the tour! Feel free to keep exploring.',
+      page: 'repo-detail',
+    });
+  } else if (isUsingTourRadar) {
     steps.push({
       id: 'tour-complete',
       target: '',
@@ -114,7 +124,7 @@ function getRepoDetailSteps(isUsingExampleRadar: boolean): TourStep[] {
       page: 'repo-detail',
     });
   } else {
-    // Demo mode gets a simpler ending
+    // User has real radars, simpler ending
     steps[1].text =
       'Expand any release to see version details and release notes. Thanks for exploring!';
   }
@@ -124,12 +134,13 @@ function getRepoDetailSteps(isUsingExampleRadar: boolean): TourStep[] {
 
 export function getTourSteps(
   hasStarredRepos: boolean,
-  isUsingExampleRadar: boolean = false
+  isUsingTourRadar: boolean = false,
+  isDemoMode: boolean = false
 ): TourStep[] {
   return [
     ...starsCommonSteps,
-    ...(hasStarredRepos ? getStarsWithReposSteps(isUsingExampleRadar) : starsEmptySteps),
-    ...getRadarSteps(isUsingExampleRadar),
-    ...getRepoDetailSteps(isUsingExampleRadar),
+    ...(hasStarredRepos ? getStarsWithReposSteps(isUsingTourRadar) : starsEmptySteps),
+    ...getRadarSteps(isUsingTourRadar),
+    ...getRepoDetailSteps(isUsingTourRadar, isDemoMode),
   ];
 }

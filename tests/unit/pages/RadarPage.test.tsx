@@ -7,7 +7,7 @@ import RadarPage from '@/pages/RadarPage';
 import * as useRadarHook from '@/hooks/useRadar';
 import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
-import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
@@ -322,7 +322,7 @@ describe('RadarPage', () => {
     it('redirects to /stars when accessing React Ecosystem outside of tour', () => {
       mockIsTourActive.mockReturnValue(false);
 
-      renderWithProviders(TOUR_DEMO_RADAR_ID);
+      renderWithProviders(TOUR_RADAR_ID);
 
       expect(screen.getByText('Stars Page')).toBeInTheDocument();
     });

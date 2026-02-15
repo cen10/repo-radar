@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRadarRepositories } from '@/hooks/useRadarRepositories';
 import * as radar from '@/services/radar';
 import * as github from '@/services/github';
-import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import type { RadarRepo } from '@/types/database';
 import { createMockRepository } from '../../mocks/factories';
 
@@ -180,7 +180,7 @@ describe('useRadarRepositories', () => {
       mockIsTourActive.mockReturnValue(true);
 
       const { result } = renderHook(
-        () => useRadarRepositories({ radarId: TOUR_DEMO_RADAR_ID, token: null }),
+        () => useRadarRepositories({ radarId: TOUR_RADAR_ID, token: null }),
         { wrapper }
       );
 
@@ -199,7 +199,7 @@ describe('useRadarRepositories', () => {
       mockIsTourActive.mockReturnValue(false);
 
       const { result } = renderHook(
-        () => useRadarRepositories({ radarId: TOUR_DEMO_RADAR_ID, token: null }),
+        () => useRadarRepositories({ radarId: TOUR_RADAR_ID, token: null }),
         { wrapper }
       );
 

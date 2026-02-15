@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { useOnboarding } from '../contexts/use-onboarding';
-import { TOUR_DEMO_RADAR_ID } from '../demo/demo-data';
+import { TOUR_RADAR_ID } from '../demo/tour-data';
 import { RepoCard } from '../components/RepoCard';
 import { CollapsibleSearch } from '../components/CollapsibleSearch';
 import { SortDropdown } from '../components/SortDropdown';
@@ -71,7 +71,7 @@ const RadarPage = () => {
   }, [filteredRepos, sortBy]);
 
   // Redirect away from tour demo radar when tour is not active (after all hooks)
-  if (id === TOUR_DEMO_RADAR_ID && !isTourActive) {
+  if (id === TOUR_RADAR_ID && !isTourActive) {
     return <Navigate to="/stars" replace />;
   }
 

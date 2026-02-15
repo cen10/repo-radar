@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRadars } from '@/hooks/useRadars';
 import * as radar from '@/services/radar';
-import { TOUR_DEMO_RADAR_ID } from '@/demo/demo-data';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import { createQueryClientWrapper } from '../../helpers/render';
 import { createMockRadar } from '../../mocks/factories';
 
@@ -142,7 +142,7 @@ describe('useRadars', () => {
       });
 
       expect(result.current.radars).toHaveLength(1);
-      expect(result.current.radars[0].id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radars[0].id).toBe(TOUR_RADAR_ID);
       expect(result.current.radars[0].name).toBe('React Ecosystem');
     });
 
@@ -188,7 +188,7 @@ describe('useRadars', () => {
       });
 
       expect(result.current.radars).toHaveLength(1);
-      expect(result.current.radars[0].id).toBe(TOUR_DEMO_RADAR_ID);
+      expect(result.current.radars[0].id).toBe(TOUR_RADAR_ID);
       expect(result.current.radars[0].name).toBe('React Ecosystem');
     });
   });
