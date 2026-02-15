@@ -59,9 +59,11 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         setCurrentStepId,
       }}
     >
-      {/* Fallback overlay - visible during page transitions when Shepherd's overlay
-          is absent. Instantly hidden via CSS :has() when Shepherd's overlay appears. */}
-      {isTourActive && (
+      {/* Fallback overlay - visible when tour is active OR when tour is about to start
+          (demo mode users who haven't completed tour). This ensures the overlay is
+          present before Shepherd initializes, preventing a flash of the unmasked page.
+          Instantly hidden via CSS :has() when Shepherd's overlay appears. */}
+      {(isTourActive || (isDemoMode && !hasCompletedTour)) && (
         <div
           className="tour-fallback-overlay fixed inset-0 bg-black/50 pointer-events-none"
           style={{ zIndex: 9996 }}

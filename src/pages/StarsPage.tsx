@@ -59,8 +59,7 @@ const StarsPage = () => {
   // Auto-start tour for new users once data has loaded
   useEffect(() => {
     if (!browseResult.isLoading && !hasCompletedTour && !isTourActive) {
-      const timer = setTimeout(startTour, 800);
-      return () => clearTimeout(timer);
+      startTour();
     }
   }, [browseResult.isLoading, hasCompletedTour, isTourActive, startTour]);
 
