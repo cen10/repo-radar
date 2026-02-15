@@ -106,7 +106,10 @@ function RadarNavItem({
                   {/* Kebab menu - visually hidden but accessible, shown on hover/focus */}
                   <Menu as="div" className="absolute -right-1">
                     <MenuButton
-                      onClick={(e: React.MouseEvent) => e.preventDefault()}
+                      onClick={(e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                       className="text-gray-400 cursor-pointer lg:opacity-0 transition-opacity focus:opacity-100 lg:group-hover/radar:opacity-100 lg:group-focus-within/radar:opacity-100"
                     >
                       <span className="sr-only">Open menu for {radar.name}</span>
