@@ -32,7 +32,6 @@ const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
 
 const defaultProps = {
   radar: createMockRadar(),
-  repoCount: 5,
   onClose: vi.fn(),
   onDeleted: vi.fn(),
 };
@@ -61,12 +60,6 @@ describe('DeleteRadarModal', () => {
       expect(screen.getByText(/this cannot be undone/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-    });
-
-    it('shows empty radar message when no repos', () => {
-      renderWithProviders(<DeleteRadarModal {...defaultProps} repoCount={0} />);
-
-      expect(screen.getByText(/this radar is empty/i)).toBeInTheDocument();
     });
   });
 

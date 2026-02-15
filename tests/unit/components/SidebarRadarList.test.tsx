@@ -40,7 +40,6 @@ vi.mock('@/components/DeleteRadarModal', () => ({
     radar: { name: string };
     onClose: () => void;
     onDeleted: () => void;
-    repoCount: number;
   }) => (
     <div data-testid="delete-modal">
       Delete {radar.name}

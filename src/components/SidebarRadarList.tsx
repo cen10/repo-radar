@@ -368,7 +368,6 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
       {radarToDelete && (
         <DeleteRadarModal
           radar={radarToDelete}
-          repoCount={radarToDelete.repo_count}
           onClose={() => setRadarToDelete(null)}
           onDeleted={handleDeleted}
         />
