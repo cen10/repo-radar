@@ -54,8 +54,7 @@ function RadarNavItem({
   // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
 
-  const navLinkBase =
-    'group/radar flex items-center py-2 text-sm font-medium transition-colors rounded-lg';
+  const navLinkBase = 'flex items-center py-2 text-sm font-medium transition-colors rounded-lg';
   const navLinkLayout = collapsed ? 'justify-center px-2 outline-none' : 'gap-3 px-3';
   const navLinkActive = 'bg-indigo-100 text-indigo-700';
   const navLinkInactive = 'text-gray-700 hover:bg-indigo-50';
