@@ -156,8 +156,14 @@ describe('useRadarToggle', () => {
       mockRadars.push(radar1, radar2);
 
       // radar-1 succeeds, radar-2 fails
+      const mockRadarRepo = {
+        id: '1',
+        radar_id: 'radar-1',
+        github_repo_id: testRepoId,
+        added_at: '',
+      };
       vi.mocked(radarService.addRepoToRadar).mockImplementation((radarId) => {
-        if (radarId === 'radar-1') return Promise.resolve();
+        if (radarId === 'radar-1') return Promise.resolve(mockRadarRepo);
         return Promise.reject(new Error('Network error'));
       });
 
@@ -196,7 +202,7 @@ describe('useRadarToggle', () => {
 
       // On retry, only radar-2 should be attempted
       vi.mocked(radarService.addRepoToRadar).mockClear();
-      vi.mocked(radarService.addRepoToRadar).mockResolvedValue();
+      vi.mocked(radarService.addRepoToRadar).mockResolvedValue(mockRadarRepo);
 
       await act(async () => {
         await result.current.saveChanges();
@@ -212,7 +218,13 @@ describe('useRadarToggle', () => {
       const radar2 = createMockRadar({ id: 'radar-2', name: 'Backend' });
       mockRadars.push(radar1, radar2);
 
-      vi.mocked(radarService.addRepoToRadar).mockResolvedValue();
+      const mockRadarRepo = {
+        id: '1',
+        radar_id: 'radar-1',
+        github_repo_id: testRepoId,
+        added_at: '',
+      };
+      vi.mocked(radarService.addRepoToRadar).mockResolvedValue(mockRadarRepo);
 
       const { result } = renderHook(
         () => useRadarToggle({ githubRepoId: testRepoId, open: true }),
