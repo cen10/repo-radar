@@ -60,7 +60,7 @@ const Home = () => {
   if (authLoading) {
     return (
       <div
-        className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center"
+        className="min-h-screen bg-indigo-50 flex items-center justify-center"
         role="status"
         aria-label="Loading"
       >
@@ -75,7 +75,7 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-8 md:px-4">
+    <div className="min-h-screen bg-indigo-50 flex items-center justify-center px-8 md:px-4">
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">Repo Radar</h1>
         <p className="text-xl text-gray-600 mb-5 max-w-2xl mx-auto">

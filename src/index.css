@@ -10,7 +10,10 @@
  */
 @layer vendor, theme, base, components, utilities, overrides;
 
-/* Match Home page gradient so iOS safe area isn't white */
+/*
+ * Body: indigo-50 to match Home page. Authenticated pages cover with bg-white.
+ * Unlayered to override @layer base.
+ */
 body {
   background-color: #eef2ff; /* indigo-50 */
 }
@@ -95,7 +98,7 @@ body {
 
 @layer base {
   body {
-    /* Background is set unlayered above (indigo-50 for iOS safe area) */
+    /* Background color is set unlayered above — see comment there */
     @apply text-gray-900 antialiased;
   }
 }
