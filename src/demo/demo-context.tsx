@@ -50,6 +50,8 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     void import('./browser').then(({ stopDemoMode }) => stopDemoMode());
 
     localStorage.removeItem(DEMO_MODE_KEY);
+    // Clear demo tour completion so tour starts fresh on next demo login
+    sessionStorage.removeItem('demo-onboarding');
     setIsDemoMode(false);
     setIsBannerDismissed(false);
   }, []);

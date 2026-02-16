@@ -7,6 +7,7 @@ import { DemoModeProvider } from '@/demo/demo-context';
 import * as useDemoModeModule from '@/demo/use-demo-mode';
 
 const STORAGE_KEY = 'repo-radar-onboarding';
+const DEMO_SESSION_KEY = 'demo-onboarding';
 const DEMO_MODE_KEY = 'repo_radar_demo_mode';
 
 function TestConsumer() {
@@ -35,6 +36,7 @@ function renderWithProvider() {
 describe('OnboardingContext', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('throws when useOnboarding is used outside provider', () => {
@@ -117,6 +119,111 @@ describe('OnboardingContext', () => {
 
     expect(screen.getByTestId('active')).toHaveTextContent('true');
     expect(screen.getByTestId('completed')).toHaveTextContent('false');
+  });
+
+  describe('Demo mode persistence', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    function renderWithDemoMode() {
+      vi.spyOn(useDemoModeModule, 'useDemoMode').mockReturnValue({
+        isDemoMode: true,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      return render(
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      );
+    }
+
+    it('persists completion to sessionStorage in demo mode', async () => {
+      const user = userEvent.setup();
+      renderWithDemoMode();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^complete$/i }));
+
+      // Should be in sessionStorage, not localStorage
+      const sessionStored = JSON.parse(sessionStorage.getItem(DEMO_SESSION_KEY)!);
+      expect(sessionStored.hasCompletedTour).toBe(true);
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
+
+    it('restores completion from sessionStorage in demo mode', () => {
+      sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ hasCompletedTour: true }));
+
+      renderWithDemoMode();
+
+      expect(screen.getByTestId('completed')).toHaveTextContent('true');
+    });
+
+    it('does not show overlay after tour completed in demo mode (simulates refresh)', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({ hasCompletedTour: true }));
+
+      renderWithDemoMode();
+
+      // Overlay should NOT show because hasCompletedTour is true from sessionStorage
+      expect(document.querySelector('.tour-fallback-overlay')).not.toBeInTheDocument();
+    });
+
+    it('does not write to localStorage when isDemoMode changes after tour completion', async () => {
+      const user = userEvent.setup();
+
+      // Start in demo mode
+      const mockUseDemoMode = vi.spyOn(useDemoModeModule, 'useDemoMode');
+      mockUseDemoMode.mockReturnValue({
+        isDemoMode: true,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      const { rerender } = render(
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      );
+
+      // Complete the tour in demo mode
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^complete$/i }));
+
+      // Verify it wrote to sessionStorage, not localStorage
+      expect(sessionStorage.getItem(DEMO_SESSION_KEY)).not.toBeNull();
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+
+      // Simulate exiting demo mode (isDemoMode becomes false)
+      mockUseDemoMode.mockReturnValue({
+        isDemoMode: false,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      rerender(
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      );
+
+      // localStorage should STILL be empty - the bug was that it would write here
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    });
   });
 
   describe('Fallback overlay', () => {

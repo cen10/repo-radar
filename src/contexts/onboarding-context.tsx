@@ -1,6 +1,8 @@
-import { useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingContext, ONBOARDING_STORAGE_KEY } from './OnboardingContext';
+
+const DEMO_ONBOARDING_SESSION_KEY = 'demo-onboarding';
 
 interface OnboardingProviderProps {
   children: ReactNode;
@@ -12,15 +14,18 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
   const [hasCompletedTour, setHasCompletedTour] = useState(() => {
-    if (isDemoMode) return false;
     try {
-      const saved = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      // Demo mode: use sessionStorage so completion persists across refresh but not new sessions
+      // Real users: use localStorage for permanent persistence
+      const storage = isDemoMode ? sessionStorage : localStorage;
+      const key = isDemoMode ? DEMO_ONBOARDING_SESSION_KEY : ONBOARDING_STORAGE_KEY;
+      const saved = storage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved) as { hasCompletedTour: boolean };
         return parsed.hasCompletedTour;
       }
     } catch {
-      // Ignore malformed localStorage
+      // Ignore malformed storage
     }
     return false;
   });
@@ -28,11 +33,22 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
 
-  // Persist completion to localStorage for real users only.
-  // Demo mode skips persistence so each demo session shows a fresh tour.
+  // Track previous completion state to detect transitions
+  const prevHasCompletedTourRef = useRef(hasCompletedTour);
+
+  // Persist completion state when tour is completed.
+  // Only write when hasCompletedTour transitions to true, not when isDemoMode changes.
+  // This prevents writing to the wrong storage when exiting demo mode.
+  // Demo mode: sessionStorage (survives refresh, clears on new session)
+  // Real users: localStorage (permanent)
   useEffect(() => {
-    if (!isDemoMode && hasCompletedTour) {
-      localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify({ hasCompletedTour: true }));
+    const justCompleted = hasCompletedTour && !prevHasCompletedTourRef.current;
+    prevHasCompletedTourRef.current = hasCompletedTour;
+
+    if (justCompleted) {
+      const storage = isDemoMode ? sessionStorage : localStorage;
+      const key = isDemoMode ? DEMO_ONBOARDING_SESSION_KEY : ONBOARDING_STORAGE_KEY;
+      storage.setItem(key, JSON.stringify({ hasCompletedTour: true }));
     }
   }, [hasCompletedTour, isDemoMode]);
 
