@@ -39,7 +39,7 @@ describe('useRepoRadars', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.radarIds).toEqual(['radar-1', 'radar-2']);
+    expect(result.current.radarsAlreadyContainingRepo).toEqual(['radar-1', 'radar-2']);
     expect(result.current.error).toBeNull();
     expect(radar.getRadarsContainingRepo).toHaveBeenCalledWith(testRepoId);
   });
@@ -53,7 +53,7 @@ describe('useRepoRadars', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.radarIds).toEqual([]);
+    expect(result.current.radarsAlreadyContainingRepo).toEqual([]);
     expect(result.current.error).toBeNull();
   });
 
@@ -63,7 +63,7 @@ describe('useRepoRadars', () => {
     const { result } = renderHook(() => useRepoRadars(testRepoId), { wrapper });
 
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.radarIds).toEqual([]);
+    expect(result.current.radarsAlreadyContainingRepo).toEqual([]);
   });
 
   it('handles error state', async () => {
@@ -77,14 +77,14 @@ describe('useRepoRadars', () => {
     });
 
     expect(result.current.error).toEqual(error);
-    expect(result.current.radarIds).toEqual([]);
+    expect(result.current.radarsAlreadyContainingRepo).toEqual([]);
   });
 
   it('does not fetch when enabled is false', async () => {
     const { result } = renderHook(() => useRepoRadars(testRepoId, { enabled: false }), { wrapper });
 
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.radarIds).toEqual([]);
+    expect(result.current.radarsAlreadyContainingRepo).toEqual([]);
     expect(radar.getRadarsContainingRepo).not.toHaveBeenCalled();
   });
 
@@ -119,7 +119,7 @@ describe('useRepoRadars', () => {
     result.current.refetch();
 
     await waitFor(() => {
-      expect(result.current.radarIds).toEqual(['radar-1', 'radar-2']);
+      expect(result.current.radarsAlreadyContainingRepo).toEqual(['radar-1', 'radar-2']);
     });
   });
 });

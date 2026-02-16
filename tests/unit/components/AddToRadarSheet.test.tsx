@@ -111,8 +111,30 @@ describe('AddToRadarSheet', () => {
     });
   });
 
-  describe('checkbox toggling', () => {
-    it('calls addRepoToRadar when checking unchecked radar', async () => {
+  describe('checkbox toggling (batch save)', () => {
+    it('does not call API immediately when toggling checkbox', async () => {
+      const user = userEvent.setup();
+      vi.mocked(radarService.getRadars).mockResolvedValue([
+        createMockRadar({ id: 'radar-1', name: 'Frontend' }),
+      ]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Frontend')).toBeInTheDocument();
+      });
+
+      await user.click(screen.getByRole('checkbox'));
+
+      // Checkbox should be checked immediately (local state)
+      expect(screen.getByRole('checkbox')).toBeChecked();
+
+      // But no API call yet
+      expect(radarService.addRepoToRadar).not.toHaveBeenCalled();
+    });
+
+    it('calls addRepoToRadar when clicking Done after checking', async () => {
       const user = userEvent.setup();
       const queryClient = createTestQueryClient();
       const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -134,7 +156,12 @@ describe('AddToRadarSheet', () => {
         expect(screen.getByText('Frontend')).toBeInTheDocument();
       });
 
+      // Toggle checkbox (local state only)
       await user.click(screen.getByRole('checkbox'));
+      expect(radarService.addRepoToRadar).not.toHaveBeenCalled();
+
+      // Click Done to save
+      await user.click(screen.getByRole('button', { name: /done/i }));
 
       await waitFor(() => {
         expect(radarService.addRepoToRadar).toHaveBeenCalledWith('radar-1', TEST_REPO_ID);
@@ -148,7 +175,7 @@ describe('AddToRadarSheet', () => {
       });
     });
 
-    it('calls removeRepoFromRadar when unchecking checked radar', async () => {
+    it('calls removeRepoFromRadar when clicking Done after unchecking', async () => {
       const user = userEvent.setup();
       vi.mocked(radarService.getRadars).mockResolvedValue([
         createMockRadar({ id: 'radar-1', name: 'Frontend' }),
@@ -162,20 +189,25 @@ describe('AddToRadarSheet', () => {
         expect(screen.getByRole('checkbox')).toBeChecked();
       });
 
+      // Uncheck (local state only)
       await user.click(screen.getByRole('checkbox'));
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
+      expect(radarService.removeRepoFromRadar).not.toHaveBeenCalled();
+
+      // Click Done to save
+      await user.click(screen.getByRole('button', { name: /done/i }));
 
       await waitFor(() => {
         expect(radarService.removeRepoFromRadar).toHaveBeenCalledWith('radar-1', TEST_REPO_ID);
       });
     });
 
-    it('shows optimistic update immediately', async () => {
+    it('updates checkbox state immediately on toggle', async () => {
       const user = userEvent.setup();
       vi.mocked(radarService.getRadars).mockResolvedValue([
         createMockRadar({ id: 'radar-1', name: 'Frontend' }),
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
-      vi.mocked(radarService.addRepoToRadar).mockImplementation(() => new Promise(() => {}));
 
       renderWithProviders(<AddToRadarSheet {...defaultProps} />);
 
@@ -185,41 +217,39 @@ describe('AddToRadarSheet', () => {
 
       await user.click(screen.getByRole('checkbox'));
 
-      // Should be checked immediately (optimistic)
+      // Should be checked immediately (local state)
       expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
-    it('reverts optimistic update on error', async () => {
+    it('shows error when save fails and keeps sheet open', async () => {
       const user = userEvent.setup();
+      const onClose = vi.fn();
       vi.mocked(radarService.getRadars).mockResolvedValue([
         createMockRadar({ id: 'radar-1', name: 'Frontend' }),
       ]);
       vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+      vi.mocked(radarService.addRepoToRadar).mockRejectedValue(new Error('Failed to add'));
 
-      let rejectFn: (err: Error) => void;
-      vi.mocked(radarService.addRepoToRadar).mockImplementation(
-        () =>
-          new Promise((_, reject) => {
-            rejectFn = reject;
-          })
-      );
-
-      renderWithProviders(<AddToRadarSheet {...defaultProps} />);
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
 
       await waitFor(() => {
         expect(screen.getByRole('checkbox')).not.toBeChecked();
       });
 
+      // Toggle checkbox
       await user.click(screen.getByRole('checkbox'));
       expect(screen.getByRole('checkbox')).toBeChecked();
 
-      rejectFn!(new Error('Failed to add'));
+      // Click Done - should fail and show error
+      await user.click(screen.getByRole('button', { name: /done/i }));
 
       await waitFor(() => {
-        expect(screen.getByRole('checkbox')).not.toBeChecked();
+        expect(screen.getByRole('alert')).toHaveTextContent(/failed to add/i);
       });
 
-      expect(screen.getByRole('alert')).toHaveTextContent(/failed to add/i);
+      // Sheet should stay open
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 
@@ -257,7 +287,7 @@ describe('AddToRadarSheet', () => {
   });
 
   describe('closing behavior', () => {
-    it('calls onClose when Done button is clicked', async () => {
+    it('calls onClose when Done button is clicked with no changes', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
@@ -270,7 +300,7 @@ describe('AddToRadarSheet', () => {
       expect(onClose).toHaveBeenCalled();
     });
 
-    it('calls onClose when Escape is pressed', async () => {
+    it('calls onClose when Escape is pressed with no changes', async () => {
       const user = userEvent.setup();
       const onClose = vi.fn();
       vi.mocked(radarService.getRadars).mockResolvedValue([]);
@@ -281,6 +311,87 @@ describe('AddToRadarSheet', () => {
       await user.keyboard('{Escape}');
 
       expect(onClose).toHaveBeenCalled();
+    });
+
+    it('shows confirmation dialog when closing with unsaved changes', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([
+        createMockRadar({ id: 'radar-1', name: 'Frontend' }),
+      ]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+      });
+
+      // Make a change
+      await user.click(screen.getByRole('checkbox'));
+
+      // Try to close with Escape
+      await user.keyboard('{Escape}');
+
+      // Should show confirmation dialog, not close immediately
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText(/discard changes/i)).toBeInTheDocument();
+    });
+
+    it('discards changes and closes when confirming discard', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([
+        createMockRadar({ id: 'radar-1', name: 'Frontend' }),
+      ]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+      });
+
+      // Make a change
+      await user.click(screen.getByRole('checkbox'));
+
+      // Try to close
+      await user.keyboard('{Escape}');
+
+      // Confirm discard
+      await user.click(screen.getByRole('button', { name: /discard/i }));
+
+      expect(onClose).toHaveBeenCalled();
+      // API should not have been called
+      expect(radarService.addRepoToRadar).not.toHaveBeenCalled();
+    });
+
+    it('keeps sheet open when canceling discard confirmation', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([
+        createMockRadar({ id: 'radar-1', name: 'Frontend' }),
+      ]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+      });
+
+      // Make a change
+      await user.click(screen.getByRole('checkbox'));
+
+      // Try to close
+      await user.keyboard('{Escape}');
+
+      // Click "Keep editing" to go back
+      await user.click(screen.getByRole('button', { name: /keep editing/i }));
+
+      // Sheet should still be open with changes preserved
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('checkbox')).toBeChecked();
     });
   });
 

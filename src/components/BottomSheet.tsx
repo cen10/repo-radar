@@ -9,17 +9,23 @@ const TRANSITION_DURATION = 300; // Match CSS transition-transform duration
 interface BottomSheetProps {
   open: boolean;
   onClose: () => void;
+  onDone?: () => void;
   title: string;
   children: ReactNode;
   doneLabel?: string;
+  doneDisabled?: boolean;
+  doneLoading?: boolean;
 }
 
 export function BottomSheet({
   open,
   onClose,
+  onDone,
   title,
   children,
   doneLabel = 'Done',
+  doneDisabled = false,
+  doneLoading = false,
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -118,7 +124,13 @@ export function BottomSheet({
             </div>
 
             <div className="mt-6 pb-4">
-              <Button variant="primary" className="w-full" onClick={onClose}>
+              <Button
+                variant="primary"
+                className="w-full"
+                onClick={onDone ?? onClose}
+                disabled={doneDisabled}
+                loading={doneLoading}
+              >
                 {doneLabel}
               </Button>
             </div>
