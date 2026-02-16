@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import { useRepoRadars } from './useRepoRadars';
@@ -46,19 +46,30 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     [radarsAlreadyContainingRepo, radarsToAddRepoTo, radarsToRemoveRepoFrom]
   );
 
+  // Filter to actual changes (not toggling back to original state)
+  const actualAdds = useMemo(
+    () => Array.from(radarsToAddRepoTo).filter((id) => !radarsAlreadyContainingRepo.includes(id)),
+    [radarsToAddRepoTo, radarsAlreadyContainingRepo]
+  );
+  const actualRemoves = useMemo(
+    () =>
+      Array.from(radarsToRemoveRepoFrom).filter((id) => radarsAlreadyContainingRepo.includes(id)),
+    [radarsToRemoveRepoFrom, radarsAlreadyContainingRepo]
+  );
+
   // Compute repo count considering unsaved changes (for limit enforcement)
   const getRepoCountIncludingUnsavedChanges = useCallback(
     (radar: RadarWithCount): number => {
       let count = radar.repo_count;
-      if (radarsToAddRepoTo.has(radar.id) && !radarsAlreadyContainingRepo.includes(radar.id)) {
+      if (actualAdds.includes(radar.id)) {
         count += 1;
       }
-      if (radarsToRemoveRepoFrom.has(radar.id) && radarsAlreadyContainingRepo.includes(radar.id)) {
+      if (actualRemoves.includes(radar.id)) {
         count -= 1;
       }
       return count;
     },
-    [radarsAlreadyContainingRepo, radarsToAddRepoTo, radarsToRemoveRepoFrom]
+    [actualAdds, actualRemoves]
   );
 
   // Derived state for limits using counts that include unsaved changes
@@ -66,7 +77,7 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
 
   const isAtTotalRepoLimit = totalRepoCount >= RADAR_LIMITS.MAX_TOTAL_REPOS;
 
-  const hasUnsavedChanges = radarsToAddRepoTo.size > 0 || radarsToRemoveRepoFrom.size > 0;
+  const hasUnsavedChanges = actualAdds.length > 0 || actualRemoves.length > 0;
 
   // Toggle handler: update local state only, no API calls
   const handleToggleRadar = useCallback(
@@ -102,14 +113,6 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     setIsSaving(true);
     setSaveError(null);
 
-    // Filter to only actual changes (not toggling back to original state)
-    const actualAdds = Array.from(radarsToAddRepoTo).filter(
-      (id) => !radarsAlreadyContainingRepo.includes(id)
-    );
-    const actualRemoves = Array.from(radarsToRemoveRepoFrom).filter((id) =>
-      radarsAlreadyContainingRepo.includes(id)
-    );
-
     try {
       await Promise.all([
         ...actualAdds.map((id) => addRepoToRadar(id, githubRepoId)),
@@ -136,14 +139,7 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    hasUnsavedChanges,
-    radarsToAddRepoTo,
-    radarsToRemoveRepoFrom,
-    radarsAlreadyContainingRepo,
-    githubRepoId,
-    queryClient,
-  ]);
+  }, [hasUnsavedChanges, actualAdds, actualRemoves, githubRepoId, queryClient]);
 
   // Discard all unsaved changes
   const cancelChanges = useCallback(() => {
