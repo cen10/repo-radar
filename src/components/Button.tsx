@@ -19,37 +19,37 @@ const variantStyles: Record<ButtonVariant, string> = {
     'bg-indigo-600 text-white shadow-sm',
     'hover:bg-indigo-700',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:bg-indigo-600 disabled:opacity-70',
+    'disabled:bg-indigo-600 disabled:opacity-70',
   ].join(' '),
   secondary: [
     'border border-gray-300 bg-white text-gray-700 shadow-sm',
     'hover:bg-gray-50',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:opacity-50',
+    'disabled:opacity-50',
   ].join(' '),
   danger: [
     'bg-red-600 text-white shadow-sm',
     'hover:bg-red-700',
     'focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:bg-red-600 disabled:opacity-70',
+    'disabled:bg-red-600 disabled:opacity-70',
   ].join(' '),
   ghost: [
     'text-gray-500',
     'hover:bg-gray-100 hover:text-gray-700',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:opacity-50',
+    'disabled:opacity-50',
   ].join(' '),
   'ghost-primary': [
     'text-gray-400',
     'hover:bg-indigo-50',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:opacity-50',
+    'disabled:opacity-50',
   ].join(' '),
   link: [
     'text-indigo-600 font-medium',
     'hover:text-indigo-700 hover:underline',
     'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-    'disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline',
+    'disabled:opacity-50 disabled:no-underline',
   ].join(' '),
 };
 
@@ -97,7 +97,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   };
 
   const baseClasses = [
-    'inline-flex items-center justify-center rounded-md font-medium cursor-pointer',
+    'inline-flex items-center justify-center rounded-md font-medium',
+    isDisabled ? 'cursor-not-allowed' : 'cursor-pointer',
     variantStyles[variant],
     textSizeStyles[size],
     getPaddingClass(),
