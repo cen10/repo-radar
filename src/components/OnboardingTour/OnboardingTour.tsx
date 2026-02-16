@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getCurrentPage } from './tourSteps';
 import { getTourSteps } from './tourContent';
@@ -12,7 +12,16 @@ import { TOUR_RADAR_ID } from '../../demo/tour-data';
 
 export function OnboardingTour() {
   const location = useLocation();
-  const { isTourActive } = useOnboarding();
+  const { isTourActive, startTour } = useOnboarding();
+
+  // Check for pending tour start after navigation (from restartTour)
+  useEffect(() => {
+    const pending = sessionStorage.getItem('tour-pending-start');
+    if (pending) {
+      sessionStorage.removeItem('tour-pending-start');
+      startTour();
+    }
+  }, [location.pathname, startTour]);
   const { isDemoMode } = useDemoMode();
   const { radars } = useRadars();
   const { providerToken } = useAuth();

@@ -39,6 +39,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setIsTourActive(true);
   }, []);
 
+  const restartTour = useCallback((navigateTo?: string, navigateFn?: (path: string) => void) => {
+    setHasCompletedTour(false);
+    setIsTourActive(false);
+
+    if (navigateTo && navigateFn) {
+      // Signal that tour should start after navigation completes
+      sessionStorage.setItem('tour-pending-start', 'true');
+      navigateFn(navigateTo);
+    } else {
+      setIsTourActive(true);
+    }
+  }, []);
+
   const completeTour = useCallback(() => {
     setHasCompletedTour(true);
     setIsTourActive(false);
@@ -51,6 +64,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         hasCompletedTour,
         isTourActive,
         startTour,
+        restartTour,
         completeTour,
         currentStepId,
         setCurrentStepId,

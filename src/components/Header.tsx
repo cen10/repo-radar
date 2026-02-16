@@ -92,7 +92,7 @@ interface HeaderProps {
 export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { isBannerVisible } = useDemoMode();
-  const { startTour } = useOnboarding();
+  const { restartTour } = useOnboarding();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -238,7 +238,10 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                 <button
                   onClick={() => {
                     setIsHelpOpen(false);
-                    startTour();
+                    // Clear any mid-tour navigation state to ensure fresh start
+                    sessionStorage.removeItem('tour-start-from-step');
+                    // Restart tour - this cancels existing tour, navigates, then starts fresh
+                    restartTour('/stars', navigate);
                   }}
                   className="block w-[calc(100%+2rem)] text-left text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer px-4 py-2 -mx-4 -mb-4 rounded-b-lg hover:bg-indigo-200 transition-colors"
                 >
