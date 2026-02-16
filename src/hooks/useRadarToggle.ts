@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import { useRepoRadars } from './useRepoRadars';
@@ -62,9 +62,7 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
   );
 
   // Derived state for limits using counts that include unsaved changes
-  const totalRepoCount = useMemo(() => {
-    return radars.reduce((sum, r) => sum + getRepoCountIncludingUnsavedChanges(r), 0);
-  }, [radars, getRepoCountIncludingUnsavedChanges]);
+  const totalRepoCount = radars.reduce((sum, r) => sum + getRepoCountIncludingUnsavedChanges(r), 0);
 
   const isAtTotalRepoLimit = totalRepoCount >= RADAR_LIMITS.MAX_TOTAL_REPOS;
 
