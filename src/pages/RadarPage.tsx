@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { useOnboarding } from '../contexts/use-onboarding';
+import { useDemoMode } from '../demo/use-demo-mode';
 import { TOUR_RADAR_ID } from '../demo/tour-data';
 import { RepoCard } from '../components/RepoCard';
 import { CollapsibleSearch } from '../components/CollapsibleSearch';
@@ -24,6 +25,7 @@ const RadarPage = () => {
   const { id } = useParams<{ id: string }>();
   const { providerToken } = useAuth();
   const { isTourActive } = useOnboarding();
+  const { isDemoMode } = useDemoMode();
 
   // Data fetching
   const {
@@ -70,8 +72,9 @@ const RadarPage = () => {
     );
   }, [filteredRepos, sortBy]);
 
-  // Redirect away from tour demo radar when tour is not active (after all hooks)
-  if (id === TOUR_RADAR_ID && !isTourActive) {
+  // Redirect away from tour demo radar when tour is not active (for logged-in users only).
+  // In demo mode, the tour radar persists in the sidebar so it should remain accessible.
+  if (id === TOUR_RADAR_ID && !isTourActive && !isDemoMode) {
     return <Navigate to="/stars" replace />;
   }
 
