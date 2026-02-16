@@ -61,6 +61,10 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setHasCompletedTour(false);
     setIsTourActive(false);
 
+    // Clear persisted completion so refresh mid-tour doesn't restore "completed" state
+    localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    sessionStorage.removeItem(DEMO_ONBOARDING_SESSION_KEY);
+
     if (navigateTo && navigateFn) {
       // Signal that tour should start after navigation completes
       sessionStorage.setItem('tour-pending-start', 'true');

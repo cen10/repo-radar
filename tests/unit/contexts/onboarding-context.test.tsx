@@ -11,7 +11,7 @@ const DEMO_SESSION_KEY = 'demo-onboarding';
 const DEMO_MODE_KEY = 'repo_radar_demo_mode';
 
 function TestConsumer() {
-  const { hasCompletedTour, isTourActive, startTour, completeTour } = useOnboarding();
+  const { hasCompletedTour, isTourActive, startTour, completeTour, restartTour } = useOnboarding();
 
   return (
     <div>
@@ -19,6 +19,7 @@ function TestConsumer() {
       <span data-testid="active">{isTourActive ? 'true' : 'false'}</span>
       <button onClick={startTour}>Start</button>
       <button onClick={completeTour}>Complete</button>
+      <button onClick={() => restartTour()}>Restart</button>
     </div>
   );
 }
@@ -104,6 +105,24 @@ describe('OnboardingContext', () => {
     renderWithProvider();
 
     expect(screen.getByTestId('completed')).toHaveTextContent('false');
+  });
+
+  it('restartTour clears persisted completion from storage', async () => {
+    const user = userEvent.setup();
+    renderWithProvider();
+
+    // Complete the tour first
+    await user.click(screen.getByRole('button', { name: /^start$/i }));
+    await user.click(screen.getByRole('button', { name: /^complete$/i }));
+
+    // Verify storage has completion
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+
+    // Restart the tour
+    await user.click(screen.getByRole('button', { name: /^restart$/i }));
+
+    // Storage should be cleared so refresh mid-tour doesn't restore "completed" state
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it('startTour resets completed flag', async () => {
