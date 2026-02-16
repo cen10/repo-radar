@@ -60,11 +60,12 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  dataTour?: string;
 }
 
 const navItems: NavItem[] = [
   { to: '/stars', label: 'My Stars', icon: StarIcon },
-  { to: '/explore', label: 'Explore', icon: GlobeAltIcon },
+  { to: '/explore', label: 'Explore', icon: GlobeAltIcon, dataTour: 'explore-link' },
 ];
 
 interface NavContentProps {
@@ -87,11 +88,12 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
 
   return (
     <div className="space-y-1 pt-8 pb-4 px-2">
-      {navItems.map(({ to, label, icon: Icon }) => (
+      {navItems.map(({ to, label, icon: Icon, dataTour }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
           <NavLink
             to={to}
             onClick={onLinkClick}
+            data-tour={dataTour}
             className={({ isActive }) =>
               clsx(
                 navLinkBase,

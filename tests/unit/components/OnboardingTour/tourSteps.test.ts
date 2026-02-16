@@ -16,10 +16,10 @@ describe('getTourSteps', () => {
 
     // First step is still welcome
     expect(steps[0].text).toMatch(/welcome to repo radar/i);
-    // Empty state step prompts user to star repos on GitHub
-    const emptyStateStep = steps.find((s) => s.id === 'my-stars-heading');
-    expect(emptyStateStep).toBeDefined();
-    expect(emptyStateStep!.text).toMatch(/star repositories on github/i);
+    // My Stars heading step prompts user to star repos on GitHub when empty
+    const myStarsStep = steps.find((s) => s.id === 'my-stars-heading');
+    expect(myStarsStep).toBeDefined();
+    expect(myStarsStep!.text).toMatch(/star repositories on github/i);
   });
 
   it('returns steps spanning all three pages', () => {
@@ -31,11 +31,21 @@ describe('getTourSteps', () => {
     expect(pages).toContain('repo-detail');
   });
 
-  it('has a centered welcome step with no specific target', () => {
+  it('welcome step is centered (no target)', () => {
     const steps = getTourSteps(true);
 
+    expect(steps[0].id).toBe('welcome');
     expect(steps[0].target).toBe('');
-    expect(steps[0].placement).toBeUndefined(); // Centered steps don't need placement
+    expect(steps[0].placement).toBeUndefined();
+  });
+
+  it('my-stars-heading step targets the My Stars heading', () => {
+    const steps = getTourSteps(true);
+    const myStarsStep = steps.find((s) => s.id === 'my-stars-heading');
+
+    expect(myStarsStep).toBeDefined();
+    expect(myStarsStep!.target).toBe('[data-tour="my-stars-heading"]');
+    expect(myStarsStep!.placement).toBe('bottom');
   });
 
   it('includes keyboard tip in welcome text', () => {
@@ -74,20 +84,20 @@ describe('getTourSteps', () => {
   });
 
   describe('React Ecosystem flow (authenticated users with no radars)', () => {
-    it('includes tour-complete step when using React Ecosystem', () => {
+    it('includes help-button as final step', () => {
       const steps = getTourSteps(true, true); // hasStarredRepos=true, isUsingExampleRadar=true
-      const tourCompleteStep = steps.find((s) => s.id === 'tour-complete');
+      const helpButtonStep = steps.find((s) => s.id === 'help-button');
 
-      expect(tourCompleteStep).toBeDefined();
-      expect(tourCompleteStep!.text).toMatch(/react ecosystem radar will disappear/i);
-      expect(tourCompleteStep!.page).toBe('repo-detail');
+      expect(helpButtonStep).toBeDefined();
+      expect(helpButtonStep!.text).toMatch(/tour is complete/i);
+      expect(helpButtonStep!.page).toBe('repo-detail');
     });
 
-    it('does not include tour-complete step when not using React Ecosystem', () => {
+    it('includes help-button step regardless of radar type', () => {
       const steps = getTourSteps(true, false); // hasStarredRepos=true, isUsingExampleRadar=false
-      const tourCompleteStep = steps.find((s) => s.id === 'tour-complete');
+      const helpButtonStep = steps.find((s) => s.id === 'help-button');
 
-      expect(tourCompleteStep).toBeUndefined();
+      expect(helpButtonStep).toBeDefined();
     });
 
     it('shows React Ecosystem-specific text in sidebar-radars step', () => {

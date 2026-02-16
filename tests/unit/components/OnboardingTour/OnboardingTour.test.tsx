@@ -131,12 +131,12 @@ describe('OnboardingTour', () => {
     renderTour('/stars');
 
     // Stars page has 4 steps on desktop when user has starred repos:
-    // welcome, help-button, repo-link, sidebar-radars
+    // welcome, my-stars-heading, explore-link, sidebar-radars
     const addedSteps = mockTourAddSteps.mock.calls[0][0];
     expect(addedSteps.length).toBe(4);
     expect(addedSteps[0].id).toBe('welcome');
-    expect(addedSteps[1].id).toBe('help-button');
-    expect(addedSteps[2].id).toBe('repo-link');
+    expect(addedSteps[1].id).toBe('my-stars-heading');
+    expect(addedSteps[2].id).toBe('explore-link');
     expect(addedSteps[3].id).toBe('sidebar-radars');
   });
 
@@ -212,8 +212,8 @@ describe('OnboardingTour', () => {
 
     it('calls tour.show() with previous step index for same-page navigation', () => {
       mockOnboarding.isTourActive = true;
-      // Simulate being on help-button step (second step on stars page, index 1)
-      mockTourGetCurrentStep.mockReturnValue({ id: 'help-button' });
+      // Simulate being on my-stars-heading step (second step on stars page, index 1)
+      mockTourGetCurrentStep.mockReturnValue({ id: 'my-stars-heading' });
 
       renderTour('/stars');
 
