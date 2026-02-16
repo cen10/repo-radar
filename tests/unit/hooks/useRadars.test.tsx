@@ -193,5 +193,27 @@ describe('useRadars', () => {
       expect(result.current.radars[0].id).toBe(TOUR_RADAR_ID);
       expect(result.current.radars[0].name).toBe('React Ecosystem');
     });
+
+    it('does not duplicate tour radar when already present in fetched data', async () => {
+      mockIsTourActive.mockReturnValue(true);
+      mockIsDemoMode.mockReturnValue(true);
+      // Simulate demo mode where the tour radar is already in the API response
+      const tourRadarFromApi = createMockRadar({
+        id: TOUR_RADAR_ID,
+        name: 'React Ecosystem',
+        repo_count: 4,
+      });
+      vi.mocked(radar.getRadars).mockResolvedValue([tourRadarFromApi]);
+
+      const { result } = renderHook(() => useRadars(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should only have 1 radar, not 2 (no duplicate injection)
+      expect(result.current.radars).toHaveLength(1);
+      expect(result.current.radars[0].id).toBe(TOUR_RADAR_ID);
+    });
   });
 });
