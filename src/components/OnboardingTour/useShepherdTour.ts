@@ -61,16 +61,18 @@ export function useShepherdTour(pageSteps: TourStep[]) {
 
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
         const currentStep = tour.getCurrentStep();
-        const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
-        const isFirstStepOnPage = tourStep?.id === pageSteps[0]?.id;
+        const currentStepIndex = pageSteps.findIndex((s) => s.id === currentStep?.id);
+        const tourStep = currentStepIndex >= 0 ? pageSteps[currentStepIndex] : null;
 
         if (tourStep?.backTo) {
-          // Cross-page back navigation
           handleBackTo(tourStep.backTo.stepId, tourStep.backTo.path);
-        } else if (!isFirstStepOnPage) {
-          // Same-page back navigation
-          void tour.back();
+        } else if (currentStepIndex > 0) {
+          // Use numeric index with forward=false to match Shepherd's back() behavior
+          void tour.show(currentStepIndex - 1, false);
         }
         return;
       }

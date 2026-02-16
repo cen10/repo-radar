@@ -24,7 +24,8 @@ function buildButtons(
   isFirstStep: boolean,
   isLastStep: boolean,
   tour: Tour,
-  onBackTo?: (stepId: string, path: string) => void
+  onBackTo?: (stepId: string, path: string) => void,
+  previousStepIndex?: number
 ): StepOptionsButton[] {
   const buttons: StepOptionsButton[] = [];
   const isCrossPageNav = step.backTo && onBackTo;
@@ -35,10 +36,11 @@ function buildButtons(
       action: () => onBackTo(step.backTo!.stepId, step.backTo!.path),
       secondary: true,
     });
-  } else if (!isFirstStep) {
+  } else if (!isFirstStep && previousStepIndex !== undefined && previousStepIndex >= 0) {
+    // Use numeric index with forward=false to match Shepherd's back() behavior
     buttons.push({
       text: 'Back',
-      action: () => tour.back(),
+      action: () => tour.show(previousStepIndex, false),
       secondary: true,
     });
   }
@@ -64,11 +66,12 @@ export function configureStepsForShepherd(
   return steps.map((step, index) => {
     const isFirstStep = index === 0;
     const isLastStep = index === steps.length - 1;
+    const previousStepIndex = index > 0 ? index - 1 : undefined;
 
     const configuredStep: StepOptions = {
       id: step.id,
       text: step.text,
-      buttons: buildButtons(step, isFirstStep, isLastStep, tour, onBackTo),
+      buttons: buildButtons(step, isFirstStep, isLastStep, tour, onBackTo, previousStepIndex),
       cancelIcon: { enabled: true },
       canClickTarget: step.canClickTarget ?? false,
       scrollTo: { behavior: 'smooth', block: 'center' } as ScrollIntoViewOptions,

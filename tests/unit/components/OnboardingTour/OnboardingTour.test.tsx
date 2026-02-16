@@ -42,6 +42,7 @@ const mockTourOn = vi.fn();
 const mockTourOff = vi.fn();
 const mockTourIsActive = vi.fn().mockReturnValue(false);
 const mockTourBack = vi.fn();
+const mockTourShow = vi.fn();
 const mockTourGetCurrentStep = vi.fn();
 
 const tourInstances: object[] = [];
@@ -54,6 +55,7 @@ class MockTour {
   off = mockTourOff;
   isActive = mockTourIsActive;
   back = mockTourBack;
+  show = mockTourShow;
   getCurrentStep = mockTourGetCurrentStep;
   options: Record<string, unknown>;
   constructor(options: Record<string, unknown>) {
@@ -208,9 +210,9 @@ describe('OnboardingTour', () => {
       expect(sessionStorage.getItem('tour-start-from-step')).toBe('sidebar-radars');
     });
 
-    it('calls tour.back() for same-page navigation on non-first step', () => {
+    it('calls tour.show() with previous step index for same-page navigation', () => {
       mockOnboarding.isTourActive = true;
-      // Simulate being on help-button step (second step on stars page, no backTo)
+      // Simulate being on help-button step (second step on stars page, index 1)
       mockTourGetCurrentStep.mockReturnValue({ id: 'help-button' });
 
       renderTour('/stars');
@@ -218,8 +220,8 @@ describe('OnboardingTour', () => {
       const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
       document.dispatchEvent(event);
 
-      // Should call tour.back() for same-page navigation
-      expect(mockTourBack).toHaveBeenCalledOnce();
+      // Should call tour.show() with previous index and forward=false
+      expect(mockTourShow).toHaveBeenCalledWith(0, false);
       expect(mockNavigate).not.toHaveBeenCalled();
     });
 
@@ -233,9 +235,9 @@ describe('OnboardingTour', () => {
       const event = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true });
       document.dispatchEvent(event);
 
-      // Should not navigate or call back
+      // Should not navigate or show any step
       expect(mockNavigate).not.toHaveBeenCalled();
-      expect(mockTourBack).not.toHaveBeenCalled();
+      expect(mockTourShow).not.toHaveBeenCalled();
     });
   });
 });
