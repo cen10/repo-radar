@@ -91,6 +91,7 @@ export function useShepherdTour(pageSteps: TourStep[]) {
         if (tourStep?.advanceByClickingTarget) {
           e.preventDefault();
           e.stopPropagation();
+          e.stopImmediatePropagation();
         }
       }
     };
