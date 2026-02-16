@@ -146,7 +146,7 @@ describe('useRadars', () => {
       expect(result.current.radars[0].name).toBe('React Ecosystem');
     });
 
-    it('does not inject demo radar when user has real radars', async () => {
+    it('prepends tour radar when user has real radars during tour', async () => {
       mockIsTourActive.mockReturnValue(true);
       mockIsDemoMode.mockReturnValue(false);
       const mockRadars = [createMockRadar({ id: 'real-radar', name: 'My Radar' })];
@@ -158,8 +158,10 @@ describe('useRadars', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.radars).toHaveLength(1);
-      expect(result.current.radars[0].id).toBe('real-radar');
+      // Tour radar is prepended so backTo navigation works consistently
+      expect(result.current.radars).toHaveLength(2);
+      expect(result.current.radars[0].id).toBe(TOUR_RADAR_ID);
+      expect(result.current.radars[1].id).toBe('real-radar');
     });
 
     it('does not inject demo radar when tour is not active', async () => {

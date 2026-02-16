@@ -33,9 +33,9 @@ export function useRadars({ enabled = true }: UseRadarsOptions = {}): UseRadarsR
     enabled,
   });
 
-  // During the tour, show tour radar only when user has no real radars
-  const shouldUseTourRadar = isTourActive && (data?.length ?? 0) === 0;
-  const radars = shouldUseTourRadar ? [getTourRadar()] : (data ?? []);
+  // During the tour, always prepend tour-demo-radar so backTo navigation works
+  // and the tour consistently guides users through the same radar.
+  const radars = isTourActive ? [getTourRadar(), ...(data ?? [])] : (data ?? []);
 
   return {
     radars,

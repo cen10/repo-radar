@@ -16,6 +16,8 @@ export function useShepherdTour(pageSteps: TourStep[]) {
   const Shepherd = useShepherd();
   const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
+  // Track current step to preserve position when effect re-runs (e.g., hasStarredRepos changes)
+  const currentStepRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isTourActive || pageSteps.length === 0) {
@@ -43,12 +45,18 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     const configuredSteps = configureStepsForShepherd(pageSteps, { tour, onBackTo: handleBackTo });
     tour.addSteps(configuredSteps);
 
-    tour.on('complete', completeTour);
-    tour.on('cancel', completeTour);
+    const handleTourEnd = () => {
+      currentStepRef.current = null;
+      completeTour();
+    };
+    tour.on('complete', handleTourEnd);
+    tour.on('cancel', handleTourEnd);
 
     const updateCurrentStepId = () => {
       const step = tour.getCurrentStep();
-      setCurrentStepId(step?.id ?? null);
+      const stepId = step?.id ?? null;
+      currentStepRef.current = stepId;
+      setCurrentStepId(stepId);
     };
     tour.on('show', updateCurrentStepId);
 
@@ -104,26 +112,32 @@ export function useShepherdTour(pageSteps: TourStep[]) {
 
     tourRef.current = tour;
 
-    // Check for cross-page back navigation (e.g., Back button on repo-detail → radar page)
-    const stepToResume = sessionStorage.getItem('tour-start-from-step');
+    // Determine which step to show:
+    // 1. Cross-page back navigation (sessionStorage flag from backTo)
+    // 2. Same-page effect re-run (currentStepRef preserved from previous tour instance)
+    // 3. Normal start (first step on this page)
+    const crossPageStep = sessionStorage.getItem('tour-start-from-step');
     sessionStorage.removeItem('tour-start-from-step');
-    const canResume = stepToResume && pageSteps.some((s) => s.id === stepToResume);
+    const samePageStep = currentStepRef.current;
 
-    if (canResume) {
-      // Resume directly at the target step (no flash of first step)
+    const stepToResume =
+      (crossPageStep && pageSteps.some((s) => s.id === crossPageStep) && crossPageStep) ||
+      (samePageStep && pageSteps.some((s) => s.id === samePageStep) && samePageStep);
+
+    if (stepToResume) {
       void tour.show(stepToResume);
     } else {
-      // Normal forward navigation: start from first step on this page
       void tour.start();
     }
 
     return () => {
-      tour.off('complete', completeTour);
-      tour.off('cancel', completeTour);
+      tour.off('complete', handleTourEnd);
+      tour.off('cancel', handleTourEnd);
       tour.off('show', updateCurrentStepId);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleOverlayClick, true);
       setCurrentStepId(null);
+      // Don't clear currentStepRef here - it's needed to resume after effect re-runs
       if (tour.isActive()) {
         void tour.cancel();
       }

@@ -16,6 +16,7 @@ import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
 import { useOnboarding } from '../contexts/use-onboarding';
 import { useRadars } from '../hooks/useRadars';
+import { TOUR_RADAR_ID } from '../demo/tour-data';
 import { RenameRadarModal } from './RenameRadarModal';
 import { DeleteRadarModal } from './DeleteRadarModal';
 
@@ -32,6 +33,8 @@ interface RadarNavItemProps {
   onRename: (radar: RadarWithCount) => void;
   onDelete: (radar: RadarWithCount) => void;
   dataTour?: string;
+  isDimmed?: boolean;
+  showPulse?: boolean;
 }
 
 // Approximate characters that fit in one line of the sidebar (for tooltip detection)
@@ -45,6 +48,8 @@ function RadarNavItem({
   onRename,
   onDelete,
   dataTour,
+  isDimmed,
+  showPulse,
 }: RadarNavItemProps) {
   // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
@@ -59,7 +64,13 @@ function RadarNavItem({
 
   // Wrapper div with group class so hover state applies to both NavLink and Menu
   return (
-    <div className="group/radar relative rounded-lg hover:bg-indigo-50 transition-colors">
+    <div
+      className={clsx(
+        'group/radar relative rounded-lg transition-colors',
+        isDimmed ? 'opacity-40 pointer-events-none' : 'hover:bg-indigo-50',
+        showPulse && 'animate-pulse-border'
+      )}
+    >
       <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
         <NavLink
           to={`/radar/${radar.id}`}
@@ -297,8 +308,8 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
 
 export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarListProps) {
   const { collapsed, hideText } = useSidebarContext();
-  const { currentStepId } = useOnboarding();
-  // Pulse animation draws attention to radar list during onboarding tour
+  const { currentStepId, isTourActive } = useOnboarding();
+  // Pulse animation draws attention to tour radar during onboarding
   const showPulse = currentStepId === 'sidebar-radars';
   const navigate = useNavigate();
   const { id: currentRadarId } = useParams<{ id: string }>();
@@ -345,22 +356,30 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
   // Normal state with radars
   return (
     <div data-testid="radar-list" className="space-y-1">
-      {/* Radar list - wrapped for tour targeting (excludes create button) */}
-      <div
-        data-tour="sidebar-radars"
-        className={`space-y-1 ${showPulse ? 'animate-pulse-border' : ''}`}
-      >
-        {radars.map((radar) => (
-          <RadarNavItem
-            key={radar.id}
-            radar={radar}
-            collapsed={collapsed}
-            hideText={hideText}
-            onLinkClick={onLinkClick}
-            onRename={setRadarToRename}
-            onDelete={setRadarToDelete}
-          />
-        ))}
+      {/* Radar list */}
+      <div className="space-y-1">
+        {radars.map((radar) => {
+          const isTourRadar = radar.id === TOUR_RADAR_ID;
+          // During tour, only tour-demo-radar gets the data-tour attribute for highlighting
+          const dataTour = isTourRadar ? 'sidebar-radars' : undefined;
+          // Dim non-tour radars during tour to guide users to click the tour radar
+          const isDimmed = isTourActive && !isTourRadar;
+
+          return (
+            <RadarNavItem
+              key={radar.id}
+              radar={radar}
+              collapsed={collapsed}
+              hideText={hideText}
+              onLinkClick={onLinkClick}
+              onRename={setRadarToRename}
+              onDelete={setRadarToDelete}
+              dataTour={dataTour}
+              isDimmed={isDimmed}
+              showPulse={isTourRadar && showPulse}
+            />
+          );
+        })}
       </div>
 
       {/* Create button */}

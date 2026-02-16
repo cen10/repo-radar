@@ -5,10 +5,8 @@ import { getTourSteps } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
 import { useOnboarding } from '../../contexts/use-onboarding';
 import { useDemoMode } from '../../demo/use-demo-mode';
-import { useRadars } from '../../hooks/useRadars';
 import { useAllStarredRepositories } from '../../hooks/useAllStarredRepositories';
 import { useAuth } from '../../hooks/use-auth';
-import { TOUR_RADAR_ID } from '../../demo/tour-data';
 
 export function OnboardingTour() {
   const location = useLocation();
@@ -23,7 +21,6 @@ export function OnboardingTour() {
     }
   }, [location.pathname, startTour]);
   const { isDemoMode } = useDemoMode();
-  const { radars } = useRadars();
   const { providerToken } = useAuth();
 
   // Fetch starred repos to determine if user has any (affects tour messaging)
@@ -33,8 +30,8 @@ export function OnboardingTour() {
   });
   const hasStarredRepos = isDemoMode || totalStarred > 0;
 
-  // True when showing the injected tour radar (React Ecosystem)
-  const isUsingTourRadar = isTourActive && radars.length === 1 && radars[0].id === TOUR_RADAR_ID;
+  // Always true during tour since we prepend tour-demo-radar to guide users consistently
+  const isUsingTourRadar = isTourActive;
 
   const steps = useMemo(
     () => getTourSteps(hasStarredRepos, isUsingTourRadar, isDemoMode),
