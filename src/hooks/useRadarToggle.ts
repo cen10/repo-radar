@@ -151,7 +151,8 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     // Invalidate caches for successful operations
     if (succeededAdds.length > 0 || succeededRemoves.length > 0) {
       void queryClient.invalidateQueries({ queryKey: ['radars'] });
-      void queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] });
+      // Await repo-radars so RadarIconButton sees updated state before modal closes
+      await queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] });
 
       const affectedRadarIds = new Set([...succeededAdds, ...succeededRemoves]);
       affectedRadarIds.forEach((id) => {
