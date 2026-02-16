@@ -235,11 +235,16 @@ describe('Radar CRUD Integration', () => {
         expect(mockAddRepoToRadar).toHaveBeenCalledWith('radar-1', 123);
       });
 
-      // Verify cache invalidation
       await waitFor(() => {
+        // Updates sidebar repo counts
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+        // Updates checkbox state in ManageRadarsModal
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['repo-radars', 123],
+        });
+        // Updates the radar's repository list on RadarPage
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['radarRepositories', 'radar-1'],
         });
       });
     });
@@ -274,7 +279,16 @@ describe('Radar CRUD Integration', () => {
       });
 
       await waitFor(() => {
+        // Updates sidebar repo counts
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
+        // Updates checkbox state in ManageRadarsModal
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['repo-radars', 123],
+        });
+        // Updates the radar's repository list on RadarPage
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['radarRepositories', 'radar-1'],
+        });
       });
     });
 

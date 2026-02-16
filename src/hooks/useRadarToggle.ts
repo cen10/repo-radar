@@ -63,9 +63,11 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
         } else {
           await addRepoToRadar(radar.id, githubRepoId);
         }
-        // Refresh both caches with server data
+        // Refresh all affected caches with server data
         void queryClient.invalidateQueries({ queryKey: radarsQueryKey });
         void queryClient.invalidateQueries({ queryKey: repoRadarsQueryKey });
+        // Also invalidate the radar's repository list so RadarPage shows updated repos
+        void queryClient.invalidateQueries({ queryKey: ['radarRepositories', radar.id] });
       } catch (err) {
         // Revert both caches on error
         queryClient.setQueryData(repoRadarsQueryKey, previousIds);
