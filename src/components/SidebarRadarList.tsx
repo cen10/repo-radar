@@ -109,26 +109,26 @@ function RadarNavItem({
         >
           {({ open }) => (
             <>
-              {/* Kebab menu - shown on hover, focus, or when menu is open */}
+              {/* Kebab menu - shown on hover, keyboard focus, or when menu is open */}
               <MenuButton
                 className={clsx(
                   'peer absolute -right-1 text-gray-400 cursor-pointer transition-opacity pointer-events-auto',
                   open
                     ? 'opacity-100'
-                    : 'lg:opacity-0 focus:opacity-100 lg:group-hover/radar:opacity-100'
+                    : 'lg:opacity-0 focus-visible:opacity-100 lg:group-hover/radar:opacity-100'
                 )}
               >
                 <span className="sr-only">Open menu for {radar.name}</span>
                 <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
               </MenuButton>
-              {/* Repo count - hidden on hover, button focus, or when menu is open */}
+              {/* Repo count - hidden on hover, keyboard focus, or when menu is open */}
               <span
                 aria-hidden="true"
                 className={clsx(
                   'text-gray-400 text-xs whitespace-nowrap transition-opacity',
                   open
                     ? 'opacity-0'
-                    : 'opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:peer-focus:opacity-0'
+                    : 'opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:peer-focus-visible:opacity-0'
                 )}
               >
                 {radar.repo_count}
