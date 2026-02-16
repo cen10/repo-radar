@@ -113,31 +113,61 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     setIsSaving(true);
     setSaveError(null);
 
-    try {
-      await Promise.all([
-        ...actualAdds.map((id) => addRepoToRadar(id, githubRepoId)),
-        ...actualRemoves.map((id) => removeRepoFromRadar(id, githubRepoId)),
-      ]);
+    // Use Promise.allSettled to handle partial failures gracefully
+    const addResults = await Promise.allSettled(
+      actualAdds.map((id) => addRepoToRadar(id, githubRepoId).then(() => id))
+    );
+    const removeResults = await Promise.allSettled(
+      actualRemoves.map((id) => removeRepoFromRadar(id, githubRepoId).then(() => id))
+    );
 
-      // Invalidate all affected caches
+    const succeededAdds = addResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+    const succeededRemoves = removeResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    const failedResults = [...addResults, ...removeResults].filter(
+      (r) => r.status === 'rejected'
+    ) as PromiseRejectedResult[];
+
+    // Remove succeeded operations from pending sets
+    if (succeededAdds.length > 0) {
+      setRadarsToAddRepoTo((prev) => {
+        const next = new Set(prev);
+        succeededAdds.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+    if (succeededRemoves.length > 0) {
+      setRadarsToRemoveRepoFrom((prev) => {
+        const next = new Set(prev);
+        succeededRemoves.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+
+    // Invalidate caches for successful operations
+    if (succeededAdds.length > 0 || succeededRemoves.length > 0) {
       void queryClient.invalidateQueries({ queryKey: ['radars'] });
       void queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] });
 
-      // Invalidate each affected radar's repository list
-      const affectedRadarIds = new Set([...actualAdds, ...actualRemoves]);
+      const affectedRadarIds = new Set([...succeededAdds, ...succeededRemoves]);
       affectedRadarIds.forEach((id) => {
         void queryClient.invalidateQueries({ queryKey: ['radarRepositories', id] });
       });
+    }
 
-      // Clear unsaved changes on success
-      setRadarsToAddRepoTo(new Set());
-      setRadarsToRemoveRepoFrom(new Set());
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save changes';
+    setIsSaving(false);
+
+    // If any failed, report error and throw
+    if (failedResults.length > 0) {
+      const firstError = failedResults[0].reason;
+      const message =
+        firstError instanceof Error ? firstError.message : 'Failed to save some changes';
       setSaveError(message);
-      throw err;
-    } finally {
-      setIsSaving(false);
+      throw firstError;
     }
   }, [hasUnsavedChanges, actualAdds, actualRemoves, githubRepoId, queryClient]);
 
