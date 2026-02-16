@@ -32,9 +32,9 @@ vi.mock('@/services/radar', () => ({
   addRepoToRadar: vi.fn(),
   removeRepoFromRadar: vi.fn(),
   RADAR_LIMITS: {
-    MAX_RADARS: 10,
-    MAX_REPOS_PER_RADAR: 50,
-    MAX_TOTAL_REPOS: 200,
+    MAX_RADARS_PER_USER: 5,
+    MAX_REPOS_PER_RADAR: 25,
+    MAX_TOTAL_REPOS: 50,
   },
 }));
 
