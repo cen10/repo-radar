@@ -1,22 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-
-const DEMO_MODE_KEY = 'repo_radar_demo_mode';
-
-interface DemoModeResult {
-  success: boolean;
-}
-
-interface DemoContextType {
-  isDemoMode: boolean;
-  enterDemoMode: () => Promise<DemoModeResult>;
-  exitDemoMode: () => void;
-  isInitializing: boolean;
-  isBannerVisible: boolean;
-  dismissBanner: () => void;
-  resetBannerDismissed: () => void;
-}
-
-const DemoContext = createContext<DemoContextType | null>(null);
+import { useState, useCallback, useEffect, type ReactNode } from 'react';
+import { DemoContext, DEMO_MODE_KEY } from './DemoContext';
 
 interface DemoModeProviderProps {
   children: ReactNode;
@@ -34,15 +17,15 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
 
   const isBannerVisible = isDemoMode && !isBannerDismissed;
 
-  const dismissBanner = useCallback(() => {
+  const dismissBanner = () => {
     setIsBannerDismissed(true);
-  }, []);
+  };
 
   const resetBannerDismissed = useCallback(() => {
     setIsBannerDismissed(false);
   }, []);
 
-  const enterDemoMode = useCallback(async (): Promise<DemoModeResult> => {
+  const enterDemoMode = async () => {
     if (isInitializing || isDemoMode) return { success: false };
 
     setIsInitializing(true);
@@ -60,13 +43,15 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
     } finally {
       setIsInitializing(false);
     }
-  }, [isInitializing, isDemoMode]);
+  };
 
   const exitDemoMode = useCallback(() => {
     // Stop MSW (fire-and-forget since page reloads after)
     void import('./browser').then(({ stopDemoMode }) => stopDemoMode());
 
     localStorage.removeItem(DEMO_MODE_KEY);
+    // Clear demo tour completion so tour starts fresh on next demo login
+    sessionStorage.removeItem('demo-onboarding');
     setIsDemoMode(false);
     setIsBannerDismissed(false);
   }, []);
@@ -92,7 +77,7 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
   }
 
   return (
-    <DemoContext.Provider
+    <DemoContext
       value={{
         isDemoMode,
         enterDemoMode,
@@ -104,41 +89,6 @@ export function DemoModeProvider({ children }: DemoModeProviderProps) {
       }}
     >
       {children}
-    </DemoContext.Provider>
+    </DemoContext>
   );
-}
-
-export function useDemoMode(): DemoContextType {
-  const context = useContext(DemoContext);
-  if (!context) {
-    // No provider = not in demo mode. Return safe defaults.
-    // This is semantically correct and simplifies testing.
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('useDemoMode: No DemoModeProvider found — demo mode will not function');
-    }
-    return {
-      isDemoMode: false,
-      enterDemoMode: async () => ({ success: false }),
-      exitDemoMode: () => {},
-      isInitializing: false,
-      isBannerVisible: false,
-      dismissBanner: () => {},
-      resetBannerDismissed: () => {},
-    };
-  }
-  return context;
-}
-
-/**
- * Check if demo mode is active by reading localStorage directly.
- *
- * Use this ONLY in non-React code (services, utilities, loaders) where
- * you don't have access to React context. In React components, use
- * the `useDemoMode()` hook instead for reactive updates.
- *
- * This reads localStorage which is updated synchronously before React
- * state in enterDemoMode/exitDemoMode, so it stays in sync.
- */
-export function isDemoModeActive(): boolean {
-  return localStorage.getItem(DEMO_MODE_KEY) === 'true';
 }

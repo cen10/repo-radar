@@ -148,7 +148,8 @@ describe('Button', () => {
     it('applies disabled styling', () => {
       render(<Button disabled>Submit</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('disabled:cursor-not-allowed');
+      expect(button).toHaveClass('cursor-not-allowed');
+      expect(button).not.toHaveClass('cursor-pointer');
     });
   });
 

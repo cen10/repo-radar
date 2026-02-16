@@ -12,12 +12,13 @@ import { RadarsPage } from '../pages/radars.page';
 const MOCK_GITHUB_TOKEN = 'mock-github-token-for-e2e-tests';
 
 export const test = base.extend<{
-  authenticatedPage: Page;
+  returningUserPage: Page;
+  firstTimeUserPage: Page;
   starsPage: StarsPage;
   radarsPage: RadarsPage;
 }>({
-  // Authenticated page with all mocks set up
-  authenticatedPage: async ({ page }, use) => {
+  // Returning user: has completed onboarding, tour won't show
+  returningUserPage: async ({ page }, use) => {
     await setupAuthState(page, MOCK_GITHUB_TOKEN);
     await setupAuthMocks(page);
     await setupSupabaseMocks(page, mockSupabaseUser.id);
@@ -25,11 +26,20 @@ export const test = base.extend<{
     await use(page);
   },
 
-  starsPage: async ({ authenticatedPage }, use) => {
-    await use(new StarsPage(authenticatedPage));
+  // First-time user: hasn't completed onboarding, tour will show
+  firstTimeUserPage: async ({ page }, use) => {
+    await setupAuthState(page, MOCK_GITHUB_TOKEN, { skipOnboardingCompletion: true });
+    await setupAuthMocks(page);
+    await setupSupabaseMocks(page, mockSupabaseUser.id, { seedDefaultRadar: true });
+    await setupGitHubMocks(page);
+    await use(page);
   },
 
-  radarsPage: async ({ authenticatedPage }, use) => {
-    await use(new RadarsPage(authenticatedPage));
+  starsPage: async ({ returningUserPage }, use) => {
+    await use(new StarsPage(returningUserPage));
+  },
+
+  radarsPage: async ({ returningUserPage }, use) => {
+    await use(new RadarsPage(returningUserPage));
   },
 });

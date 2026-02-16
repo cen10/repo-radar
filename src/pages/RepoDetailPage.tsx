@@ -3,7 +3,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRepository } from '../hooks/useRepository';
 import { useReleases } from '../hooks/useReleases';
-import { RepoHeader, RepoStats, RepoReleases } from '../components/repo-detail';
+import { RepoHeader, RepoStats, RepoReleases, ComingSoon } from '../components/repo-detail';
 import { LoadingSpinner } from '../components/icons';
 
 const RepoDetailPage = () => {
@@ -138,6 +138,7 @@ const RepoDetailPage = () => {
         dataFetchedAt={dataUpdatedAt}
       />
       <RepoStats repository={repository} />
+      <ComingSoon />
       <RepoReleases
         releases={releases}
         isLoading={releasesLoading}

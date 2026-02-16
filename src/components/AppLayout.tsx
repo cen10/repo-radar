@@ -6,8 +6,11 @@ import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
 import { CreateRadarModal } from './CreateRadarModal';
 import { DemoBanner } from './DemoBanner';
+import { OnboardingTour } from './OnboardingTour';
 import { useAuth } from '../hooks/use-auth';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
+import { OnboardingProvider } from '../contexts/onboarding-context';
+import { ShepherdJourneyProvider } from 'react-shepherd';
 
 /**
  * Inner layout component that uses auth context.
@@ -49,6 +52,9 @@ function AuthenticatedLayout() {
   // Only show sidebar for authenticated users
   const showSidebar = !!user;
 
+  // Skip onboarding tour on mobile - the experience is desktop-optimized
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
   return (
     <div className="min-h-screen bg-white">
       <DemoBanner />
@@ -70,13 +76,15 @@ function AuthenticatedLayout() {
         </Sidebar>
       )}
       <main
-        className={`${isBannerVisible ? 'pt-[118px]' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`${user ? (isBannerVisible ? 'pt-[118px]' : 'pt-16') : ''} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
       >
         <Outlet />
       </main>
 
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
+
+      {showSidebar && isDesktop && <OnboardingTour />}
     </div>
   );
 }
@@ -90,7 +98,11 @@ function AuthenticatedLayout() {
 export function AppLayout() {
   return (
     <AuthProvider>
-      <AuthenticatedLayout />
+      <ShepherdJourneyProvider>
+        <OnboardingProvider>
+          <AuthenticatedLayout />
+        </OnboardingProvider>
+      </ShepherdJourneyProvider>
     </AuthProvider>
   );
 }

@@ -2,9 +2,14 @@ Create a document in `docs/agent-course-corrections/` about the conversation
 we just had where I identified an issue with a decision you made and redirected
 the approach.
 
-Before creating the file, check the existing files in that directory to find the
-highest numeric prefix (e.g., if `003-fixture-chaining-pattern.md` exists, the
-next file should start with `004-`). Zero-pad to three digits.
+**Important:** The `docs/` folder is symlinked and not checked into git. It
+exists locally at the workspace root but glob/grep won't find it through the
+worktree. To check existing files, use bash directly with the current working
+directory: `ls $CWD/docs/agent-course-corrections/`
+
+Before creating the file, list existing files to find the highest numeric prefix
+(e.g., if `003-fixture-chaining-pattern.md` exists, the next file should start
+with `004-`). Zero-pad to three digits.
 
 This doc is for interview prep. I expect to be asked how I work with AI agents,
 and I want concrete examples showing that I review code critically, catch

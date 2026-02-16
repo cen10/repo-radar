@@ -12,7 +12,8 @@ import {
   storeAccessToken,
   getStoredAccessToken,
 } from '../services/github-token';
-import { isDemoModeActive, useDemoMode } from '../demo/demo-context';
+import { isDemoModeActive } from '../demo/is-demo-mode-active';
+import { useDemoMode } from '../demo/use-demo-mode';
 import { DEMO_USER } from '../demo/demo-user';
 
 const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRadarRepositories } from '@/hooks/useRadarRepositories';
 import * as radar from '@/services/radar';
 import * as github from '@/services/github';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import type { RadarRepo } from '@/types/database';
 import { createMockRepository } from '../../mocks/factories';
 
@@ -24,6 +25,12 @@ vi.mock('@/services/github-token', () => ({
     return token;
   },
   hasFallbackToken: () => false,
+}));
+
+// Mock the onboarding context
+const mockIsTourActive = vi.fn(() => false);
+vi.mock('@/contexts/use-onboarding', () => ({
+  useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
 }));
 
 // Helper to create a test QueryClient
@@ -166,5 +173,40 @@ describe('useRadarRepositories', () => {
     });
 
     expect(result.current.refetch).toBeInstanceOf(Function);
+  });
+
+  describe('React Ecosystem for authenticated users with no radars', () => {
+    it('returns demo repo when viewing React Ecosystem during onboarding tour', async () => {
+      mockIsTourActive.mockReturnValue(true);
+
+      const { result } = renderHook(
+        () => useRadarRepositories({ radarId: TOUR_RADAR_ID, token: null }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Should return all 4 demo repos without calling the API
+      expect(result.current.repositories).toHaveLength(4);
+      expect(result.current.repositories[0].full_name).toBe('facebook/react');
+      expect(result.current.repositories[1].full_name).toBe('vercel/next.js');
+      expect(radar.getRadarRepos).not.toHaveBeenCalled();
+      expect(github.fetchRepositoriesByIds).not.toHaveBeenCalled();
+    });
+
+    it('does not return demo repo when tour is not active (e.g., direct URL access)', async () => {
+      mockIsTourActive.mockReturnValue(false);
+
+      const { result } = renderHook(
+        () => useRadarRepositories({ radarId: TOUR_RADAR_ID, token: null }),
+        { wrapper }
+      );
+
+      // Query should be disabled (no token and not tour demo radar)
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.repositories).toEqual([]);
+    });
   });
 });

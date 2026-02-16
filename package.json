@@ -29,11 +29,13 @@
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.89.0",
+    "clsx": "^2.1.1",
+    "msw": "^2.12.9",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "msw": "^2.12.9",
     "react-error-boundary": "^6.0.0",
-    "react-router-dom": "^7.11.0"
+    "react-router-dom": "^7.11.0",
+    "react-shepherd": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
@@ -69,6 +71,10 @@
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
       "bash -c 'npm run typecheck'",
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "tests/**/*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],

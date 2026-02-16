@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
 import {
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
   Bars3Icon,
@@ -12,7 +12,8 @@ import {
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { Button } from './Button';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
+import { useOnboarding } from '../contexts/use-onboarding';
 
 // Helper function to provide user-friendly error messages for sign out
 function getSignOutErrorMessage(error: unknown): string {
@@ -91,7 +92,9 @@ interface HeaderProps {
 export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { isBannerVisible } = useDemoMode();
+  const { restartTour } = useOnboarding();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -211,6 +214,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                 aria-label="Help"
                 aria-expanded={isHelpOpen}
                 aria-controls="help-panel"
+                data-tour="help-button"
               >
                 <QuestionMarkCircleIcon className="h-5 w-5" />
               </Button>
@@ -231,6 +235,30 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                   Not seeing your latest changes from GitHub? Try refreshing the page to sync your
                   starred repositories.
                 </p>
+                {/* Tour link hidden on mobile - tour is desktop-only */}
+                <div className="hidden lg:block">
+                  <div className="border-t border-gray-200 mt-3 -mx-4 w-[calc(100%+2rem)]" />
+                  <button
+                    onClick={() => {
+                      setIsHelpOpen(false);
+                      // Clear any mid-tour navigation state to ensure fresh start
+                      sessionStorage.removeItem('tour-start-from-step');
+                      // If already on /stars, start tour directly; otherwise navigate first.
+                      // Navigation is needed because the effect that clears tour-pending-start
+                      // depends on location.pathname changing. Starting directly avoids
+                      // orphaning the flag, which would cause startTour() to be called again
+                      // during tour navigation between pages.
+                      if (location.pathname === '/stars') {
+                        restartTour();
+                      } else {
+                        restartTour('/stars', navigate);
+                      }
+                    }}
+                    className="block w-[calc(100%+2rem)] text-left text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer px-4 py-2 -mx-4 -mb-4 rounded-b-lg hover:bg-indigo-200 transition-colors"
+                  >
+                    Take the onboarding tour
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -241,7 +269,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               loading={isSigningOut}
               loadingText="Signing out..."
             >
-              <ArrowRightOnRectangleIcon className="mr-2 h-4 w-4" />
+              <ArrowRightStartOnRectangleIcon className="mr-2 h-4 w-4" />
               Sign out
             </Button>
           </div>

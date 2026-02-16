@@ -212,6 +212,57 @@ describe('Header', () => {
     expect(signOutButton).toHaveFocus();
   });
 
+  describe('Help menu', () => {
+    it('hides tour link on mobile via CSS class', async () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
+
+      renderWithRouter(<Header />);
+
+      // Open the help menu
+      const helpButton = screen.getByRole('button', { name: /help/i });
+      fireEvent.click(helpButton);
+
+      // Find the tour link and verify its wrapper has the mobile-hiding class
+      const tourLink = await screen.findByRole('button', { name: /take the onboarding tour/i });
+      const tourLinkWrapper = tourLink.parentElement;
+      expect(tourLinkWrapper).toHaveClass('hidden', 'lg:block');
+    });
+
+    it('does not set sessionStorage flag when clicking tour button while on /stars', async () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
+      sessionStorage.clear();
+
+      // Render at /stars route
+      renderWithRouter(<Header />, { route: '/stars' });
+
+      // Open help menu and click tour button
+      const helpButton = screen.getByRole('button', { name: /help/i });
+      fireEvent.click(helpButton);
+      const tourButton = await screen.findByRole('button', { name: /take the onboarding tour/i });
+      fireEvent.click(tourButton);
+
+      // Flag should NOT be set (avoids orphaned flag bug)
+      expect(sessionStorage.getItem('tour-pending-start')).toBeNull();
+    });
+
+    it('sets sessionStorage flag when clicking tour button from different page', async () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
+      sessionStorage.clear();
+
+      // Render at /radars route (not /stars)
+      renderWithRouter(<Header />, { route: '/radars' });
+
+      // Open help menu and click tour button
+      const helpButton = screen.getByRole('button', { name: /help/i });
+      fireEvent.click(helpButton);
+      const tourButton = await screen.findByRole('button', { name: /take the onboarding tour/i });
+      fireEvent.click(tourButton);
+
+      // Flag SHOULD be set (navigation needed)
+      expect(sessionStorage.getItem('tour-pending-start')).toBe('true');
+    });
+  });
+
   describe('Mobile menu button', () => {
     it('renders hamburger menu button when onMenuToggle is provided', () => {
       vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));

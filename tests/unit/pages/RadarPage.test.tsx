@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,14 +7,22 @@ import RadarPage from '@/pages/RadarPage';
 import * as useRadarHook from '@/hooks/useRadar';
 import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
+import { TOUR_RADAR_ID } from '@/demo/tour-data';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
 import type { Radar } from '@/types/database';
 
 // Mock the hooks
 vi.mock('@/hooks/useRadar');
 vi.mock('@/hooks/useRadarRepositories');
 vi.mock('@/hooks/useAuth');
+
+// Mock useOnboarding to control isTourActive
+const mockIsTourActive = vi.fn(() => false);
+vi.mock('@/contexts/use-onboarding', () => ({
+  useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
+}));
 
 // Local factory for Radar type (without repo_count) - useRadar returns Radar, not RadarWithCount
 const createMockRadar = (overrides?: Partial<Radar>): Radar => ({
@@ -48,12 +56,14 @@ describe('RadarPage', () => {
   const renderWithProviders = (radarId: string = 'radar-123') => {
     return render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
-          <Routes>
-            <Route path="/radar/:id" element={<RadarPage />} />
-            <Route path="/stars" element={<div>Stars Page</div>} />
-          </Routes>
-        </MemoryRouter>
+        <OnboardingProvider>
+          <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
+            <Routes>
+              <Route path="/radar/:id" element={<RadarPage />} />
+              <Route path="/stars" element={<div>Stars Page</div>} />
+            </Routes>
+          </MemoryRouter>
+        </OnboardingProvider>
       </QueryClientProvider>
     );
   };
@@ -194,12 +204,6 @@ describe('RadarPage', () => {
       // Search is collapsible - look for the toggle button instead of the input
       expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
     });
-
-    it('shows kebab menu button', () => {
-      renderWithProviders();
-
-      expect(screen.getByRole('button', { name: /open radar menu/i })).toBeInTheDocument();
-    });
   });
 
   describe('Search functionality', () => {
@@ -314,38 +318,13 @@ describe('RadarPage', () => {
     });
   });
 
-  describe('Delete modal', () => {
-    beforeEach(() => {
-      vi.mocked(useRadarHook.useRadar).mockReturnValue({
-        radar: createMockRadar(),
-        isLoading: false,
-        error: null,
-        isNotFound: false,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
-        repositories: [createMockRepository()],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-    });
+  describe('React Ecosystem redirect guard', () => {
+    it('redirects to /stars when accessing React Ecosystem outside of tour', () => {
+      mockIsTourActive.mockReturnValue(false);
 
-    it('opens delete modal when Delete is clicked in menu', async () => {
-      const user = userEvent.setup();
-      renderWithProviders();
+      renderWithProviders(TOUR_RADAR_ID);
 
-      // Open the kebab menu
-      await user.click(screen.getByRole('button', { name: /open radar menu/i }));
-
-      // Click Delete
-      await user.click(screen.getByRole('menuitem', { name: /delete/i }));
-
-      // Check modal is open
-      await waitFor(() => {
-        expect(screen.getByRole('dialog')).toBeInTheDocument();
-        expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
-      });
+      expect(screen.getByText('Stars Page')).toBeInTheDocument();
     });
   });
 });

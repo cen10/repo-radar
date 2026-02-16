@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { StarIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
-import { useDemoMode } from '../demo/demo-context';
+import { useDemoMode } from '../demo/use-demo-mode';
 
 interface EmptyStateProps {
   icon: ReactNode;

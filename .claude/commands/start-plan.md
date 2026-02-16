@@ -1,5 +1,10 @@
 Implement a plan from the `docs/potential-plans/` folder.
 
+**Important:** The `docs/` folder is symlinked and not checked into git. It
+exists locally at the workspace root but glob/grep won't find it through the
+worktree. To find the plan file, use bash directly with the current working
+directory: `ls $CWD/docs/potential-plans/`
+
 The user will provide a plan name or topic. Find the matching file in
 `docs/potential-plans/` and read it.
 

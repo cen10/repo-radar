@@ -24,7 +24,7 @@ vi.mock('react-router-dom', async () => {
 
 // Mock useDemoMode
 const mockEnterDemoMode = vi.fn();
-vi.mock('@/demo/demo-context', () => ({
+vi.mock('@/demo/use-demo-mode', () => ({
   useDemoMode: () => ({
     enterDemoMode: mockEnterDemoMode,
     isInitializing: false,

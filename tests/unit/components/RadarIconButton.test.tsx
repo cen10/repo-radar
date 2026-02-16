@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RadarIconButton } from '@/components/RadarIconButton';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
 import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
@@ -26,7 +27,11 @@ const TEST_REPO_ID = 12345;
 
 const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <OnboardingProvider>{ui}</OnboardingProvider>
+    </QueryClientProvider>
+  );
 };
 
 // Helper to mock window.matchMedia for mobile/desktop testing

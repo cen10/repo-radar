@@ -25,8 +25,8 @@ test.describe('Authentication', () => {
     await expect(starsPage.heading).toBeVisible();
   });
 
-  test('authenticated user is redirected from home to stars', async ({ authenticatedPage }) => {
-    await authenticatedPage.goto('/');
-    await expect(authenticatedPage).toHaveURL('/stars');
+  test('authenticated user is redirected from home to stars', async ({ returningUserPage }) => {
+    await returningUserPage.goto('/');
+    await expect(returningUserPage).toHaveURL('/stars');
   });
 });

@@ -12,8 +12,8 @@ export function RepoStats({ repository }: RepoStatsProps) {
   const links = getLinks(repository);
 
   return (
-    <div className="mb-8 bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3">
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-gray-900">
+    <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-4 space-y-3">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-indigo-900">
         {stats.map(({ key, icon: Icon, value, label }) => (
           <span key={key} className="inline-flex items-baseline gap-1.5">
             <Icon className="h-4 w-4 self-center" aria-hidden="true" />
@@ -30,7 +30,7 @@ export function RepoStats({ repository }: RepoStatsProps) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-gray-900 hover:text-indigo-600 hover:underline"
+            className="inline-flex items-center gap-1 text-indigo-800 hover:text-indigo-600 hover:underline"
           >
             <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden="true" />
             {label}

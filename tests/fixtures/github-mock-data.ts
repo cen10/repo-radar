@@ -148,9 +148,15 @@ function createMockRepository(id: number, name: string): GitHubRepository {
 }
 
 /**
+ * Base ID for mock repositories. IDs are deterministic: MOCK_REPO_ID_BASE + index.
+ * Exported so other mock fixtures can reference specific repos by ID.
+ */
+export const MOCK_REPO_ID_BASE = 1000;
+
+/**
  * Creates a list of mock starred repositories.
  * Repos are ordered with most recently starred first (decreasing starred_at dates).
- * IDs are deterministic: 1000 + index (e.g., 1000, 1001, 1002...).
+ * IDs are deterministic: MOCK_REPO_ID_BASE + index (e.g., 1000, 1001, 1002...).
  */
 export function createMockStarredReposList(count: number): GitHubStarredRepoResponse[] {
   const baseDate = new Date();
@@ -161,7 +167,7 @@ export function createMockStarredReposList(count: number): GitHubStarredRepoResp
 
     return {
       starred_at: starredDate.toISOString(),
-      repo: createMockRepository(1000 + i, `repo-${i + 1}`),
+      repo: createMockRepository(MOCK_REPO_ID_BASE + i, `repo-${i + 1}`),
     };
   });
 }

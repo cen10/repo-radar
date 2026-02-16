@@ -1,17 +1,12 @@
 import { useState, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import {
-  ArrowLeftIcon,
-  EllipsisVerticalIcon,
-  PencilIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
+import { useParams, Link, Navigate } from 'react-router-dom';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
 import { useRadarRepositories } from '../hooks/useRadarRepositories';
-import { DeleteRadarModal } from '../components/DeleteRadarModal';
-import { RenameRadarModal } from '../components/RenameRadarModal';
+import { useOnboarding } from '../contexts/use-onboarding';
+import { useDemoMode } from '../demo/use-demo-mode';
+import { TOUR_RADAR_ID } from '../demo/tour-data';
 import { RepoCard } from '../components/RepoCard';
 import { CollapsibleSearch } from '../components/CollapsibleSearch';
 import { SortDropdown } from '../components/SortDropdown';
@@ -28,8 +23,9 @@ const SORT_OPTIONS = [
 
 const RadarPage = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { providerToken } = useAuth();
+  const { isTourActive } = useOnboarding();
+  const { isDemoMode } = useDemoMode();
 
   // Data fetching
   const {
@@ -54,10 +50,6 @@ const RadarPage = () => {
   const [activeSearch, setActiveSearch] = useState('');
   const [sortBy, setSortBy] = useState<RadarSortOption>('updated');
 
-  // Modal state
-  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   // Client-side search filtering
   const filteredRepos = useMemo(() => {
     const query = activeSearch.trim().toLowerCase();
@@ -80,21 +72,15 @@ const RadarPage = () => {
     );
   }, [filteredRepos, sortBy]);
 
+  // Redirect away from tour demo radar when tour is not active (for logged-in users only).
+  // In demo mode, the tour radar persists in the sidebar so it should remain accessible.
+  if (id === TOUR_RADAR_ID && !isTourActive && !isDemoMode) {
+    return <Navigate to="/stars" replace />;
+  }
+
   const handleClearSearch = () => {
     setSearchQuery('');
     setActiveSearch('');
-  };
-
-  const handleRenameClick = () => {
-    setIsRenameModalOpen(true);
-  };
-
-  const handleDeleteClick = () => {
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleted = () => {
-    void navigate('/stars');
   };
 
   const isLoading = radarLoading || reposLoading;
@@ -154,46 +140,16 @@ const RadarPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header with radar name and kebab menu */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
-            <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
-            {radar?.name}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">{repoText}</p>
-        </div>
-
-        <Menu as="div" className="relative">
-          <MenuButton className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <span className="sr-only">Open radar menu</span>
-            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
-          </MenuButton>
-
-          <MenuItems
-            transition
-            className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
-          >
-            <MenuItem>
-              <button
-                onClick={handleRenameClick}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100"
-              >
-                <PencilIcon className="h-4 w-4" aria-hidden="true" />
-                Rename
-              </button>
-            </MenuItem>
-            <MenuItem>
-              <button
-                onClick={handleDeleteClick}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 data-focus:bg-gray-100"
-              >
-                <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                Delete
-              </button>
-            </MenuItem>
-          </MenuItems>
-        </Menu>
+      {/* Header with radar name */}
+      <div className="mb-6">
+        <h1
+          className="inline-flex items-center gap-2 text-2xl font-semibold text-gray-900"
+          data-tour="radar-name"
+        >
+          <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
+          {radar?.name}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">{repoText}</p>
       </div>
 
       {/* Search and Sort */}
@@ -230,8 +186,8 @@ const RadarPage = () => {
       {!reposLoading && sortedRepos.length > 0 && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedRepos.map((repo: Repository) => (
-              <RepoCard key={repo.id} repository={repo} />
+            {sortedRepos.map((repo: Repository, index: number) => (
+              <RepoCard key={repo.id} repository={{ ...repo, isTourTarget: index === 0 }} />
             ))}
           </div>
 
@@ -248,21 +204,6 @@ const RadarPage = () => {
             )}
           </div>
         </>
-      )}
-
-      {/* Rename Modal */}
-      {isRenameModalOpen && radar && (
-        <RenameRadarModal radar={radar} onClose={() => setIsRenameModalOpen(false)} />
-      )}
-
-      {/* Delete Modal */}
-      {isDeleteModalOpen && radar && (
-        <DeleteRadarModal
-          radar={radar}
-          repoCount={repoCount}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onDeleted={handleDeleted}
-        />
       )}
     </div>
   );

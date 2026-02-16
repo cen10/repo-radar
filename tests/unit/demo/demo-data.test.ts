@@ -1,56 +1,13 @@
 /**
  * Consistency tests for demo mode data.
  *
- * Ensures that radar repos reference valid starred repos and counts are accurate.
+ * Ensures starred repos are valid and tour data is consistent.
  */
 import { describe, it, expect } from 'vitest';
-import { DEMO_STARRED_REPOS, DEMO_RADARS, DEMO_RADAR_REPOS } from '../../../src/demo/demo-data';
+import { DEMO_STARRED_REPOS } from '../../../src/demo/demo-data';
+import { getTourRadar, getTourRepos, TOUR_RADAR_ID } from '../../../src/demo/tour-data';
 
 describe('Demo Data Consistency', () => {
-  describe('DEMO_RADAR_REPOS', () => {
-    it('only references repo IDs that exist in DEMO_STARRED_REPOS', () => {
-      const starredRepoIds = new Set(DEMO_STARRED_REPOS.map((r) => r.id));
-
-      const orphanedRepoIds = DEMO_RADAR_REPOS.filter(
-        (rr) => !starredRepoIds.has(rr.github_repo_id)
-      ).map((rr) => rr.github_repo_id);
-
-      expect(orphanedRepoIds).toEqual([]);
-    });
-
-    it('only references radar IDs that exist in DEMO_RADARS', () => {
-      const radarIds = new Set(DEMO_RADARS.map((r) => r.id));
-
-      const orphanedRadarIds = DEMO_RADAR_REPOS.filter((rr) => !radarIds.has(rr.radar_id)).map(
-        (rr) => rr.radar_id
-      );
-
-      expect(orphanedRadarIds).toEqual([]);
-    });
-
-    it('has no duplicate radar-repo pairs', () => {
-      const pairs = DEMO_RADAR_REPOS.map((rr) => `${rr.radar_id}:${rr.github_repo_id}`);
-      const uniquePairs = new Set(pairs);
-
-      expect(pairs.length).toBe(uniquePairs.size);
-    });
-  });
-
-  describe('DEMO_RADARS repo_count', () => {
-    it.each(DEMO_RADARS)('$name has correct repo_count', (radar) => {
-      const actualCount = DEMO_RADAR_REPOS.filter((rr) => rr.radar_id === radar.id).length;
-
-      expect(actualCount).toBe(radar.repo_count);
-    });
-
-    it('total repos on radars equals sum of individual counts', () => {
-      const totalFromRadars = DEMO_RADARS.reduce((sum, r) => sum + r.repo_count, 0);
-      const totalFromRadarRepos = DEMO_RADAR_REPOS.length;
-
-      expect(totalFromRadarRepos).toBe(totalFromRadars);
-    });
-  });
-
   describe('DEMO_STARRED_REPOS', () => {
     it('has unique repo IDs', () => {
       const ids = DEMO_STARRED_REPOS.map((r) => r.id);
@@ -63,6 +20,41 @@ describe('Demo Data Consistency', () => {
       // Plan specifies ~45 repos for 3-4 pages of scrolling
       expect(DEMO_STARRED_REPOS.length).toBeGreaterThanOrEqual(40);
       expect(DEMO_STARRED_REPOS.length).toBeLessThanOrEqual(50);
+    });
+  });
+
+  describe('Tour Data', () => {
+    it('getTourRadar returns radar with correct ID and name', () => {
+      const radar = getTourRadar();
+
+      expect(radar.id).toBe(TOUR_RADAR_ID);
+      expect(radar.name).toBe('React Ecosystem');
+      expect(radar.repo_count).toBe(4);
+    });
+
+    it('getTourRepos returns 4 React ecosystem repos', () => {
+      const repos = getTourRepos();
+
+      expect(repos).toHaveLength(4);
+      expect(repos.map((r) => r.full_name)).toEqual([
+        'facebook/react',
+        'vercel/next.js',
+        'remix-run/react-router',
+        'pmndrs/zustand',
+      ]);
+    });
+
+    it('tour radar and repos are consistent', () => {
+      const radar = getTourRadar();
+      const repos = getTourRepos();
+
+      // The tour radar repo_count should match the number of tour repos
+      expect(radar.repo_count).toBe(repos.length);
+      // All repos should be valid GitHub repos
+      for (const repo of repos) {
+        expect(repo.id).toBeGreaterThan(0);
+        expect(repo.full_name).toMatch(/^[^/]+\/[^/]+$/);
+      }
     });
   });
 });

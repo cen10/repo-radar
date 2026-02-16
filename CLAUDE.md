@@ -205,13 +205,28 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 7. **Task tracking**: Update `/specs/001-develop-a-personalized/tasks.md` when completing tasks
 8. **Knowledge capture**: When solving problems that took significant time, established new patterns, or involved architecture decisions, suggest adding the solution to this file. Focus on practical knowledge with code examples, not general advice.
 9. **Tailwind v4 syntax**: Use canonical v4 class names (e.g., `shrink-0` not `flex-shrink-0`, `grow` not `flex-grow`)
-10. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
-11. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
-12. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
-13. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
-14. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
-15. **Production code over test convenience**: Never make production code decisions (like optional props, public methods, or loose types) just to make tests easier to write. Tests should adapt to production code, not the other way around.
-16. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
+10. **Conditional className with clsx**: Use `clsx` for combining conditional classes. Extract long class strings to named variables; keep short ones inline.
+
+    ```tsx
+    // Short strings: inline ternary is fine
+    className={clsx('base-class', isActive ? 'text-blue-500' : 'text-gray-500')}
+
+    // Long strings: extract to variables, use && pattern
+    const navLinkBase = 'flex items-center py-2 text-sm font-medium transition-colors rounded-lg';
+    const navLinkActive = 'bg-indigo-100 text-indigo-700';
+    const navLinkInactive = 'text-gray-700 hover:bg-indigo-50';
+
+    className={clsx(navLinkBase, isActive && navLinkActive, !isActive && navLinkInactive)}
+    ```
+
+    The goal is readability: don't add indirection for short strings, but do extract when inline strings would make the JSX hard to scan.
+11. **Unused parameters**: Prefix unused function parameters with `_` to avoid ESLint warnings (e.g., `{ error: _error, resetErrorBoundary }`)
+12. **Testing text content**: Use partial, case-insensitive regex for text assertions rather than exact string matches (e.g., `screen.getByText(/something went wrong/i)` instead of `screen.getByText('Something went wrong...')`)
+13. **Testing interactive elements**: Use `getByRole` for buttons/links with partial name matching (e.g., `screen.getByRole('button', { name: /try again/i })`)
+14. **Test user-facing behavior**: Focus on user-facing meaning, not implementation details like HTML structure or exact copy that may change
+15. **Vitest globals**: Keep `globals: false` in vitest config for explicit imports best practice - always import `{ expect, describe, it }` from 'vitest' in test files. Use `'@testing-library/jest-dom/vitest'` import for jest-dom matchers.
+16. **Production code over test convenience**: Never make production code decisions (like optional props, public methods, or loose types) just to make tests easier to write. Tests should adapt to production code, not the other way around.
+17. **Type-safe test mocks**: Prefer typed approaches over `as any`, but choose based on context:
     - **Simple object mocks**: Use `Partial<T>` for type safety without complexity
 
       `error: { message: 'test' } as Partial<AuthError>`
@@ -227,9 +242,8 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
 
     - Avoid creating helper functions just to wrap constructors - keep tests simple.
 
-19. **Avoid eslint-disable comments**: Before using `eslint-disable-next-line`, always look for an alternative solution (e.g., using `_` prefix for unused params, restructuring code). If you determine `eslint-disable` is truly necessary, explicitly flag it to the user and explain why no alternative exists.
-
-17. **Comment sparingly**: Don't add comments that merely restate what the code does - let well-named functions speak for themselves. Add comments only when explaining:
+18. **Avoid eslint-disable comments**: Before using `eslint-disable-next-line`, always look for an alternative solution (e.g., using `_` prefix for unused params, restructuring code). If you determine `eslint-disable` is truly necessary, explicitly flag it to the user and explain why no alternative exists.
+19. **Comment sparingly**: Don't add comments that merely restate what the code does - let well-named functions speak for themselves. Add comments only when explaining:
     - **Why** something is done a non-obvious way
     - **Tricky logic** that isn't self-evident (e.g., race condition guards, edge case handling)
     - **Workarounds** for bugs or limitations
@@ -245,7 +259,7 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     const isFetchingRef = useRef(false);
     ```
 
-18. **Avoid deeply nested ternaries**: Never nest ternaries more than two levels. For conditional rendering with multiple states, use if-else in a render function:
+20. **Avoid deeply nested ternaries**: Never nest ternaries more than two levels. For conditional rendering with multiple states, use if-else in a render function:
 
     ```tsx
     // ✗ Bad: Deeply nested ternary
@@ -260,6 +274,44 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
       if (data.length === 0) return <Empty />;
       return <List />;
     };
+    ```
+
+21. **React 19 context syntax**: Use `<Context>` directly instead of `<Context.Provider>`. React 19 allows rendering context as a provider without the `.Provider` suffix.
+
+    ```tsx
+    // ✗ Legacy (React 18)
+    <MyContext.Provider value={value}>
+      {children}
+    </MyContext.Provider>
+
+    // ✓ React 19
+    <MyContext value={value}>
+      {children}
+    </MyContext>
+    ```
+
+22. **useCallback only when needed**: Don't wrap every function in `useCallback` by default. Only use it when:
+    - The callback is passed to a `React.memo()` component
+    - The callback is used in a dependency array of `useEffect`, `useMemo`, or another `useCallback`
+
+    If neither applies, skip `useCallback` — it adds cognitive overhead without benefit.
+
+    ```tsx
+    // ✗ Bad: useCallback for onClick handler not in any dep array
+    const handleClick = useCallback(() => {
+      doSomething();
+    }, []);
+
+    // ✓ Good: Plain function when not used in deps
+    const handleClick = () => {
+      doSomething();
+    };
+
+    // ✓ Good: useCallback when used in useEffect deps
+    const fetchData = useCallback(() => { ... }, [userId]);
+    useEffect(() => {
+      fetchData();
+    }, [fetchData]);
     ```
 
 ## Testing Best Practices

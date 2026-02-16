@@ -38,6 +38,7 @@ export interface Repository {
   is_starred: boolean; // Simple boolean to indicate star status
   metrics?: RepositoryMetrics;
   is_following?: boolean; // Deprecated - to be removed
+  isTourTarget?: boolean; // Set by RadarPage to mark the first repo as the onboarding tour target
 }
 
 export interface RepositoryMetrics {

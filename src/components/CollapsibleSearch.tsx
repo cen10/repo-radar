@@ -98,7 +98,7 @@ export function CollapsibleSearch({
   return (
     <div
       ref={containerRef}
-      className={`flex items-center gap-2 flex-1 min-h-[42px] mr-2 ${isExpanded ? '' : 'justify-end'} ${className}`}
+      className={`flex items-center gap-2 flex-1 min-h-[42px] ${isExpanded ? '' : 'sm:justify-end'} ${className}`}
     >
       {/* Collapsed state: Hint + search icon */}
       {!isExpanded && (
@@ -124,7 +124,10 @@ export function CollapsibleSearch({
 
       {/* Expanded state: Search bar + close button */}
       {isExpanded && (
-        <div id={`${id}-container`} className="flex items-center gap-2 flex-1">
+        <div
+          id={`${id}-container`}
+          className="flex items-center gap-2 flex-1 w-full sm:min-w-[400px]"
+        >
           <SearchBar
             id={id}
             value={value}

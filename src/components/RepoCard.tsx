@@ -6,6 +6,7 @@ import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 import { StarredBadge } from './StarredBadge';
 import { RadarIconButton } from './RadarIconButton';
+import { useOnboarding } from '../contexts/use-onboarding';
 
 interface RepoCardProps {
   repository: Repository;
@@ -23,7 +24,11 @@ export function RepoCard({ repository }: RepoCardProps) {
     topics,
     metrics,
     is_starred,
+    isTourTarget,
   } = repository;
+
+  const { currentStepId } = useOnboarding();
+  const showCardPulse = isTourTarget && currentStepId === 'click-repo';
 
   const [isNameTruncated, setIsNameTruncated] = useState(false);
   const nameRef = useRef<HTMLHeadingElement>(null);
@@ -61,7 +66,10 @@ export function RepoCard({ repository }: RepoCardProps) {
       : description;
 
   return (
-    <article className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6">
+    <article
+      className={`relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6 ${showCardPulse ? 'animate-pulse-border' : ''}`}
+      {...(isTourTarget ? { 'data-tour': 'repo-card' } : {})}
+    >
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
@@ -90,7 +98,11 @@ export function RepoCard({ repository }: RepoCardProps) {
           </Link>
         </div>
         {/* Radar button - z-2 to sit above the stretched link overlay (z-1) */}
-        <RadarIconButton githubRepoId={id} className="relative z-2 -mt-2" />
+        <RadarIconButton
+          githubRepoId={id}
+          className="relative z-2 -mt-2"
+          {...(isTourTarget ? { 'data-tour': 'radar-icon' } : {})}
+        />
       </div>
 
       {/* Status badges */}
@@ -125,7 +137,7 @@ export function RepoCard({ repository }: RepoCardProps) {
           {topics.slice(0, 3).map((topic) => (
             <span
               key={topic}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-800"
               aria-hidden="true"
             >
               {topic}

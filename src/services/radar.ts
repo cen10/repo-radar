@@ -7,7 +7,7 @@ import type {
   RadarWithRepoCountResponse,
 } from '../types/database';
 import { logger } from '../utils/logger';
-import { isDemoModeActive } from '../demo/demo-context';
+import { isDemoModeActive } from '../demo/is-demo-mode-active';
 import { DEMO_USER } from '../demo/demo-user';
 
 // Limit constants

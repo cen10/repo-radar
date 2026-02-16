@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getRadarRepos } from '../services/radar';
 import { fetchRepositoriesByIds } from '../services/github';
 import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
+import { useOnboarding } from '../contexts/use-onboarding';
+import { getTourRepos, TOUR_RADAR_ID } from '../demo/tour-data';
 import type { Repository } from '../types';
 
 interface UseRadarRepositoriesOptions {
@@ -33,11 +35,22 @@ export function useRadarRepositories({
   token,
   enabled = true,
 }: UseRadarRepositoriesOptions): UseRadarRepositoriesReturn {
+  const { isTourActive } = useOnboarding();
+
+  // Return tour demo repod immediately for the tour demo radar
+  const isTourDemoRadar = isTourActive && radarId === TOUR_RADAR_ID;
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['radarRepositories', radarId],
+    // Include isTourDemoRadar in key so cache invalidates when tour state changes
+    queryKey: ['radarRepositories', radarId, isTourDemoRadar],
     queryFn: async () => {
       if (!radarId) {
         return [];
+      }
+
+      // Tour demo radar uses client-side demo data, no API calls
+      if (isTourDemoRadar) {
+        return getTourRepos();
       }
 
       const validToken = getValidGitHubToken(token);
@@ -55,7 +68,7 @@ export function useRadarRepositories({
 
       return repositories;
     },
-    enabled: enabled && !!radarId && (!!token || hasFallbackToken()),
+    enabled: enabled && !!radarId && (isTourDemoRadar || !!token || hasFallbackToken()),
   });
 
   return {

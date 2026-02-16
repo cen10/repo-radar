@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ManageRadarsModal } from '@/components/ManageRadarsModal';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
 import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRadar } from '../../mocks/factories';
@@ -31,7 +32,11 @@ const defaultProps = {
 
 const renderWithProviders = (ui: ReactElement, queryClient?: QueryClient) => {
   const client = queryClient ?? createTestQueryClient();
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      <OnboardingProvider>{ui}</OnboardingProvider>
+    </QueryClientProvider>
+  );
 };
 
 describe('ManageRadarsModal', () => {

@@ -13,20 +13,26 @@ if (import.meta.hot) {
 
 import { http, HttpResponse } from 'msw';
 import { DEMO_USER } from './demo-user';
-import {
-  DEMO_STARRED_REPOS,
-  DEMO_RADARS,
-  DEMO_RADAR_REPOS,
-  getDemoSearchResults,
-  getAllDemoRepos,
-} from './demo-data';
+import { DEMO_STARRED_REPOS, getDemoSearchResults, getAllDemoRepos } from './demo-data';
+import { getTourRadar, getTourRepos, TOUR_RADAR_ID } from './tour-data';
 import type { RadarWithCount, RadarRepo } from '../types/database';
+
+// Create initial tour radar repo entries (called at init and reset)
+function createTourRadarRepos(): RadarRepo[] {
+  return getTourRepos().map((repo, index) => ({
+    id: `tour-rr-${index + 1}`,
+    radar_id: TOUR_RADAR_ID,
+    github_repo_id: repo.id,
+    added_at: new Date().toISOString(),
+  }));
+}
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
 // In-memory state for radar mutations (resets on page refresh)
-let demoRadars: RadarWithCount[] = [...DEMO_RADARS];
-let demoRadarRepos: RadarRepo[] = [...DEMO_RADAR_REPOS];
+// Demo mode starts with tour radar pre-configured (React Ecosystem with 4 repos)
+let demoRadars: RadarWithCount[] = [getTourRadar()];
+let demoRadarRepos: RadarRepo[] = createTourRadarRepos();
 // Counter for generating deterministic IDs within a session
 let idCounter = 1000;
 
@@ -35,9 +41,8 @@ let idCounter = 1000;
  * Called when entering demo mode.
  */
 export function resetDemoState() {
-  // Deep copy to avoid mutating source constants
-  demoRadars = DEMO_RADARS.map((r) => ({ ...r }));
-  demoRadarRepos = DEMO_RADAR_REPOS.map((r) => ({ ...r }));
+  demoRadars = [getTourRadar()];
+  demoRadarRepos = createTourRadarRepos();
   idCounter = 1000;
 }
 

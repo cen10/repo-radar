@@ -1,9 +1,14 @@
 Create a document in `docs/decisions/` explaining a technical decision we just
 made or discussed.
 
-Before creating the file, check the existing files in that directory to find the
-highest numeric prefix (e.g., if `003-architecture-migration.md` exists, the
-next file should start with `004-`). Zero-pad to three digits.
+**Important:** The `docs/` folder is symlinked and not checked into git. It
+exists locally at the workspace root but glob/grep won't find it through the
+worktree. To check existing files, use bash directly with the current working
+directory: `ls $CWD/docs/decisions/`
+
+Before creating the file, list existing files to find the highest numeric prefix
+(e.g., if `003-architecture-migration.md` exists, the next file should start
+with `004-`). Zero-pad to three digits.
 
 This doc is a reference I'll come back to when I need to remember why we made
 a specific decision — whether that's in an interview, during a code review, or

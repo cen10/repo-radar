@@ -8,12 +8,11 @@ import { Button } from './Button';
 
 interface DeleteRadarModalProps {
   radar: Radar;
-  repoCount: number;
   onClose: () => void;
   onDeleted: () => void;
 }
 
-export function DeleteRadarModal({ radar, repoCount, onClose, onDeleted }: DeleteRadarModalProps) {
+export function DeleteRadarModal({ radar, onClose, onDeleted }: DeleteRadarModalProps) {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -44,8 +43,6 @@ export function DeleteRadarModal({ radar, repoCount, onClose, onDeleted }: Delet
     }
   };
 
-  const repoText = repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
-
   return (
     <Dialog open={true} onClose={handleClose} className="relative z-50">
       <DialogBackdrop
@@ -66,12 +63,8 @@ export function DeleteRadarModal({ radar, repoCount, onClose, onDeleted }: Delet
                 Delete Radar
               </DialogTitle>
               <p className="mt-2 text-sm text-gray-600">
-                {`Are you sure you want to delete "${radar.name}"? `}
-                {repoCount > 0
-                  ? `This will remove ${repoText} from this collection.`
-                  : 'This radar is empty.'}
+                {`Are you sure you want to delete "${radar.name}"? This cannot be undone.`}
               </p>
-              <p className="mt-2 text-sm text-gray-500">This action cannot be undone.</p>
 
               {error && (
                 <p className="mt-3 text-sm text-red-600" role="alert">

@@ -87,6 +87,7 @@ export function RepoHeader({
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-900 hover:text-indigo-600"
+              data-tour="repo-name"
             >
               {full_name}
             </a>
@@ -156,7 +157,7 @@ export function RepoHeader({
           {(showAllTopics ? topics : topics.slice(0, 10)).map((topic) => (
             <span
               key={topic}
-              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-800"
             >
               {topic}
             </span>
