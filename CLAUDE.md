@@ -290,6 +290,30 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     </MyContext>
     ```
 
+22. **useCallback only when needed**: Don't wrap every function in `useCallback` by default. Only use it when:
+    - The callback is passed to a `React.memo()` component
+    - The callback is used in a dependency array of `useEffect`, `useMemo`, or another `useCallback`
+
+    If neither applies, skip `useCallback` — it adds cognitive overhead without benefit.
+
+    ```tsx
+    // ✗ Bad: useCallback for onClick handler not in any dep array
+    const handleClick = useCallback(() => {
+      doSomething();
+    }, []);
+
+    // ✓ Good: Plain function when not used in deps
+    const handleClick = () => {
+      doSomething();
+    };
+
+    // ✓ Good: useCallback when used in useEffect deps
+    const fetchData = useCallback(() => { ... }, [userId]);
+    useEffect(() => {
+      fetchData();
+    }, [fetchData]);
+    ```
+
 ## Testing Best Practices
 
 ### Logger Mocking Pattern
