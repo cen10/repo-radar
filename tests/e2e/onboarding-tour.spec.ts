@@ -102,4 +102,15 @@ test.describe('Onboarding Tour', () => {
 
     await expect(visibleStep(returningUserPage)).not.toBeVisible();
   });
+
+  test.describe('Mobile viewport', () => {
+    test.use({ viewport: { width: 375, height: 667 } });
+
+    test('does not auto-start tour on mobile', async ({ firstTimeUserPage }) => {
+      await firstTimeUserPage.goto('/stars');
+
+      // Tour should not appear on mobile viewport
+      await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
+    });
+  });
 });

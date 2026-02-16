@@ -212,6 +212,23 @@ describe('Header', () => {
     expect(signOutButton).toHaveFocus();
   });
 
+  describe('Help menu', () => {
+    it('hides tour link on mobile via CSS class', async () => {
+      vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));
+
+      renderWithRouter(<Header />);
+
+      // Open the help menu
+      const helpButton = screen.getByRole('button', { name: /help/i });
+      fireEvent.click(helpButton);
+
+      // Find the tour link and verify its wrapper has the mobile-hiding class
+      const tourLink = await screen.findByRole('button', { name: /take the onboarding tour/i });
+      const tourLinkWrapper = tourLink.parentElement;
+      expect(tourLinkWrapper).toHaveClass('hidden', 'lg:block');
+    });
+  });
+
   describe('Mobile menu button', () => {
     it('renders hamburger menu button when onMenuToggle is provided', () => {
       vi.mocked(useAuth).mockReturnValue(createMockAuthContext({ user: mockUser }));

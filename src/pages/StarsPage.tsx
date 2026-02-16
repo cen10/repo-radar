@@ -56,12 +56,15 @@ const StarsPage = () => {
     }
   };
 
-  // Auto-start tour for new users once data has loaded
+  // Auto-start tour for new desktop users once data has loaded
+  // Tour is desktop-only (matches lg: breakpoint)
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
   useEffect(() => {
-    if (!browseResult.isLoading && !hasCompletedTour && !isTourActive) {
+    if (!browseResult.isLoading && !hasCompletedTour && !isTourActive && isDesktop) {
       startTour();
     }
-  }, [browseResult.isLoading, hasCompletedTour, isTourActive, startTour]);
+  }, [browseResult.isLoading, hasCompletedTour, isTourActive, startTour, isDesktop]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
