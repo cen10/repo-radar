@@ -181,13 +181,14 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
 
   const isCheckboxDisabled = useCallback(
     (radar: RadarWithCount): boolean => {
+      if (isSaving) return true; // Disable all during save to prevent edits being dropped
       if (isRadarChecked(radar.id)) return false; // Can always uncheck
       const repoCount = getRepoCountIncludingUnsavedChanges(radar);
       if (repoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) return true;
       if (isAtTotalRepoLimit) return true;
       return false;
     },
-    [isRadarChecked, getRepoCountIncludingUnsavedChanges, isAtTotalRepoLimit]
+    [isSaving, isRadarChecked, getRepoCountIncludingUnsavedChanges, isAtTotalRepoLimit]
   );
 
   const getDisabledTooltip = useCallback(
