@@ -147,14 +147,16 @@ const TOUR_REPOS: Repository[] = [
 /**
  * Get the demo radar shown during onboarding tour.
  * Used in both production (auth users with no radars) and demo mode.
+ * Returns a shallow copy to prevent callers from mutating the shared constant.
  */
 export function getTourRadar(): RadarWithCount {
-  return TOUR_RADAR;
+  return { ...TOUR_RADAR };
 }
 
 /**
  * Get the demo repos for the tour radar.
+ * Returns shallow copies to prevent callers from mutating the shared array.
  */
 export function getTourRepos(): Repository[] {
-  return TOUR_REPOS;
+  return TOUR_REPOS.map((repo) => ({ ...repo }));
 }
