@@ -12,9 +12,8 @@ interface BottomSheetProps {
   onDone?: () => void;
   title: string;
   children: ReactNode;
-  doneLabel?: string;
-  doneDisabled?: boolean;
-  doneLoading?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
 }
 
 export function BottomSheet({
@@ -23,9 +22,8 @@ export function BottomSheet({
   onDone,
   title,
   children,
-  doneLabel = 'Done',
-  doneDisabled = false,
-  doneLoading = false,
+  disabled = false,
+  loading = false,
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,10 +126,10 @@ export function BottomSheet({
                 variant="primary"
                 className="w-full"
                 onClick={onDone ?? onClose}
-                disabled={doneDisabled}
-                loading={doneLoading}
+                disabled={disabled}
+                loading={loading}
               >
-                {doneLabel}
+                Done
               </Button>
             </div>
           </div>

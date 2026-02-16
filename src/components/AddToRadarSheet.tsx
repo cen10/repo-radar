@@ -139,7 +139,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
         onClose={handleCancel}
         onDone={handleDone}
         title="Add to Radar"
-        doneLoading={isSaving}
+        loading={isSaving}
       >
         {renderContent()}
       </BottomSheet>
