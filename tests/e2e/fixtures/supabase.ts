@@ -1,4 +1,5 @@
 import { type Page, type Route } from '@playwright/test';
+import { MOCK_REPO_ID_BASE } from '../../fixtures/github-mock-data';
 
 // In-memory mock storage for Supabase data during E2E tests
 interface MockRadar {
@@ -55,7 +56,7 @@ export async function setupSupabaseMocks(
     const defaultRadarRepo: MockRadarRepo = {
       id: 'default-radar-repo',
       radar_id: defaultRadar.id,
-      github_repo_id: 1000, // First mock repo from github.ts (IDs start at 1000)
+      github_repo_id: MOCK_REPO_ID_BASE, // First mock repo from github-mock-data.ts
       added_at: new Date().toISOString(),
     };
     mockRadarRepos.set(defaultRadarRepo.id, defaultRadarRepo);
