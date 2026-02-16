@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
 import { useOnboarding } from '@/contexts/use-onboarding';
 import { DemoModeProvider } from '@/demo/demo-context';
+import * as useDemoModeModule from '@/demo/use-demo-mode';
 
 const STORAGE_KEY = 'repo-radar-onboarding';
+const DEMO_MODE_KEY = 'repo_radar_demo_mode';
 
 function TestConsumer() {
   const { hasCompletedTour, isTourActive, startTour, completeTour } = useOnboarding();
@@ -115,5 +117,84 @@ describe('OnboardingContext', () => {
 
     expect(screen.getByTestId('active')).toHaveTextContent('true');
     expect(screen.getByTestId('completed')).toHaveTextContent('false');
+  });
+
+  describe('Fallback overlay', () => {
+    const originalInnerWidth = window.innerWidth;
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      Object.defineProperty(window, 'innerWidth', {
+        value: originalInnerWidth,
+        writable: true,
+      });
+    });
+
+    it('shows overlay on desktop when tour is active', async () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+
+      expect(document.querySelector('.tour-fallback-overlay')).toBeInTheDocument();
+    });
+
+    it('hides overlay on mobile when tour is active', async () => {
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+
+      expect(document.querySelector('.tour-fallback-overlay')).not.toBeInTheDocument();
+    });
+
+    it('hides overlay on mobile in demo mode', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 375, writable: true });
+      localStorage.setItem(DEMO_MODE_KEY, 'true');
+
+      vi.spyOn(useDemoModeModule, 'useDemoMode').mockReturnValue({
+        isDemoMode: true,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      render(
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      );
+
+      // In demo mode, hasCompletedTour=false, so condition would be true without isDesktop check
+      expect(document.querySelector('.tour-fallback-overlay')).not.toBeInTheDocument();
+    });
+
+    it('shows overlay on desktop in demo mode', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      localStorage.setItem(DEMO_MODE_KEY, 'true');
+
+      vi.spyOn(useDemoModeModule, 'useDemoMode').mockReturnValue({
+        isDemoMode: true,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      render(
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      );
+
+      expect(document.querySelector('.tour-fallback-overlay')).toBeInTheDocument();
+    });
   });
 });

@@ -8,6 +8,8 @@ interface OnboardingProviderProps {
 
 export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const { isDemoMode } = useDemoMode();
+  // Tour is desktop-only (matches lg: breakpoint)
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
   const [hasCompletedTour, setHasCompletedTour] = useState(() => {
     if (isDemoMode) return false;
@@ -70,11 +72,12 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         setCurrentStepId,
       }}
     >
-      {/* Fallback overlay - visible when tour is active OR when tour is about to start
-          (demo mode users who haven't completed tour). This ensures the overlay is
-          present before Shepherd initializes, preventing a flash of the unmasked page.
-          Instantly hidden via CSS :has() when Shepherd's overlay appears. */}
-      {(isTourActive || (isDemoMode && !hasCompletedTour)) && (
+      {/* Fallback overlay - visible on desktop when tour is active OR when tour is about
+          to start (demo mode users who haven't completed tour). This ensures the overlay
+          is present before Shepherd initializes, preventing a flash of the unmasked page.
+          Instantly hidden via CSS :has() when Shepherd's overlay appears.
+          Hidden on mobile since tour is desktop-only. */}
+      {isDesktop && (isTourActive || (isDemoMode && !hasCompletedTour)) && (
         <div
           className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none"
           style={{ zIndex: 9996 }}
