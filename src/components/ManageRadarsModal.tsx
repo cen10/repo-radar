@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
@@ -30,6 +30,13 @@ export function ManageRadarsModal({ githubRepoId, open, onClose }: ManageRadarsM
   } = useRadarToggle({ githubRepoId, open });
 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Reset discard confirm state when modal opens (defensive, since components stay mounted)
+  useEffect(() => {
+    if (open) {
+      setShowDiscardConfirm(false);
+    }
+  }, [open]);
 
   const handleDone = async () => {
     if (!hasUnsavedChanges) {

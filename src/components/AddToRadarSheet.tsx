@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { useRadarToggle } from '../hooks/useRadarToggle';
 import { Tooltip } from './Tooltip';
@@ -28,6 +28,13 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
   } = useRadarToggle({ githubRepoId, open });
 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Reset discard confirm state when sheet opens (defensive, since components stay mounted)
+  useEffect(() => {
+    if (open) {
+      setShowDiscardConfirm(false);
+    }
+  }, [open]);
 
   const handleDone = async () => {
     if (!hasUnsavedChanges) {
