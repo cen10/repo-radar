@@ -59,7 +59,7 @@ function RadarNavItem({
 
   // Wrapper div with group class so hover state applies to both NavLink and Menu
   return (
-    <div className="group/radar relative">
+    <div className="group/radar relative rounded-lg hover:bg-indigo-50 transition-colors">
       <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
         <NavLink
           to={`/radar/${radar.id}`}
@@ -103,46 +103,63 @@ function RadarNavItem({
 
       {/* Repo count and kebab menu - positioned outside NavLink to avoid click interference */}
       {!hideText && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-50">
-          {/* Repo count - hidden on hover/focus-within */}
-          <span
-            aria-hidden="true"
-            className="text-gray-400 text-xs whitespace-nowrap transition-opacity opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:group-focus-within/radar:opacity-0"
-          >
-            {radar.repo_count}
-          </span>
-          {/* Kebab menu - shown on hover/focus */}
-          <Menu as="div" className="absolute -right-1">
-            <MenuButton className="text-gray-400 cursor-pointer lg:opacity-0 transition-opacity focus:opacity-100 lg:group-hover/radar:opacity-100 lg:group-focus-within/radar:opacity-100">
-              <span className="sr-only">Open menu for {radar.name}</span>
-              <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-            </MenuButton>
+        <Menu
+          as="div"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-50 pointer-events-none"
+        >
+          {({ open }) => (
+            <>
+              {/* Kebab menu - shown on hover, focus, or when menu is open */}
+              <MenuButton
+                className={clsx(
+                  'peer absolute -right-1 text-gray-400 cursor-pointer transition-opacity pointer-events-auto',
+                  open
+                    ? 'opacity-100'
+                    : 'lg:opacity-0 focus:opacity-100 lg:group-hover/radar:opacity-100'
+                )}
+              >
+                <span className="sr-only">Open menu for {radar.name}</span>
+                <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+              </MenuButton>
+              {/* Repo count - hidden on hover, button focus, or when menu is open */}
+              <span
+                aria-hidden="true"
+                className={clsx(
+                  'text-gray-400 text-xs whitespace-nowrap transition-opacity',
+                  open
+                    ? 'opacity-0'
+                    : 'opacity-0 lg:opacity-100 lg:group-hover/radar:opacity-0 lg:peer-focus:opacity-0'
+                )}
+              >
+                {radar.repo_count}
+              </span>
 
-            <MenuItems
-              transition
-              className="absolute right-0 mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
-            >
-              <MenuItem>
-                <button
-                  onClick={() => onRename(radar)}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 data-focus:bg-indigo-50"
-                >
-                  <PencilIcon className="h-4 w-4" aria-hidden="true" />
-                  Rename
-                </button>
-              </MenuItem>
-              <MenuItem>
-                <button
-                  onClick={() => onDelete(radar)}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 data-focus:bg-indigo-50"
-                >
-                  <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                  Delete
-                </button>
-              </MenuItem>
-            </MenuItems>
-          </Menu>
-        </div>
+              <MenuItems
+                transition
+                className="absolute right-0 top-full mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 pointer-events-auto"
+              >
+                <MenuItem>
+                  <button
+                    onClick={() => onRename(radar)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 data-focus:bg-indigo-50"
+                  >
+                    <PencilIcon className="h-4 w-4" aria-hidden="true" />
+                    Rename
+                  </button>
+                </MenuItem>
+                <MenuItem>
+                  <button
+                    onClick={() => onDelete(radar)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 data-focus:bg-indigo-50"
+                  >
+                    <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                    Delete
+                  </button>
+                </MenuItem>
+              </MenuItems>
+            </>
+          )}
+        </Menu>
       )}
     </div>
   );
