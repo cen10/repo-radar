@@ -95,7 +95,8 @@ body {
 
 @layer base {
   body {
-    @apply bg-white text-gray-900 antialiased;
+    /* Background is set unlayered above (indigo-50 for iOS safe area) */
+    @apply text-gray-900 antialiased;
   }
 }
 
