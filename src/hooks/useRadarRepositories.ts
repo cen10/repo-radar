@@ -41,7 +41,8 @@ export function useRadarRepositories({
   const isTourDemoRadar = isTourActive && radarId === TOUR_RADAR_ID;
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['radarRepositories', radarId],
+    // Include isTourDemoRadar in key so cache invalidates when tour state changes
+    queryKey: ['radarRepositories', radarId, isTourDemoRadar],
     queryFn: async () => {
       if (!radarId) {
         return [];
