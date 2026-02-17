@@ -14,11 +14,8 @@ test.describe('Starred Repositories', () => {
   test('can search starred repositories', async ({ starsPage }) => {
     await starsPage.goto();
 
-    // Search is collapsible - verify the "Open search" button is visible
-    await expect(starsPage.openSearchButton).toBeVisible();
-    await starsPage.search('react');
-
-    // After searching, verify search input is now visible
+    // Search is always visible in the header
     await expect(starsPage.searchInput).toBeVisible();
+    await starsPage.search('react');
   });
 });

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { useOnboarding } from '../contexts/use-onboarding';
+import { fetchStarredRepoCount } from '../services/github';
+import { getValidGitHubToken } from '../services/github-token';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { NoStarredReposState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -39,14 +42,24 @@ const StarsPage = () => {
     enabled: isSearchMode,
   });
 
+  // Fetch total starred count (efficient HEAD request)
+  const { data: totalStarredCount } = useQuery({
+    queryKey: ['starredRepoCount', providerToken],
+    queryFn: () => fetchStarredRepoCount(getValidGitHubToken(providerToken)),
+    enabled: !!providerToken,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const result = isSearchMode ? searchResult : browseResult;
 
   const showSearchBar =
     isSearchMode || browseResult.isLoading || browseResult.repositories.length > 0;
 
-  const repoCount = browseResult.repositories.length;
-  const repoText =
-    repoCount === 0 ? undefined : repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  const getSubtitle = () => {
+    if (totalStarredCount === undefined) return undefined;
+    if (totalStarredCount === 0) return undefined;
+    return totalStarredCount === 1 ? '1 repository' : `${totalStarredCount} repositories`;
+  };
 
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
@@ -70,7 +83,7 @@ const StarsPage = () => {
         title="My Stars"
         titleIcon={<StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
         titleTourId="my-stars-heading"
-        subtitle={repoText}
+        subtitle={getSubtitle()}
         showSearchBar={showSearchBar}
         searchId="stars-search"
         searchValue={searchQuery}

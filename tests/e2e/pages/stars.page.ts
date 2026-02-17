@@ -3,7 +3,6 @@ import { BasePage } from './base.page';
 
 export class StarsPage extends BasePage {
   readonly heading: Locator;
-  readonly openSearchButton: Locator;
   readonly searchInput: Locator;
   readonly repositoryCards: Locator;
   readonly emptyState: Locator;
@@ -12,7 +11,6 @@ export class StarsPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.heading = page.getByRole('heading', { name: /my stars|starred/i });
-    this.openSearchButton = page.getByRole('button', { name: /open search/i });
     this.searchInput = page.getByPlaceholder(/search your starred/i);
     this.repositoryCards = page.getByRole('article').filter({ hasText: /stars:/i });
     this.emptyState = page.getByText(/no starred repositories/i);
@@ -25,8 +23,6 @@ export class StarsPage extends BasePage {
   }
 
   async search(query: string) {
-    await this.openSearchButton.click();
-    await this.searchInput.waitFor({ state: 'visible' });
     await this.searchInput.fill(query);
   }
 

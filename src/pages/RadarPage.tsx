@@ -11,6 +11,7 @@ import { RepoCard } from '../components/RepoCard';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
 import { EmptyRadarState, NoSearchResultsState } from '../components/EmptyState';
+import type { SortOption } from '../components/RepositoryList';
 import type { Repository } from '../types';
 
 type RadarSortOption = 'updated' | 'stars';
@@ -82,6 +83,12 @@ const RadarPage = () => {
     setActiveSearch('');
   };
 
+  const handleSortChange = (newSort: SortOption) => {
+    if (newSort === 'updated' || newSort === 'stars') {
+      setSortBy(newSort);
+    }
+  };
+
   const isLoading = radarLoading || reposLoading;
   const error = radarError || reposError;
   const hasActiveSearch = activeSearch.trim().length > 0;
@@ -151,7 +158,7 @@ const RadarPage = () => {
         onSearchSubmit={setActiveSearch}
         searchPlaceholder="Search repositories in this radar..."
         sortValue={sortBy}
-        onSortChange={setSortBy}
+        onSortChange={handleSortChange}
         sortOptions={SORT_OPTIONS}
       />
 
