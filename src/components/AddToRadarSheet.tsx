@@ -51,6 +51,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
   };
 
   const handleCancel = () => {
+    if (isSaving) return; // Prevent closing while save is in-flight
     if (hasUnsavedChanges) {
       setShowDiscardConfirm(true);
     } else {

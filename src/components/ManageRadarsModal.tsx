@@ -53,6 +53,7 @@ export function ManageRadarsModal({ githubRepoId, open, onClose }: ManageRadarsM
   };
 
   const handleCancel = () => {
+    if (isSaving) return; // Prevent closing while save is in-flight
     if (hasUnsavedChanges) {
       setShowDiscardConfirm(true);
     } else {
