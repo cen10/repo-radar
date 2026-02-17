@@ -82,7 +82,7 @@ const RepositoryList = ({
 
   useEffect(() => {
     isFetchingRef.current = isFetchingMore;
-  }, [isFetchingMore, sortBy]);
+  }, [isFetchingMore]);
 
   const canLoadMore = hasMore && !isFetchingMore && !isLoading;
 
