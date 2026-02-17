@@ -12,6 +12,10 @@ export interface OnboardingContextType {
   /** Current active step ID (for conditional styling) */
   currentStepId: string | null;
   setCurrentStepId: (stepId: string | null) => void;
+  showExitConfirmation: boolean;
+  exitTour: () => void;
+  confirmExitTour: () => void;
+  cancelExitTour: () => void;
 }
 
 export const OnboardingContext = createContext<OnboardingContextType | null>(null);

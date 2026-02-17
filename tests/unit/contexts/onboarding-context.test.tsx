@@ -11,15 +11,29 @@ const DEMO_SESSION_KEY = 'demo-onboarding';
 const DEMO_MODE_KEY = 'repo_radar_demo_mode';
 
 function TestConsumer() {
-  const { hasCompletedTour, isTourActive, startTour, completeTour, restartTour } = useOnboarding();
+  const {
+    hasCompletedTour,
+    isTourActive,
+    startTour,
+    completeTour,
+    restartTour,
+    showExitConfirmation,
+    exitTour,
+    confirmExitTour,
+    cancelExitTour,
+  } = useOnboarding();
 
   return (
     <div>
       <span data-testid="completed">{hasCompletedTour ? 'true' : 'false'}</span>
       <span data-testid="active">{isTourActive ? 'true' : 'false'}</span>
+      <span data-testid="exit-confirmation">{showExitConfirmation ? 'true' : 'false'}</span>
       <button onClick={startTour}>Start</button>
       <button onClick={completeTour}>Complete</button>
       <button onClick={() => restartTour()}>Restart</button>
+      <button onClick={exitTour}>Exit Tour</button>
+      <button onClick={confirmExitTour}>Confirm Exit</button>
+      <button onClick={cancelExitTour}>Cancel Exit</button>
     </div>
   );
 }
@@ -321,6 +335,63 @@ describe('OnboardingContext', () => {
       );
 
       expect(document.querySelector('.tour-fallback-overlay')).toBeInTheDocument();
+    });
+  });
+
+  describe('Exit confirmation', () => {
+    it('starts with showExitConfirmation false', () => {
+      renderWithProvider();
+      expect(screen.getByTestId('exit-confirmation')).toHaveTextContent('false');
+    });
+
+    it('exitTour shows exit confirmation', async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^exit tour$/i }));
+
+      expect(screen.getByTestId('exit-confirmation')).toHaveTextContent('true');
+      // Tour should still be active while confirmation is showing
+      expect(screen.getByTestId('active')).toHaveTextContent('true');
+    });
+
+    it('cancelExitTour hides exit confirmation and continues tour', async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^exit tour$/i }));
+      await user.click(screen.getByRole('button', { name: /cancel exit/i }));
+
+      expect(screen.getByTestId('exit-confirmation')).toHaveTextContent('false');
+      expect(screen.getByTestId('active')).toHaveTextContent('true');
+      expect(screen.getByTestId('completed')).toHaveTextContent('false');
+    });
+
+    it('confirmExitTour completes the tour and hides confirmation', async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^exit tour$/i }));
+      await user.click(screen.getByRole('button', { name: /confirm exit/i }));
+
+      expect(screen.getByTestId('exit-confirmation')).toHaveTextContent('false');
+      expect(screen.getByTestId('active')).toHaveTextContent('false');
+      expect(screen.getByTestId('completed')).toHaveTextContent('true');
+    });
+
+    it('confirmExitTour persists completion to localStorage', async () => {
+      const user = userEvent.setup();
+      renderWithProvider();
+
+      await user.click(screen.getByRole('button', { name: /^start$/i }));
+      await user.click(screen.getByRole('button', { name: /^exit tour$/i }));
+      await user.click(screen.getByRole('button', { name: /confirm exit/i }));
+
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
+      expect(stored.hasCompletedTour).toBe(true);
     });
   });
 });

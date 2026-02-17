@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingContext, ONBOARDING_STORAGE_KEY } from './OnboardingContext';
+import { ExitTourConfirmationModal } from '../components/OnboardingTour/ExitTourConfirmationModal';
 
 const DEMO_ONBOARDING_SESSION_KEY = 'demo-onboarding';
 
@@ -32,6 +33,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
   // Track previous completion state to detect transitions
   const prevHasCompletedTourRef = useRef(hasCompletedTour);
@@ -80,6 +82,19 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setCurrentStepId(null);
   }, []);
 
+  const exitTour = useCallback(() => {
+    setShowExitConfirmation(true);
+  }, []);
+
+  const confirmExitTour = useCallback(() => {
+    setShowExitConfirmation(false);
+    completeTour();
+  }, [completeTour]);
+
+  const cancelExitTour = useCallback(() => {
+    setShowExitConfirmation(false);
+  }, []);
+
   return (
     <OnboardingContext
       value={{
@@ -90,6 +105,10 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         completeTour,
         currentStepId,
         setCurrentStepId,
+        showExitConfirmation,
+        exitTour,
+        confirmExitTour,
+        cancelExitTour,
       }}
     >
       {/* Fallback overlay - visible on desktop when tour is active OR when tour is about
@@ -104,6 +123,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           aria-hidden="true"
         />
       )}
+      <ExitTourConfirmationModal />
       {children}
     </OnboardingContext>
   );
