@@ -17,10 +17,14 @@ import { configureStepsForShepherd, type TourStep } from './tourSteps';
 export function useShepherdTour(pageSteps: TourStep[]) {
   const navigate = useNavigate();
   const Shepherd = useShepherd();
-  const { isTourActive, completeTour, setCurrentStepId, exitTour } = useOnboarding();
+  const { isTourActive, completeTour, setCurrentStepId, exitTour, showExitConfirmation } =
+    useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
   // Track current step to preserve position when effect re-runs (e.g., hasStarredRepos changes)
   const currentStepRef = useRef<string | null>(null);
+  // Track exit confirmation state without adding to effect deps (would recreate tour)
+  const showExitConfirmationRef = useRef(false);
+  showExitConfirmationRef.current = showExitConfirmation;
 
   useEffect(() => {
     if (!isTourActive || pageSteps.length === 0) {
@@ -65,10 +69,13 @@ export function useShepherdTour(pageSteps: TourStep[]) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (showExitConfirmationRef.current) {
+          // Let the confirmation modal handle Escape via HeadlessUI Dialog
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        // Show confirmation modal instead of immediately cancelling
         exitTour();
         return;
       }
