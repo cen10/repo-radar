@@ -53,7 +53,10 @@ const StarsPage = () => {
   const result = isSearchMode ? searchResult : browseResult;
 
   const showSearchBar =
-    isSearchMode || browseResult.isLoading || browseResult.repositories.length > 0;
+    isSearchMode ||
+    browseResult.isLoading ||
+    browseResult.repositories.length > 0 ||
+    !!browseResult.error;
 
   const getSubtitle = () => {
     if (totalStarredCount === undefined) return undefined;
