@@ -86,7 +86,6 @@ test.describe('Onboarding Tour', () => {
     const exitButton = firstTimeUserPage.getByRole('button', { name: /^exit tour$/i });
     await expect(exitButton).toBeVisible();
 
-    // Confirm exit
     await exitButton.click();
     await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
   });
@@ -101,7 +100,6 @@ test.describe('Onboarding Tour', () => {
     const exitButton = firstTimeUserPage.getByRole('button', { name: /^exit tour$/i });
     await expect(exitButton).toBeVisible();
 
-    // Confirm exit
     await exitButton.click();
     await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
   });
@@ -116,7 +114,6 @@ test.describe('Onboarding Tour', () => {
     const continueButton = firstTimeUserPage.getByRole('button', { name: /continue tour/i });
     await expect(continueButton).toBeVisible();
 
-    // Click Continue Tour
     await continueButton.click();
 
     // Modal closes, tour continues
