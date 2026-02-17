@@ -66,38 +66,38 @@ const Home = () => {
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">Repo Radar</h1>
         <p className="text-xl text-gray-600 mb-5 max-w-2xl mx-auto">
-          Track momentum and activity across GitHub repositories.
+          Organize and explore your GitHub starred repositories.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 text-left max-w-3xl mx-auto">
-          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm flex md:block items-start gap-3">
-            <div className="text-indigo-600 text-xl md:text-2xl md:mb-2 shrink-0">📊</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Track Growth</h3>
-              <p className="text-gray-600 text-sm">
-                Monitor star counts and growth trends across repositories
-              </p>
-            </div>
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-900 mb-1">
+              <span className="text-xl md:text-2xl">📊</span>
+              Repository Stats
+            </h3>
+            <p className="text-gray-600 text-sm">
+              View stars, forks, and recent activity at a glance
+            </p>
           </div>
 
-          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm flex md:block items-start gap-3">
-            <div className="text-indigo-600 text-xl md:text-2xl md:mb-2 shrink-0">🚀</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Release Updates</h3>
-              <p className="text-gray-600 text-sm">
-                Stay informed about new releases and version updates
-              </p>
-            </div>
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-900 mb-1">
+              <span className="text-xl md:text-2xl">🚀</span>
+              Release Updates
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Stay informed about new releases and version updates
+            </p>
           </div>
 
-          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm flex md:block items-start gap-3">
-            <div className="text-indigo-600 text-xl md:text-2xl md:mb-2 shrink-0">🔔</div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Activity Alerts</h3>
-              <p className="text-gray-600 text-sm">
-                Get notified about trending repos and increased activity
-              </p>
-            </div>
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-sm">
+            <h3 className="flex items-center gap-2 font-semibold text-gray-900 mb-1">
+              <span className="text-xl md:text-2xl">📡</span>
+              Custom Radars
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Organize repositories into collections by topic or project
+            </p>
           </div>
         </div>
 
@@ -141,6 +141,15 @@ const Home = () => {
         <p className="mt-4 text-xs text-gray-500 lg:hidden">
           Use demo mode on desktop to get a guided tour.
         </p>
+
+        <a
+          href="https://github.com/cen10/repo-radar"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 inline-block text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          View source on GitHub
+        </a>
       </div>
     </div>
   );

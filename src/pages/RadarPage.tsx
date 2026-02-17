@@ -8,10 +8,10 @@ import { useOnboarding } from '../contexts/use-onboarding';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { TOUR_RADAR_ID } from '../demo/tour-data';
 import { RepoCard } from '../components/RepoCard';
-import { CollapsibleSearch } from '../components/CollapsibleSearch';
-import { SortDropdown } from '../components/SortDropdown';
+import { PageHeader } from '../components/PageHeader';
 import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
 import { EmptyRadarState, NoSearchResultsState } from '../components/EmptyState';
+import type { SortOption } from '../components/RepositoryList';
 import type { Repository } from '../types';
 
 type RadarSortOption = 'updated' | 'stars';
@@ -83,6 +83,12 @@ const RadarPage = () => {
     setActiveSearch('');
   };
 
+  const handleSortChange = (newSort: SortOption) => {
+    if (newSort === 'updated' || newSort === 'stars') {
+      setSortBy(newSort);
+    }
+  };
+
   const isLoading = radarLoading || reposLoading;
   const error = radarError || reposError;
   const hasActiveSearch = activeSearch.trim().length > 0;
@@ -136,35 +142,29 @@ const RadarPage = () => {
 
   // Radar loaded successfully
   const repoCount = repositories.length;
-  const repoText = repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  const getSubtitle = () => {
+    if (reposLoading) return undefined;
+    if (repoCount === 0) return undefined;
+    return repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header with radar name */}
-      <div className="mb-6">
-        <h1
-          className="inline-flex items-center gap-2 text-2xl font-semibold text-gray-900"
-          data-tour="radar-name"
-        >
-          <StaticRadarIcon className="h-7 w-7 text-indigo-600" />
-          {radar?.name}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">{repoText}</p>
-      </div>
-
-      {/* Search and Sort */}
-      {repoCount > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-          <CollapsibleSearch
-            id="radar-search"
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={setActiveSearch}
-            placeholder="Search repositories in this radar..."
-          />
-          <SortDropdown value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
-        </div>
-      )}
+      <PageHeader
+        title={radar?.name ?? ''}
+        titleIcon={<StaticRadarIcon className="h-7 w-7 text-indigo-600" />}
+        titleTourId="radar-name"
+        subtitle={getSubtitle()}
+        showSearchBar={repoCount > 0}
+        searchId="radar-search"
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={setActiveSearch}
+        searchPlaceholder="Search repositories in this radar..."
+        sortValue={sortBy}
+        onSortChange={handleSortChange}
+        sortOptions={SORT_OPTIONS}
+      />
 
       {/* Loading repos indicator */}
       {reposLoading && (
@@ -200,7 +200,7 @@ const RadarPage = () => {
                   : `${sortedRepos.length} repositories found`}
               </p>
             ) : (
-              <p>{repoText}</p>
+              <p>{repoCount === 1 ? '1 repository' : `${repoCount} repositories`}</p>
             )}
           </div>
         </>

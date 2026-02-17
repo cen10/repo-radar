@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthErrorHandler } from '../hooks/useAuthErrorHandler';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { useOnboarding } from '../contexts/use-onboarding';
+import { fetchStarredRepoCount } from '../services/github';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { NoStarredReposState } from '../components/EmptyState';
-import { CollapsibleSearch } from '../components/CollapsibleSearch';
-import { SortDropdown } from '../components/SortDropdown';
+import { PageHeader } from '../components/PageHeader';
 
 type StarsSortOption = 'updated' | 'created';
 
@@ -40,15 +43,35 @@ const StarsPage = () => {
     enabled: isSearchMode,
   });
 
+  // Fetch total starred count (efficient HEAD request)
+  const { data: totalStarredCount, error: countError } = useQuery({
+    queryKey: ['starredRepoCount', providerToken],
+    queryFn: () => fetchStarredRepoCount(getValidGitHubToken(providerToken)),
+    enabled: !!providerToken || hasFallbackToken(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  useAuthErrorHandler(countError, 'starredRepoCount');
+
   const result = isSearchMode ? searchResult : browseResult;
 
-  // Hide search/sort when user has no starred repos (determined after browse loads).
-  // Include !isSearchMode to prevent UI from disappearing if user searches during initial load.
-  const showSearchAndSort =
+  const showSearchBar =
     isSearchMode ||
     browseResult.isLoading ||
     browseResult.repositories.length > 0 ||
-    browseResult.error;
+    !!browseResult.error;
+
+  const getSubtitle = () => {
+    if (isSearchMode) {
+      if (searchResult.isLoading) return undefined;
+      const total = searchResult.totalCount;
+      if (total === 0) return undefined;
+      return total === 1 ? '1 result' : `${total.toLocaleString()} results`;
+    }
+    if (totalStarredCount === undefined) return undefined;
+    if (totalStarredCount === 0) return undefined;
+    return totalStarredCount === 1 ? '1 repository' : `${totalStarredCount} repositories`;
+  };
 
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
@@ -68,33 +91,21 @@ const StarsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header with Search and Sort */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1
-          className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
-          data-tour="my-stars-heading"
-        >
-          <StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />
-          My Stars
-        </h1>
-
-        {showSearchAndSort && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div>
-              <CollapsibleSearch
-                id="stars-search"
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onSubmit={setActiveSearch}
-                placeholder="Search your starred repositories..."
-              />
-            </div>
-            <div>
-              <SortDropdown value={sortBy} onChange={handleSortChange} options={SORT_OPTIONS} />
-            </div>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        title="My Stars"
+        titleIcon={<StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
+        titleTourId="my-stars-heading"
+        subtitle={getSubtitle()}
+        showSearchBar={showSearchBar}
+        searchId="stars-search"
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={setActiveSearch}
+        searchPlaceholder="Search your starred repositories..."
+        sortValue={sortBy}
+        onSortChange={handleSortChange}
+        sortOptions={SORT_OPTIONS}
+      />
 
       <div>
         <RepositoryList

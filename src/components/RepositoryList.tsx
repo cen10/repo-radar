@@ -80,9 +80,17 @@ const RepositoryList = ({
   // See: https://github.com/TanStack/query/issues/6689
   const isFetchingRef = useRef(false);
 
+  // Reset ref when fetch completes.
   useEffect(() => {
-    isFetchingRef.current = isFetchingMore;
-  }, [isFetchingMore, sortBy]);
+    if (!isFetchingMore) {
+      isFetchingRef.current = false;
+    }
+  }, [isFetchingMore]);
+
+  // Reset ref when sort changes (creates a new query, not fetching "next" page).
+  useEffect(() => {
+    isFetchingRef.current = false;
+  }, [sortBy]);
 
   const canLoadMore = hasMore && !isFetchingMore && !isLoading;
 

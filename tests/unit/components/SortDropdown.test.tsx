@@ -59,4 +59,17 @@ describe('SortDropdown', () => {
     const selectedOption = screen.getByRole('option', { name: 'Most Stars' });
     expect(selectedOption).toHaveAttribute('data-selected');
   });
+
+  it('disables dropdown when disabled prop is true', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<SortDropdown {...defaultProps} onChange={onChange} disabled={true} />);
+
+    const button = screen.getByRole('button');
+    expect(button).toBeDisabled();
+
+    await user.click(button);
+    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

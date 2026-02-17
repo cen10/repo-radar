@@ -281,8 +281,6 @@ describe('Repository Search Integration', () => {
         { timeout: 2000 }
       );
 
-      // Open collapsed search and enter query
-      await user.click(screen.getByRole('button', { name: /open search/i }));
       const searchInput = screen.getByPlaceholderText(/search your starred/i);
       await user.type(searchInput, 'react');
       // Submit the search form
@@ -345,8 +343,6 @@ describe('Repository Search Integration', () => {
         { timeout: 2000 }
       );
 
-      // Open collapsed search and enter query that returns no results
-      await user.click(screen.getByRole('button', { name: /open search/i }));
       const searchInput = screen.getByPlaceholderText(/search your starred/i);
       await user.type(searchInput, 'nonexistent');
       await user.keyboard('{Enter}');

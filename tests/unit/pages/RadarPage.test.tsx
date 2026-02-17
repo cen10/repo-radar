@@ -201,8 +201,8 @@ describe('RadarPage', () => {
 
       // Sort dropdown button (Headless UI Listbox)
       expect(screen.getByRole('button', { name: /sort repositories/i })).toBeInTheDocument();
-      // Search is collapsible - look for the toggle button instead of the input
-      expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
+      // Search input is always visible
+      expect(screen.getByPlaceholderText(/search repositories/i)).toBeInTheDocument();
     });
   });
 
@@ -240,9 +240,6 @@ describe('RadarPage', () => {
       const user = userEvent.setup();
       renderWithProviders();
 
-      // Expand the collapsible search first
-      await user.click(screen.getByRole('button', { name: /open search/i }));
-
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       await user.type(searchInput, 'react');
       await user.click(screen.getByRole('button', { name: /^search$/i }));
@@ -254,9 +251,6 @@ describe('RadarPage', () => {
     it('shows no results message when search has no matches', async () => {
       const user = userEvent.setup();
       renderWithProviders();
-
-      // Expand the collapsible search first
-      await user.click(screen.getByRole('button', { name: /open search/i }));
 
       const searchInput = screen.getByPlaceholderText(/search repositories/i);
       await user.type(searchInput, 'nonexistent');
