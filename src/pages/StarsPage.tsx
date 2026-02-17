@@ -6,7 +6,7 @@ import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { useOnboarding } from '../contexts/use-onboarding';
 import { fetchStarredRepoCount } from '../services/github';
-import { getValidGitHubToken } from '../services/github-token';
+import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
 import RepositoryList, { type SortOption } from '../components/RepositoryList';
 import { NoStarredReposState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
@@ -46,7 +46,7 @@ const StarsPage = () => {
   const { data: totalStarredCount } = useQuery({
     queryKey: ['starredRepoCount', providerToken],
     queryFn: () => fetchStarredRepoCount(getValidGitHubToken(providerToken)),
-    enabled: !!providerToken,
+    enabled: !!providerToken || hasFallbackToken(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
