@@ -65,9 +65,10 @@ test.describe('Onboarding Tour', () => {
   test('does not show tour after completion', async ({ firstTimeUserPage }) => {
     await firstTimeUserPage.goto('/stars');
 
-    // Complete the tour quickly by pressing Escape to cancel
+    // Complete the tour quickly by pressing Escape and confirming exit
     await expect(visibleStep(firstTimeUserPage)).toBeVisible();
     await firstTimeUserPage.keyboard.press('Escape');
+    await firstTimeUserPage.getByRole('button', { name: /exit tour/i }).click();
     await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
 
     await firstTimeUserPage.reload();
@@ -80,6 +81,13 @@ test.describe('Onboarding Tour', () => {
 
     await expect(visibleStep(firstTimeUserPage)).toBeVisible();
     await firstTimeUserPage.keyboard.press('Escape');
+
+    // Confirmation modal appears - wait for the Exit Tour button to be clickable
+    const exitButton = firstTimeUserPage.getByRole('button', { name: /^exit tour$/i });
+    await expect(exitButton).toBeVisible();
+
+    // Confirm exit
+    await exitButton.click();
     await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
   });
 
@@ -88,7 +96,32 @@ test.describe('Onboarding Tour', () => {
 
     await expect(visibleStep(firstTimeUserPage)).toBeVisible();
     await firstTimeUserPage.locator('.shepherd-cancel-icon:visible').click();
+
+    // Confirmation modal appears - wait for the Exit Tour button to be clickable
+    const exitButton = firstTimeUserPage.getByRole('button', { name: /^exit tour$/i });
+    await expect(exitButton).toBeVisible();
+
+    // Confirm exit
+    await exitButton.click();
     await expect(visibleStep(firstTimeUserPage)).not.toBeVisible();
+  });
+
+  test('can continue tour after clicking X button', async ({ firstTimeUserPage }) => {
+    await firstTimeUserPage.goto('/stars');
+
+    await expect(visibleStep(firstTimeUserPage)).toBeVisible();
+    await firstTimeUserPage.locator('.shepherd-cancel-icon:visible').click();
+
+    // Confirmation modal appears - wait for the Continue Tour button
+    const continueButton = firstTimeUserPage.getByRole('button', { name: /continue tour/i });
+    await expect(continueButton).toBeVisible();
+
+    // Click Continue Tour
+    await continueButton.click();
+
+    // Modal closes, tour continues
+    await expect(continueButton).not.toBeVisible();
+    await expect(visibleStep(firstTimeUserPage)).toBeVisible();
   });
 
   test('can navigate back during tour', async ({ firstTimeUserPage }) => {
