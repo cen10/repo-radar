@@ -142,7 +142,11 @@ const RadarPage = () => {
 
   // Radar loaded successfully
   const repoCount = repositories.length;
-  const repoText = repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  const getSubtitle = () => {
+    if (reposLoading) return undefined;
+    if (repoCount === 0) return undefined;
+    return repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -150,7 +154,7 @@ const RadarPage = () => {
         title={radar?.name ?? ''}
         titleIcon={<StaticRadarIcon className="h-7 w-7 text-indigo-600" />}
         titleTourId="radar-name"
-        subtitle={repoText}
+        subtitle={getSubtitle()}
         showSearchBar={repoCount > 0}
         searchId="radar-search"
         searchValue={searchQuery}
@@ -196,7 +200,7 @@ const RadarPage = () => {
                   : `${sortedRepos.length} repositories found`}
               </p>
             ) : (
-              <p>{repoText}</p>
+              <p>{repoCount === 1 ? '1 repository' : `${repoCount} repositories`}</p>
             )}
           </div>
         </>
