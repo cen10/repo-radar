@@ -1,9 +1,8 @@
 import type { ReactElement, ReactNode } from 'react';
 import { SearchBar } from './SearchBar';
 import { SortDropdown } from './SortDropdown';
-import type { SortOption, SortOptionConfig } from './RepositoryList';
 
-export interface PageHeaderProps {
+export interface PageHeaderProps<T extends string> {
   title: string;
   titleIcon: ReactElement;
   subtitle?: string;
@@ -19,9 +18,9 @@ export interface PageHeaderProps {
   searchTourId?: string;
 
   // Sort configuration
-  sortValue: SortOption;
-  onSortChange: (sort: SortOption) => void;
-  sortOptions: SortOptionConfig[];
+  sortValue: T;
+  onSortChange: (sort: T) => void;
+  sortOptions: { value: T; label: string }[];
   sortDisabled?: boolean;
   sortTourId?: string;
 
@@ -29,7 +28,7 @@ export interface PageHeaderProps {
   actionMenu?: ReactNode;
 }
 
-export function PageHeader({
+export function PageHeader<T extends string>({
   title,
   titleIcon,
   subtitle,
@@ -47,7 +46,7 @@ export function PageHeader({
   sortDisabled,
   sortTourId,
   actionMenu,
-}: PageHeaderProps) {
+}: PageHeaderProps<T>) {
   return (
     <div className="mb-6">
       {/* Title row */}
