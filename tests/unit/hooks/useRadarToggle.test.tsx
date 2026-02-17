@@ -243,5 +243,49 @@ describe('useRadarToggle', () => {
       expect(result.current.hasUnsavedChanges).toBe(false);
       expect(result.current.saveError).toBeNull();
     });
+
+    it('executes removes before adds to support move operations at limit', async () => {
+      // Scenario: user is at per-radar limit and wants to "move" repo
+      // Remove from radar-1, add to radar-2
+      const radar1 = createMockRadar({ id: 'radar-1', name: 'Frontend' });
+      const radar2 = createMockRadar({ id: 'radar-2', name: 'Backend' });
+      mockRadars.push(radar1, radar2);
+      mockRadarsAlreadyContainingRepo.push('radar-1'); // Repo is in radar-1
+
+      const callOrder: string[] = [];
+      const mockRadarRepo = {
+        id: '1',
+        radar_id: 'radar-2',
+        github_repo_id: testRepoId,
+        added_at: '',
+      };
+
+      vi.mocked(radarService.removeRepoFromRadar).mockImplementation(() => {
+        callOrder.push('remove');
+        return Promise.resolve();
+      });
+      vi.mocked(radarService.addRepoToRadar).mockImplementation(() => {
+        callOrder.push('add');
+        return Promise.resolve(mockRadarRepo);
+      });
+
+      const { result } = renderHook(
+        () => useRadarToggle({ githubRepoId: testRepoId, open: true }),
+        { wrapper }
+      );
+
+      // Uncheck radar-1 (remove), check radar-2 (add) - a "move" operation
+      act(() => {
+        result.current.handleToggleRadar(radar1); // Remove from radar-1
+        result.current.handleToggleRadar(radar2); // Add to radar-2
+      });
+
+      await act(async () => {
+        await result.current.saveChanges();
+      });
+
+      // Removes should complete before adds start
+      expect(callOrder).toEqual(['remove', 'add']);
+    });
   });
 });
