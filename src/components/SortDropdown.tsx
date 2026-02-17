@@ -26,7 +26,7 @@ export function SortDropdown<T extends string>({
       <div className="relative w-full sm:w-auto">
         <ListboxButton
           aria-label="Sort repositories"
-          className="relative w-full sm:w-[200px] rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="relative w-full sm:w-[200px] cursor-pointer rounded-lg bg-white py-2 pl-4 pr-10 text-left border border-gray-300 text-gray-900 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="block truncate">{selectedOption?.label}</span>
           <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
