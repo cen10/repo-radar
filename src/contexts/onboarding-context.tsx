@@ -59,7 +59,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setIsTourActive(true);
   }, []);
 
-  const restartTour = useCallback((navigateTo?: string, navigateFn?: (path: string) => void) => {
+  const restartTour = (navigateTo?: string, navigateFn?: (path: string) => void) => {
     setHasCompletedTour(false);
     setIsTourActive(false);
 
@@ -74,7 +74,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     } else {
       setIsTourActive(true);
     }
-  }, []);
+  };
 
   const completeTour = useCallback(() => {
     setHasCompletedTour(true);
@@ -86,14 +86,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setShowExitConfirmation(true);
   }, []);
 
-  const confirmExitTour = useCallback(() => {
+  const confirmExitTour = () => {
     setShowExitConfirmation(false);
     completeTour();
-  }, [completeTour]);
+  };
 
-  const cancelExitTour = useCallback(() => {
+  const cancelExitTour = () => {
     setShowExitConfirmation(false);
-  }, []);
+  };
 
   return (
     <OnboardingContext
