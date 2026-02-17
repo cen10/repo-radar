@@ -209,7 +209,10 @@ describe('Header', () => {
       expect(screen.getByText(/sign out failed/i)).toBeInTheDocument();
     });
 
-    expect(signOutButton).toHaveFocus();
+    // Focus is set via useEffect after error state changes
+    await waitFor(() => {
+      expect(signOutButton).toHaveFocus();
+    });
   });
 
   describe('Help menu', () => {
