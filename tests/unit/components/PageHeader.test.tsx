@@ -13,7 +13,7 @@ vi.mock('@/components/SortDropdown', () => ({
   SortDropdown: () => <div data-testid="mock-sort-dropdown" />,
 }));
 
-const defaultProps: PageHeaderProps = {
+const defaultProps: PageHeaderProps<'updated'> = {
   title: 'Test Title',
   titleIcon: <span data-testid="title-icon">icon</span>,
   showSearchBar: true,
