@@ -12,6 +12,7 @@ import {
 import { SIGNOUT_FAILED } from '../constants/errorMessages';
 import { logger } from '../utils/logger';
 import { Button } from './Button';
+import { LoadingSpinner } from './icons';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { useOnboarding } from '../contexts/use-onboarding';
 
@@ -171,7 +172,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
       <header
         className={`bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${headerTopClass}`}
       >
-        <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between gap-4 h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             {onMenuToggle && (
               <Button
@@ -187,8 +188,8 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
             <h1 className="text-xl font-semibold text-gray-900">Repo Radar</h1>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-3">
               {user.avatar_url ? (
                 <img
                   src={user.avatar_url}
@@ -198,7 +199,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               ) : (
                 <UserCircleIcon className="h-8 w-8 text-gray-400 shrink-0" aria-hidden="true" />
               )}
-              <div className="hidden sm:block">
+              <div>
                 <p className="text-sm font-medium text-gray-900">{user.name || user.login}</p>
                 <p className="text-xs text-gray-500">@{user.login}</p>
               </div>
@@ -225,7 +226,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                 id="help-panel"
                 role="region"
                 aria-label="Help information"
-                className={`absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 transition-all duration-200 ease-out origin-top-right ${
+                className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 transition-all duration-200 ease-out origin-top-right left-auto right-0 w-72 max-w-[calc(100vw-2rem)] sm:max-w-none ${
                   isHelpOpen
                     ? 'opacity-100 scale-100 translate-y-0'
                     : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
@@ -266,10 +267,14 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
               ref={signOutButtonRef}
               variant="secondary"
               onClick={handleSignOut}
-              loading={isSigningOut}
-              loadingText="Signing out..."
+              disabled={isSigningOut}
+              className="p-2! sm:px-4! sm:py-2!"
             >
-              <ArrowRightStartOnRectangleIcon className="mr-2 h-4 w-4" />
+              {isSigningOut ? (
+                <LoadingSpinner className="mr-2 h-4 w-4 hidden sm:block" />
+              ) : (
+                <ArrowRightStartOnRectangleIcon className="mr-2 h-4 w-4 hidden sm:block" />
+              )}
               Sign out
             </Button>
           </div>
