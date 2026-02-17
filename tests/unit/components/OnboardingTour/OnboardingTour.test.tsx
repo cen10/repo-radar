@@ -28,6 +28,8 @@ const mockOnboarding = {
   completeTour: vi.fn(),
   startTour: vi.fn(),
   setCurrentStepId: vi.fn(),
+  exitTour: vi.fn(),
+  showExitConfirmation: false,
 };
 
 vi.mock('@/contexts/use-onboarding', () => ({
@@ -97,6 +99,7 @@ describe('OnboardingTour', () => {
     tourInstances.length = 0;
     mockOnboarding.isTourActive = false;
     mockOnboarding.hasCompletedTour = false;
+    mockOnboarding.showExitConfirmation = false;
     mockTourGetCurrentStep.mockReturnValue(null);
     sessionStorage.clear();
 
@@ -238,6 +241,54 @@ describe('OnboardingTour', () => {
       // Should not navigate or show any step
       expect(mockNavigate).not.toHaveBeenCalled();
       expect(mockTourShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Exit tour behavior', () => {
+    it('calls exitTour when Escape key is pressed', () => {
+      mockOnboarding.isTourActive = true;
+
+      renderTour('/stars');
+
+      const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(event);
+
+      expect(mockOnboarding.exitTour).toHaveBeenCalledOnce();
+      // Should NOT directly cancel the tour
+      expect(mockTourCancel).not.toHaveBeenCalled();
+    });
+
+    it('calls exitTour when X button is clicked', () => {
+      mockOnboarding.isTourActive = true;
+
+      renderTour('/stars');
+
+      // Create a mock cancel icon element
+      const cancelIcon = document.createElement('button');
+      cancelIcon.className = 'shepherd-cancel-icon';
+      document.body.appendChild(cancelIcon);
+
+      // Dispatch click event on the cancel icon
+      const event = new MouseEvent('click', { bubbles: true });
+      cancelIcon.dispatchEvent(event);
+
+      expect(mockOnboarding.exitTour).toHaveBeenCalledOnce();
+
+      // Cleanup
+      document.body.removeChild(cancelIcon);
+    });
+
+    it('does not call exitTour when Escape is pressed while confirmation modal is showing', () => {
+      mockOnboarding.isTourActive = true;
+      mockOnboarding.showExitConfirmation = true;
+
+      renderTour('/stars');
+
+      const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+      document.dispatchEvent(event);
+
+      // Should NOT call exitTour - let HeadlessUI Dialog handle Escape
+      expect(mockOnboarding.exitTour).not.toHaveBeenCalled();
     });
   });
 });

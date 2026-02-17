@@ -8,16 +8,23 @@ import { configureStepsForShepherd, type TourStep } from './tourSteps';
  * Custom hook that manages a Shepherd.js tour lifecycle.
  *
  * Handles tour creation, event listeners, keyboard navigation,
- * click-outside behavior, and cleanup. The tour is controlled
- * by the onboarding context's isTourActive state.
+ * and cleanup. The tour is controlled by the onboarding context's
+ * isTourActive state.
+ *
+ * Exit behavior: Users must click the X button to exit, which shows a
+ * confirmation modal. Clicking outside the tour tooltip does not dismiss it.
  */
 export function useShepherdTour(pageSteps: TourStep[]) {
   const navigate = useNavigate();
   const Shepherd = useShepherd();
-  const { isTourActive, completeTour, setCurrentStepId } = useOnboarding();
+  const { isTourActive, completeTour, setCurrentStepId, exitTour, showExitConfirmation } =
+    useOnboarding();
   const tourRef = useRef<InstanceType<typeof Shepherd.Tour> | null>(null);
   // Track current step to preserve position when effect re-runs (e.g., hasStarredRepos changes)
   const currentStepRef = useRef<string | null>(null);
+  // Track exit confirmation state without adding to effect deps (would recreate tour)
+  const showExitConfirmationRef = useRef(false);
+  showExitConfirmationRef.current = showExitConfirmation;
 
   useEffect(() => {
     if (!isTourActive || pageSteps.length === 0) {
@@ -62,8 +69,14 @@ export function useShepherdTour(pageSteps: TourStep[]) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (showExitConfirmationRef.current) {
+          // Let the confirmation modal handle Escape via HeadlessUI Dialog
+          return;
+        }
         e.preventDefault();
-        void tour.cancel();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        exitTour();
         return;
       }
 
@@ -97,19 +110,19 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     };
     document.addEventListener('keydown', handleKeyDown, true);
 
-    const handleOverlayClick = (e: MouseEvent) => {
+    // Intercept clicks on the cancel icon (X button) to show confirmation modal
+    // instead of immediately cancelling the tour. Uses capturing to handle
+    // the event before Shepherd processes it.
+    const handleCancelIconClick = (e: MouseEvent) => {
       const target = e.target as Element;
-      const isInsideTooltip = target.closest('.shepherd-element');
-      const currentStep = tour.getCurrentStep();
-      const tourStep = pageSteps.find((s) => s.id === currentStep?.id);
-      const targetSelector = tourStep?.target;
-      const isOnTarget = targetSelector && target.closest(targetSelector);
-
-      if (!isInsideTooltip && !(tourStep?.canClickTarget && isOnTarget)) {
-        void tour.cancel();
+      if (target.closest('.shepherd-cancel-icon')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        exitTour();
       }
     };
-    document.addEventListener('click', handleOverlayClick, true);
+    document.addEventListener('click', handleCancelIconClick, true);
 
     tourRef.current = tour;
 
@@ -136,12 +149,12 @@ export function useShepherdTour(pageSteps: TourStep[]) {
       tour.off('cancel', handleTourEnd);
       tour.off('show', updateCurrentStepId);
       document.removeEventListener('keydown', handleKeyDown, true);
-      document.removeEventListener('click', handleOverlayClick, true);
+      document.removeEventListener('click', handleCancelIconClick, true);
       setCurrentStepId(null);
       // Don't clear currentStepRef here - it's needed to resume after effect re-runs
       if (tour.isActive()) {
         void tour.cancel();
       }
     };
-  }, [isTourActive, pageSteps, Shepherd, completeTour, navigate, setCurrentStepId]);
+  }, [isTourActive, pageSteps, Shepherd, completeTour, navigate, setCurrentStepId, exitTour]);
 }
