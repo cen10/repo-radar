@@ -7,12 +7,11 @@ import { useRadarRepositories } from '../hooks/useRadarRepositories';
 import { useOnboarding } from '../contexts/use-onboarding';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { TOUR_RADAR_ID } from '../demo/tour-data';
-import { RepoCard } from '../components/RepoCard';
+import { RepositoryContent } from '../components/RepositoryContent';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSpinner, StaticRadarIcon } from '../components/icons';
-import { EmptyRadarState, NoSearchResultsState } from '../components/EmptyState';
-import type { SortOption } from '../components/RepositoryList';
-import type { Repository } from '../types';
+import { EmptyRadarState } from '../components/EmptyState';
+import type { SortOption } from '../components/SortDropdown';
 
 type RadarSortOption = 'updated' | 'stars';
 
@@ -89,12 +88,10 @@ const RadarPage = () => {
     }
   };
 
-  const isLoading = radarLoading || reposLoading;
-  const error = radarError || reposError;
   const hasActiveSearch = activeSearch.trim().length > 0;
 
-  // Loading state
-  if (isLoading && !radar) {
+  // Loading radar state (before radar metadata is loaded)
+  if (radarLoading && !radar) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center min-h-[400px]" role="status">
@@ -125,13 +122,13 @@ const RadarPage = () => {
     );
   }
 
-  // Error state
-  if (error) {
+  // Radar error state (radar fetch failed)
+  if (radarError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12" role="alert">
           <p className="text-red-600 mb-4">Error loading radar</p>
-          <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+          <p className="text-sm text-gray-600 mb-4">{radarError.message}</p>
           <Link to="/stars" className="text-indigo-600 hover:text-indigo-700 font-medium">
             <ArrowLeftIcon className="inline h-4 w-4" aria-hidden="true" /> Back to My Stars
           </Link>
@@ -146,6 +143,20 @@ const RadarPage = () => {
     if (reposLoading) return undefined;
     if (repoCount === 0) return undefined;
     return repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+  };
+
+  // Mark first repo for onboarding tour
+  const reposWithTourTarget = sortedRepos.map((repo, index) => ({
+    ...repo,
+    isTourTarget: index === 0,
+  }));
+
+  const renderFooter = () => {
+    if (hasActiveSearch) {
+      const count = sortedRepos.length;
+      return <p>{count === 1 ? '1 repository found' : `${count} repositories found`}</p>;
+    }
+    return <p>{repoCount === 1 ? '1 repository' : `${repoCount} repositories`}</p>;
   };
 
   return (
@@ -166,45 +177,16 @@ const RadarPage = () => {
         sortOptions={SORT_OPTIONS}
       />
 
-      {/* Loading repos indicator */}
-      {reposLoading && (
-        <div className="flex justify-center items-center py-8" role="status">
-          <LoadingSpinner className="h-8 w-8 text-indigo-600" />
-          <span className="ml-3 text-gray-500">Loading repositories...</span>
-        </div>
-      )}
-
-      {/* Empty radar state */}
-      {!reposLoading && repoCount === 0 && <EmptyRadarState />}
-
-      {/* No search results */}
-      {!reposLoading && repoCount > 0 && sortedRepos.length === 0 && hasActiveSearch && (
-        <NoSearchResultsState onClearSearch={handleClearSearch} />
-      )}
-
-      {/* Repository Grid */}
-      {!reposLoading && sortedRepos.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedRepos.map((repo: Repository, index: number) => (
-              <RepoCard key={repo.id} repository={{ ...repo, isTourTarget: index === 0 }} />
-            ))}
-          </div>
-
-          {/* Results count */}
-          <div className="text-center py-4 text-gray-500">
-            {hasActiveSearch ? (
-              <p>
-                {sortedRepos.length === 1
-                  ? '1 repository found'
-                  : `${sortedRepos.length} repositories found`}
-              </p>
-            ) : (
-              <p>{repoCount === 1 ? '1 repository' : `${repoCount} repositories`}</p>
-            )}
-          </div>
-        </>
-      )}
+      <RepositoryContent
+        repositories={reposWithTourTarget}
+        isLoading={reposLoading}
+        error={reposError}
+        hasActiveSearch={hasActiveSearch}
+        onClearSearch={handleClearSearch}
+        emptyState={<EmptyRadarState />}
+        sortBy={sortBy}
+        footer={renderFooter()}
+      />
     </div>
   );
 };

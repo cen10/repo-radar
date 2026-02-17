@@ -1,15 +1,13 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
 
-interface SortOption<T extends string> {
-  value: T;
-  label: string;
-}
+// Union of all possible sort option values across pages
+export type SortOption = 'updated' | 'created' | 'stars' | 'forks' | 'help-wanted' | 'best-match';
 
 interface SortDropdownProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
-  options: SortOption<T>[];
+  options: { value: T; label: string }[];
   disabled?: boolean;
 }
 
