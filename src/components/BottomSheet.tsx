@@ -14,6 +14,7 @@ interface BottomSheetProps {
   children: ReactNode;
   disabled?: boolean;
   loading?: boolean;
+  hasUnsavedChanges?: boolean;
 }
 
 export function BottomSheet({
@@ -24,6 +25,7 @@ export function BottomSheet({
   children,
   disabled = false,
   loading = false,
+  hasUnsavedChanges = false,
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -73,15 +75,21 @@ export function BottomSheet({
     const shouldDismiss = isSwipeGesture.current && currentTranslateY.current > SWIPE_THRESHOLD;
 
     if (shouldDismiss) {
-      // Animate to off-screen from current position, then close
-      panelRef.current.style.transform = 'translateY(100%)';
-      dismissTimeoutRef.current = setTimeout(() => {
-        dismissTimeoutRef.current = null;
-        if (panelRef.current) {
-          panelRef.current.style.transform = '';
-        }
+      if (hasUnsavedChanges) {
+        // Skip slide-away animation to avoid jank when discard dialog appears
+        panelRef.current.style.transform = '';
         onClose();
-      }, TRANSITION_DURATION);
+      } else {
+        // Animate to off-screen from current position, then close
+        panelRef.current.style.transform = 'translateY(100%)';
+        dismissTimeoutRef.current = setTimeout(() => {
+          dismissTimeoutRef.current = null;
+          if (panelRef.current) {
+            panelRef.current.style.transform = '';
+          }
+          onClose();
+        }, TRANSITION_DURATION);
+      }
     } else {
       // Snap back to original position
       panelRef.current.style.transform = '';
@@ -90,7 +98,7 @@ export function BottomSheet({
     touchStartY.current = null;
     currentTranslateY.current = 0;
     isSwipeGesture.current = false;
-  }, [onClose]);
+  }, [onClose, hasUnsavedChanges]);
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">

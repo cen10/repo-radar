@@ -148,6 +148,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
         onDone={handleDone}
         title="Add to Radar"
         loading={isSaving}
+        hasUnsavedChanges={hasUnsavedChanges}
       >
         {renderContent()}
       </BottomSheet>
