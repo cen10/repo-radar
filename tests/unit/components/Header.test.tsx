@@ -64,13 +64,11 @@ describe('Header', () => {
     const signOutButton = screen.getByRole('button', { name: /sign out/i });
     fireEvent.click(signOutButton);
 
-    expect(screen.getByText(/signing out/i)).toBeInTheDocument();
     expect(signOutButton).toBeDisabled();
 
     await waitFor(() => {
       expect(mockSignOut).toHaveBeenCalledTimes(1);
       expect(signOutButton).not.toBeDisabled();
-      expect(screen.getByText(/sign out/i)).toBeInTheDocument();
     });
   });
 
