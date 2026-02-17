@@ -1,14 +1,12 @@
 import { useAuth } from '../hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/icons';
 import { Button } from '../components/Button';
 import { useDemoMode } from '../demo/use-demo-mode';
 
 const Home = () => {
-  const { user, authLoading, signInWithGitHub } = useAuth();
+  const { authLoading, signInWithGitHub } = useAuth();
   const { enterDemoMode, isInitializing: isDemoInitializing } = useDemoMode();
-  const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [demoError, setDemoError] = useState(false);
@@ -43,18 +41,12 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      void navigate('/stars');
-    }
-  }, [user, authLoading, navigate]);
-
   // Focus the sign-in button when the page loads
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading) {
       signInButtonRef.current?.focus();
     }
-  }, [authLoading, user]);
+  }, [authLoading]);
 
   // Show loading spinner while checking auth state to prevent flash
   if (authLoading) {
@@ -67,11 +59,6 @@ const Home = () => {
         <LoadingSpinner className="h-12 w-12 text-indigo-600" />
       </div>
     );
-  }
-
-  // If user is authenticated, show nothing while redirect happens
-  if (user) {
-    return null;
   }
 
   return (
