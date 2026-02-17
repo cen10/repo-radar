@@ -22,6 +22,7 @@ export interface PageHeaderProps {
   sortValue: SortOption;
   onSortChange: (sort: SortOption) => void;
   sortOptions: SortOptionConfig[];
+  sortDisabled?: boolean;
   sortTourId?: string;
 
   // Optional action menu (for RadarPage kebab menu if needed)
@@ -43,6 +44,7 @@ export function PageHeader({
   sortValue,
   onSortChange,
   sortOptions,
+  sortDisabled,
   sortTourId,
   actionMenu,
 }: PageHeaderProps) {
@@ -76,7 +78,12 @@ export function PageHeader({
             />
           </div>
           <div data-tour={sortTourId}>
-            <SortDropdown value={sortValue} onChange={onSortChange} options={sortOptions} />
+            <SortDropdown
+              value={sortValue}
+              onChange={onSortChange}
+              options={sortOptions}
+              disabled={sortDisabled}
+            />
           </div>
         </div>
       )}

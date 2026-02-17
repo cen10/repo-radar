@@ -73,6 +73,7 @@ const ExplorePage = () => {
         sortValue={sortBy}
         onSortChange={handleSortChange}
         sortOptions={SORT_OPTIONS}
+        sortDisabled={hasActiveSearch && !result.isLoading && result.totalCount === 0}
       />
       <RepositoryList
         title="Explore"
