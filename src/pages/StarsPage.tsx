@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { StarIcon } from '@heroicons/react/24/outline';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthErrorHandler } from '../hooks/useAuthErrorHandler';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { useOnboarding } from '../contexts/use-onboarding';
@@ -43,12 +44,14 @@ const StarsPage = () => {
   });
 
   // Fetch total starred count (efficient HEAD request)
-  const { data: totalStarredCount } = useQuery({
+  const { data: totalStarredCount, error: countError } = useQuery({
     queryKey: ['starredRepoCount', providerToken],
     queryFn: () => fetchStarredRepoCount(getValidGitHubToken(providerToken)),
     enabled: !!providerToken || hasFallbackToken(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  useAuthErrorHandler(countError, 'starredRepoCount');
 
   const result = isSearchMode ? searchResult : browseResult;
 
