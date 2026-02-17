@@ -101,12 +101,12 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
     setIsSaving(true);
     setSaveError(null);
 
-    // Use Promise.allSettled to handle partial failures gracefully
-    const addResults = await Promise.allSettled(
-      actualAdds.map((id) => addRepoToRadar(id, githubRepoId).then(() => id))
-    );
+    // Run removes before adds so "move" operations succeed when at limit
     const removeResults = await Promise.allSettled(
       actualRemoves.map((id) => removeRepoFromRadar(id, githubRepoId).then(() => id))
+    );
+    const addResults = await Promise.allSettled(
+      actualAdds.map((id) => addRepoToRadar(id, githubRepoId).then(() => id))
     );
 
     const succeededAdds = addResults
