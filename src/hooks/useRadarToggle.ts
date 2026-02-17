@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRadars } from './useRadars';
 import { useRepoRadars } from './useRepoRadars';
@@ -14,102 +14,191 @@ export function useRadarToggle({ githubRepoId, open }: UseRadarToggleOptions) {
   const queryClient = useQueryClient();
   const { radars, isLoading: isLoadingRadars, error: radarsError } = useRadars();
   const {
-    radarIds,
+    radarsAlreadyContainingRepo,
     isLoading: isLoadingRepoRadars,
     error: repoRadarsError,
   } = useRepoRadars(githubRepoId);
 
-  const [toggleError, setToggleError] = useState<string | null>(null);
+  // Track radars to add/remove the repo that haven't been saved yet
+  const [radarsToAddRepoTo, setRadarsToAddRepoTo] = useState<Set<string>>(new Set());
+  const [radarsToRemoveRepoFrom, setRadarsToRemoveRepoFrom] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Clear error when dialog opens
+  // Clear unsaved changes and error when dialog opens
   useEffect(() => {
     if (open) {
-      setToggleError(null);
+      setRadarsToAddRepoTo(new Set());
+      setRadarsToRemoveRepoFrom(new Set());
+      setSaveError(null);
     }
   }, [open]);
 
   const isLoading = isLoadingRadars || isLoadingRepoRadars;
   const fetchError = radarsError || repoRadarsError;
 
-  // Derived state for limits
-  const totalRepos = radars.reduce((sum, r) => sum + r.repo_count, 0);
-  const isAtTotalRepoLimit = totalRepos >= RADAR_LIMITS.MAX_TOTAL_REPOS;
+  const isRadarChecked = (radarId: string): boolean => {
+    if (radarsToAddRepoTo.has(radarId)) return true;
+    if (radarsToRemoveRepoFrom.has(radarId)) return false;
+    return radarsAlreadyContainingRepo.includes(radarId);
+  };
 
-  const repoRadarsQueryKey = useMemo(() => ['repo-radars', githubRepoId] as const, [githubRepoId]);
-  const radarsQueryKey = useMemo(() => ['radars'] as const, []);
-
-  const handleToggleRadar = useCallback(
-    async (radar: RadarWithCount, isChecked: boolean) => {
-      setToggleError(null);
-
-      // Read current cache state at execution time to avoid stale closure issues
-      const previousIds = queryClient.getQueryData<string[]>(repoRadarsQueryKey) ?? [];
-      const previousRadars = queryClient.getQueryData<RadarWithCount[]>(radarsQueryKey) ?? [];
-
-      const newIds = isChecked
-        ? previousIds.filter((id) => id !== radar.id)
-        : [...previousIds, radar.id];
-      queryClient.setQueryData(repoRadarsQueryKey, newIds);
-
-      // Also update radars cache to keep repo_count in sync with checkbox state
-      const newRadars = previousRadars.map((r) =>
-        r.id === radar.id ? { ...r, repo_count: r.repo_count + (isChecked ? -1 : 1) } : r
-      );
-      queryClient.setQueryData(radarsQueryKey, newRadars);
-
-      try {
-        if (isChecked) {
-          await removeRepoFromRadar(radar.id, githubRepoId);
-        } else {
-          await addRepoToRadar(radar.id, githubRepoId);
-        }
-        // Refresh all affected caches with server data
-        void queryClient.invalidateQueries({ queryKey: radarsQueryKey });
-        void queryClient.invalidateQueries({ queryKey: repoRadarsQueryKey });
-        // Also invalidate the radar's repository list so RadarPage shows updated repos
-        void queryClient.invalidateQueries({ queryKey: ['radarRepositories', radar.id] });
-      } catch (err) {
-        // Revert both caches on error
-        queryClient.setQueryData(repoRadarsQueryKey, previousIds);
-        queryClient.setQueryData(radarsQueryKey, previousRadars);
-        const message = err instanceof Error ? err.message : 'Failed to update radar';
-        setToggleError(message);
-      }
-    },
-    [queryClient, githubRepoId, repoRadarsQueryKey, radarsQueryKey]
+  // Filter to actual changes (not toggling back to original state)
+  const actualAdds = Array.from(radarsToAddRepoTo).filter(
+    (id) => !radarsAlreadyContainingRepo.includes(id)
+  );
+  const actualRemoves = Array.from(radarsToRemoveRepoFrom).filter((id) =>
+    radarsAlreadyContainingRepo.includes(id)
   );
 
-  const isCheckboxDisabled = useCallback(
-    (radar: RadarWithCount, isChecked: boolean): boolean => {
-      if (isChecked) return false; // Can always uncheck
-      if (radar.repo_count >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) return true;
-      if (isAtTotalRepoLimit) return true;
-      return false;
-    },
-    [isAtTotalRepoLimit]
-  );
+  // Compute repo count considering unsaved changes (for limit enforcement)
+  const getRepoCountIncludingUnsavedChanges = (radar: RadarWithCount): number => {
+    let count = radar.repo_count;
+    if (actualAdds.includes(radar.id)) {
+      count += 1;
+    }
+    if (actualRemoves.includes(radar.id)) {
+      count -= 1;
+    }
+    return count;
+  };
 
-  const getDisabledTooltip = useCallback(
-    (radar: RadarWithCount): string | null => {
-      if (radar.repo_count >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) {
-        return `This radar has reached its limit (${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repos)`;
-      }
-      if (isAtTotalRepoLimit) {
-        return `You've reached your total repo limit (${RADAR_LIMITS.MAX_TOTAL_REPOS})`;
-      }
-      return null;
-    },
-    [isAtTotalRepoLimit]
-  );
+  // Derived state for limits using counts that include unsaved changes
+  const totalRepoCount = radars.reduce((sum, r) => sum + getRepoCountIncludingUnsavedChanges(r), 0);
+
+  const isAtTotalRepoLimit = totalRepoCount >= RADAR_LIMITS.MAX_TOTAL_REPOS;
+
+  const hasUnsavedChanges = actualAdds.length > 0 || actualRemoves.length > 0;
+
+  // Toggle handler: update local state only, no API calls
+  const handleToggleRadar = (radar: RadarWithCount) => {
+    setSaveError(null);
+    const currentlyChecked = isRadarChecked(radar.id);
+
+    if (currentlyChecked) {
+      // Currently checked → mark for removal
+      setRadarsToRemoveRepoFrom((prev) => new Set(prev).add(radar.id));
+      setRadarsToAddRepoTo((prev) => {
+        const next = new Set(prev);
+        next.delete(radar.id);
+        return next;
+      });
+    } else {
+      // Currently unchecked → mark for add
+      setRadarsToAddRepoTo((prev) => new Set(prev).add(radar.id));
+      setRadarsToRemoveRepoFrom((prev) => {
+        const next = new Set(prev);
+        next.delete(radar.id);
+        return next;
+      });
+    }
+  };
+
+  // Save all unsaved changes
+  const saveChanges = async (): Promise<void> => {
+    if (!hasUnsavedChanges) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    // Run removes before adds so "move" operations succeed when at limit
+    const removeResults = await Promise.allSettled(
+      actualRemoves.map((id) => removeRepoFromRadar(id, githubRepoId).then(() => id))
+    );
+    const addResults = await Promise.allSettled(
+      actualAdds.map((id) => addRepoToRadar(id, githubRepoId).then(() => id))
+    );
+
+    const succeededAdds = addResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+    const succeededRemoves = removeResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    const failedResults = [...addResults, ...removeResults].filter(
+      (r) => r.status === 'rejected'
+    ) as PromiseRejectedResult[];
+
+    // Remove succeeded operations from pending sets
+    if (succeededAdds.length > 0) {
+      setRadarsToAddRepoTo((prev) => {
+        const next = new Set(prev);
+        succeededAdds.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+    if (succeededRemoves.length > 0) {
+      setRadarsToRemoveRepoFrom((prev) => {
+        const next = new Set(prev);
+        succeededRemoves.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+
+    // Invalidate caches for successful operations
+    if (succeededAdds.length > 0 || succeededRemoves.length > 0) {
+      void queryClient.invalidateQueries({ queryKey: ['radars'] });
+      // Await repo-radars so RadarIconButton sees updated state before modal closes
+      await queryClient.invalidateQueries({ queryKey: ['repo-radars', githubRepoId] });
+
+      const affectedRadarIds = new Set([...succeededAdds, ...succeededRemoves]);
+      affectedRadarIds.forEach((id) => {
+        void queryClient.invalidateQueries({ queryKey: ['radarRepositories', id] });
+      });
+    }
+
+    setIsSaving(false);
+
+    // If any failed, report error and throw
+    if (failedResults.length > 0) {
+      const firstError = failedResults[0].reason;
+      const message =
+        firstError instanceof Error ? firstError.message : 'Failed to save some changes';
+      setSaveError(message);
+      throw firstError;
+    }
+  };
+
+  // Discard all unsaved changes
+  const cancelChanges = () => {
+    setRadarsToAddRepoTo(new Set());
+    setRadarsToRemoveRepoFrom(new Set());
+    setSaveError(null);
+  };
+
+  const isCheckboxDisabled = (radar: RadarWithCount): boolean => {
+    if (isSaving) return true; // Disable all during save to prevent edits being dropped
+    if (isRadarChecked(radar.id)) return false; // Can always uncheck
+    const repoCount = getRepoCountIncludingUnsavedChanges(radar);
+    if (repoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) return true;
+    if (isAtTotalRepoLimit) return true;
+    return false;
+  };
+
+  const getDisabledTooltip = (radar: RadarWithCount): string | null => {
+    const repoCount = getRepoCountIncludingUnsavedChanges(radar);
+    if (repoCount >= RADAR_LIMITS.MAX_REPOS_PER_RADAR) {
+      return `This radar has reached its limit (${RADAR_LIMITS.MAX_REPOS_PER_RADAR} repos)`;
+    }
+    if (isAtTotalRepoLimit) {
+      return `You've reached your total repo limit (${RADAR_LIMITS.MAX_TOTAL_REPOS})`;
+    }
+    return null;
+  };
 
   return {
     radars,
-    radarIds,
     isLoading,
     fetchError,
-    toggleError,
+    saveError,
+    isSaving,
+    hasUnsavedChanges,
     handleToggleRadar,
+    isRadarChecked,
     isCheckboxDisabled,
     getDisabledTooltip,
+    saveChanges,
+    cancelChanges,
   };
 }

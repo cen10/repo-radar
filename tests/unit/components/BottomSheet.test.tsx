@@ -46,16 +46,10 @@ describe('BottomSheet', () => {
       expect(screen.getByText(/custom child content/i)).toBeInTheDocument();
     });
 
-    it('renders Done button with default label', () => {
+    it('renders Done button', () => {
       render(<BottomSheet {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /done/i })).toBeInTheDocument();
-    });
-
-    it('renders Done button with custom label', () => {
-      render(<BottomSheet {...defaultProps} doneLabel="Close" />);
-
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
     });
 
     it('renders drag handle indicator', () => {

@@ -198,10 +198,39 @@ describe('Radar CRUD Integration', () => {
     });
   });
 
-  describe('Add/Remove Repo from Radar', () => {
+  describe('Add/Remove Repo from Radar (Batch Save)', () => {
     const mockRepository = createMockRepository({ id: 123, name: 'test-repo' });
 
-    it('adds repo to radar and invalidates radars and repo-radars queries', async () => {
+    it('updates checkbox state locally without API call on toggle', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        { authState: { user: mockUser } }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+      expect(checkbox).not.toBeChecked();
+
+      await user.click(checkbox);
+
+      // Checkbox should be checked immediately (local state)
+      expect(checkbox).toBeChecked();
+
+      // No API call yet - changes are batched until Done is clicked
+      expect(mockAddRepoToRadar).not.toHaveBeenCalled();
+    });
+
+    it('saves changes and invalidates caches when Done is clicked', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
 
@@ -215,8 +244,9 @@ describe('Radar CRUD Integration', () => {
         added_at: new Date().toISOString(),
       });
 
+      const onClose = vi.fn();
       const { queryClient } = renderForIntegration(
-        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
         { authState: { user: mockUser } }
       );
 
@@ -227,29 +257,36 @@ describe('Radar CRUD Integration', () => {
       });
 
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
-      expect(checkbox).not.toBeChecked();
-
       await user.click(checkbox);
 
+      // API not called yet
+      expect(mockAddRepoToRadar).not.toHaveBeenCalled();
+
+      // Click Done to save
+      const doneButton = screen.getByRole('button', { name: /done/i });
+      await user.click(doneButton);
+
+      // Now API should be called
       await waitFor(() => {
         expect(mockAddRepoToRadar).toHaveBeenCalledWith('radar-1', 123);
       });
 
+      // Caches should be invalidated
       await waitFor(() => {
-        // Updates sidebar repo counts
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
-        // Updates checkbox state in ManageRadarsModal
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['repo-radars', 123],
         });
-        // Updates the radar's repository list on RadarPage
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['radarRepositories', 'radar-1'],
         });
       });
+
+      // Modal should close
+      expect(onClose).toHaveBeenCalled();
     });
 
-    it('removes repo from radar and invalidates radars query', async () => {
+    it('removes repo from radar when Done is clicked', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 1 });
 
@@ -258,8 +295,9 @@ describe('Radar CRUD Integration', () => {
       mockGetAllRadarRepoIds.mockResolvedValue(new Set([123]));
       mockRemoveRepoFromRadar.mockResolvedValue(undefined);
 
+      const onClose = vi.fn();
       const { queryClient } = renderForIntegration(
-        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
         { authState: { user: mockUser } }
       );
 
@@ -274,25 +312,32 @@ describe('Radar CRUD Integration', () => {
 
       await user.click(checkbox);
 
+      // Should be unchecked now (unsaved removal)
+      expect(checkbox).not.toBeChecked();
+      expect(mockRemoveRepoFromRadar).not.toHaveBeenCalled();
+
+      // Click Done to save
+      const doneButton = screen.getByRole('button', { name: /done/i });
+      await user.click(doneButton);
+
       await waitFor(() => {
         expect(mockRemoveRepoFromRadar).toHaveBeenCalledWith('radar-1', 123);
       });
 
       await waitFor(() => {
-        // Updates sidebar repo counts
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['radars'] });
-        // Updates checkbox state in ManageRadarsModal
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['repo-radars', 123],
         });
-        // Updates the radar's repository list on RadarPage
         expect(invalidateSpy).toHaveBeenCalledWith({
           queryKey: ['radarRepositories', 'radar-1'],
         });
       });
+
+      expect(onClose).toHaveBeenCalled();
     });
 
-    it('shows optimistic update immediately', async () => {
+    it('shows confirmation dialog when closing with unsaved changes', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
 
@@ -300,28 +345,11 @@ describe('Radar CRUD Integration', () => {
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
 
-      // Delay the service response to test optimistic update
-      mockAddRepoToRadar.mockImplementation(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  id: 'radar-repo-1',
-                  radar_id: 'radar-1',
-                  github_repo_id: 123,
-                  added_at: new Date().toISOString(),
-                }),
-              100
-            )
-          )
-      );
+      const onClose = vi.fn();
 
       renderForIntegration(
-        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
-        {
-          authState: { user: mockUser },
-        }
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
+        { authState: { user: mockUser } }
       );
 
       await waitFor(() => {
@@ -329,27 +357,108 @@ describe('Radar CRUD Integration', () => {
       });
 
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
-      expect(checkbox).not.toBeChecked();
-
       await user.click(checkbox);
 
+      // Click X button to try to close
+      const closeButton = screen.getByRole('button', { name: /close/i });
+      await user.click(closeButton);
+
+      // Should show confirmation dialog, not close immediately
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText(/discard changes/i)).toBeInTheDocument();
+
+      // Confirm discard
+      const discardButton = screen.getByRole('button', { name: /discard/i });
+      await user.click(discardButton);
+
+      // No API calls should be made
+      expect(mockAddRepoToRadar).not.toHaveBeenCalled();
+      expect(mockRemoveRepoFromRadar).not.toHaveBeenCalled();
+
+      // Modal should close
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('keeps modal open when canceling discard confirmation', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      const onClose = vi.fn();
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
+        { authState: { user: mockUser } }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
+      await user.click(checkbox);
+
+      // Click X button to try to close
+      const closeButton = screen.getByRole('button', { name: /close/i });
+      await user.click(closeButton);
+
+      // Cancel the discard (keep editing)
+      const keepEditingButton = screen.getByRole('button', { name: /keep editing/i });
+      await user.click(keepEditingButton);
+
+      // Modal should still be open with changes preserved
+      expect(onClose).not.toHaveBeenCalled();
       expect(checkbox).toBeChecked();
     });
 
-    it('reverts optimistic update on error', async () => {
+    it('closes modal without API call when Done clicked with no changes', async () => {
       const user = userEvent.setup();
       const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
 
       mockGetRadars.mockResolvedValue([radar]);
       mockGetRadarsContainingRepo.mockResolvedValue([]);
       mockGetAllRadarRepoIds.mockResolvedValue(new Set());
-      mockAddRepoToRadar.mockRejectedValue(new Error('Failed to add'));
+
+      const onClose = vi.fn();
 
       renderForIntegration(
-        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={vi.fn()} />,
-        {
-          authState: { user: mockUser },
-        }
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
+        { authState: { user: mockUser } }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('My Radar')).toBeInTheDocument();
+      });
+
+      // Click Done without making any changes
+      const doneButton = screen.getByRole('button', { name: /done/i });
+      await user.click(doneButton);
+
+      // No API calls should be made
+      expect(mockAddRepoToRadar).not.toHaveBeenCalled();
+      expect(mockRemoveRepoFromRadar).not.toHaveBeenCalled();
+
+      // Modal should close
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    it('shows error and keeps modal open when save fails', async () => {
+      const user = userEvent.setup();
+      const radar = createMockRadar({ id: 'radar-1', name: 'My Radar', repo_count: 0 });
+
+      mockGetRadars.mockResolvedValue([radar]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+      mockAddRepoToRadar.mockRejectedValue(new Error('Network error'));
+
+      const onClose = vi.fn();
+
+      renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
+        { authState: { user: mockUser } }
       );
 
       await waitFor(() => {
@@ -357,15 +466,84 @@ describe('Radar CRUD Integration', () => {
       });
 
       const checkbox = screen.getByRole('checkbox', { name: /my radar/i });
-
       await user.click(checkbox);
 
-      await waitFor(() => {
-        expect(checkbox).not.toBeChecked();
-      });
+      const doneButton = screen.getByRole('button', { name: /done/i });
+      await user.click(doneButton);
 
       // Error message should be shown
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/network error/i);
+      });
+
+      // Modal should NOT close
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('saves multiple changes in a single batch', async () => {
+      const user = userEvent.setup();
+      const radar1 = createMockRadar({ id: 'radar-1', name: 'Radar One', repo_count: 0 });
+      const radar2 = createMockRadar({ id: 'radar-2', name: 'Radar Two', repo_count: 1 });
+
+      mockGetRadars.mockResolvedValue([radar1, radar2]);
+      mockGetRadarsContainingRepo.mockResolvedValue(['radar-2']); // Repo is in radar-2
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set([123]));
+      mockAddRepoToRadar.mockResolvedValue({
+        id: 'radar-repo-1',
+        radar_id: 'radar-1',
+        github_repo_id: 123,
+        added_at: new Date().toISOString(),
+      });
+      mockRemoveRepoFromRadar.mockResolvedValue(undefined);
+
+      const onClose = vi.fn();
+      const { queryClient } = renderForIntegration(
+        <ManageRadarsModal githubRepoId={mockRepository.id} open={true} onClose={onClose} />,
+        { authState: { user: mockUser } }
+      );
+
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      await waitFor(() => {
+        expect(screen.getByText('Radar One')).toBeInTheDocument();
+        expect(screen.getByText('Radar Two')).toBeInTheDocument();
+      });
+
+      // Add to radar-1
+      const checkbox1 = screen.getByRole('checkbox', { name: /radar one/i });
+      await user.click(checkbox1);
+      expect(checkbox1).toBeChecked();
+
+      // Remove from radar-2
+      const checkbox2 = screen.getByRole('checkbox', { name: /radar two/i });
+      await user.click(checkbox2);
+      expect(checkbox2).not.toBeChecked();
+
+      // No API calls yet
+      expect(mockAddRepoToRadar).not.toHaveBeenCalled();
+      expect(mockRemoveRepoFromRadar).not.toHaveBeenCalled();
+
+      // Click Done to save all changes
+      const doneButton = screen.getByRole('button', { name: /done/i });
+      await user.click(doneButton);
+
+      // Both API calls should be made
+      await waitFor(() => {
+        expect(mockAddRepoToRadar).toHaveBeenCalledWith('radar-1', 123);
+        expect(mockRemoveRepoFromRadar).toHaveBeenCalledWith('radar-2', 123);
+      });
+
+      // Both radar caches should be invalidated
+      await waitFor(() => {
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['radarRepositories', 'radar-1'],
+        });
+        expect(invalidateSpy).toHaveBeenCalledWith({
+          queryKey: ['radarRepositories', 'radar-2'],
+        });
+      });
+
+      expect(onClose).toHaveBeenCalled();
     });
   });
 
@@ -438,6 +616,50 @@ describe('Radar CRUD Integration', () => {
       // disabled because total across all radars (50) is at the limit
       const checkbox = screen.getByRole('checkbox', { name: /has room/i });
       expect(checkbox).toBeDisabled();
+    });
+
+    it('respects unsaved changes when enforcing limits', async () => {
+      const user = userEvent.setup();
+      // Start at 49 total repos
+      const radar1 = createMockRadar({
+        id: 'radar-1',
+        name: 'Radar A',
+        repo_count: 24,
+      });
+      const radar2 = createMockRadar({
+        id: 'radar-2',
+        name: 'Radar B',
+        repo_count: 24,
+      });
+      const radar3 = createMockRadar({
+        id: 'radar-3',
+        name: 'Almost Full',
+        repo_count: 1, // 24 + 24 + 1 = 49
+      });
+
+      mockGetRadars.mockResolvedValue([radar1, radar2, radar3]);
+      mockGetRadarsContainingRepo.mockResolvedValue([]);
+      mockGetAllRadarRepoIds.mockResolvedValue(new Set());
+
+      renderForIntegration(<ManageRadarsModal githubRepoId={456} open={true} onClose={vi.fn()} />, {
+        authState: { user: mockUser },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Almost Full')).toBeInTheDocument();
+      });
+
+      // At 49 total, we can still add one more
+      const checkboxAlmostFull = screen.getByRole('checkbox', { name: /almost full/i });
+      expect(checkboxAlmostFull).not.toBeDisabled();
+
+      // Add to "Almost Full" - this brings us to 50 (unsaved)
+      await user.click(checkboxAlmostFull);
+      expect(checkboxAlmostFull).toBeChecked();
+
+      // Now Radar A should be disabled because unsaved total is 50
+      const checkboxRadarA = screen.getByRole('checkbox', { name: /radar a/i });
+      expect(checkboxRadarA).toBeDisabled();
     });
   });
 });

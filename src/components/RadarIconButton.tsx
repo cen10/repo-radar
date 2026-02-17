@@ -43,9 +43,9 @@ export function RadarIconButton({
   'data-tour': dataTour,
 }: RadarIconButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { radarIds, isLoading } = useRepoRadars(githubRepoId);
+  const { radarsAlreadyContainingRepo, isLoading } = useRepoRadars(githubRepoId);
   const isMobile = useIsMobile();
-  const isInAnyRadar = radarIds.length > 0;
+  const isInAnyRadar = radarsAlreadyContainingRepo.length > 0;
 
   // Keep a ref to current value for use in callbacks
   const isInAnyRadarRef = useRef(isInAnyRadar);

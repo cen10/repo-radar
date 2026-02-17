@@ -6,7 +6,7 @@ interface UseRepoRadarsOptions {
 }
 
 interface UseRepoRadarsReturn {
-  radarIds: string[];
+  radarsAlreadyContainingRepo: string[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -31,7 +31,7 @@ export function useRepoRadars(
   });
 
   return {
-    radarIds: data ?? [],
+    radarsAlreadyContainingRepo: data ?? [],
     isLoading,
     error: error as Error | null,
     refetch,
