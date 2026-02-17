@@ -158,6 +158,15 @@ const effectiveData = optimisticData ?? serverData;
 queryClient.setQueryData(queryKey, optimisticData);
 ```
 
+### Modal/Sheet Save Patterns
+
+When a modal or sheet has a save/submit action:
+
+- **Disable inputs while saving** - Prevent edits during in-flight save that would be lost on close
+- **Block close/cancel while saving** - Return early from close handlers if save is in progress
+- **Reset local state when modal opens** - Components stay mounted for exit animations, so useEffect on `open` to clear state
+- **Await cache invalidations that affect post-close UI** - Fire-and-forget can race with modal close
+
 ## Performance Targets
 
 - Initial load: < 3 seconds
