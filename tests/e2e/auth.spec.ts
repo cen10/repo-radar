@@ -6,10 +6,10 @@ test.describe('Authentication', () => {
 
     await expect(page.getByRole('heading', { name: /repo radar/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /sign in with github/i })).toBeVisible();
-    await expect(page.getByText(/track momentum and activity/i)).toBeVisible();
-    await expect(page.getByText(/track growth/i)).toBeVisible();
+    await expect(page.getByText(/organize and explore/i)).toBeVisible();
+    await expect(page.getByText(/repository stats/i)).toBeVisible();
     await expect(page.getByText(/release updates/i)).toBeVisible();
-    await expect(page.getByText(/activity alerts/i)).toBeVisible();
+    await expect(page.getByText(/custom radars/i)).toBeVisible();
   });
 
   test('unauthenticated user is redirected to home from protected routes', async ({ page }) => {

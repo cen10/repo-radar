@@ -59,7 +59,7 @@ describe('Home', () => {
     );
 
     expect(screen.getByText('Repo Radar')).toBeInTheDocument();
-    expect(screen.getByText(/track momentum and activity/i)).toBeInTheDocument();
+    expect(screen.getByText(/organize and explore/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign in with github/i })).toBeInTheDocument();
   });
 
@@ -85,14 +85,14 @@ describe('Home', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('Track Growth')).toBeInTheDocument();
-    expect(screen.getByText(/monitor star counts/i)).toBeInTheDocument();
+    expect(screen.getByText('Repository Stats')).toBeInTheDocument();
+    expect(screen.getByText(/view stars, forks, and recent activity/i)).toBeInTheDocument();
 
     expect(screen.getByText('Release Updates')).toBeInTheDocument();
     expect(screen.getByText(/stay informed about new releases/i)).toBeInTheDocument();
 
-    expect(screen.getByText('Activity Alerts')).toBeInTheDocument();
-    expect(screen.getByText(/get notified about trending/i)).toBeInTheDocument();
+    expect(screen.getByText('Custom Radars')).toBeInTheDocument();
+    expect(screen.getByText(/organize repositories into collections/i)).toBeInTheDocument();
   });
 
   it('redirects to dashboard when user is authenticated', () => {
