@@ -1,23 +1,20 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { AuthProvider } from './AuthProvider';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { SidebarRadarList } from './SidebarRadarList';
 import { CreateRadarModal } from './CreateRadarModal';
 import { DemoBanner } from './DemoBanner';
 import { OnboardingTour } from './OnboardingTour';
-import { useAuth } from '../hooks/use-auth';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingProvider } from '../contexts/onboarding-context';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 
 /**
- * Inner layout component that uses auth context.
- * Separated from AppLayout so it can access useAuth.
+ * Inner layout component for protected routes.
+ * User is guaranteed to exist due to requireAuth loader at layout level.
  */
-function AuthenticatedLayout() {
-  const { user } = useAuth();
+function ProtectedLayout() {
   const { isBannerVisible } = useDemoMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -49,34 +46,26 @@ function AuthenticatedLayout() {
     setIsSidebarCollapsed((prev) => !prev);
   }, []);
 
-  // Only show sidebar for authenticated users
-  const showSidebar = !!user;
-
   // Skip onboarding tour on mobile - the experience is desktop-optimized
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
 
   return (
     <div className="min-h-screen bg-white">
       <DemoBanner />
-      <Header
-        onMenuToggle={showSidebar ? handleMenuToggle : undefined}
-        sidebarCollapsed={showSidebar ? isSidebarCollapsed : undefined}
-      />
-      {showSidebar && (
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={handleSidebarClose}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapsed={handleToggleCollapsed}
-        >
-          <SidebarRadarList
-            onLinkClick={handleSidebarClose}
-            onCreateRadar={handleOpenCreateRadarModal}
-          />
-        </Sidebar>
-      )}
+      <Header onMenuToggle={handleMenuToggle} sidebarCollapsed={isSidebarCollapsed} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={handleSidebarClose}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapsed={handleToggleCollapsed}
+      >
+        <SidebarRadarList
+          onLinkClick={handleSidebarClose}
+          onCreateRadar={handleOpenCreateRadarModal}
+        />
+      </Sidebar>
       <main
-        className={`${user ? (isBannerVisible ? 'pt-[118px]' : 'pt-16') : ''} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${showSidebar ? (isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64') : ''}`}
+        className={`${isBannerVisible ? 'pt-[118px]' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}
       >
         <Outlet />
       </main>
@@ -84,25 +73,24 @@ function AuthenticatedLayout() {
       {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
 
-      {showSidebar && isDesktop && <OnboardingTour />}
+      {isDesktop && <OnboardingTour />}
     </div>
   );
 }
 
 /**
- * App layout component that wraps all routes.
- * Provides AuthProvider context and renders the authenticated layout.
+ * App layout component that wraps protected routes.
+ * Renders sidebar, header, and onboarding tour for authenticated users.
  *
- * Used as the root element in createBrowserRouter configuration.
+ * Used as the root element in createBrowserRouter configuration with
+ * requireAuth loader at the layout level.
  */
 export function AppLayout() {
   return (
-    <AuthProvider>
-      <ShepherdJourneyProvider>
-        <OnboardingProvider>
-          <AuthenticatedLayout />
-        </OnboardingProvider>
-      </ShepherdJourneyProvider>
-    </AuthProvider>
+    <ShepherdJourneyProvider>
+      <OnboardingProvider>
+        <ProtectedLayout />
+      </OnboardingProvider>
+    </ShepherdJourneyProvider>
   );
 }

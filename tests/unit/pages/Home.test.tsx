@@ -4,23 +4,13 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Home from '@/pages/Home';
-import { createMockUser, createMockAuthContext } from '../../mocks/factories';
+import { createMockAuthContext } from '../../mocks/factories';
 
 // Mock the useAuth hook
 const mockUseAuth = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
-
-// Mock useNavigate
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
 
 // Mock useDemoMode
 const mockEnterDemoMode = vi.fn();
@@ -35,8 +25,6 @@ vi.mock('@/demo/use-demo-mode', () => ({
     resetBannerDismissed: vi.fn(),
   }),
 }));
-
-const mockUser = createMockUser();
 
 // Helper for creating unauthenticated context
 const unauthenticatedContext = () => createMockAuthContext({ user: null, providerToken: null });
@@ -95,17 +83,9 @@ describe('Home', () => {
     expect(screen.getByText(/get notified about trending/i)).toBeInTheDocument();
   });
 
-  it('redirects to dashboard when user is authenticated', () => {
-    mockUseAuth.mockReturnValue(createMockAuthContext({ user: mockUser }));
-
-    render(
-      <BrowserRouter>
-        <Home />
-      </BrowserRouter>
-    );
-
-    expect(mockNavigate).toHaveBeenCalledWith('/stars');
-  });
+  // Note: Redirect for authenticated users is now handled by redirectIfAuthenticated
+  // loader in App.tsx router config. E2E test 'authenticated user is redirected
+  // from home to stars' covers this behavior.
 
   it('sign in button triggers GitHub OAuth flow', async () => {
     const mockSignIn = vi.fn();

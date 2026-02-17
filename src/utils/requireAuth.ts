@@ -47,3 +47,43 @@ export async function requireAuth() {
 
   return null; // Continue to route
 }
+
+/**
+ * Route loader that redirects authenticated users away.
+ * Used for public-only routes like the Home/login page.
+ *
+ * Usage in router config:
+ * ```tsx
+ * {
+ *   path: '/',
+ *   element: <Home />,
+ *   loader: redirectIfAuthenticated,
+ * }
+ * ```
+ */
+export async function redirectIfAuthenticated() {
+  logger.debug('redirectIfAuthenticated: Checking session...');
+
+  // Demo mode users should be redirected to /stars
+  if (isDemoModeActive()) {
+    logger.debug('redirectIfAuthenticated: Demo mode active, redirecting to /stars');
+    return redirect('/stars');
+  }
+
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+
+  if (error) {
+    logger.warn('redirectIfAuthenticated: Error getting session', { error: error.message });
+  }
+
+  if (session) {
+    logger.info('redirectIfAuthenticated: Session found, redirecting to /stars');
+    return redirect('/stars');
+  }
+
+  logger.debug('redirectIfAuthenticated: No session, allowing access to public route');
+  return null; // Continue to route
+}
