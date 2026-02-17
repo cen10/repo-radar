@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { GlobeAltIcon } from '@heroicons/react/24/outline';
+import { GlobeAltIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
-import RepositoryList, { type SortOption } from '../components/RepositoryList';
+import { RepositoryContent } from '../components/RepositoryContent';
 import { PageHeader } from '../components/PageHeader';
+import type { SortOption } from '../components/SortDropdown';
 
 // Sort options for Explore page (GitHub search API sort options)
 type ExploreSortOption = 'best-match' | 'updated' | 'stars' | 'forks' | 'help-wanted';
@@ -47,8 +48,10 @@ const ExplorePage = () => {
     }
   };
 
-  // null = pre-search, [] = no results
-  const repositories = hasActiveSearch ? result.repositories : null;
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+  };
 
   const getSubtitle = () => {
     if (!hasActiveSearch) return undefined;
@@ -56,6 +59,21 @@ const ExplorePage = () => {
     const total = result.totalCount;
     if (total === 0) return undefined;
     return total === 1 ? '1 repository' : `${total.toLocaleString()} repositories`;
+  };
+
+  const preSearchState = (
+    <div className="text-center py-16">
+      <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" aria-hidden="true" />
+      <p className="mt-4 text-lg font-medium text-gray-900">Discover repositories</p>
+      <p className="text-sm text-gray-400 mt-2">
+        Search across all of GitHub to find interesting projects
+      </p>
+    </div>
+  );
+
+  const renderFooter = () => {
+    const count = result.repositories.length;
+    return <p>{count === 1 ? '1 repository' : `${count} repositories`}</p>;
   };
 
   return (
@@ -75,28 +93,19 @@ const ExplorePage = () => {
         sortOptions={SORT_OPTIONS}
         sortDisabled={hasActiveSearch && !result.isLoading && result.totalCount === 0}
       />
-      <RepositoryList
-        title="Explore"
-        titleIcon={<GlobeAltIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
-        repositories={repositories}
+
+      <RepositoryContent
+        repositories={result.repositories}
         isLoading={result.isLoading}
+        error={result.error}
+        hasActiveSearch={hasActiveSearch}
+        onClearSearch={handleClearSearch}
+        preSearchState={preSearchState}
         isFetchingMore={result.isFetchingNextPage}
         hasMore={result.hasNextPage}
-        error={result.error}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSearchSubmit={setActiveSearch}
-        isSearching={result.isLoading && hasActiveSearch}
-        hasActiveSearch={hasActiveSearch}
-        sortBy={sortBy}
-        onSortChange={handleSortChange}
         onLoadMore={result.fetchNextPage}
-        searchPlaceholder="Search all GitHub repositories..."
-        sortOptions={SORT_OPTIONS}
-        preSearchMessage="Discover repositories"
-        preSearchHint="Search across all of GitHub to find interesting projects"
-        hideSearch
-        hideTitle
+        sortBy={sortBy}
+        footer={renderFooter()}
       />
     </div>
   );

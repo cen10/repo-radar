@@ -6,11 +6,12 @@ import { useAuthErrorHandler } from '../hooks/useAuthErrorHandler';
 import { useBrowseStarred } from '../hooks/useBrowseStarred';
 import { useInfiniteSearch } from '../hooks/useInfiniteSearch';
 import { useOnboarding } from '../contexts/use-onboarding';
-import { fetchStarredRepoCount } from '../services/github';
+import { fetchStarredRepoCount, MAX_STARRED_REPOS } from '../services/github';
 import { getValidGitHubToken, hasFallbackToken } from '../services/github-token';
-import RepositoryList, { type SortOption } from '../components/RepositoryList';
+import { RepositoryContent } from '../components/RepositoryContent';
 import { NoStarredReposState } from '../components/EmptyState';
 import { PageHeader } from '../components/PageHeader';
+import type { SortOption } from '../components/SortDropdown';
 
 type StarsSortOption = 'updated' | 'created';
 
@@ -89,6 +90,36 @@ const StarsPage = () => {
     }
   }, [browseResult.isLoading, hasCompletedTour, isTourActive, startTour, isDesktop]);
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+  };
+
+  const totalStarred = isSearchMode ? searchResult.totalStarred : undefined;
+
+  const renderFooter = () => {
+    const count = result.repositories.length;
+    if (totalStarred && totalStarred > MAX_STARRED_REPOS) {
+      return (
+        <>
+          <p>{count === 1 ? '1 repository' : `${count} repositories`}</p>
+          <p className="text-sm mt-1">
+            {`Searched ${MAX_STARRED_REPOS} of ${totalStarred} starred repos. `}
+            <a
+              href="https://github.com/stars"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 hover:text-indigo-700"
+            >
+              View all on GitHub
+            </a>
+          </p>
+        </>
+      );
+    }
+    return <p>{count === 1 ? '1 repository' : `${count} repositories`}</p>;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
@@ -107,31 +138,19 @@ const StarsPage = () => {
         sortOptions={SORT_OPTIONS}
       />
 
-      <div>
-        <RepositoryList
-          title="My Stars"
-          titleIcon={<StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
-          repositories={result.repositories}
-          isLoading={result.isLoading}
-          isFetchingMore={result.isFetchingNextPage}
-          hasMore={result.hasNextPage}
-          error={result.error}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchSubmit={setActiveSearch}
-          isSearching={isSearchMode && result.isLoading}
-          hasActiveSearch={isSearchMode}
-          sortBy={sortBy}
-          onSortChange={handleSortChange}
-          onLoadMore={result.fetchNextPage}
-          searchPlaceholder="Search your starred repositories..."
-          sortOptions={SORT_OPTIONS}
-          emptyState={<NoStarredReposState />}
-          totalStarred={isSearchMode ? searchResult.totalStarred : undefined}
-          hideSearch
-          hideTitle
-        />
-      </div>
+      <RepositoryContent
+        repositories={result.repositories}
+        isLoading={result.isLoading}
+        error={result.error}
+        hasActiveSearch={isSearchMode}
+        onClearSearch={handleClearSearch}
+        emptyState={<NoStarredReposState />}
+        isFetchingMore={result.isFetchingNextPage}
+        hasMore={result.hasNextPage}
+        onLoadMore={result.fetchNextPage}
+        sortBy={sortBy}
+        footer={renderFooter()}
+      />
     </div>
   );
 };
