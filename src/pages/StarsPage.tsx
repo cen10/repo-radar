@@ -44,6 +44,10 @@ const StarsPage = () => {
   const showSearchBar =
     isSearchMode || browseResult.isLoading || browseResult.repositories.length > 0;
 
+  const repoCount = browseResult.repositories.length;
+  const repoText =
+    repoCount === 0 ? undefined : repoCount === 1 ? '1 repository' : `${repoCount} repositories`;
+
   const handleSortChange = (newSort: SortOption) => {
     if (newSort === 'updated' || newSort === 'created') {
       setSortBy(newSort);
@@ -66,6 +70,7 @@ const StarsPage = () => {
         title="My Stars"
         titleIcon={<StarIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
         titleTourId="my-stars-heading"
+        subtitle={repoText}
         showSearchBar={showSearchBar}
         searchId="stars-search"
         searchValue={searchQuery}
