@@ -50,11 +50,20 @@ const ExplorePage = () => {
   // null = pre-search, [] = no results
   const repositories = hasActiveSearch ? result.repositories : null;
 
+  const getSubtitle = () => {
+    if (!hasActiveSearch) return undefined;
+    if (result.isLoading) return undefined;
+    const total = result.totalCount;
+    if (total === 0) return undefined;
+    return total === 1 ? '1 repository' : `${total.toLocaleString()} repositories`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageHeader
         title="Explore"
         titleIcon={<GlobeAltIcon className="h-7 w-7 text-indigo-600" aria-hidden="true" />}
+        subtitle={getSubtitle()}
         showSearchBar={true}
         searchId="explore-search"
         searchValue={searchQuery}
