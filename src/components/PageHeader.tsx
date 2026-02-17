@@ -60,7 +60,7 @@ export function PageHeader({
             {titleIcon}
             {title}
           </h1>
-          {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
+          <p className="mt-1 text-sm text-gray-500 min-h-5">{subtitle}</p>
         </div>
         {actionMenu}
       </div>
