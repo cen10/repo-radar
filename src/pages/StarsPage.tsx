@@ -62,6 +62,12 @@ const StarsPage = () => {
     !!browseResult.error;
 
   const getSubtitle = () => {
+    if (isSearchMode) {
+      if (searchResult.isLoading) return undefined;
+      const total = searchResult.totalCount;
+      if (total === 0) return undefined;
+      return total === 1 ? '1 result' : `${total.toLocaleString()} results`;
+    }
     if (totalStarredCount === undefined) return undefined;
     if (totalStarredCount === 0) return undefined;
     return totalStarredCount === 1 ? '1 repository' : `${totalStarredCount} repositories`;
