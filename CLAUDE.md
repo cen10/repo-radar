@@ -323,6 +323,25 @@ Console violations like `[Violation] 'setTimeout' handler took Xms` in dev mode 
     }, [fetchData]);
     ```
 
+## Z-Index Scale
+
+The codebase uses semantic z-index tokens defined in `src/index.css` with 100-unit gaps for future insertion. Always use these tokens (e.g., `z-modal`, `z-tooltip`) instead of arbitrary values like `z-50` or `z-[999]`.
+
+### Portal-based Dropdowns and Fixed Elements
+
+**Problem:** Headless UI v2's `anchor` prop on `MenuItems` and `ListboxOptions` renders dropdown content via a portal at the `<body>` level, removing it from normal stacking context. If the trigger element is inside fixed navigation (`z-fixed`, 300), using `z-dropdown` (100) would render the dropdown _behind_ the navigation.
+
+**Workaround:** Use `z-modal` (500) for portaled dropdowns that originate from fixed-position elements. This is semantically imprecise but functionally necessary. Document the workaround with a comment at the usage site.
+
+```tsx
+{/* z-modal instead of z-dropdown: Headless UI v2's anchor prop renders
+    MenuItems via portal at body level. Sidebar is z-fixed (300), so
+    z-dropdown (100) would render behind it. See CLAUDE.md for details. */}
+<MenuItems anchor="bottom end" className="... z-modal">
+```
+
+**Future consideration:** If this pattern proliferates, consider adding a dedicated `z-popover` token at 350 for "dropdowns that must float above fixed navigation."
+
 ## Testing Best Practices
 
 ### Logger Mocking Pattern

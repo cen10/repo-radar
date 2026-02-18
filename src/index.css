@@ -33,7 +33,8 @@ body {
    * - sticky (200): Sticky headers within content
    * - fixed (300): Fixed navigation (header, sidebar)
    * - modal-backdrop (400): Dark overlay behind modals
-   * - modal (500): Modal dialogs, bottom sheets, confirm dialogs
+   * - modal (500): Modal dialogs, bottom sheets
+   * - confirm (550): Confirmation dialogs layered above modals
    * - toast (600): Toast notifications, banners
    * - tooltip (700): Tooltips, hover cards
    * - tour (800): Shepherd.js tour overlay and tooltips
@@ -44,6 +45,7 @@ body {
   --z-index-fixed: 300;
   --z-index-modal-backdrop: 400;
   --z-index-modal: 500;
+  --z-index-confirm: 550;
   --z-index-toast: 600;
   --z-index-tooltip: 700;
   --z-index-tour: 800;

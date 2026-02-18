@@ -136,6 +136,9 @@ function RadarNavItem({
                 {radar.repo_count}
               </span>
 
+              {/* z-modal instead of z-dropdown: Headless UI v2's anchor prop renders
+                  MenuItems via portal at body level. Sidebar is z-fixed (300), so
+                  z-dropdown (100) would render behind it. See CLAUDE.md for details. */}
               <MenuItems
                 transition
                 anchor="bottom end"

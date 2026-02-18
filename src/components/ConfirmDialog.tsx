@@ -24,7 +24,7 @@ export function ConfirmDialog({
   variant = 'default',
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onClose={onCancel} className="relative z-modal">
+    <Dialog open={open} onClose={onCancel} className="relative z-confirm">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 data-closed:opacity-0"
