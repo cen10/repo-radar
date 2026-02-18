@@ -103,7 +103,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [all, following, trending]
+            enum: [all, trending]
             default: all
         - name: sort
           in: query
