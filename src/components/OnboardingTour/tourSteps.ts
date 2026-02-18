@@ -56,6 +56,34 @@ function buildButtons(
   return buttons;
 }
 
+/**
+ * Finds a focusable element for keyboard activation.
+ * Prioritizes links/buttons (inside or the target itself) over generic focusable elements,
+ * since Shepherd adds tabindex="0" to targets which makes them focusable but not activatable.
+ */
+function findFocusableElement(target: Element): HTMLElement | null {
+  // If target itself is a link or button, use it directly
+  if (target instanceof HTMLAnchorElement || target instanceof HTMLButtonElement) {
+    return target;
+  }
+
+  // Look for a link inside the target (these respond to Enter key)
+  const link = target.querySelector('a[href]');
+  if (link instanceof HTMLElement) return link;
+
+  // Look for a button inside the target
+  const button = target.querySelector('button');
+  if (button instanceof HTMLElement) return button;
+
+  // Fall back to target if it's focusable (e.g., has tabindex)
+  // Note: This is less useful since generic focusable elements don't respond to Enter
+  if (target instanceof HTMLElement && target.tabIndex >= 0) {
+    return target;
+  }
+
+  return null;
+}
+
 /** Converts our tour steps to Shepherd-compatible steps with buttons and callbacks. */
 export function configureStepsForShepherd(
   steps: TourStep[],
@@ -85,6 +113,28 @@ export function configureStepsForShepherd(
     if (step.tooltipDelayMs) {
       configuredStep.beforeShowPromise = () =>
         new Promise((r) => setTimeout(r, step.tooltipDelayMs));
+    }
+
+    // Auto-focus the target element for steps that require clicking it to advance.
+    // This allows keyboard users to press Enter immediately without tabbing.
+    if (step.advanceByClickingTarget && step.target) {
+      configuredStep.when = {
+        show: () => {
+          // Delay must be long enough for:
+          // 1. Element to be visible and scrolled into view
+          // 2. Shepherd to finish its focus management (moves focus to dialog)
+          // 500ms is safely after Shepherd's animation/focus setup completes
+          setTimeout(() => {
+            const targetEl = document.querySelector(step.target);
+            if (targetEl) {
+              const focusable = findFocusableElement(targetEl);
+              if (focusable) {
+                focusable.focus();
+              }
+            }
+          }, 500);
+        },
+      };
     }
 
     return configuredStep;

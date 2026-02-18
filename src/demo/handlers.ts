@@ -183,6 +183,39 @@ const githubHandlers = [
     });
   }),
 
+  // GET /search/issues - search issues (used by useIssueCount for accurate issue count)
+  // Returns a mock count based on the repo's open_issues_count
+  http.get(`${GITHUB_API_BASE}/search/issues`, ({ request }) => {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q') || '';
+
+    // Parse repo from query like "repo:owner/repo is:issue is:open"
+    const repoMatch = query.match(/repo:([^/]+)\/([^\s]+)/);
+    if (repoMatch) {
+      const [, owner, repo] = repoMatch;
+      const fullName = `${owner}/${repo}`;
+      const allRepos = getAllDemoRepos();
+      const foundRepo = allRepos.find((r) => r.full_name === fullName);
+
+      if (foundRepo) {
+        // Return a realistic issue count (roughly half of open_issues_count since that includes PRs)
+        const issueCount = Math.floor((foundRepo.open_issues_count || 0) * 0.6);
+        return HttpResponse.json({
+          total_count: issueCount,
+          incomplete_results: false,
+          items: [],
+        });
+      }
+    }
+
+    // Default response for unknown repos
+    return HttpResponse.json({
+      total_count: 0,
+      incomplete_results: false,
+      items: [],
+    });
+  }),
+
   // GET /repositories/:id - get repo by ID
   // Search both starred repos and additional search repos
   http.get(`${GITHUB_API_BASE}/repositories/:id`, ({ params }) => {
