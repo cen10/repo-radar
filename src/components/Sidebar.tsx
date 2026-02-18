@@ -103,18 +103,13 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
               )
             }
           >
-            {({ isActive }) => (
-              <>
-                {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-                <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
-                  <Icon
-                    className={clsx('h-5 w-5', isActive && 'text-indigo-600')}
-                    aria-hidden="true"
-                  />
-                </span>
-                <span className={clsx(labelBase, hideText ? 'w-0' : 'w-auto')}>{label}</span>
-              </>
-            )}
+            <>
+              {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+              <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
+                <Icon className="h-5 w-5 text-indigo-600" aria-hidden="true" />
+              </span>
+              <span className={clsx(labelBase, hideText ? 'w-0' : 'w-auto')}>{label}</span>
+            </>
           </NavLink>
         </SidebarTooltip>
       ))}

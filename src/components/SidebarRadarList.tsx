@@ -86,28 +86,20 @@ function RadarNavItem({
             )
           }
         >
-          {({ isActive }) => (
-            <>
-              {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-              <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
-                <StaticRadarIcon
-                  className={clsx(
-                    'h-5 w-5',
-                    isActive && 'text-indigo-600',
-                    !isActive && 'text-gray-600'
-                  )}
-                />
-              </span>
-              {/* Name in fixed-width wrapper so text doesn't reflow during collapse */}
-              {!hideText && (
-                <div className="flex items-center gap-3 shrink-0 w-[168px]">
-                  <span aria-hidden="true" className="flex-1 truncate min-w-0">
-                    {radar.name}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
+          <>
+            {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+            <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
+              <StaticRadarIcon className="h-5 w-5 text-indigo-600" />
+            </span>
+            {/* Name in fixed-width wrapper so text doesn't reflow during collapse */}
+            {!hideText && (
+              <div className="flex items-center gap-3 shrink-0 w-[168px]">
+                <span aria-hidden="true" className="flex-1 truncate min-w-0">
+                  {radar.name}
+                </span>
+              </div>
+            )}
+          </>
         </NavLink>
       </SidebarTooltip>
 
