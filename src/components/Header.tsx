@@ -62,7 +62,7 @@ function ErrorBanner({
 
   return (
     <div
-      className={`fixed ${topClass} right-0 z-40 bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
+      className={`fixed ${topClass} right-0 z-fixed bg-red-50 border-b border-red-200 px-4 py-3 sm:px-6 lg:px-8 transition-[left] duration-300 ease-in-out ${leftClass}`}
       role="alert"
       aria-live="assertive"
     >
@@ -170,7 +170,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   return (
     <>
       <header
-        className={`bg-white border-b border-slate-300 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-50 transition-[top] duration-300 ease-in-out ${headerTopClass}`}
+        className={`bg-white border-b border-slate-300 px-4 sm:px-6 lg:px-8 fixed left-0 right-0 z-fixed transition-[top] duration-300 ease-in-out ${headerTopClass}`}
       >
         <div className="flex items-center justify-between gap-4 h-16 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">

@@ -34,7 +34,7 @@ export function SortDropdown<T extends string>({
 
         <ListboxOptions
           transition
-          className="absolute right-0 z-50 mt-1 max-h-60 min-w-[200px] w-max overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none"
+          className="absolute right-0 z-dropdown mt-1 max-h-60 min-w-[200px] w-max overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none"
         >
           {options.map((option) => (
             <ListboxOption
