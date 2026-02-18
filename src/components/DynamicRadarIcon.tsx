@@ -21,7 +21,7 @@ function ActiveIcon(props: SvgProps) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2.0}
+      strokeWidth={2}
       aria-hidden="true"
       {...props}
     >
@@ -57,8 +57,8 @@ function SweepWedge() {
 
 /**
  * Radar icon with filled/outline states and sweep animation.
- * Active = indigo color, thicker strokes
- * Inactive = gray color, thinner strokes
+ * Active = indigo color
+ * Inactive = gray color
  *
  * Pure presentational component - parent owns all timing logic.
  */
@@ -72,7 +72,7 @@ export function DynamicRadarIcon({
     // Layered reveal: StaticRadarIcon (base) → ActiveIcon (clipped, revealed by sweep) → SweepWedge (rotating gradient)
     return (
       <div className={`relative ${className}`}>
-        <StaticRadarIcon className="absolute inset-0 w-full h-full text-gray-400" />
+        <StaticRadarIcon className="absolute inset-0 w-full h-full text-gray-600" />
         <ActiveIcon
           className="absolute inset-0 w-full h-full text-indigo-600 animate-radar-sweep"
           onAnimationEnd={onAnimationEnd}
@@ -86,5 +86,5 @@ export function DynamicRadarIcon({
     return <ActiveIcon className={`${className} text-indigo-600`} />;
   }
 
-  return <StaticRadarIcon className={`${className} text-gray-400`} />;
+  return <StaticRadarIcon className={`${className} text-gray-600`} />;
 }

@@ -94,7 +94,7 @@ function RadarNavItem({
                   className={clsx(
                     'h-5 w-5',
                     isActive && 'text-indigo-600',
-                    !isActive && 'text-gray-400'
+                    !isActive && 'text-gray-600'
                   )}
                 />
               </span>

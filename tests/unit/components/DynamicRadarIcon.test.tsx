@@ -10,7 +10,7 @@ describe('DynamicRadarIcon', () => {
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveAttribute('fill', 'none');
     expect(svg).toHaveAttribute('stroke', 'currentColor');
-    expect(svg).toHaveAttribute('stroke-width', '1.5');
+    expect(svg).toHaveAttribute('stroke-width', '2');
   });
 
   it('renders active icon when isActive is true', () => {
@@ -39,14 +39,14 @@ describe('DynamicRadarIcon', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('uses thicker strokes for active state', () => {
+  it('uses consistent stroke width for both states', () => {
     const { container: inactiveContainer } = render(<DynamicRadarIcon isActive={false} />);
     const { container: activeContainer } = render(<DynamicRadarIcon isActive={true} />);
 
     const inactiveSvg = inactiveContainer.querySelector('svg');
     const activeSvg = activeContainer.querySelector('svg');
 
-    expect(inactiveSvg).toHaveAttribute('stroke-width', '1.5');
+    expect(inactiveSvg).toHaveAttribute('stroke-width', '2');
     expect(activeSvg).toHaveAttribute('stroke-width', '2');
   });
 
