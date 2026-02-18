@@ -5,16 +5,9 @@
 
 **[Live Demo](https://the-repo-radar.vercel.app)**
 
-Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum.
-This is a portfolio project built to explore modern React patterns, API integration, and comprehensive testing strategies.
+Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum. Built as a portfolio project demonstrating React 19, strict TypeScript, and full-stack testing with Vitest and Playwright.
 
 ![My Stars - browse and search your starred repos](public/starred-repos-screenshot.png)
-
-![Repository detail - stats and release history](public/repo-detail-screenshot.png)
-
-![Add to Radar - organize repos into collections](public/add-to-radar-screenshot.png)
-
-![Explore - discover trending repositories](public/explore-page-screenshot.png)
 
 ## Features
 
@@ -22,6 +15,14 @@ This is a portfolio project built to explore modern React patterns, API integrat
 - **Star Tracking** - Monitor star growth across your starred repositories
 - **Release Monitoring** - Track release cycles and versioning patterns
 - **GitHub OAuth** - Secure authentication with your GitHub account
+
+## Screenshots
+
+![Repository detail - stats and release history](public/repo-detail-screenshot.png)
+
+![Add to Radar - organize repos into collections](public/add-to-radar-screenshot.png)
+
+![Explore - discover trending repositories](public/explore-page-screenshot.png)
 
 ## Tech Stack
 
