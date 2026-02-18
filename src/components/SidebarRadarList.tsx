@@ -107,7 +107,7 @@ function RadarNavItem({
       {!hideText && (
         <Menu
           as="div"
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-50 pointer-events-none"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-dropdown pointer-events-none"
         >
           {({ open }) => (
             <>
@@ -139,7 +139,7 @@ function RadarNavItem({
               <MenuItems
                 transition
                 anchor="bottom end"
-                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-50"
+                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-dropdown"
               >
                 <MenuItem>
                   <button

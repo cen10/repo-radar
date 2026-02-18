@@ -21,7 +21,7 @@ export function ExitTourConfirmationModal() {
       open={true}
       onClose={cancelExitTour}
       initialFocus={exitButtonRef}
-      className="relative z-[10001]"
+      className="relative z-tour-modal"
     >
       <DialogBackdrop
         transition

@@ -33,7 +33,7 @@ export function DemoBanner() {
 
   return (
     <div
-      className="bg-indigo-600 text-white text-center py-3 px-4 text-sm fixed top-0 left-0 right-0 z-60"
+      className="bg-indigo-600 text-white text-center py-3 px-4 text-sm fixed top-0 left-0 right-0 z-toast"
       role="status"
       aria-live="polite"
     >

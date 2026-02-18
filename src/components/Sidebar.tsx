@@ -32,7 +32,7 @@ interface SidebarTooltipProps {
 export function SidebarTooltip({ label, show, children, position = 'right' }: SidebarTooltipProps) {
   const isRight = position === 'right';
   const tooltipBase =
-    'pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-50';
+    'pointer-events-none absolute whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-has-focus-visible:opacity-100 z-tooltip';
   const tooltipRight = 'left-full top-1/2 -translate-y-1/2 ml-2';
   const tooltipBottom = 'top-full left-0 mt-1';
   const arrowBase = 'absolute border-4 border-transparent';
@@ -133,7 +133,7 @@ function CollapseButton({ isCollapsed, onToggle }: CollapseButtonProps) {
   return (
     <button
       onClick={onToggle}
-      className="absolute right-0 translate-x-1/2 top-2 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer"
+      className="absolute right-0 translate-x-1/2 top-2 z-fixed flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-pointer"
       aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       aria-expanded={!isCollapsed}
     >
@@ -160,11 +160,11 @@ function MobileDrawer({ isOpen, onClose, topClass, heightClass, children }: Mobi
       <DialogBackdrop
         transition
         data-testid="sidebar-backdrop"
-        className="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 data-closed:opacity-0"
+        className="fixed inset-0 bg-black/50 z-modal-backdrop transition-opacity duration-300 data-closed:opacity-0"
       />
       <DialogPanel
         transition
-        className={`fixed left-0 ${topClass} ${heightClass} w-64 bg-white border-r border-slate-300 z-40 transition-all duration-300 ease-in-out data-closed:-translate-x-full`}
+        className={`fixed left-0 ${topClass} ${heightClass} w-64 bg-white border-r border-slate-300 z-fixed transition-all duration-300 ease-in-out data-closed:-translate-x-full`}
       >
         <nav aria-label="Main navigation" className="flex flex-col h-full">
           {children}
@@ -192,7 +192,7 @@ function DesktopSidebar({
   return (
     <div
       className={`
-        hidden lg:block fixed left-0 ${topClass} ${heightClass} z-40
+        hidden lg:block fixed left-0 ${topClass} ${heightClass} z-fixed
         transition-all duration-300 ease-in-out motion-reduce:transition-none overflow-visible
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
