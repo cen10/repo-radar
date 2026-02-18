@@ -5,8 +5,8 @@ import '@testing-library/jest-dom/vitest';
 
 import { renderForIntegration } from '../helpers/integration-render';
 import { createMockRepository, createMockUser } from '../mocks/factories';
-import ExplorePage from '@/pages/ExplorePage';
-import StarsPage from '@/pages/StarsPage';
+import ExplorePage from '@/views/ExplorePage';
+import StarsPage from '@/views/StarsPage';
 import type { AllStarredData } from '@/types';
 
 // Mock GitHub service

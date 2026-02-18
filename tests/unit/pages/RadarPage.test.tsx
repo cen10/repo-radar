@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import RadarPage from '@/pages/RadarPage';
+import RadarPage from '@/views/RadarPage';
 import * as useRadarHook from '@/hooks/useRadar';
 import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
