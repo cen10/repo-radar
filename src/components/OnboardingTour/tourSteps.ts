@@ -115,16 +115,69 @@ export function configureStepsForShepherd(
         new Promise((r) => setTimeout(r, step.tooltipDelayMs));
     }
 
-    // Auto-focus the target element for steps that require clicking it to advance.
-    // This allows keyboard users to press Enter immediately without tabbing.
-    if (step.advanceByClickingTarget && step.target) {
-      configuredStep.when = {
-        show: () => {
-          // Delay must be long enough for:
-          // 1. Element to be visible and scrolled into view
-          // 2. Shepherd to finish its focus management (moves focus to dialog)
-          // 500ms is safely after Shepherd's animation/focus setup completes
-          setTimeout(() => {
+    // Auto-focus for keyboard accessibility.
+    // - Steps requiring click: focus the target element
+    // - All other steps: focus the Next/Finish button
+    configuredStep.when = {
+      show: function (this: { el?: HTMLElement }) {
+        // Native <dialog> elements trap focus even when we programmatically focus
+        // elements inside them. Add a keydown handler to forward Enter to the
+        // appropriate element (Next button or clickable target).
+        const handleKeydown = (e: KeyboardEvent) => {
+          if (e.key !== 'Enter') return;
+
+          // Don't interfere if user is focused on a button inside the dialog
+          // (they can activate it normally with Enter)
+          if (
+            document.activeElement instanceof HTMLButtonElement &&
+            document.activeElement.closest('.shepherd-element')
+          ) {
+            return;
+          }
+
+          if (step.advanceByClickingTarget && step.target) {
+            // Click the target element to advance
+            const targetEl = document.querySelector(step.target);
+            if (targetEl) {
+              const focusable = findFocusableElement(targetEl);
+              if (focusable) {
+                e.preventDefault();
+                focusable.click();
+              }
+            }
+          } else {
+            // Click the primary button (Next/Finish) to advance
+            const primaryButton = document.querySelector(
+              '.shepherd-button:not(.shepherd-button-secondary)'
+            );
+            if (primaryButton instanceof HTMLElement) {
+              e.preventDefault();
+              primaryButton.click();
+            }
+          }
+        };
+
+        // Attach to the dialog element so it captures Enter even when dialog has focus
+        const dialog = this.el;
+        if (dialog) {
+          dialog.addEventListener('keydown', handleKeydown);
+          // Store reference for cleanup
+          (
+            dialog as HTMLElement & { _tourKeydownHandler?: typeof handleKeydown }
+          )._tourKeydownHandler = handleKeydown;
+        }
+
+        const focusTarget = () => {
+          // Native <dialog> elements lock focus to themselves when opened via showModal().
+          // We can't programmatically move focus until something inside the dialog is
+          // focused first. Focus the cancel icon briefly to break the lock.
+          const cancelIcon = document.querySelector('.shepherd-cancel-icon');
+          if (cancelIcon instanceof HTMLElement) {
+            cancelIcon.focus();
+          }
+
+          if (step.advanceByClickingTarget && step.target) {
+            // Focus the clickable target so Enter activates it
             const targetEl = document.querySelector(step.target);
             if (targetEl) {
               const focusable = findFocusableElement(targetEl);
@@ -132,10 +185,47 @@ export function configureStepsForShepherd(
                 focusable.focus();
               }
             }
-          }, 500);
-        },
-      };
-    }
+          } else {
+            // Focus the primary button (Next/Finish) so Enter advances the tour
+            const primaryButton = document.querySelector(
+              '.shepherd-button:not(.shepherd-button-secondary)'
+            );
+            if (primaryButton instanceof HTMLElement) {
+              primaryButton.focus();
+            }
+          }
+        };
+
+        // Shepherd manages focus in complex ways during step transitions.
+        // The dialog element locks focus until something inside it receives focus.
+        // Poll with retries to ensure focus happens after Shepherd completes.
+        let attempts = 0;
+        const maxAttempts = 10;
+        const tryFocus = () => {
+          attempts++;
+          focusTarget();
+          // Check if we successfully moved focus away from the dialog
+          const success = document.activeElement?.tagName !== 'DIALOG';
+          if (!success && attempts < maxAttempts) {
+            setTimeout(tryFocus, 100);
+          }
+        };
+        // Start trying after a brief delay
+        setTimeout(tryFocus, 100);
+      },
+      hide: function (this: { el?: HTMLElement }) {
+        // Clean up keydown handler
+        const dialog = this.el;
+        if (dialog) {
+          const handler = (
+            dialog as HTMLElement & { _tourKeydownHandler?: (e: KeyboardEvent) => void }
+          )._tourKeydownHandler;
+          if (handler) {
+            dialog.removeEventListener('keydown', handler);
+          }
+        }
+      },
+    };
 
     return configuredStep;
   });
