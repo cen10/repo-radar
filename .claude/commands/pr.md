@@ -156,6 +156,7 @@ migration steps needed. Remove this section entirely if none.
 2. Show me the proposed description
 3. Wait for my approval
 4. Run `gh pr create --title "..." --body "..."`
+5. Run `/sync-permissions` to check for local permissions that should be moved to global
 
 **For updates:**
 1. Compare `git diff origin/main...HEAD` with the current PR description
