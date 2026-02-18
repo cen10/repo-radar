@@ -118,8 +118,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           Hidden on mobile since tour is desktop-only. */}
       {isDesktop && (isTourActive || (isDemoMode && !hasCompletedTour)) && (
         <div
-          className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none"
-          style={{ zIndex: 9996 }}
+          className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none z-tour"
           aria-hidden="true"
         />
       )}

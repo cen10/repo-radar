@@ -87,7 +87,7 @@ export function Tooltip({
         content &&
         createPortal(
           <div
-            className="fixed z-100 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white pointer-events-none"
+            className="fixed z-tooltip w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white pointer-events-none"
             style={{ top: position.top, left: position.left }}
             role="tooltip"
           >

@@ -28,7 +28,7 @@ export function HotBadge({ stars, growthRate, starsGained, className = '' }: Hot
       </span>
       {/* Tooltip - visible on hover or focus */}
       <span
-        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-50"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-max max-w-xs rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 z-tooltip"
         role="tooltip"
         aria-hidden="true"
       >

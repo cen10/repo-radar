@@ -6,6 +6,7 @@
  *   npm run schema:update
  */
 import type { components } from '@/types/github-api.generated';
+import { getTourRepos } from '@/demo/tour-data';
 
 type GitHubRepository = components['schemas']['repository'];
 type GitHubSimpleUser = components['schemas']['simple-user'];
@@ -19,31 +20,6 @@ export interface GitHubStarredRepoResponse {
   repo: GitHubRepository;
 }
 
-// Base URLs for mock data - suffixes show what matters
-const USER_API = 'https://api.github.com/users/mock-user';
-const USER_WEB = 'https://github.com/mock-user';
-
-const MOCK_USER: GitHubSimpleUser = {
-  login: 'mock-user',
-  id: 12345,
-  node_id: 'MDQ6VXNlcjEyMzQ1',
-  avatar_url: 'https://avatars.githubusercontent.com/u/12345?v=4',
-  gravatar_id: '',
-  url: USER_API,
-  html_url: USER_WEB,
-  followers_url: `${USER_API}/followers`,
-  following_url: `${USER_API}/following{/other_user}`,
-  gists_url: `${USER_API}/gists{/gist_id}`,
-  starred_url: `${USER_API}/starred{/owner}{/repo}`,
-  subscriptions_url: `${USER_API}/subscriptions`,
-  organizations_url: `${USER_API}/orgs`,
-  repos_url: `${USER_API}/repos`,
-  events_url: `${USER_API}/events{/privacy}`,
-  received_events_url: `${USER_API}/received_events`,
-  type: 'User',
-  site_admin: false,
-};
-
 export const MOCK_LICENSE = {
   key: 'mit',
   name: 'MIT License',
@@ -52,18 +28,45 @@ export const MOCK_LICENSE = {
   node_id: 'MDc6TGljZW5zZW1pdA==',
 };
 
-function createMockRepository(id: number, name: string): GitHubRepository {
+function createMockOwner(login: string, id: number): GitHubSimpleUser {
+  const ownerApi = `https://api.github.com/users/${login}`;
+  const ownerWeb = `https://github.com/${login}`;
+
+  return {
+    login,
+    id,
+    node_id: `MDQ6VXNlciR7${id}}`,
+    avatar_url: `https://avatars.githubusercontent.com/u/${id}?v=4`,
+    gravatar_id: '',
+    url: ownerApi,
+    html_url: ownerWeb,
+    followers_url: `${ownerApi}/followers`,
+    following_url: `${ownerApi}/following{/other_user}`,
+    gists_url: `${ownerApi}/gists{/gist_id}`,
+    starred_url: `${ownerApi}/starred{/owner}{/repo}`,
+    subscriptions_url: `${ownerApi}/subscriptions`,
+    organizations_url: `${ownerApi}/orgs`,
+    repos_url: `${ownerApi}/repos`,
+    events_url: `${ownerApi}/events{/privacy}`,
+    received_events_url: `${ownerApi}/received_events`,
+    type: 'User',
+    site_admin: false,
+  };
+}
+
+function createMockRepository(id: number, name: string, ownerLogin: string): GitHubRepository {
   const now = new Date().toISOString();
-  const repoApi = `https://api.github.com/repos/mock-user/${name}`;
-  const repoWeb = `https://github.com/mock-user/${name}`;
+  const repoApi = `https://api.github.com/repos/${ownerLogin}/${name}`;
+  const repoWeb = `https://github.com/${ownerLogin}/${name}`;
+  const owner = createMockOwner(ownerLogin, 10000 + id);
 
   return {
     id,
-    node_id: 'MDEwOlJlcG9zaXRvcnkxMjM0NQ==',
+    node_id: `MDEwOlJlcG9zaXRvcnkk${id}`,
     name,
-    full_name: `mock-user/${name}`,
+    full_name: `${ownerLogin}/${name}`,
     private: false,
-    owner: MOCK_USER,
+    owner,
     html_url: repoWeb,
     description: `Description for ${name}`,
     fork: false,
@@ -107,8 +110,8 @@ function createMockRepository(id: number, name: string): GitHubRepository {
     created_at: now,
     updated_at: now,
     pushed_at: now,
-    git_url: `git://github.com/mock-user/${name}.git`,
-    ssh_url: `git@github.com:mock-user/${name}.git`,
+    git_url: `git://github.com/${ownerLogin}/${name}.git`,
+    ssh_url: `git@github.com:${ownerLogin}/${name}.git`,
     clone_url: `${repoWeb}.git`,
     svn_url: repoWeb,
     homepage: null,
@@ -148,26 +151,23 @@ function createMockRepository(id: number, name: string): GitHubRepository {
 }
 
 /**
- * Base ID for mock repositories. IDs are deterministic: MOCK_REPO_ID_BASE + index.
- * Exported so other mock fixtures can reference specific repos by ID.
+ * Creates a list of mock starred repositories using tour repo data.
+ * Returns repos in starred order (most recent first).
+ *
+ * Uses tour repo data from src/demo/tour-data.ts as the source of truth,
+ * ensuring E2E tests have repos with correct IDs for tour navigation.
  */
-export const MOCK_REPO_ID_BASE = 1000;
-
-/**
- * Creates a list of mock starred repositories.
- * Repos are ordered with most recently starred first (decreasing starred_at dates).
- * IDs are deterministic: MOCK_REPO_ID_BASE + index (e.g., 1000, 1001, 1002...).
- */
-export function createMockStarredReposList(count: number): GitHubStarredRepoResponse[] {
+export function createMockStarredReposList(): GitHubStarredRepoResponse[] {
+  const tourRepos = getTourRepos();
   const baseDate = new Date();
 
-  return Array.from({ length: count }, (_, i) => {
+  return tourRepos.map((repo, i) => {
     const starredDate = new Date(baseDate);
     starredDate.setDate(starredDate.getDate() - i);
 
     return {
-      starred_at: starredDate.toISOString(),
-      repo: createMockRepository(MOCK_REPO_ID_BASE + i, `repo-${i + 1}`),
+      starred_at: repo.starred_at ?? starredDate.toISOString(),
+      repo: createMockRepository(repo.id, repo.name, repo.owner.login),
     };
   });
 }

@@ -51,11 +51,15 @@ test.describe('Onboarding Tour', () => {
     await expect(visibleStep(firstTimeUserPage)).toContainText(/repository page/i);
     await firstTimeUserPage.getByRole('button', { name: 'Next' }).click();
 
-    // Step 9: Releases
+    // Step 9: Repo detail radar icon
+    await expect(visibleStep(firstTimeUserPage)).toContainText(/add or remove.*radars/i);
+    await firstTimeUserPage.getByRole('button', { name: 'Next' }).click();
+
+    // Step 10: Releases
     await expect(visibleStep(firstTimeUserPage)).toContainText(/release/i);
     await firstTimeUserPage.getByRole('button', { name: 'Next' }).click();
 
-    // Step 10: Help button - final step
+    // Step 11: Help button - final step
     await expect(visibleStep(firstTimeUserPage)).toContainText(/help menu/i);
     await firstTimeUserPage.getByRole('button', { name: 'Finish' }).click();
 

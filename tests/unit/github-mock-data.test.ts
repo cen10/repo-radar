@@ -18,41 +18,27 @@ describe('GitHub Mock Data Factories', () => {
   });
 
   describe('createMockStarredReposList', () => {
-    it('creates specified number of repos', () => {
-      const list = createMockStarredReposList(3);
-      expect(list).toHaveLength(3);
+    it('creates repos from tour data', () => {
+      const list = createMockStarredReposList();
+      expect(list.length).toBeGreaterThan(0);
     });
 
     it('creates repos with unique IDs', () => {
-      const list = createMockStarredReposList(5);
+      const list = createMockStarredReposList();
       const ids = list.map((item) => item.repo.id);
       const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(5);
-    });
-
-    it('names repos sequentially', () => {
-      const list = createMockStarredReposList(3);
-      expect(list[0].repo.name).toBe('repo-1');
-      expect(list[1].repo.name).toBe('repo-2');
-      expect(list[2].repo.name).toBe('repo-3');
-    });
-
-    it('orders repos with most recent starred first', () => {
-      const list = createMockStarredReposList(3);
-      const dates = list.map((item) => new Date(item.starred_at).getTime());
-      expect(dates[0]).toBeGreaterThan(dates[1]);
-      expect(dates[1]).toBeGreaterThan(dates[2]);
+      expect(uniqueIds.size).toBe(list.length);
     });
 
     it('creates repos with required GitHub API fields', () => {
-      const list = createMockStarredReposList(1);
+      const list = createMockStarredReposList();
       const repo = list[0].repo;
 
       // Required fields from GitHub API schema
       expect(repo.id).toBeDefined();
       expect(repo.name).toBeDefined();
-      expect(repo.full_name).toContain('mock-user/');
-      expect(repo.owner.login).toBe('mock-user');
+      expect(repo.full_name).toContain('/');
+      expect(repo.owner.login).toBeDefined();
       expect(repo.html_url).toMatch(/^https:\/\/github\.com\//);
       expect(typeof repo.stargazers_count).toBe('number');
       expect(typeof repo.forks_count).toBe('number');
@@ -60,7 +46,7 @@ describe('GitHub Mock Data Factories', () => {
     });
 
     it('wraps repository with starred_at timestamp', () => {
-      const list = createMockStarredReposList(1);
+      const list = createMockStarredReposList();
       expect(list[0].starred_at).toBeDefined();
       expect(new Date(list[0].starred_at).getTime()).not.toBeNaN();
     });

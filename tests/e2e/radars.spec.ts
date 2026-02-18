@@ -23,6 +23,8 @@ test.describe('Radar CRUD', () => {
 
     // Verify the specific repo appears on the radar
     await radarsPage.navigateToRadar(radarName);
-    await expect(radarsPage.page.getByRole('heading', { name: repoName })).toBeVisible();
+    await expect(
+      radarsPage.page.getByRole('heading', { name: repoName, exact: true })
+    ).toBeVisible();
   });
 });
