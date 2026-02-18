@@ -8,9 +8,13 @@
 Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum.
 This is a portfolio project built to explore modern React patterns, API integration, and comprehensive testing strategies.
 
-![Repo Radar - My Stars view](public/starred-repos-screenshot.png)
+![My Stars - browse and search your starred repos](public/starred-repos-screenshot.png)
 
+![Repository detail - stats and release history](public/repo-detail-screenshot.png)
 
+![Add to Radar - organize repos into collections](public/add-to-radar-screenshot.png)
+
+![Explore - discover trending repositories](public/explore-page-screenshot.png)
 
 ## Features
 
