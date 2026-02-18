@@ -93,6 +93,13 @@ function getRepoDetailSteps(): TourStep[] {
       tooltipDelayMs: 100,
     },
     {
+      id: 'repo-detail-radar-icon',
+      target: '[data-tour="repo-radar-icon"]',
+      text: 'Add or remove this repo from any of your Radars without leaving this page.',
+      page: 'repo-detail',
+      placement: 'left',
+    },
+    {
       id: 'releases',
       target: '[data-tour="releases"]',
       text: 'Expand any release to see version details and release notes.',
