@@ -155,7 +155,7 @@ describe('RadarPage', () => {
 
       renderWithProviders();
 
-      expect(screen.getByText(/no repos on this radar yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/this radar is ready for repos/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /go to my stars/i })).toBeInTheDocument();
     });
   });

@@ -81,7 +81,7 @@ describe('EmptyRadarState', () => {
   it('renders correct title and description', () => {
     renderWithRouter(<EmptyRadarState />);
 
-    expect(screen.getByText(/no repos on this radar yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/this radar is ready for repos/i)).toBeInTheDocument();
     expect(screen.getByText(/add repos from my stars or explore/i)).toBeInTheDocument();
   });
 
