@@ -169,7 +169,7 @@ function MobileDrawer({ isOpen, onClose, topClass, heightClass, children }: Mobi
       />
       <DialogPanel
         transition
-        className={`fixed left-0 ${topClass} ${heightClass} w-64 bg-white border-r border-gray-200 z-40 transition-all duration-300 ease-in-out data-closed:-translate-x-full`}
+        className={`fixed left-0 ${topClass} ${heightClass} w-64 bg-white border-r border-slate-300 z-40 transition-all duration-300 ease-in-out data-closed:-translate-x-full`}
       >
         <nav aria-label="Main navigation" className="flex flex-col h-full">
           {children}
@@ -203,7 +203,7 @@ function DesktopSidebar({
       `}
     >
       <CollapseButton isCollapsed={isCollapsed} onToggle={onToggleCollapsed} />
-      <aside className="h-full bg-white border-r border-gray-200 overflow-visible">
+      <aside className="h-full bg-white border-r border-slate-300 overflow-visible">
         <nav aria-label="Main navigation" className="flex flex-col">
           {children}
         </nav>
