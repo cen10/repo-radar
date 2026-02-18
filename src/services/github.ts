@@ -138,7 +138,6 @@ function mapGitHubRepoToRepository(
       issues_growth_rate: 0,
       is_trending: isTrending(repo),
     },
-    is_following: false,
   };
 }
 
