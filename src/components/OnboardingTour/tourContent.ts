@@ -98,6 +98,7 @@ function getRepoDetailSteps(): TourStep[] {
       text: 'Add or remove this repo from any of your Radars without leaving this page.',
       page: 'repo-detail',
       placement: 'left',
+      tooltipDelayMs: 100,
     },
     {
       id: 'releases',

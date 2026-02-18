@@ -1,5 +1,5 @@
 import { type Page, type Route } from '@playwright/test';
-import { MOCK_REPO_ID_BASE } from '../../fixtures/github-mock-data';
+import { getTourRepos } from '@/demo/tour-data';
 
 // In-memory mock storage for Supabase data during E2E tests
 interface MockRadar {
@@ -53,10 +53,11 @@ export async function setupSupabaseMocks(
     mockRadars.set(defaultRadar.id, defaultRadar);
 
     // Add a repo to the default radar so the radar page has content
+    const tourRepos = getTourRepos();
     const defaultRadarRepo: MockRadarRepo = {
       id: 'default-radar-repo',
       radar_id: defaultRadar.id,
-      github_repo_id: MOCK_REPO_ID_BASE, // First mock repo from github-mock-data.ts
+      github_repo_id: tourRepos[0].id, // First tour repo (React)
       added_at: new Date().toISOString(),
     };
     mockRadarRepos.set(defaultRadarRepo.id, defaultRadarRepo);

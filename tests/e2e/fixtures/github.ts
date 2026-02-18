@@ -15,10 +15,11 @@ export interface GitHubMockStore {
 }
 
 /**
- * Create a default mock store with some sample data.
+ * Create a default mock store with tour repo data.
+ * Uses repos from src/demo/tour-data.ts for consistent E2E testing.
  */
 export function createDefaultGitHubMockStore(): GitHubMockStore {
-  return { starredRepos: createMockStarredReposList(5) };
+  return { starredRepos: createMockStarredReposList() };
 }
 
 /**
@@ -182,6 +183,52 @@ export async function setupGitHubMocks(
           body: JSON.stringify({ message: 'Not Found' }),
         });
       }
+    }
+  );
+
+  // Mock GET /search/issues - Used by useIssueCount for open issue counts
+  await page.route(`${GITHUB_API_BASE}/search/issues*`, async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: {
+        'x-ratelimit-limit': '30',
+        'x-ratelimit-remaining': '29',
+        'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+      },
+      body: JSON.stringify({ total_count: 100, incomplete_results: false, items: [] }),
+    });
+  });
+
+  // Mock GET /repos/:owner/:repo/releases - Get releases for a repository
+  // Returns mock releases so the tour step target element renders
+  await page.route(
+    new RegExp(`${GITHUB_API_BASE.replace(/\./g, '\\.')}/repos/[^/]+/[^/]+/releases`),
+    async (route: Route) => {
+      const mockReleases = [
+        {
+          id: 1,
+          tag_name: 'v1.0.0',
+          name: 'Version 1.0.0',
+          body: 'Initial release',
+          html_url: 'https://github.com/mock/repo/releases/tag/v1.0.0',
+          published_at: new Date().toISOString(),
+          author: {
+            login: 'mock-user',
+            avatar_url: 'https://avatars.githubusercontent.com/u/12345?v=4',
+          },
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: {
+          'x-ratelimit-limit': '5000',
+          'x-ratelimit-remaining': '4999',
+          'x-ratelimit-reset': String(Math.floor(Date.now() / 1000) + 3600),
+        },
+        body: JSON.stringify(mockReleases),
+      });
     }
   );
 
