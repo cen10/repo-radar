@@ -39,7 +39,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
   const touchStartY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
   const isSwipeGesture = useRef(false);
-  const dismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const swipeAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset discard confirm state when sheet opens (defensive, since components stay mounted)
   useEffect(() => {
@@ -48,15 +48,15 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
     }
   }, [open]);
 
-  // Clear dismiss timeout when sheet closes or unmounts
+  // Clear swipe animation timeout when sheet closes or unmounts
   useEffect(() => {
-    if (!open && dismissTimeoutRef.current) {
-      clearTimeout(dismissTimeoutRef.current);
-      dismissTimeoutRef.current = null;
+    if (!open && swipeAnimationTimeoutRef.current) {
+      clearTimeout(swipeAnimationTimeoutRef.current);
+      swipeAnimationTimeoutRef.current = null;
     }
     return () => {
-      if (dismissTimeoutRef.current) {
-        clearTimeout(dismissTimeoutRef.current);
+      if (swipeAnimationTimeoutRef.current) {
+        clearTimeout(swipeAnimationTimeoutRef.current);
       }
     };
   }, [open]);
@@ -129,8 +129,8 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
       } else {
         // Animate to off-screen from current position, then close
         panelRef.current.style.transform = 'translateY(100%)';
-        dismissTimeoutRef.current = setTimeout(() => {
-          dismissTimeoutRef.current = null;
+        swipeAnimationTimeoutRef.current = setTimeout(() => {
+          swipeAnimationTimeoutRef.current = null;
           if (panelRef.current) {
             panelRef.current.style.transform = '';
           }
