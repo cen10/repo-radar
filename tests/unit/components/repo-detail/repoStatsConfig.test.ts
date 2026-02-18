@@ -9,7 +9,7 @@ const defaultCounts = {
 
 const defaultLinkParams = {
   html_url: 'https://github.com/owner/repo',
-  open_issues_count: 42,
+  issueCount: 42 as number | null,
 };
 
 describe('repoStatsConfig', () => {
@@ -72,9 +72,16 @@ describe('repoStatsConfig', () => {
     });
 
     it('formats large open issues count compactly', () => {
-      const links = getLinks({ ...defaultLinkParams, open_issues_count: 1500 });
+      const links = getLinks({ ...defaultLinkParams, issueCount: 1500 });
 
       expect(links[0].label).toBe('1.5k open issues');
+    });
+
+    it('omits issues link when issueCount is null', () => {
+      const links = getLinks({ ...defaultLinkParams, issueCount: null });
+
+      expect(links).toHaveLength(1);
+      expect(links[0].key).toBe('pulls');
     });
   });
 });

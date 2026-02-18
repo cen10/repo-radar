@@ -13,21 +13,21 @@ const defaultRepo = createMockRepository({
 describe('RepoStats', () => {
   describe('stats display', () => {
     it('renders star count with compact formatting', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       expect(screen.getByText('12.5k')).toBeInTheDocument();
       expect(screen.getByText('stars')).toBeInTheDocument();
     });
 
     it('renders fork count with compact formatting', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       expect(screen.getByText('3.2k')).toBeInTheDocument();
       expect(screen.getByText('forks')).toBeInTheDocument();
     });
 
     it('renders watcher count with compact formatting', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       expect(screen.getByText('450')).toBeInTheDocument();
       expect(screen.getByText('watchers')).toBeInTheDocument();
@@ -42,6 +42,7 @@ describe('RepoStats', () => {
             forks_count: 5,
             watchers_count: 10,
           }}
+          issueCount={127}
         />
       );
 
@@ -53,7 +54,7 @@ describe('RepoStats', () => {
 
   describe('external links', () => {
     it('renders issues link with correct href', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       const issuesLink = screen.getByRole('link', { name: /open issues/i });
       expect(issuesLink).toHaveAttribute('href', 'https://github.com/user/test-repo/issues');
@@ -61,7 +62,7 @@ describe('RepoStats', () => {
     });
 
     it('renders pull requests link with correct href', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       const prsLink = screen.getByRole('link', { name: /pull requests/i });
       expect(prsLink).toHaveAttribute('href', 'https://github.com/user/test-repo/pulls');
@@ -69,15 +70,22 @@ describe('RepoStats', () => {
     });
 
     it('displays formatted issue count in link', () => {
-      render(<RepoStats repository={defaultRepo} />);
+      render(<RepoStats repository={defaultRepo} issueCount={127} />);
 
       expect(screen.getByText(/127 open issues/i)).toBeInTheDocument();
     });
 
     it('formats large issue counts', () => {
-      render(<RepoStats repository={{ ...defaultRepo, open_issues_count: 1500 }} />);
+      render(<RepoStats repository={defaultRepo} issueCount={1500} />);
 
       expect(screen.getByText(/1\.5k open issues/i)).toBeInTheDocument();
+    });
+
+    it('hides issue count when issueCount is null', () => {
+      render(<RepoStats repository={defaultRepo} issueCount={null} />);
+
+      expect(screen.queryByText(/open issues/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /pull requests/i })).toBeInTheDocument();
     });
   });
 });

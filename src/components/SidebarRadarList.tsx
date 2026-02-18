@@ -86,28 +86,20 @@ function RadarNavItem({
             )
           }
         >
-          {({ isActive }) => (
-            <>
-              {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
-              <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
-                <StaticRadarIcon
-                  className={clsx(
-                    'h-5 w-5',
-                    isActive && 'text-indigo-600',
-                    !isActive && 'text-gray-400'
-                  )}
-                />
-              </span>
-              {/* Name in fixed-width wrapper so text doesn't reflow during collapse */}
-              {!hideText && (
-                <div className="flex items-center gap-3 shrink-0 w-[168px]">
-                  <span aria-hidden="true" className="flex-1 truncate min-w-0">
-                    {radar.name}
-                  </span>
-                </div>
-              )}
-            </>
-          )}
+          <>
+            {/* Focus ring on icon wrapper when collapsed, on full link when expanded */}
+            <span className={clsx('shrink-0', collapsed && iconWrapperFocus)}>
+              <StaticRadarIcon className="h-5 w-5 text-indigo-600" />
+            </span>
+            {/* Name in fixed-width wrapper so text doesn't reflow during collapse */}
+            {!hideText && (
+              <div className="flex items-center gap-3 shrink-0 w-[168px]">
+                <span aria-hidden="true" className="flex-1 truncate min-w-0">
+                  {radar.name}
+                </span>
+              </div>
+            )}
+          </>
         </NavLink>
       </SidebarTooltip>
 
@@ -146,7 +138,8 @@ function RadarNavItem({
 
               <MenuItems
                 transition
-                className="absolute right-0 top-full mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 pointer-events-auto"
+                anchor="bottom end"
+                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-50"
               >
                 <MenuItem>
                   <button

@@ -24,7 +24,7 @@ interface StatCounts {
 
 interface LinkParams {
   html_url: string;
-  open_issues_count: number;
+  issueCount: number | null;
 }
 
 export function getStats(counts: StatCounts): StatItem[] {
@@ -41,16 +41,22 @@ export function getStats(counts: StatCounts): StatItem[] {
 }
 
 export function getLinks(params: LinkParams): LinkItem[] {
-  return [
-    {
+  const links: LinkItem[] = [];
+
+  // Only show issue count if we have the accurate value (excludes PRs)
+  if (params.issueCount !== null) {
+    links.push({
       key: 'issues',
       href: `${params.html_url}/issues`,
-      label: `${formatCompactNumber(params.open_issues_count)} open issues`,
-    },
-    {
-      key: 'pulls',
-      href: `${params.html_url}/pulls`,
-      label: 'Pull requests',
-    },
-  ];
+      label: `${formatCompactNumber(params.issueCount)} open issues`,
+    });
+  }
+
+  links.push({
+    key: 'pulls',
+    href: `${params.html_url}/pulls`,
+    label: 'Pull requests',
+  });
+
+  return links;
 }
