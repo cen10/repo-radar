@@ -146,7 +146,8 @@ function RadarNavItem({
 
               <MenuItems
                 transition
-                className="absolute right-0 top-full mt-1 w-36 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 pointer-events-auto"
+                anchor="bottom end"
+                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-50"
               >
                 <MenuItem>
                   <button
