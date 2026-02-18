@@ -737,6 +737,48 @@ export async function fetchRepositoryById(
 }
 
 /**
+ * Fetch the actual open issue count for a repository (excluding PRs).
+ * GitHub's open_issues_count field includes both issues and PRs.
+ * This uses the Search API to get issues only.
+ *
+ * @param token - GitHub access token
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @returns The count of open issues (excluding PRs), or null on error
+ */
+export async function fetchIssueCount(
+  token: string,
+  owner: string,
+  repo: string
+): Promise<number | null> {
+  const query = encodeURIComponent(`repo:${owner}/${repo} is:issue is:open`);
+  const url = `${GITHUB_API_BASE}/search/issues?q=${query}&per_page=1`;
+
+  try {
+    const response = await fetch(url, {
+      headers: getGitHubHeaders(token),
+    });
+
+    const result = checkGitHubResponse(response, 'fetch issue count');
+    if (!result.ok) {
+      if (result.status === 403 || result.status === 401) {
+        throw new Error(result.message);
+      }
+      return null;
+    }
+
+    const data: { total_count: number } = await response.json();
+    return data.total_count;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('GitHub')) {
+      throw error;
+    }
+    logger.error('Failed to fetch issue count:', { owner, repo, error });
+    return null;
+  }
+}
+
+/**
  * Fetch multiple repositories by their GitHub numeric IDs.
  * Uses parallel requests for performance.
  * Skips any repos that fail to fetch (deleted, private, etc.).

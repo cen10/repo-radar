@@ -5,11 +5,12 @@ import { getStats, getLinks } from './repoStatsConfig';
 
 interface RepoStatsProps {
   repository: Repository;
+  issueCount: number | null;
 }
 
-export function RepoStats({ repository }: RepoStatsProps) {
+export function RepoStats({ repository, issueCount }: RepoStatsProps) {
   const stats = getStats(repository);
-  const links = getLinks(repository);
+  const links = getLinks({ html_url: repository.html_url, issueCount });
 
   return (
     <div className="mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg p-4 space-y-3">
