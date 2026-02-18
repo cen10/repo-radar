@@ -104,7 +104,7 @@ export function RepoHeader({
 
         {/* Actions */}
         <div className="shrink-0">
-          <RadarIconButton githubRepoId={id} iconClassName="h-9 w-9" />
+          <RadarIconButton githubRepoId={id} iconClassName="h-9 w-9" data-tour="repo-radar-icon" />
         </div>
       </div>
 
