@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:next": "next dev --port 3000",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -31,6 +32,7 @@
     "@tanstack/react-query": "^5.89.0",
     "clsx": "^2.1.1",
     "msw": "^2.12.9",
+    "next": "^16.1.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-error-boundary": "^6.0.0",
@@ -41,6 +43,7 @@
     "@eslint/js": "^9.33.0",
     "@playwright/test": "^1.58.1",
     "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^25.2.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
