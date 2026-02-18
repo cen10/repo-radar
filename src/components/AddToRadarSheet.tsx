@@ -94,15 +94,15 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
     setShowDiscardConfirm(false);
   };
 
-  const handleTouchStart = useCallback((e: TouchEvent) => {
+  const handleTouchStart = (e: TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     currentTranslateY.current = 0;
     // Only allow swipe gesture if scrollable content is at top
     const scrollTop = scrollRef.current?.scrollTop ?? 0;
     isSwipeGesture.current = scrollTop === 0;
-  }, []);
+  };
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent) => {
     if (touchStartY.current === null || !panelRef.current) return;
     // Don't interfere with content scrolling
     if (!isSwipeGesture.current) return;
@@ -114,7 +114,7 @@ export function AddToRadarSheet({ githubRepoId, open, onClose }: AddToRadarSheet
       currentTranslateY.current = deltaY;
       panelRef.current.style.transform = `translateY(${deltaY}px)`;
     }
-  }, []);
+  };
 
   const handleTouchEnd = useCallback(() => {
     if (!panelRef.current) return;
