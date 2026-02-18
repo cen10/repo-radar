@@ -28,8 +28,9 @@ export function EmptyRadarState() {
   return (
     <EmptyState
       icon={<StaticRadarIcon className="h-12 w-12" />}
-      title="No repos on this radar yet"
-      description="Add repos from My Stars or Explore to start tracking their metrics."
+      title="This radar is ready for repos"
+      description="Add repos from My Stars or Explore to start tracking."
+      className="py-12"
       actions={
         <>
           <Link
