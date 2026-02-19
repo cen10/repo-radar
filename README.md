@@ -5,7 +5,7 @@
 
 **[Live Demo](https://the-repo-radar.vercel.app)**
 
-Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum. Built as a portfolio project demonstrating React 19, strict TypeScript, and full-stack testing with Vitest and Playwright.
+Organize and track your GitHub starred repositories. Create custom collections (radars), monitor star growth trends, and discover which repos are gaining momentum. Built as a portfolio project demonstrating React 19, Vite, strict TypeScript, and full-stack testing with Vitest and Playwright. While that stack is the correct choice for an application of this scope, it's now being migrated to Next.js and Apollo Client for more experience with those tools. The migration runs in parallel (Next.js on port 3000, Vite on port 5173), so you can see both the before and after as the work progresses.
 
 ![My Stars - browse and search your starred repos](public/starred-repos-screenshot.png)
 
@@ -26,12 +26,12 @@ Organize and track your GitHub starred repositories. Create custom collections (
 
 ## Tech Stack
 
-| Category  | Technology                                |
-| --------- | ----------------------------------------- |
-| Framework | React 19, Vite 7                          |
-| Language  | TypeScript 5 (strict mode)                |
-| Styling   | TailwindCSS v4, Headless UI               |
-| State     | TanStack Query                            |
+| Category  | Technology                                 |
+| --------- | ------------------------------------------ |
+| Framework | React 19, Vite 7 (migrating to Next.js 16) |
+| Language  | TypeScript 5 (strict mode)                 |
+| Styling   | TailwindCSS v4, Headless UI                |
+| State     | TanStack Query (migrating to Apollo)       |
 | Auth & DB | Supabase (PostgreSQL + GitHub OAuth)      |
 | Testing   | Vitest, React Testing Library, Playwright |
 | CI/CD     | GitHub Actions                            |
@@ -55,6 +55,13 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
+### Running Both Dev Servers
+
+The app is being migrated from Vite to Next.js. During the migration, both can run simultaneously:
+
+- **Vite** (current production app): `npm run dev` → http://localhost:5173
+- **Next.js** (migration in progress): `npx next dev` → http://localhost:3000
+
 ### Environment Variables
 
 ```env
@@ -72,7 +79,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## Scripts
 
 ```bash
-npm run dev          # Development server
+npm run dev          # Vite dev server (port 5173)
+npx next dev         # Next.js dev server (port 3000, migration in progress)
 npm run build        # Production build
 npm run test         # Unit & integration tests
 npm run test:e2e     # Playwright E2E tests
