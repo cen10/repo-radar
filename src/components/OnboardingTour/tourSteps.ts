@@ -89,6 +89,100 @@ function findFocusableElement(target: Element): HTMLElement | null {
   return null;
 }
 
+const FOCUS_CLASS = 'tour-keyboard-focus';
+type DialogWithHandler = HTMLElement & { _tourKeydownHandler?: (e: KeyboardEvent) => void };
+
+/**
+ * Attaches Enter key handler to forward keypresses to the appropriate element.
+ * Native <dialog> elements trap focus, so we intercept Enter and click the
+ * target element or primary button.
+ */
+function attachEnterKeyHandler(step: TourStep, dialog: HTMLElement | null | undefined): void {
+  if (!dialog) return;
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+
+    // Don't interfere if user is focused on a button inside the dialog
+    if (
+      document.activeElement instanceof HTMLButtonElement &&
+      document.activeElement.closest('.shepherd-element')
+    ) {
+      return;
+    }
+
+    if (step.advanceByClickingTarget && step.target) {
+      const targetEl = document.querySelector(step.target);
+      if (targetEl) {
+        const focusable = findFocusableElement(targetEl);
+        if (focusable) {
+          e.preventDefault();
+          focusable.click();
+        }
+      }
+    } else {
+      // Scope to current dialog to avoid stale buttons from previous steps
+      const primaryButton = dialog.querySelector(
+        '.shepherd-button:not(.shepherd-button-secondary)'
+      );
+      if (primaryButton instanceof HTMLElement) {
+        e.preventDefault();
+        primaryButton.click();
+      }
+    }
+  };
+
+  dialog.addEventListener('keydown', handleKeydown);
+  (dialog as DialogWithHandler)._tourKeydownHandler = handleKeydown;
+}
+
+function cleanupEnterKeyHandler(dialog: HTMLElement | null | undefined): void {
+  if (!dialog) return;
+  const handler = (dialog as DialogWithHandler)._tourKeydownHandler;
+  if (handler) {
+    dialog.removeEventListener('keydown', handler);
+  }
+}
+
+/**
+ * Applies visual focus styling to the element that Enter will activate.
+ * Uses a CSS class instead of actual focus() because native <dialog> traps focus.
+ */
+function applyVisualFocus(step: TourStep, dialog: HTMLElement | null | undefined): void {
+  const addVisualFocus = (retryCount = 0) => {
+    // Remove any existing visual focus
+    document.querySelectorAll(`.${FOCUS_CLASS}`).forEach((el) => {
+      el.classList.remove(FOCUS_CLASS);
+    });
+
+    let targetElement: HTMLElement | null = null;
+
+    if (step.advanceByClickingTarget && step.target) {
+      // Focus the clickable target (e.g., repo card)
+      const targetEl = document.querySelector(step.target);
+      if (targetEl instanceof HTMLElement) {
+        targetElement = targetEl;
+      }
+    } else if (dialog) {
+      // Focus the primary button (Next/Finish)
+      const primaryButton = dialog.querySelector(
+        '.shepherd-button:not(.shepherd-button-secondary)'
+      );
+      if (primaryButton instanceof HTMLElement) {
+        targetElement = primaryButton;
+      }
+    }
+
+    if (targetElement) {
+      targetElement.classList.add(FOCUS_CLASS);
+    } else if (retryCount < FOCUS_MAX_RETRIES) {
+      setTimeout(() => addVisualFocus(retryCount + 1), FOCUS_RETRY_DELAY_MS);
+    }
+  };
+
+  setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
+}
+
 /** Converts our tour steps to Shepherd-compatible steps with buttons and callbacks. */
 export function configureStepsForShepherd(
   steps: TourStep[],
@@ -120,120 +214,17 @@ export function configureStepsForShepherd(
         new Promise((r) => setTimeout(r, step.tooltipDelayMs));
     }
 
-    // Auto-focus for keyboard accessibility.
-    // - Steps requiring click: focus the target element
-    // - All other steps: focus the Next/Finish button
+    // Keyboard accessibility: forward Enter to appropriate element and show visual focus
     configuredStep.when = {
       show: function (this: { el?: HTMLElement | null }) {
-        const dialog = this.el;
-
-        // Native <dialog> elements trap focus even when we programmatically focus
-        // elements inside them. Add a keydown handler to forward Enter to the
-        // appropriate element (Next button or clickable target).
-        const handleKeydown = (e: KeyboardEvent) => {
-          if (e.key !== 'Enter') return;
-
-          // Don't interfere if user is focused on a button inside the dialog
-          // (they can activate it normally with Enter)
-          if (
-            document.activeElement instanceof HTMLButtonElement &&
-            document.activeElement.closest('.shepherd-element')
-          ) {
-            return;
-          }
-
-          if (step.advanceByClickingTarget && step.target) {
-            // Click the target element to advance
-            const targetEl = document.querySelector(step.target);
-            if (targetEl) {
-              const focusable = findFocusableElement(targetEl);
-              if (focusable) {
-                e.preventDefault();
-                focusable.click();
-              }
-            }
-          } else if (dialog) {
-            // Click the primary button (Next/Finish) to advance.
-            // Scope to current dialog to avoid stale buttons from previous steps.
-            const primaryButton = dialog.querySelector(
-              '.shepherd-button:not(.shepherd-button-secondary)'
-            );
-            if (primaryButton instanceof HTMLElement) {
-              e.preventDefault();
-              primaryButton.click();
-            }
-          }
-        };
-
-        // Attach to the dialog element so it captures Enter even when dialog has focus
-        if (dialog) {
-          dialog.addEventListener('keydown', handleKeydown);
-          // Store reference for cleanup
-          (
-            dialog as HTMLElement & { _tourKeydownHandler?: typeof handleKeydown }
-          )._tourKeydownHandler = handleKeydown;
-        }
-
-        // Add visual focus ring to the element that Enter will activate.
-        // Native <dialog> elements trap focus, making actual focus() unreliable.
-        // Instead, we add a CSS class that mimics the focus ring appearance.
-        const FOCUS_CLASS = 'tour-keyboard-focus';
-
-        const addVisualFocus = (retryCount = 0) => {
-          // Remove any existing visual focus
-          document.querySelectorAll(`.${FOCUS_CLASS}`).forEach((el) => {
-            el.classList.remove(FOCUS_CLASS);
-          });
-
-          let targetElement: HTMLElement | null = null;
-
-          if (step.advanceByClickingTarget && step.target) {
-            // Add visual focus to the clickable target.
-            // For cards with pseudo-element overlays, adding focus ring to the card itself
-            // is more visible than adding it to the small link inside.
-            const targetEl = document.querySelector(step.target);
-            if (targetEl instanceof HTMLElement) {
-              targetElement = targetEl;
-            }
-          } else if (dialog) {
-            // Add visual focus to the primary button (Next/Finish)
-            // Use this.el (captured as dialog) to target the current step's dialog directly,
-            // avoiding issues with Shepherd keeping old dialogs in DOM during transitions.
-            const primaryButton = dialog.querySelector(
-              '.shepherd-button:not(.shepherd-button-secondary)'
-            );
-            if (primaryButton instanceof HTMLElement) {
-              targetElement = primaryButton;
-            }
-          }
-
-          if (targetElement) {
-            targetElement.classList.add(FOCUS_CLASS);
-          } else if (retryCount < FOCUS_MAX_RETRIES) {
-            // Retry if element not found yet (Shepherd may still be rendering)
-            setTimeout(() => addVisualFocus(retryCount + 1), FOCUS_RETRY_DELAY_MS);
-          }
-        };
-
-        // Add visual focus after a brief delay for DOM to settle
-        setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
+        attachEnterKeyHandler(step, this.el);
+        applyVisualFocus(step, this.el);
       },
       hide: function (this: { el?: HTMLElement | null }) {
-        // Clean up keydown handler
-        const dialog = this.el;
-        if (dialog) {
-          const handler = (
-            dialog as HTMLElement & { _tourKeydownHandler?: (e: KeyboardEvent) => void }
-          )._tourKeydownHandler;
-          if (handler) {
-            dialog.removeEventListener('keydown', handler);
-          }
-        }
-
-        // Note: Don't remove .tour-keyboard-focus here - the show callback
+        cleanupEnterKeyHandler(this.el);
+        // Note: Don't remove .tour-keyboard-focus here - applyVisualFocus
         // already cleans up before adding. Removing here causes a race condition
-        // where hide() from step N runs after show() from step N+1, removing
-        // the class that was just added.
+        // where hide() from step N runs after show() from step N+1.
       },
     };
 
