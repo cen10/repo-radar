@@ -1,5 +1,10 @@
 import type { Tour, StepOptions, StepOptionsButton, PopperPlacement } from 'shepherd.js';
 
+// Visual focus retry configuration - Shepherd may still be rendering when show() fires
+const FOCUS_INITIAL_DELAY_MS = 100;
+const FOCUS_RETRY_DELAY_MS = 50;
+const FOCUS_MAX_RETRIES = 10;
+
 export type TourPage = 'stars' | 'radar' | 'repo-detail';
 
 export interface TourStep {
@@ -203,14 +208,14 @@ export function configureStepsForShepherd(
 
           if (targetElement) {
             targetElement.classList.add(FOCUS_CLASS);
-          } else if (retryCount < 10) {
+          } else if (retryCount < FOCUS_MAX_RETRIES) {
             // Retry if element not found yet (Shepherd may still be rendering)
-            setTimeout(() => addVisualFocus(retryCount + 1), 50);
+            setTimeout(() => addVisualFocus(retryCount + 1), FOCUS_RETRY_DELAY_MS);
           }
         };
 
         // Add visual focus after a brief delay for DOM to settle
-        setTimeout(() => addVisualFocus(0), 100);
+        setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
       },
       hide: function (this: { el?: HTMLElement }) {
         // Clean up keydown handler
