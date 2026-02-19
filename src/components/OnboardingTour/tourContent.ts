@@ -4,7 +4,7 @@ import type { TourStep } from './tourSteps';
 const welcomeStep: TourStep = {
   id: 'welcome',
   target: '',
-  text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
+  text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys to navigate this tour.</em>',
   page: 'stars',
 };
 
@@ -90,6 +90,14 @@ function getRepoDetailSteps(): TourStep[] {
       page: 'repo-detail',
       placement: 'bottom',
       backTo: { stepId: 'click-repo', path: '/radar/tour-demo-radar' },
+      tooltipDelayMs: 100,
+    },
+    {
+      id: 'repo-detail-radar-icon',
+      target: '[data-tour="repo-radar-icon"]',
+      text: 'Add or remove this repo from any of your Radars without leaving this page.',
+      page: 'repo-detail',
+      placement: 'left',
       tooltipDelayMs: 100,
     },
     {

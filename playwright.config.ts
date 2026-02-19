@@ -22,8 +22,8 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Limit parallel workers on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Limit parallel workers on CI (2 is stable on GitHub Actions 2-core runners)
+  workers: process.env.CI ? 2 : undefined,
 
   reporter: [['html', { open: 'never' }], ['list']],
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { AuthProvider } from '@/components/AuthProvider';
 import '../../mocks/supabase';
 import { createTestQueryClient } from '../../helpers/query-client';
@@ -14,7 +14,7 @@ describe('useAuth', () => {
 
     expect(() => {
       renderHook(() => useAuth());
-    }).toThrow('useAuth must be used within an AuthProvider');
+    }).toThrow('useAuth must be used within AuthProvider');
 
     console.error = consoleError;
   });

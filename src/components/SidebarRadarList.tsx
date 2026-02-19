@@ -34,7 +34,6 @@ interface RadarNavItemProps {
   onDelete: (radar: RadarWithCount) => void;
   dataTour?: string;
   isDimmed?: boolean;
-  showPulse?: boolean;
 }
 
 // Approximate characters that fit in one line of the sidebar (for tooltip detection)
@@ -49,7 +48,6 @@ function RadarNavItem({
   onDelete,
   dataTour,
   isDimmed,
-  showPulse,
 }: RadarNavItemProps) {
   // Show tooltip if name might be truncated
   const isTruncated = radar.name.length > MAX_RADAR_NAME_LENGTH;
@@ -66,8 +64,7 @@ function RadarNavItem({
     <div
       className={clsx(
         'group/radar relative rounded-lg transition-colors',
-        isDimmed ? 'opacity-40 pointer-events-none' : 'hover:bg-indigo-50',
-        showPulse && 'animate-pulse-border'
+        isDimmed ? 'opacity-40 pointer-events-none' : 'hover:bg-indigo-50'
       )}
     >
       <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
@@ -107,7 +104,7 @@ function RadarNavItem({
       {!hideText && (
         <Menu
           as="div"
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-50 pointer-events-none"
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-6 flex justify-end z-dropdown pointer-events-none"
         >
           {({ open }) => (
             <>
@@ -136,10 +133,13 @@ function RadarNavItem({
                 {radar.repo_count}
               </span>
 
+              {/* z-modal instead of z-dropdown: Headless UI v2's anchor prop renders
+                  MenuItems via portal at body level. Sidebar is z-fixed (300), so
+                  z-dropdown (100) would render behind it. See CLAUDE.md for details. */}
               <MenuItems
                 transition
                 anchor="bottom end"
-                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-50"
+                className="w-36 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0 z-modal"
               >
                 <MenuItem>
                   <button
@@ -300,9 +300,7 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
 
 export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarListProps) {
   const { collapsed, hideText } = useSidebarContext();
-  const { currentStepId, isTourActive } = useOnboarding();
-  // Pulse animation draws attention to tour radar during onboarding
-  const showPulse = currentStepId === 'sidebar-radars';
+  const { isTourActive } = useOnboarding();
   const navigate = useNavigate();
   const { id: currentRadarId } = useParams<{ id: string }>();
 
@@ -368,7 +366,6 @@ export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarLis
               onDelete={setRadarToDelete}
               dataTour={dataTour}
               isDimmed={isDimmed}
-              showPulse={isTourRadar && showPulse}
             />
           );
         })}

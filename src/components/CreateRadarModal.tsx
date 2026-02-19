@@ -63,7 +63,7 @@ export function CreateRadarModal({ onClose, onSuccess }: CreateRadarModalProps) 
   const errorId = error ? 'radar-name-error' : undefined;
 
   return (
-    <Dialog open={true} onClose={handleClose} className="relative z-50">
+    <Dialog open={true} onClose={handleClose} className="relative z-modal">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-black/50 transition-opacity duration-200 data-closed:opacity-0"

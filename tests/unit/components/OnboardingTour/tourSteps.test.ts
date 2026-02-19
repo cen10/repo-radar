@@ -52,7 +52,6 @@ describe('getTourSteps', () => {
     const steps = getTourSteps(true);
 
     expect(steps[0].text).toMatch(/arrow keys/i);
-    expect(steps[0].text).toMatch(/tab/i);
   });
 
   it('marks the click-repo step as canClickTarget for navigation', () => {
@@ -61,6 +60,16 @@ describe('getTourSteps', () => {
 
     expect(clickRepoStep).toBeDefined();
     expect(clickRepoStep!.canClickTarget).toBe(true);
+  });
+
+  it('includes radar icon step on repo detail page', () => {
+    const steps = getTourSteps(true);
+    const radarIconStep = steps.find((s) => s.id === 'repo-detail-radar-icon');
+
+    expect(radarIconStep).toBeDefined();
+    expect(radarIconStep!.page).toBe('repo-detail');
+    expect(radarIconStep!.target).toBe('[data-tour="repo-radar-icon"]');
+    expect(radarIconStep!.text).toMatch(/add or remove.*radars.*without leaving/i);
   });
 
   it('has at least one step per page', () => {

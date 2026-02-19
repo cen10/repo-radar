@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/components/AuthProvider';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { CONNECTION_FAILED, UNEXPECTED_ERROR } from '@/constants/errorMessages';
 import { createTestQueryClient } from '../../helpers/query-client';
 
