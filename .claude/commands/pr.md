@@ -13,9 +13,11 @@ Do NOT run `gh pr view` to check if a PR exists — trust the user's intent.
 
 ## How to assess the current state
 
-1. Run `git diff main...HEAD` to see the actual changes against main. This
-   is the source of truth — not the commit history, not the existing PR
-   description, not your memory of the conversation.
+1. Run `git fetch origin main && git diff origin/main...HEAD` to see the
+   actual changes against the remote main branch. This is the source of
+   truth — not the commit history, not the existing PR description, not
+   your memory of the conversation. Always compare against `origin/main`,
+   not local `main`, which may be stale.
 2. For updates: Run `gh pr view --json title,body` to read the current PR
    description and identify what needs to change.
 
@@ -150,13 +152,14 @@ migration steps needed. Remove this section entirely if none.
 ## How to apply
 
 **For new PRs:**
-1. Draft the title and body based on `git diff main...HEAD`
+1. Draft the title and body based on `git fetch origin main && git diff origin/main...HEAD`
 2. Show me the proposed description
 3. Wait for my approval
 4. Run `gh pr create --title "..." --body "..."`
+5. Run `/sync-permissions` to check for local permissions that should be moved to global
 
 **For updates:**
-1. Compare `git diff main...HEAD` with the current PR description
+1. Compare `git diff origin/main...HEAD` with the current PR description
 2. If changes are needed, draft the updated title and body
 3. Show me the proposed changes
 4. Wait for my approval

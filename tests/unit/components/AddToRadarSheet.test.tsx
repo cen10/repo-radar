@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ReactElement } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -395,6 +395,113 @@ describe('AddToRadarSheet', () => {
       // Sheet should still be open with changes preserved
       expect(onClose).not.toHaveBeenCalled();
       expect(screen.getByRole('checkbox')).toBeChecked();
+    });
+  });
+
+  describe('swipe gesture', () => {
+    const createTouchEvent = (clientY: number) => ({
+      touches: [{ clientX: 100, clientY, identifier: 0 }],
+      changedTouches: [{ clientX: 100, clientY, identifier: 0 }],
+    });
+
+    it('closes when swiped down past threshold with no unsaved changes', () => {
+      vi.useFakeTimers();
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      const panel = screen.getByTestId('bottom-sheet-panel');
+
+      fireEvent.touchStart(panel, createTouchEvent(100));
+      fireEvent.touchMove(panel, createTouchEvent(250)); // 150px down, past threshold
+      fireEvent.touchEnd(panel, createTouchEvent(250));
+
+      // onClose is called after transition animation completes
+      expect(onClose).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(300);
+      expect(onClose).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('does not close when swipe is below threshold', () => {
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      const panel = screen.getByTestId('bottom-sheet-panel');
+
+      fireEvent.touchStart(panel, createTouchEvent(100));
+      fireEvent.touchMove(panel, createTouchEvent(150)); // 50px down, below threshold
+      fireEvent.touchEnd(panel, createTouchEvent(150));
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('does not allow upward swipe', () => {
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      const panel = screen.getByTestId('bottom-sheet-panel');
+
+      fireEvent.touchStart(panel, createTouchEvent(200));
+      fireEvent.touchMove(panel, createTouchEvent(50)); // swiping up
+      fireEvent.touchEnd(panel, createTouchEvent(50));
+
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('snaps back when swipe does not pass threshold', () => {
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      const panel = screen.getByTestId('bottom-sheet-panel');
+
+      fireEvent.touchStart(panel, createTouchEvent(100));
+      fireEvent.touchMove(panel, createTouchEvent(140)); // 40px down
+      fireEvent.touchEnd(panel, createTouchEvent(140));
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('shows confirmation dialog when swiped down with unsaved changes', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      vi.mocked(radarService.getRadars).mockResolvedValue([
+        createMockRadar({ id: 'radar-1', name: 'Frontend' }),
+      ]);
+      vi.mocked(radarService.getRadarsContainingRepo).mockResolvedValue([]);
+
+      renderWithProviders(<AddToRadarSheet {...defaultProps} onClose={onClose} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
+      });
+
+      // Make a change to trigger unsaved state
+      await user.click(screen.getByRole('checkbox'));
+
+      const panel = screen.getByTestId('bottom-sheet-panel');
+
+      // Swipe down past threshold
+      fireEvent.touchStart(panel, createTouchEvent(100));
+      fireEvent.touchMove(panel, createTouchEvent(250));
+      fireEvent.touchEnd(panel, createTouchEvent(250));
+
+      // Should show confirmation dialog instead of closing
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByText(/discard changes/i)).toBeInTheDocument();
     });
   });
 
