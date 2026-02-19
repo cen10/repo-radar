@@ -55,16 +55,16 @@ describe('RadarPage', () => {
 
   const renderWithProviders = (radarId: string = 'radar-123') => {
     return render(
-      <QueryClientProvider client={queryClient}>
-        <OnboardingProvider>
-          <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
+      <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
+        <QueryClientProvider client={queryClient}>
+          <OnboardingProvider>
             <Routes>
               <Route path="/radar/:id" element={<RadarPage />} />
               <Route path="/stars" element={<div>Stars Page</div>} />
             </Routes>
-          </MemoryRouter>
-        </OnboardingProvider>
-      </QueryClientProvider>
+          </OnboardingProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
     );
   };
 

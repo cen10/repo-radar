@@ -118,6 +118,7 @@ describe('OnboardingTour', () => {
   });
 
   it('creates and starts a tour when active', () => {
+    vi.useFakeTimers();
     mockOnboarding.isTourActive = true;
 
     renderTour('/stars');
@@ -125,7 +126,12 @@ describe('OnboardingTour', () => {
     expect(tourInstances).toHaveLength(1);
     expect((tourInstances[0] as MockTour).options).toMatchObject({ useModalOverlay: true });
     expect(mockTourAddSteps).toHaveBeenCalledOnce();
+
+    // Tour start is deferred to next tick for React Strict Mode compatibility
+    vi.runAllTimers();
     expect(mockTourStart).toHaveBeenCalledOnce();
+
+    vi.useRealTimers();
   });
 
   it('only includes steps for the current page', () => {
@@ -151,13 +157,15 @@ describe('OnboardingTour', () => {
     expect(tourInstances).toHaveLength(0);
   });
 
-  it('registers complete and cancel event handlers', () => {
+  it('registers complete event handler but not cancel (to allow resume on refresh)', () => {
     mockOnboarding.isTourActive = true;
 
     renderTour('/stars');
 
     expect(mockTourOn).toHaveBeenCalledWith('complete', expect.any(Function));
-    expect(mockTourOn).toHaveBeenCalledWith('cancel', expect.any(Function));
+    // Cancel handler is NOT registered - we want the tour to resume on refresh,
+    // and cancel fires during cleanup/unmount which would mark it as completed
+    expect(mockTourOn).not.toHaveBeenCalledWith('cancel', expect.any(Function));
   });
 
   it('renders null (no DOM output)', () => {
