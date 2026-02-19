@@ -152,9 +152,10 @@ export function configureStepsForShepherd(
                 focusable.click();
               }
             }
-          } else {
-            // Click the primary button (Next/Finish) to advance
-            const primaryButton = document.querySelector(
+          } else if (dialog) {
+            // Click the primary button (Next/Finish) to advance.
+            // Scope to current dialog to avoid stale buttons from previous steps.
+            const primaryButton = dialog.querySelector(
               '.shepherd-button:not(.shepherd-button-secondary)'
             );
             if (primaryButton instanceof HTMLElement) {

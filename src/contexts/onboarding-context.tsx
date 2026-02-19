@@ -86,10 +86,9 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setHasCompletedTour(false);
     setIsTourActive(false);
 
-    // Clear all persisted tour state for a fresh start
+    // Clear completion state for a fresh start (tour-active is managed by useEffect)
     localStorage.removeItem(ONBOARDING_STORAGE_KEY);
     sessionStorage.removeItem(DEMO_ONBOARDING_SESSION_KEY);
-    sessionStorage.removeItem(TOUR_ACTIVE_SESSION_KEY);
 
     if (navigateTo && navigateFn) {
       // Signal that tour should start after navigation completes

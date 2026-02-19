@@ -10,7 +10,15 @@ import { useAuth } from '../../hooks/use-auth';
 
 export function OnboardingTour() {
   const location = useLocation();
-  const { isTourActive, startTour } = useOnboarding();
+  const { isTourActive, startTour, completeTour } = useOnboarding();
+  const currentPage = getCurrentPage(location.pathname);
+
+  // Reset tour if active but on a non-tour page (e.g., user navigated away and refreshed)
+  useEffect(() => {
+    if (isTourActive && currentPage === null) {
+      completeTour();
+    }
+  }, [isTourActive, currentPage, completeTour]);
 
   // Check for pending tour start after navigation (from restartTour)
   useEffect(() => {
@@ -37,8 +45,6 @@ export function OnboardingTour() {
     () => getTourSteps(hasStarredRepos, isUsingTourRadar, isDemoMode),
     [hasStarredRepos, isUsingTourRadar, isDemoMode]
   );
-
-  const currentPage = getCurrentPage(location.pathname);
 
   const pageSteps = useMemo(
     () => steps.filter((s) => s.page === currentPage),

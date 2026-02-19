@@ -157,6 +157,14 @@ describe('OnboardingTour', () => {
     expect(tourInstances).toHaveLength(0);
   });
 
+  it('calls completeTour when active on a non-tour page', () => {
+    mockOnboarding.isTourActive = true;
+
+    renderTour('/explore');
+
+    expect(mockOnboarding.completeTour).toHaveBeenCalledOnce();
+  });
+
   it('registers complete event handler but not cancel (to allow resume on refresh)', () => {
     mockOnboarding.isTourActive = true;
 
