@@ -124,7 +124,7 @@ export function configureStepsForShepherd(
     // - Steps requiring click: focus the target element
     // - All other steps: focus the Next/Finish button
     configuredStep.when = {
-      show: function (this: { el?: HTMLElement }) {
+      show: function (this: { el?: HTMLElement | null }) {
         const dialog = this.el;
 
         // Native <dialog> elements trap focus even when we programmatically focus
@@ -217,7 +217,7 @@ export function configureStepsForShepherd(
         // Add visual focus after a brief delay for DOM to settle
         setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
       },
-      hide: function (this: { el?: HTMLElement }) {
+      hide: function (this: { el?: HTMLElement | null }) {
         // Clean up keydown handler
         const dialog = this.el;
         if (dialog) {
