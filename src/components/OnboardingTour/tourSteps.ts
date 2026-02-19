@@ -147,6 +147,9 @@ function cleanupEnterKeyHandler(dialog: HTMLElement | null | undefined): void {
 /**
  * Applies visual focus styling to the element that Enter will activate.
  * Uses a CSS class instead of actual focus() because native <dialog> traps focus.
+ *
+ * Delays before querying the DOM because Shepherd's show callback fires before
+ * the dialog is fully rendered. Retries if the element still isn't found.
  */
 function applyVisualFocus(step: TourStep, dialog: HTMLElement | null | undefined): void {
   const addVisualFocus = (retryCount = 0) => {
