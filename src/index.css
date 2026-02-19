@@ -219,7 +219,7 @@ body {
   }
 
   .shepherd-button:not(.shepherd-button-secondary):not(.shepherd-button-skip):focus {
-    outline: none;
+    /* outline: none removed - let .tour-keyboard-focus control outline */
     box-shadow:
       0 0 0 2px white,
       0 0 0 4px #6366f1; /* ring-2 ring-indigo-500 ring-offset-2 */
@@ -239,7 +239,7 @@ body {
   }
 
   .shepherd-button-secondary:focus {
-    outline: none;
+    /* outline: none removed - let .tour-keyboard-focus control outline */
     box-shadow:
       0 0 0 2px white,
       0 0 0 4px #6366f1;
@@ -268,6 +268,19 @@ body {
      Uses !important because CSS layer cascading isn't winning reliably. */
   .shepherd-modal-overlay-container.shepherd-modal-is-visible path {
     pointer-events: none !important;
+  }
+
+  /* Visual focus ring for tour keyboard navigation.
+     Native <dialog> elements trap focus, so we can't reliably use :focus.
+     This class is added via JS to indicate which element Enter will activate.
+     Uses outline instead of box-shadow to avoid clipping issues with dialog elements.
+     Must override .shepherd-button:focus which sets outline:none (specificity 0,4,0). */
+  .shepherd-button.tour-keyboard-focus,
+  .shepherd-button.tour-keyboard-focus:focus,
+  a.tour-keyboard-focus,
+  a.tour-keyboard-focus:focus {
+    outline: 5px solid red !important; /* DEBUG: bright red to test if outlines render */
+    outline-offset: 4px !important;
   }
 }
 

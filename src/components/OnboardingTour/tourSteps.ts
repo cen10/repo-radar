@@ -167,51 +167,73 @@ export function configureStepsForShepherd(
           )._tourKeydownHandler = handleKeydown;
         }
 
-        const focusTarget = () => {
-          // Native <dialog> elements lock focus to themselves when opened via showModal().
-          // We can't programmatically move focus until something inside the dialog is
-          // focused first. Focus the cancel icon briefly to break the lock.
-          const cancelIcon = document.querySelector('.shepherd-cancel-icon');
-          if (cancelIcon instanceof HTMLElement) {
-            cancelIcon.focus();
-          }
+        // Add visual focus ring to the element that Enter will activate.
+        // Native <dialog> elements trap focus, making actual focus() unreliable.
+        // Instead, we add a CSS class that mimics the focus ring appearance.
+        const FOCUS_CLASS = 'tour-keyboard-focus';
+
+        const addVisualFocus = (retryCount = 0) => {
+          console.log(
+            `[tour-focus] addVisualFocus called for step "${step.id}", retry ${retryCount}`
+          );
+
+          // Remove any existing visual focus
+          const existing = document.querySelectorAll(`.${FOCUS_CLASS}`);
+          console.log(`[tour-focus] Removing ${existing.length} existing focus classes`);
+          existing.forEach((el) => {
+            el.classList.remove(FOCUS_CLASS);
+          });
+
+          let targetElement: HTMLElement | null = null;
 
           if (step.advanceByClickingTarget && step.target) {
-            // Focus the clickable target so Enter activates it
+            // Add visual focus to the clickable target
             const targetEl = document.querySelector(step.target);
             if (targetEl) {
-              const focusable = findFocusableElement(targetEl);
-              if (focusable) {
-                focusable.focus();
-              }
+              targetElement = findFocusableElement(targetEl);
             }
           } else {
-            // Focus the primary button (Next/Finish) so Enter advances the tour
-            const primaryButton = document.querySelector(
+            // Add visual focus to the primary button (Next/Finish)
+            // Find the VISIBLE dialog - Shepherd keeps old dialogs in DOM briefly.
+            // Use getBoundingClientRect since offsetParent is unreliable for dialogs.
+            const allDialogs = document.querySelectorAll('.shepherd-element.shepherd-enabled');
+            let visibleDialog: Element | null = null;
+            allDialogs.forEach((dialog) => {
+              const rect = dialog.getBoundingClientRect();
+              const isVisible = rect.width > 0 && rect.height > 0;
+              console.log(
+                `[tour-focus] Dialog: ${dialog.className.substring(0, 50)}, rect=${rect.width}x${rect.height}, visible=${isVisible}`
+              );
+              if (isVisible) {
+                visibleDialog = dialog;
+              }
+            });
+
+            const primaryButton = visibleDialog?.querySelector(
               '.shepherd-button:not(.shepherd-button-secondary)'
             );
+            console.log(`[tour-focus] Found primary button in visible dialog:`, primaryButton);
             if (primaryButton instanceof HTMLElement) {
-              primaryButton.focus();
+              targetElement = primaryButton;
             }
+          }
+
+          if (targetElement) {
+            console.log(`[tour-focus] Adding class to:`, targetElement);
+            targetElement.classList.add(FOCUS_CLASS);
+            console.log(`[tour-focus] Class added. Element classes now:`, targetElement.className);
+          } else if (retryCount < 10) {
+            console.log(`[tour-focus] Target not found, scheduling retry ${retryCount + 1}`);
+            // Retry if element not found yet (Shepherd may still be rendering)
+            setTimeout(() => addVisualFocus(retryCount + 1), 50);
+          } else {
+            console.log(`[tour-focus] Failed to find target after 10 retries`);
           }
         };
 
-        // Shepherd manages focus in complex ways during step transitions.
-        // The dialog element locks focus until something inside it receives focus.
-        // Poll with retries to ensure focus happens after Shepherd completes.
-        let attempts = 0;
-        const maxAttempts = 10;
-        const tryFocus = () => {
-          attempts++;
-          focusTarget();
-          // Check if we successfully moved focus away from the dialog
-          const success = document.activeElement?.tagName !== 'DIALOG';
-          if (!success && attempts < maxAttempts) {
-            setTimeout(tryFocus, 100);
-          }
-        };
-        // Start trying after a brief delay
-        setTimeout(tryFocus, 100);
+        // Add visual focus after a brief delay for DOM to settle.
+        console.log(`[tour-focus] show() called for step "${step.id}", scheduling addVisualFocus`);
+        setTimeout(() => addVisualFocus(0), 100);
       },
       hide: function (this: { el?: HTMLElement }) {
         // Clean up keydown handler
@@ -224,6 +246,11 @@ export function configureStepsForShepherd(
             dialog.removeEventListener('keydown', handler);
           }
         }
+
+        // Note: Don't remove .tour-keyboard-focus here - the show callback
+        // already cleans up before adding. Removing here causes a race condition
+        // where hide() from step N runs after show() from step N+1, removing
+        // the class that was just added.
       },
     };
 
