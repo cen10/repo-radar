@@ -62,13 +62,13 @@ export function renderForIntegration(
     );
 
   const rendered = render(
-    <QueryClientProvider client={client}>
-      <OnboardingProvider>
-        <AuthContext.Provider value={authContext}>
-          <MemoryRouter initialEntries={[route]}>{routeElements}</MemoryRouter>
-        </AuthContext.Provider>
-      </OnboardingProvider>
-    </QueryClientProvider>
+    <MemoryRouter initialEntries={[route]}>
+      <QueryClientProvider client={client}>
+        <OnboardingProvider>
+          <AuthContext.Provider value={authContext}>{routeElements}</AuthContext.Provider>
+        </OnboardingProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 
   return {

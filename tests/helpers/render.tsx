@@ -25,9 +25,9 @@ export const renderWithRouter = (
   { route = '/' }: RenderWithRouterOptions = {}
 ): RenderResult => {
   return render(
-    <OnboardingProvider>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-    </OnboardingProvider>
+    <MemoryRouter initialEntries={[route]}>
+      <OnboardingProvider>{ui}</OnboardingProvider>
+    </MemoryRouter>
   );
 };
 
@@ -42,11 +42,11 @@ export const renderWithProviders = (
   const client = queryClient ?? createTestQueryClient();
   return {
     ...render(
-      <QueryClientProvider client={client}>
-        <OnboardingProvider>
-          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-        </OnboardingProvider>
-      </QueryClientProvider>
+      <MemoryRouter initialEntries={[route]}>
+        <QueryClientProvider client={client}>
+          <OnboardingProvider>{ui}</OnboardingProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
     ),
     queryClient: client,
   };

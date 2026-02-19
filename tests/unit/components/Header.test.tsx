@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { Header } from '@/components/Header';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 import { renderWithRouter } from '../../helpers/render';
 import { createMockUser, createMockAuthContext } from '../../mocks/factories';
 
-vi.mock('@/hooks/use-auth');
+vi.mock('@/hooks/useAuth');
 
 const mockUser = createMockUser();
 
