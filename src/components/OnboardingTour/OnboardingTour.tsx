@@ -6,11 +6,19 @@ import { useShepherdTour } from './useShepherdTour';
 import { useOnboarding } from '../../contexts/use-onboarding';
 import { useDemoMode } from '../../demo/use-demo-mode';
 import { useAllStarredRepositories } from '../../hooks/useAllStarredRepositories';
-import { useAuth } from '../../hooks/use-auth';
+import { useAuth } from '../../hooks/useAuth';
 
 export function OnboardingTour() {
   const location = useLocation();
-  const { isTourActive, startTour } = useOnboarding();
+  const { isTourActive, startTour, completeTour } = useOnboarding();
+  const currentPage = getCurrentPage(location.pathname);
+
+  // Reset tour if active but on a non-tour page (e.g., user navigated away and refreshed)
+  useEffect(() => {
+    if (isTourActive && currentPage === null) {
+      completeTour();
+    }
+  }, [isTourActive, currentPage, completeTour]);
 
   // Check for pending tour start after navigation (from restartTour)
   useEffect(() => {
@@ -37,8 +45,6 @@ export function OnboardingTour() {
     () => getTourSteps(hasStarredRepos, isUsingTourRadar, isDemoMode),
     [hasStarredRepos, isUsingTourRadar, isDemoMode]
   );
-
-  const currentPage = getCurrentPage(location.pathname);
 
   const pageSteps = useMemo(
     () => steps.filter((s) => s.page === currentPage),

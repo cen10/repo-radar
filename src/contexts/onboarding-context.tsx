@@ -1,15 +1,18 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingContext, ONBOARDING_STORAGE_KEY } from './OnboardingContext';
 import { ExitTourConfirmationModal } from '../components/OnboardingTour/ExitTourConfirmationModal';
 
 const DEMO_ONBOARDING_SESSION_KEY = 'demo-onboarding';
+const TOUR_ACTIVE_SESSION_KEY = 'tour-active';
 
 interface OnboardingProviderProps {
   children: ReactNode;
 }
 
 export function OnboardingProvider({ children }: OnboardingProviderProps) {
+  const location = useLocation();
   const { isDemoMode } = useDemoMode();
   // Tour is desktop-only (matches lg: breakpoint)
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
@@ -31,9 +34,29 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     return false;
   });
 
-  const [isTourActive, setIsTourActive] = useState(false);
+  // Restore active tour state from sessionStorage (survives refresh)
+  const [isTourActive, setIsTourActive] = useState(() => {
+    try {
+      return sessionStorage.getItem(TOUR_ACTIVE_SESSION_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
   const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+
+  // Persist isTourActive to sessionStorage when it changes
+  useEffect(() => {
+    try {
+      if (isTourActive) {
+        sessionStorage.setItem(TOUR_ACTIVE_SESSION_KEY, 'true');
+      } else {
+        sessionStorage.removeItem(TOUR_ACTIVE_SESSION_KEY);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, [isTourActive]);
 
   // Track previous completion state to detect transitions
   const prevHasCompletedTourRef = useRef(hasCompletedTour);
@@ -63,7 +86,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setHasCompletedTour(false);
     setIsTourActive(false);
 
-    // Clear persisted completion so refresh mid-tour doesn't restore "completed" state
+    // Clear completion state for a fresh start (tour-active is managed by useEffect)
     localStorage.removeItem(ONBOARDING_STORAGE_KEY);
     sessionStorage.removeItem(DEMO_ONBOARDING_SESSION_KEY);
 
@@ -112,16 +135,18 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       }}
     >
       {/* Fallback overlay - visible on desktop when tour is active OR when tour is about
-          to start (demo mode users who haven't completed tour). This ensures the overlay
-          is present before Shepherd initializes, preventing a flash of the unmasked page.
+          to start (demo mode users on /stars who haven't completed tour). This ensures
+          the overlay is present before Shepherd initializes, preventing a flash of the
+          unmasked page. Only show on /stars since that's where the tour auto-starts.
           Instantly hidden via CSS :has() when Shepherd's overlay appears.
           Hidden on mobile since tour is desktop-only. */}
-      {isDesktop && (isTourActive || (isDemoMode && !hasCompletedTour)) && (
-        <div
-          className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none z-tour"
-          aria-hidden="true"
-        />
-      )}
+      {isDesktop &&
+        (isTourActive || (isDemoMode && !hasCompletedTour && location.pathname === '/stars')) && (
+          <div
+            className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none z-tour"
+            aria-hidden="true"
+          />
+        )}
       <ExitTourConfirmationModal />
       {children}
     </OnboardingContext>

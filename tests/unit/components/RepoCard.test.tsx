@@ -27,11 +27,11 @@ vi.mock('@/services/radar', () => ({
 const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
-      <OnboardingProvider>
-        <MemoryRouter>{ui}</MemoryRouter>
-      </OnboardingProvider>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <OnboardingProvider>{ui}</OnboardingProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 };
 

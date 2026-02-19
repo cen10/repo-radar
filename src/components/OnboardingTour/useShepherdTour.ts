@@ -27,11 +27,19 @@ export function useShepherdTour(pageSteps: TourStep[]) {
   showExitConfirmationRef.current = showExitConfirmation;
 
   useEffect(() => {
-    if (!isTourActive || pageSteps.length === 0) {
-      if (tourRef.current?.isActive()) {
-        void tourRef.current.cancel();
-      }
+    // Use a cancelled flag to prevent the first effect's tour from starting
+    // when React Strict Mode double-invokes effects
+    let cancelled = false;
+
+    // Clean up any existing tour before creating a new one
+    if (tourRef.current) {
+      void tourRef.current.cancel();
       tourRef.current = null;
+    }
+    // Also remove any orphaned Shepherd DOM elements
+    document.querySelectorAll('.shepherd-element').forEach((el) => el.remove());
+
+    if (!isTourActive || pageSteps.length === 0) {
       return;
     }
 
@@ -43,6 +51,7 @@ export function useShepherdTour(pageSteps: TourStep[]) {
         modalOverlayOpeningRadius: 8,
       },
     });
+    tourRef.current = tour;
 
     const handleBackTo = (stepId: string, path: string) => {
       sessionStorage.setItem('tour-start-from-step', stepId);
@@ -52,12 +61,13 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     const configuredSteps = configureStepsForShepherd(pageSteps, { tour, onBackTo: handleBackTo });
     tour.addSteps(configuredSteps);
 
-    const handleTourEnd = () => {
+    // Only mark tour as completed when it naturally completes (user reaches the end).
+    // Do NOT call completeTour on cancel - cancel happens during cleanup/unmount,
+    // and we want the tour to resume on refresh.
+    tour.on('complete', () => {
       currentStepRef.current = null;
       completeTour();
-    };
-    tour.on('complete', handleTourEnd);
-    tour.on('cancel', handleTourEnd);
+    });
 
     const updateCurrentStepId = () => {
       const step = tour.getCurrentStep();
@@ -124,12 +134,13 @@ export function useShepherdTour(pageSteps: TourStep[]) {
     };
     document.addEventListener('click', handleCancelIconClick, true);
 
-    tourRef.current = tour;
-
     // Determine which step to show:
     // 1. Cross-page back navigation (sessionStorage flag from backTo)
     // 2. Same-page effect re-run (currentStepRef preserved from previous tour instance)
     // 3. Normal start (first step on this page)
+    // Note: We intentionally don't resume to the exact persisted step on refresh because
+    // the target element may not be ready yet (async loading). Starting from the first
+    // step of the current page is more reliable.
     const crossPageStep = sessionStorage.getItem('tour-start-from-step');
     sessionStorage.removeItem('tour-start-from-step');
     const samePageStep = currentStepRef.current;
@@ -138,23 +149,29 @@ export function useShepherdTour(pageSteps: TourStep[]) {
       (crossPageStep && pageSteps.some((s) => s.id === crossPageStep) && crossPageStep) ||
       (samePageStep && pageSteps.some((s) => s.id === samePageStep) && samePageStep);
 
-    if (stepToResume) {
-      void tour.show(stepToResume);
-    } else {
-      void tour.start();
-    }
+    // Defer tour start to next tick so cleanup can cancel it if React Strict Mode
+    // double-invokes this effect. Without this, both effects' tours would start.
+    const startTimeout = setTimeout(() => {
+      if (cancelled) return;
+      if (stepToResume) {
+        void tour.show(stepToResume);
+      } else {
+        void tour.start();
+      }
+    }, 0);
 
     return () => {
-      tour.off('complete', handleTourEnd);
-      tour.off('cancel', handleTourEnd);
+      cancelled = true;
+      clearTimeout(startTimeout);
       tour.off('show', updateCurrentStepId);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleCancelIconClick, true);
-      setCurrentStepId(null);
-      // Don't clear currentStepRef here - it's needed to resume after effect re-runs
-      if (tour.isActive()) {
-        void tour.cancel();
-      }
+      // Clean up visual focus styling that may remain on target elements
+      document.querySelectorAll('.tour-keyboard-focus').forEach((el) => {
+        el.classList.remove('tour-keyboard-focus');
+      });
+      // Don't clear currentStepId or currentStepRef - they're needed to resume after refresh
+      void tour.cancel();
     };
   }, [isTourActive, pageSteps, Shepherd, completeTour, navigate, setCurrentStepId, exitTour]);
 }

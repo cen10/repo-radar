@@ -4,7 +4,7 @@ import type { TourStep } from './tourSteps';
 const welcomeStep: TourStep = {
   id: 'welcome',
   target: '',
-  text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys or Tab to navigate this tour.</em>',
+  text: 'Welcome to Repo Radar! Track the momentum of your favorite GitHub repositories — star growth, releases, and activity — all in one place.<br><br><em>Tip: Use arrow keys to navigate this tour.</em>',
   page: 'stars',
 };
 

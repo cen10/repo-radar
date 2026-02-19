@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
 import { useOnboarding } from '@/contexts/use-onboarding';
@@ -38,13 +39,15 @@ function TestConsumer() {
   );
 }
 
-function renderWithProvider() {
+function renderWithProvider(initialPath = '/') {
   return render(
-    <DemoModeProvider>
-      <OnboardingProvider>
-        <TestConsumer />
-      </OnboardingProvider>
-    </DemoModeProvider>
+    <MemoryRouter initialEntries={[initialPath]}>
+      <DemoModeProvider>
+        <OnboardingProvider>
+          <TestConsumer />
+        </OnboardingProvider>
+      </DemoModeProvider>
+    </MemoryRouter>
   );
 }
 
@@ -159,7 +162,7 @@ describe('OnboardingContext', () => {
       vi.restoreAllMocks();
     });
 
-    function renderWithDemoMode() {
+    function renderWithDemoMode(initialPath = '/stars') {
       vi.spyOn(useDemoModeModule, 'useDemoMode').mockReturnValue({
         isDemoMode: true,
         enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
@@ -171,9 +174,11 @@ describe('OnboardingContext', () => {
       });
 
       return render(
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
       );
     }
 
@@ -224,9 +229,11 @@ describe('OnboardingContext', () => {
       });
 
       const { rerender } = render(
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
+        <MemoryRouter initialEntries={['/stars']}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
       );
 
       // Complete the tour in demo mode
@@ -249,9 +256,11 @@ describe('OnboardingContext', () => {
       });
 
       rerender(
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
+        <MemoryRouter initialEntries={['/stars']}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
       );
 
       // localStorage should STILL be empty - the bug was that it would write here
@@ -305,16 +314,18 @@ describe('OnboardingContext', () => {
       });
 
       render(
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
+        <MemoryRouter initialEntries={['/stars']}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
       );
 
       // In demo mode, hasCompletedTour=false, so condition would be true without isDesktop check
       expect(document.querySelector('.tour-fallback-overlay')).not.toBeInTheDocument();
     });
 
-    it('shows overlay on desktop in demo mode', () => {
+    it('shows overlay on desktop in demo mode on /stars', () => {
       Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
       localStorage.setItem(DEMO_MODE_KEY, 'true');
 
@@ -329,12 +340,40 @@ describe('OnboardingContext', () => {
       });
 
       render(
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
+        <MemoryRouter initialEntries={['/stars']}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
       );
 
       expect(document.querySelector('.tour-fallback-overlay')).toBeInTheDocument();
+    });
+
+    it('hides overlay on desktop in demo mode on other pages', () => {
+      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true });
+      localStorage.setItem(DEMO_MODE_KEY, 'true');
+
+      vi.spyOn(useDemoModeModule, 'useDemoMode').mockReturnValue({
+        isDemoMode: true,
+        enterDemoMode: vi.fn().mockResolvedValue({ success: false }),
+        exitDemoMode: vi.fn(),
+        isInitializing: false,
+        isBannerVisible: false,
+        dismissBanner: vi.fn(),
+        resetBannerDismissed: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/radars/123']}>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </MemoryRouter>
+      );
+
+      // Overlay should NOT show on non-/stars pages even in demo mode
+      expect(document.querySelector('.tour-fallback-overlay')).not.toBeInTheDocument();
     });
   });
 

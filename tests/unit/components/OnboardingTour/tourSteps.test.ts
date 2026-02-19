@@ -52,7 +52,6 @@ describe('getTourSteps', () => {
     const steps = getTourSteps(true);
 
     expect(steps[0].text).toMatch(/arrow keys/i);
-    expect(steps[0].text).toMatch(/tab/i);
   });
 
   it('marks the click-repo step as canClickTarget for navigation', () => {

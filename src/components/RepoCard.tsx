@@ -6,7 +6,6 @@ import { isHotRepo } from '../utils/metrics';
 import { HotBadge } from './HotBadge';
 import { StarredBadge } from './StarredBadge';
 import { RadarIconButton } from './RadarIconButton';
-import { useOnboarding } from '../contexts/use-onboarding';
 
 interface RepoCardProps {
   repository: Repository;
@@ -26,9 +25,6 @@ export function RepoCard({ repository }: RepoCardProps) {
     is_starred,
     isTourTarget,
   } = repository;
-
-  const { currentStepId } = useOnboarding();
-  const showCardPulse = isTourTarget && currentStepId === 'click-repo';
 
   const [isNameTruncated, setIsNameTruncated] = useState(false);
   const nameRef = useRef<HTMLHeadingElement>(null);
@@ -67,7 +63,7 @@ export function RepoCard({ repository }: RepoCardProps) {
 
   return (
     <article
-      className={`relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6 ${showCardPulse ? 'animate-pulse-border' : ''}`}
+      className="relative bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow p-6"
       {...(isTourTarget ? { 'data-tour': 'repo-card' } : {})}
     >
       {/* Header with owner avatar, stretched link, badges, and star indicator */}
