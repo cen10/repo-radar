@@ -11,7 +11,7 @@ vi.mock('@/demo/use-demo-mode', () => ({
 }));
 
 // Mock useAuth
-vi.mock('@/hooks/use-auth', () => ({
+vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ providerToken: 'test-token', user: { id: 'test-user' } }),
 }));
 

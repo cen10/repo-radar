@@ -6,7 +6,7 @@ import { useShepherdTour } from './useShepherdTour';
 import { useOnboarding } from '../../contexts/use-onboarding';
 import { useDemoMode } from '../../demo/use-demo-mode';
 import { useAllStarredRepositories } from '../../hooks/useAllStarredRepositories';
-import { useAuth } from '../../hooks/use-auth';
+import { useAuth } from '../../hooks/useAuth';
 
 export function OnboardingTour() {
   const location = useLocation();
