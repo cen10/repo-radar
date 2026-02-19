@@ -120,6 +120,8 @@ export function configureStepsForShepherd(
     // - All other steps: focus the Next/Finish button
     configuredStep.when = {
       show: function (this: { el?: HTMLElement }) {
+        const dialog = this.el;
+
         // Native <dialog> elements trap focus even when we programmatically focus
         // elements inside them. Add a keydown handler to forward Enter to the
         // appropriate element (Next button or clickable target).
@@ -158,7 +160,6 @@ export function configureStepsForShepherd(
         };
 
         // Attach to the dialog element so it captures Enter even when dialog has focus
-        const dialog = this.el;
         if (dialog) {
           dialog.addEventListener('keydown', handleKeydown);
           // Store reference for cleanup
@@ -173,66 +174,42 @@ export function configureStepsForShepherd(
         const FOCUS_CLASS = 'tour-keyboard-focus';
 
         const addVisualFocus = (retryCount = 0) => {
-          console.log(
-            `[tour-focus] addVisualFocus called for step "${step.id}", retry ${retryCount}`
-          );
-
           // Remove any existing visual focus
-          const existing = document.querySelectorAll(`.${FOCUS_CLASS}`);
-          console.log(`[tour-focus] Removing ${existing.length} existing focus classes`);
-          existing.forEach((el) => {
+          document.querySelectorAll(`.${FOCUS_CLASS}`).forEach((el) => {
             el.classList.remove(FOCUS_CLASS);
           });
 
           let targetElement: HTMLElement | null = null;
 
           if (step.advanceByClickingTarget && step.target) {
-            // Add visual focus to the clickable target
+            // Add visual focus to the clickable target.
+            // For cards with pseudo-element overlays, adding focus ring to the card itself
+            // is more visible than adding it to the small link inside.
             const targetEl = document.querySelector(step.target);
-            if (targetEl) {
-              targetElement = findFocusableElement(targetEl);
+            if (targetEl instanceof HTMLElement) {
+              targetElement = targetEl;
             }
-          } else {
+          } else if (dialog) {
             // Add visual focus to the primary button (Next/Finish)
-            // Find the VISIBLE dialog - Shepherd keeps old dialogs in DOM briefly.
-            // Use getBoundingClientRect since offsetParent is unreliable for dialogs.
-            const allDialogs = document.querySelectorAll('.shepherd-element.shepherd-enabled');
-            let visibleDialog: Element | null = null;
-            allDialogs.forEach((dialog) => {
-              const rect = dialog.getBoundingClientRect();
-              const isVisible = rect.width > 0 && rect.height > 0;
-              console.log(
-                `[tour-focus] Dialog: ${dialog.className.substring(0, 50)}, rect=${rect.width}x${rect.height}, visible=${isVisible}`
-              );
-              if (isVisible) {
-                visibleDialog = dialog;
-              }
-            });
-
-            const primaryButton = visibleDialog?.querySelector(
+            // Use this.el (captured as dialog) to target the current step's dialog directly,
+            // avoiding issues with Shepherd keeping old dialogs in DOM during transitions.
+            const primaryButton = dialog.querySelector(
               '.shepherd-button:not(.shepherd-button-secondary)'
             );
-            console.log(`[tour-focus] Found primary button in visible dialog:`, primaryButton);
             if (primaryButton instanceof HTMLElement) {
               targetElement = primaryButton;
             }
           }
 
           if (targetElement) {
-            console.log(`[tour-focus] Adding class to:`, targetElement);
             targetElement.classList.add(FOCUS_CLASS);
-            console.log(`[tour-focus] Class added. Element classes now:`, targetElement.className);
           } else if (retryCount < 10) {
-            console.log(`[tour-focus] Target not found, scheduling retry ${retryCount + 1}`);
             // Retry if element not found yet (Shepherd may still be rendering)
             setTimeout(() => addVisualFocus(retryCount + 1), 50);
-          } else {
-            console.log(`[tour-focus] Failed to find target after 10 retries`);
           }
         };
 
-        // Add visual focus after a brief delay for DOM to settle.
-        console.log(`[tour-focus] show() called for step "${step.id}", scheduling addVisualFocus`);
+        // Add visual focus after a brief delay for DOM to settle
         setTimeout(() => addVisualFocus(0), 100);
       },
       hide: function (this: { el?: HTMLElement }) {

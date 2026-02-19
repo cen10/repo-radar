@@ -274,13 +274,12 @@ body {
      Native <dialog> elements trap focus, so we can't reliably use :focus.
      This class is added via JS to indicate which element Enter will activate.
      Uses outline instead of box-shadow to avoid clipping issues with dialog elements.
-     Must override .shepherd-button:focus which sets outline:none (specificity 0,4,0). */
-  .shepherd-button.tour-keyboard-focus,
-  .shepherd-button.tour-keyboard-focus:focus,
-  a.tour-keyboard-focus,
-  a.tour-keyboard-focus:focus {
-    outline: 5px solid red !important; /* DEBUG: bright red to test if outlines render */
-    outline-offset: 4px !important;
+     Position relative + z-index ensures outline isn't covered by pseudo-element overlays. */
+  .tour-keyboard-focus {
+    outline: 3px solid #4f46e5 !important; /* indigo-600 */
+    outline-offset: 2px !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
 }
 
