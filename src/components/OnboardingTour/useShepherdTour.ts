@@ -166,6 +166,10 @@ export function useShepherdTour(pageSteps: TourStep[]) {
       tour.off('show', updateCurrentStepId);
       document.removeEventListener('keydown', handleKeyDown, true);
       document.removeEventListener('click', handleCancelIconClick, true);
+      // Clean up visual focus styling that may remain on target elements
+      document.querySelectorAll('.tour-keyboard-focus').forEach((el) => {
+        el.classList.remove('tour-keyboard-focus');
+      });
       // Don't clear currentStepId or currentStepRef - they're needed to resume after refresh
       void tour.cancel();
     };
