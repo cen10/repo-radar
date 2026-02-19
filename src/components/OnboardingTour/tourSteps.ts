@@ -90,7 +90,10 @@ function findFocusableElement(target: Element): HTMLElement | null {
 }
 
 const FOCUS_CLASS = 'tour-keyboard-focus';
-type DialogWithHandler = HTMLElement & { _tourKeydownHandler?: (e: KeyboardEvent) => void };
+type DialogWithHandler = HTMLElement & {
+  _tourKeydownHandler?: (e: KeyboardEvent) => void;
+  _tourFocusTimeoutId?: ReturnType<typeof setTimeout>;
+};
 
 /**
  * Attaches Enter key handler to forward keypresses to the appropriate element.
@@ -152,6 +155,8 @@ function cleanupEnterKeyHandler(dialog: HTMLElement | null | undefined): void {
  * the dialog is fully rendered. Retries if the element still isn't found.
  */
 function applyVisualFocus(step: TourStep, dialog: HTMLElement | null | undefined): void {
+  const dialogWithHandler = dialog as DialogWithHandler | null | undefined;
+
   const addVisualFocus = (retryCount = 0) => {
     // Remove any existing visual focus
     document.querySelectorAll(`.${FOCUS_CLASS}`).forEach((el) => {
@@ -179,11 +184,25 @@ function applyVisualFocus(step: TourStep, dialog: HTMLElement | null | undefined
     if (targetElement) {
       targetElement.classList.add(FOCUS_CLASS);
     } else if (retryCount < FOCUS_MAX_RETRIES) {
-      setTimeout(() => addVisualFocus(retryCount + 1), FOCUS_RETRY_DELAY_MS);
+      const timeoutId = setTimeout(() => addVisualFocus(retryCount + 1), FOCUS_RETRY_DELAY_MS);
+      if (dialogWithHandler) {
+        dialogWithHandler._tourFocusTimeoutId = timeoutId;
+      }
     }
   };
 
-  setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
+  const timeoutId = setTimeout(() => addVisualFocus(0), FOCUS_INITIAL_DELAY_MS);
+  if (dialogWithHandler) {
+    dialogWithHandler._tourFocusTimeoutId = timeoutId;
+  }
+}
+
+function cancelVisualFocusRetry(dialog: HTMLElement | null | undefined): void {
+  if (!dialog) return;
+  const timeoutId = (dialog as DialogWithHandler)._tourFocusTimeoutId;
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
 }
 
 /** Converts our tour steps to Shepherd-compatible steps with buttons and callbacks. */
@@ -225,6 +244,7 @@ export function configureStepsForShepherd(
       },
       hide: function (this: { el?: HTMLElement | null }) {
         cleanupEnterKeyHandler(this.el);
+        cancelVisualFocusRetry(this.el);
         // Note: Don't remove .tour-keyboard-focus here - applyVisualFocus
         // already cleans up before adding. Removing here causes a race condition
         // where hide() from step N runs after show() from step N+1.
