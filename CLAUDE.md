@@ -37,17 +37,18 @@ GitHub Repository Momentum Dashboard - Track star growth, releases, and issue ac
 ## Project Structure
 
 ```
+app/              # Next.js App Router (migration in progress)
 src/
   assets/          # Static assets
   components/      # React components (tests co-located)
   constants/       # Constants and error messages
   contexts/        # React contexts (auth)
   hooks/           # Custom React hooks
-  pages/           # Route pages
+  views/           # Route views
   services/        # API clients
-  test/            # Test setup and mocks
   types/           # TypeScript interfaces
   utils/           # Utility functions
+tests/            # Test setup, mocks, and specs
 specs/            # Feature specifications
 ```
 
@@ -406,9 +407,9 @@ Key points:
 
 **E2E test files:**
 
-- `e2e/` - Test specs and fixtures
-- `e2e/pages/` - Page object models
-- `e2e/fixtures/` - Playwright fixtures (auth, page objects, API mocks)
+- `tests/e2e/` - Test specs and fixtures
+- `tests/e2e/pages/` - Page object models
+- `tests/e2e/fixtures/` - Playwright fixtures (auth, page objects, API mocks)
 - Run with: `npm run test:e2e` or `npx playwright test`
 
 ### GitHub API Mocks for E2E Tests
@@ -419,8 +420,8 @@ E2E tests use fully mocked GitHub API responses - no real API calls are made. Mo
 
 | File | Purpose |
 |------|---------|
-| `e2e/fixtures/github-mock-data.ts` | Mock data factories (repos, users, rate limits) |
-| `e2e/fixtures/github.ts` | Playwright route mocks for GitHub API endpoints |
+| `tests/e2e/fixtures/github-mock-data.ts` | Mock data factories (repos, users, rate limits) |
+| `tests/e2e/fixtures/github.ts` | Playwright route mocks for GitHub API endpoints |
 | `src/test/github-mock-data.test.ts` | Schema validation tests (Vitest) |
 | `src/types/github-api.generated.ts` | TypeScript types from OpenAPI (generated) |
 
@@ -442,7 +443,7 @@ This downloads the latest GitHub OpenAPI spec and regenerates TypeScript types. 
 **If typecheck fails after schema update:**
 
 1. Check which mock factory fields are causing errors
-2. Update `e2e/fixtures/github-mock-data.ts` to match new schema
+2. Update `tests/e2e/fixtures/github-mock-data.ts` to match new schema
 3. Add/remove/rename fields as required by the updated types
 4. Run `npm run test` to verify schema validation tests still pass
 
