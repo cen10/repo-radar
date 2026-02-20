@@ -37,6 +37,10 @@ docs
 # GitHub OpenAPI schema (regenerate with: npm run schema:update)
 schemas/
 
+# Next.js
+.next/
+next-env.d.ts
+
 # Playwright
 /tests/e2e/test-results/
 /playwright-report/
