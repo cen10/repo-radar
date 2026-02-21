@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "target": "ES2022",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "allowJs": true,
@@ -26,6 +27,9 @@
     "next-env.d.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "middleware.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

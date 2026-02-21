@@ -1,27 +1,23 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { SidebarRadarList } from './SidebarRadarList';
-import { CreateRadarModal } from './CreateRadarModal';
-import { DemoBanner } from './DemoBanner';
-import { OnboardingTour } from './OnboardingTour';
-import { useDemoMode } from '../demo/use-demo-mode';
-import { OnboardingProvider } from '../contexts/onboarding-context';
+import { Header } from '@/src/components/Header';
+import { Sidebar } from '@/src/components/Sidebar';
+import { SidebarRadarList } from '@/src/components/SidebarRadarList';
+import { CreateRadarModal } from '@/src/components/CreateRadarModal';
+import { DemoBanner } from '@/src/components/DemoBanner';
+import { OnboardingTour } from '@/src/components/OnboardingTour';
+import { useDemoMode } from '@/src/demo/use-demo-mode';
+import { OnboardingProvider } from '@/src/contexts/onboarding-context';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 
-/**
- * Inner layout component for protected routes.
- * User is guaranteed to exist due to requireAuth loader at layout level.
- */
-function ProtectedLayout() {
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { isBannerVisible } = useDemoMode();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCreateRadarModalOpen, setIsCreateRadarModalOpen] = useState(false);
   const [transitionsEnabled, setTransitionsEnabled] = useState(false);
 
-  // Enable transitions after initial render to prevent layout shift on page load
   useEffect(() => {
     requestAnimationFrame(() => setTransitionsEnabled(true));
   }, []);
@@ -32,7 +28,6 @@ function ProtectedLayout() {
   const handleCloseCreateRadarModal = () => setIsCreateRadarModalOpen(false);
   const handleToggleCollapsed = () => setIsSidebarCollapsed((prev) => !prev);
 
-  // Skip onboarding tour on mobile - the experience is desktop-optimized
   const isDesktop = window.innerWidth >= 1024;
 
   return (
@@ -53,10 +48,9 @@ function ProtectedLayout() {
       <main
         className={`${isBannerVisible ? 'pt-[118px]' : 'pt-16'} ${transitionsEnabled ? 'transition-[padding] duration-300 ease-in-out' : ''} ${isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'}`}
       >
-        <Outlet />
+        {children}
       </main>
 
-      {/* TODO: Use onSuccess to navigate to the newly created radar via useNavigate */}
       {isCreateRadarModalOpen && <CreateRadarModal onClose={handleCloseCreateRadarModal} />}
 
       {isDesktop && <OnboardingTour />}
@@ -64,18 +58,11 @@ function ProtectedLayout() {
   );
 }
 
-/**
- * App layout component that wraps protected routes.
- * Renders sidebar, header, and onboarding tour for authenticated users.
- *
- * Used as the root element in createBrowserRouter configuration with
- * requireAuth loader at the layout level.
- */
-export function AppLayout() {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ShepherdJourneyProvider>
       <OnboardingProvider>
-        <ProtectedLayout />
+        <DashboardLayoutInner>{children}</DashboardLayoutInner>
       </OnboardingProvider>
     </ShepherdJourneyProvider>
   );

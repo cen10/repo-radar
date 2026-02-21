@@ -15,7 +15,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const location = useLocation();
   const { isDemoMode } = useDemoMode();
   // Tour is desktop-only (matches lg: breakpoint)
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const isDesktop = window.innerWidth >= 1024;
 
   const [hasCompletedTour, setHasCompletedTour] = useState(() => {
     try {
