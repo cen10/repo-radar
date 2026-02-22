@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
 
 // Support both Vite (import.meta.env.VITE_*) and Next.js (process.env.NEXT_PUBLIC_*)
@@ -14,12 +14,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env.local file.');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+// Use createBrowserClient from @supabase/ssr for cookie-based auth
+// This enables PKCE flow with server-side code exchange
+export const supabase = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 
 export type SupabaseClient = typeof supabase;
