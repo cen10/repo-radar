@@ -30,11 +30,13 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Use getUser() instead of getSession() - getSession() reads JWT from cookie
+  // without validation, allowing forged tokens to bypass auth
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
