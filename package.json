@@ -9,6 +9,7 @@
     "dev:next": "next dev --port 3000",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
+    "typecheck:next": "tsc --project tsconfig.next.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"tests/**/*.{ts,tsx}\" \"*.{js,ts,json}\"",
@@ -28,6 +29,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.89.0",
     "clsx": "^2.1.1",
@@ -41,6 +43,7 @@
   "devDependencies": {
     "@eslint/js": "^9.33.0",
     "@playwright/test": "^1.58.1",
+    "@tailwindcss/postcss": "^4.2.0",
     "@tailwindcss/vite": "^4.1.13",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
