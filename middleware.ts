@@ -23,6 +23,9 @@ export async function middleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
+            // Update request so downstream Server Components see refreshed tokens
+            request.cookies.set(name, value);
+            // Update response so browser stores refreshed tokens for future requests
             response.cookies.set(name, value, options);
           });
         },
