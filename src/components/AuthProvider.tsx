@@ -179,9 +179,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGitHub = useCallback(async () => {
     const origin = window.location.origin;
-    // Next.js dev server uses port 3000, Vite uses 5173+
+    // Next.js injects __NEXT_DATA__ global; use it to detect runtime environment
     // Next.js needs PKCE flow with callback route; Vite uses implicit flow
-    const isNextJs = window.location.port === '3000';
+    const isNextJs = typeof window !== 'undefined' && '__NEXT_DATA__' in window;
     const redirectTo = isNextJs ? `${origin}/auth/callback?next=/stars` : `${origin}/stars`;
 
     const { error } = await supabase.auth.signInWithOAuth({
