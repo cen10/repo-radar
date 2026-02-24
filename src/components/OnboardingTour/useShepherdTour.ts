@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAppRouter } from '../../hooks/routing';
 import { useShepherd } from 'react-shepherd';
 import { useOnboarding } from '../../contexts/use-onboarding';
 import { configureStepsForShepherd, type TourStep } from './tourSteps';
@@ -15,7 +15,7 @@ import { configureStepsForShepherd, type TourStep } from './tourSteps';
  * confirmation modal. Clicking outside the tour tooltip does not dismiss it.
  */
 export function useShepherdTour(pageSteps: TourStep[]) {
-  const navigate = useNavigate();
+  const { navigate } = useAppRouter();
   const Shepherd = useShepherd();
   const { isTourActive, completeTour, setCurrentStepId, exitTour, showExitConfirmation } =
     useOnboarding();

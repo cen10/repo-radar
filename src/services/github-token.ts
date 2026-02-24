@@ -3,6 +3,16 @@ import { GitHubReauthRequiredError } from '../utils/error';
 
 const ACCESS_TOKEN_KEY = 'github_access_token';
 
+// Environment-agnostic test token getter (works in both Vite and Next.js)
+function getTestGitHubToken(): string | undefined {
+  // Next.js uses process.env, Vite uses import.meta.env
+  if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_TEST_GITHUB_TOKEN) {
+    return process.env.NEXT_PUBLIC_TEST_GITHUB_TOKEN;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (import.meta as any).env?.VITE_TEST_GITHUB_TOKEN;
+}
+
 // Track whether we've logged fallback token usage (to avoid spam)
 let hasLoggedTestToken = false;
 let hasLoggedStoredToken = false;
@@ -26,10 +36,10 @@ export function getValidGitHubToken(providerToken: string | null): string {
   }
 
   // 2. Use test token if available (E2E testing / remote environments)
-  const testToken = import.meta.env.VITE_TEST_GITHUB_TOKEN;
+  const testToken = getTestGitHubToken();
   if (testToken) {
     if (!hasLoggedTestToken) {
-      logger.info('Using VITE_TEST_GITHUB_TOKEN for GitHub API calls');
+      logger.info('Using test GitHub token for API calls');
       hasLoggedTestToken = true;
     }
     return testToken;
@@ -90,7 +100,7 @@ export function clearStoredAccessToken(): void {
  *   enabled: !!token || hasFallbackToken()
  */
 export function hasFallbackToken(): boolean {
-  return !!import.meta.env.VITE_TEST_GITHUB_TOKEN || !!getStoredAccessToken();
+  return !!getTestGitHubToken() || !!getStoredAccessToken();
 }
 
 /**

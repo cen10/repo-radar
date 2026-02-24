@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { LinkAdapter } from '../hooks/routing';
 import { StarIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { StaticRadarIcon } from './icons';
 import { Button } from './Button';
@@ -33,18 +33,18 @@ export function EmptyRadarState() {
       className="py-12"
       actions={
         <>
-          <Link
+          <LinkAdapter
             to="/stars"
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
           >
             Go to My Stars
-          </Link>
-          <Link
+          </LinkAdapter>
+          <LinkAdapter
             to="/explore"
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
           >
             Explore Repos
-          </Link>
+          </LinkAdapter>
         </>
       }
     />
@@ -58,12 +58,12 @@ export function NoStarredReposState() {
       title="No starred repos yet"
       description="Star repos on GitHub, and they'll appear here for easy access."
       actions={
-        <Link
+        <LinkAdapter
           to="/explore"
           className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700"
         >
           Explore Repos
-        </Link>
+        </LinkAdapter>
       }
     />
   );

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useAppRouter, LinkAdapter } from '../hooks/routing';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRadar } from '../hooks/useRadar';
@@ -21,7 +21,8 @@ const SORT_OPTIONS = [
 ];
 
 const RadarPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { params, navigate } = useAppRouter();
+  const id = params.id;
   const { providerToken } = useAuth();
   const { isTourActive } = useOnboarding();
   const { isDemoMode } = useDemoMode();
@@ -73,8 +74,15 @@ const RadarPage = () => {
 
   // Redirect away from tour demo radar when tour is not active (for logged-in users only).
   // In demo mode, the tour radar persists in the sidebar so it should remain accessible.
-  if (id === TOUR_RADAR_ID && !isTourActive && !isDemoMode) {
-    return <Navigate to="/stars" replace />;
+  const shouldRedirect = id === TOUR_RADAR_ID && !isTourActive && !isDemoMode;
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate('/stars');
+    }
+  }, [shouldRedirect, navigate]);
+
+  if (shouldRedirect) {
+    return null;
   }
 
   const handleClearSearch = () => {
@@ -111,12 +119,12 @@ const RadarPage = () => {
           <p className="mt-2 text-gray-500">
             This radar doesn't exist or you don't have access to it.
           </p>
-          <Link
+          <LinkAdapter
             to="/stars"
             className="mt-6 inline-block text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeftIcon className="inline h-4 w-4" aria-hidden="true" /> Back to My Stars
-          </Link>
+          </LinkAdapter>
         </div>
       </div>
     );
@@ -129,9 +137,9 @@ const RadarPage = () => {
         <div className="text-center py-12" role="alert">
           <p className="text-red-600 mb-4">Error loading radar</p>
           <p className="text-sm text-gray-600 mb-4">{radarError.message}</p>
-          <Link to="/stars" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <LinkAdapter to="/stars" className="text-indigo-600 hover:text-indigo-700 font-medium">
             <ArrowLeftIcon className="inline h-4 w-4" aria-hidden="true" /> Back to My Stars
-          </Link>
+          </LinkAdapter>
         </div>
       </div>
     );

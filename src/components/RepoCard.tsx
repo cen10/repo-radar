@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { LinkAdapter } from '../hooks/routing';
 import type { Repository } from '../types/index';
 import { formatCompactNumber, formatGrowthRate } from '../utils/formatters';
 import { isHotRepo } from '../utils/metrics';
@@ -70,7 +70,7 @@ export function RepoCard({ repository }: RepoCardProps) {
       <div className="flex items-start space-x-3 mb-3">
         <img src={owner.avatar_url} alt="" className="h-8 w-8 rounded-full" role="presentation" />
         <div className="flex-1 min-w-0">
-          <Link
+          <LinkAdapter
             to={`/repo/${id}`}
             className="group/link no-underline hover:underline after:content-[''] after:absolute after:inset-0 after:z-1"
           >
@@ -91,7 +91,7 @@ export function RepoCard({ repository }: RepoCardProps) {
             </span>{' '}
             <span className="block text-sm text-gray-500 font-normal">by {owner.login}</span>
             <span className="sr-only">{`${isHot ? ', hot' : ''}${is_starred ? ', starred' : ''}`}</span>
-          </Link>
+          </LinkAdapter>
         </div>
         {/* Radar button - z-2 to sit above the stretched link overlay (z-1) */}
         <RadarIconButton

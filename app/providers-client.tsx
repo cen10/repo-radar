@@ -6,6 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { AuthProvider } from '@/src/components/AuthProvider';
 import { AuthErrorFallback } from '@/src/components/AuthErrorFallback';
 import { DemoModeProvider } from '@/src/demo/demo-context';
+import { NextJsRouterProvider } from './NextJsRouterProvider';
 import { logger } from '@/src/utils/logger';
 
 function makeQueryClient() {
@@ -26,16 +27,18 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DemoModeProvider>
-        <ErrorBoundary
-          FallbackComponent={AuthErrorFallback}
-          onError={(error, errorInfo) => {
-            logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
-          }}
-        >
-          <AuthProvider>{children}</AuthProvider>
-        </ErrorBoundary>
-      </DemoModeProvider>
+      <NextJsRouterProvider>
+        <DemoModeProvider>
+          <ErrorBoundary
+            FallbackComponent={AuthErrorFallback}
+            onError={(error, errorInfo) => {
+              logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
+            }}
+          >
+            <AuthProvider>{children}</AuthProvider>
+          </ErrorBoundary>
+        </DemoModeProvider>
+      </NextJsRouterProvider>
     </QueryClientProvider>
   );
 }

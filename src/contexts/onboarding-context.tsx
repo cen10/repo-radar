@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppRouter } from '../hooks/routing';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingContext, ONBOARDING_STORAGE_KEY } from './OnboardingContext';
 import { ExitTourConfirmationModal } from '../components/OnboardingTour/ExitTourConfirmationModal';
@@ -12,7 +12,7 @@ interface OnboardingProviderProps {
 }
 
 export function OnboardingProvider({ children }: OnboardingProviderProps) {
-  const location = useLocation();
+  const { pathname } = useAppRouter();
   const { isDemoMode } = useDemoMode();
   // Tour is desktop-only (matches lg: breakpoint)
   const isDesktop = window.innerWidth >= 1024;
@@ -141,7 +141,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           Instantly hidden via CSS :has() when Shepherd's overlay appears.
           Hidden on mobile since tour is desktop-only. */}
       {isDesktop &&
-        (isTourActive || (isDemoMode && !hasCompletedTour && location.pathname === '/stars')) && (
+        (isTourActive || (isDemoMode && !hasCompletedTour && pathname === '/stars')) && (
           <div
             className="tour-fallback-overlay fixed inset-0 bg-black/20 pointer-events-none z-tour"
             aria-hidden="true"

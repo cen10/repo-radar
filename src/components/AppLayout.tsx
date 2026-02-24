@@ -8,6 +8,7 @@ import { DemoBanner } from './DemoBanner';
 import { OnboardingTour } from './OnboardingTour';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingProvider } from '../contexts/onboarding-context';
+import { ViteRouterProvider } from '../hooks/routing';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 
 /**
@@ -73,10 +74,12 @@ function ProtectedLayout() {
  */
 export function AppLayout() {
   return (
-    <ShepherdJourneyProvider>
-      <OnboardingProvider>
-        <ProtectedLayout />
-      </OnboardingProvider>
-    </ShepherdJourneyProvider>
+    <ViteRouterProvider>
+      <ShepherdJourneyProvider>
+        <OnboardingProvider>
+          <ProtectedLayout />
+        </OnboardingProvider>
+      </ShepherdJourneyProvider>
+    </ViteRouterProvider>
   );
 }

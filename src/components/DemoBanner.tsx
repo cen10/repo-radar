@@ -1,25 +1,24 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppRouter } from '../hooks/routing';
 import { XMarkIcon } from '@heroicons/react/20/solid';
 import { useDemoMode } from '../demo/use-demo-mode';
 
 export function DemoBanner() {
   const { isBannerVisible, exitDemoMode, dismissBanner, resetBannerDismissed } = useDemoMode();
-  const location = useLocation();
-  const isExplorePage = location.pathname === '/explore';
-  const prevPathnameRef = useRef(location.pathname);
+  const { pathname } = useAppRouter();
+  const isExplorePage = pathname === '/explore';
+  const prevPathnameRef = useRef(pathname);
 
   // Reset dismissed state when navigating TO /explore from another page
   useEffect(() => {
     const prevPathname = prevPathnameRef.current;
-    const currentPathname = location.pathname;
 
-    if (prevPathname !== currentPathname && currentPathname === '/explore') {
+    if (prevPathname !== pathname && pathname === '/explore') {
       resetBannerDismissed();
     }
 
-    prevPathnameRef.current = currentPathname;
-  }, [location.pathname, resetBannerDismissed]);
+    prevPathnameRef.current = pathname;
+  }, [pathname, resetBannerDismissed]);
 
   const handleExitDemo = useCallback(() => {
     exitDemoMode();

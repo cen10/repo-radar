@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { useAppRouter, LinkAdapter } from '../hooks/routing';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 import { useRepository } from '../hooks/useRepository';
@@ -8,7 +8,8 @@ import { RepoHeader, RepoStats, RepoReleases, ComingSoon } from '../components/r
 import { LoadingSpinner } from '../components/icons';
 
 const RepoDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { params } = useAppRouter();
+  const id = params.id;
   const { providerToken } = useAuth();
 
   const {
@@ -61,13 +62,13 @@ const RepoDetailPage = () => {
           <p className="mt-2 text-gray-500">
             Your GitHub session has expired. Please sign in again to continue.
           </p>
-          <Link
+          <LinkAdapter
             to="/"
             className="mt-6 inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Go to sign in
-          </Link>
+          </LinkAdapter>
         </div>
       </div>
     );
@@ -82,13 +83,13 @@ const RepoDetailPage = () => {
           <p className="mt-2 text-gray-500">
             The repository ID in the URL is not valid. Please check the link and try again.
           </p>
-          <Link
+          <LinkAdapter
             to="/stars"
             className="mt-6 inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Back to My Stars
-          </Link>
+          </LinkAdapter>
         </div>
       </div>
     );
@@ -103,13 +104,13 @@ const RepoDetailPage = () => {
           <p className="mt-2 text-gray-500">
             This repository doesn't exist or may have been deleted or made private.
           </p>
-          <Link
+          <LinkAdapter
             to="/stars"
             className="mt-6 inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Back to My Stars
-          </Link>
+          </LinkAdapter>
         </div>
       </div>
     );
