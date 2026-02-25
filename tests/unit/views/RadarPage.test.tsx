@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RadarPage from '@/views/RadarPage';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import * as useRadarHook from '@/hooks/useRadar';
 import * as useRadarRepositoriesHook from '@/hooks/useRadarRepositories';
 import * as useAuthHook from '@/hooks/useAuth';
@@ -22,6 +23,11 @@ vi.mock('@/hooks/useAuth');
 const mockIsTourActive = vi.fn(() => false);
 vi.mock('@/contexts/use-onboarding', () => ({
   useOnboarding: () => ({ isTourActive: mockIsTourActive() }),
+}));
+
+// Mock useDemoMode to control isDemoMode
+vi.mock('@/demo/use-demo-mode', () => ({
+  useDemoMode: () => ({ isDemoMode: false }),
 }));
 
 // Local factory for Radar type (without repo_count) - useRadar returns Radar, not RadarWithCount
@@ -56,14 +62,16 @@ describe('RadarPage', () => {
   const renderWithProviders = (radarId: string = 'radar-123') => {
     return render(
       <MemoryRouter initialEntries={[`/radar/${radarId}`]}>
-        <QueryClientProvider client={queryClient}>
-          <OnboardingProvider>
-            <Routes>
-              <Route path="/radar/:id" element={<RadarPage />} />
-              <Route path="/stars" element={<div>Stars Page</div>} />
-            </Routes>
-          </OnboardingProvider>
-        </QueryClientProvider>
+        <ViteRouterProvider>
+          <QueryClientProvider client={queryClient}>
+            <OnboardingProvider>
+              <Routes>
+                <Route path="/radar/:id" element={<RadarPage />} />
+                <Route path="/stars" element={<div>Stars Page</div>} />
+              </Routes>
+            </OnboardingProvider>
+          </QueryClientProvider>
+        </ViteRouterProvider>
       </MemoryRouter>
     );
   };
@@ -313,12 +321,29 @@ describe('RadarPage', () => {
   });
 
   describe('React Ecosystem redirect guard', () => {
-    it('redirects to /stars when accessing React Ecosystem outside of tour', () => {
+    it('redirects to /stars when accessing React Ecosystem outside of tour', async () => {
       mockIsTourActive.mockReturnValue(false);
+
+      // Set up minimal mocks needed for the component to reach the redirect logic
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: null,
+        isLoading: true,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: true,
+        error: null,
+        refetch: vi.fn(),
+      });
 
       renderWithProviders(TOUR_RADAR_ID);
 
-      expect(screen.getByText('Stars Page')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Stars Page')).toBeInTheDocument();
+      });
     });
   });
 });

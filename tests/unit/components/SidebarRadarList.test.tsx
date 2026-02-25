@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SidebarRadarList } from '@/components/SidebarRadarList';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import * as radarService from '@/services/radar';
 import * as Sidebar from '@/components/Sidebar';
 import { createTestQueryClient } from '../../helpers/query-client';
@@ -86,9 +87,11 @@ describe('SidebarRadarList', () => {
 
   const renderWithProviders = (ui: ReactElement, { route = '/' } = {}) => {
     return render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-      </QueryClientProvider>
+      <MemoryRouter initialEntries={[route]}>
+        <ViteRouterProvider>
+          <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+        </ViteRouterProvider>
+      </MemoryRouter>
     );
   };
 

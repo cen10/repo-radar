@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { RepoCard } from '@/components/RepoCard';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import * as radarService from '@/services/radar';
 import { createTestQueryClient } from '../../helpers/query-client';
 import { createMockRepository } from '../../mocks/factories';
@@ -28,9 +29,11 @@ const renderWithProviders = (ui: ReactElement) => {
   const queryClient = createTestQueryClient();
   return render(
     <MemoryRouter>
-      <QueryClientProvider client={queryClient}>
-        <OnboardingProvider>{ui}</OnboardingProvider>
-      </QueryClientProvider>
+      <ViteRouterProvider>
+        <QueryClientProvider client={queryClient}>
+          <OnboardingProvider>{ui}</OnboardingProvider>
+        </QueryClientProvider>
+      </ViteRouterProvider>
     </MemoryRouter>
   );
 };

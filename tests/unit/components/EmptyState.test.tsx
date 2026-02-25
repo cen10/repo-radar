@@ -9,9 +9,14 @@ import {
   NoStarredReposState,
   NoSearchResultsState,
 } from '@/components/EmptyState';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 
 const renderWithRouter = (ui: ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(
+    <MemoryRouter>
+      <ViteRouterProvider>{ui}</ViteRouterProvider>
+    </MemoryRouter>
+  );
 };
 
 describe('EmptyState', () => {

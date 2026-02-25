@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { DemoBanner } from '@/components/DemoBanner';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 
 const mockDemoMode = {
   isBannerVisible: true,
@@ -18,7 +19,9 @@ vi.mock('@/demo/use-demo-mode', () => ({
 function renderBanner(route = '/stars') {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <DemoBanner />
+      <ViteRouterProvider>
+        <DemoBanner />
+      </ViteRouterProvider>
     </MemoryRouter>
   );
 }

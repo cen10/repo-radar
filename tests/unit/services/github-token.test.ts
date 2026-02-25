@@ -131,9 +131,7 @@ describe('github-token service', () => {
       import.meta.env.VITE_TEST_GITHUB_TOKEN = 'test-github-token';
       const result = getValidGitHubToken(null);
       expect(result).toBe('test-github-token');
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        'Using VITE_TEST_GITHUB_TOKEN for GitHub API calls'
-      );
+      expect(mockLogger.info).toHaveBeenCalledWith('Using test GitHub token for API calls');
     });
 
     it('falls back to localStorage when providerToken and test token are null', () => {

@@ -48,6 +48,7 @@ export function NavLinkAdapter({
       onClick={handleClick}
       className={resolvedClassName}
       aria-label={ariaLabel}
+      aria-current={isActive ? 'page' : undefined}
       data-tour={dataTour}
     >
       {resolvedChildren}

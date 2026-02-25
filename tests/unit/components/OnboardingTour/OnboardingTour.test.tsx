@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { OnboardingTour } from '@/components/OnboardingTour/OnboardingTour';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import { createTestQueryClient } from '../../../helpers/query-client';
 
 // Mock demo mode
@@ -85,11 +86,13 @@ vi.mock('shepherd.js/dist/css/shepherd.css', () => ({}));
 function renderTour(route = '/stars') {
   const queryClient = createTestQueryClient();
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <OnboardingTour />
-      </MemoryRouter>
-    </QueryClientProvider>
+    <MemoryRouter initialEntries={[route]}>
+      <ViteRouterProvider>
+        <QueryClientProvider client={queryClient}>
+          <OnboardingTour />
+        </QueryClientProvider>
+      </ViteRouterProvider>
+    </MemoryRouter>
   );
 }
 

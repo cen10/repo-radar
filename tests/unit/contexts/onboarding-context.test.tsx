@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
 import { useOnboarding } from '@/contexts/use-onboarding';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import { DemoModeProvider } from '@/demo/demo-context';
 import * as useDemoModeModule from '@/demo/use-demo-mode';
 
@@ -42,11 +43,13 @@ function TestConsumer() {
 function renderWithProvider(initialPath = '/') {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <DemoModeProvider>
-        <OnboardingProvider>
-          <TestConsumer />
-        </OnboardingProvider>
-      </DemoModeProvider>
+      <ViteRouterProvider>
+        <DemoModeProvider>
+          <OnboardingProvider>
+            <TestConsumer />
+          </OnboardingProvider>
+        </DemoModeProvider>
+      </ViteRouterProvider>
     </MemoryRouter>
   );
 }
@@ -175,9 +178,11 @@ describe('OnboardingContext', () => {
 
       return render(
         <MemoryRouter initialEntries={[initialPath]}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
     }
@@ -230,9 +235,11 @@ describe('OnboardingContext', () => {
 
       const { rerender } = render(
         <MemoryRouter initialEntries={['/stars']}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
 
@@ -257,9 +264,11 @@ describe('OnboardingContext', () => {
 
       rerender(
         <MemoryRouter initialEntries={['/stars']}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
 
@@ -315,9 +324,11 @@ describe('OnboardingContext', () => {
 
       render(
         <MemoryRouter initialEntries={['/stars']}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
 
@@ -341,9 +352,11 @@ describe('OnboardingContext', () => {
 
       render(
         <MemoryRouter initialEntries={['/stars']}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
 
@@ -366,9 +379,11 @@ describe('OnboardingContext', () => {
 
       render(
         <MemoryRouter initialEntries={['/radars/123']}>
-          <OnboardingProvider>
-            <TestConsumer />
-          </OnboardingProvider>
+          <ViteRouterProvider>
+            <OnboardingProvider>
+              <TestConsumer />
+            </OnboardingProvider>
+          </ViteRouterProvider>
         </MemoryRouter>
       );
 
