@@ -9,9 +9,6 @@ function getTestGitHubToken(): string | undefined {
   if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_TEST_GITHUB_TOKEN) {
     return process.env.NEXT_PUBLIC_TEST_GITHUB_TOKEN;
   }
-  // Vite injects env vars into import.meta.env at build time.
-  // Use direct property access since optional chaining after 'as any' cast can cause issues.
-  // @ts-expect-error - VITE_TEST_GITHUB_TOKEN is not in ImportMeta type
   return import.meta.env.VITE_TEST_GITHUB_TOKEN;
 }
 
