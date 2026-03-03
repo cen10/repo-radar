@@ -553,6 +553,11 @@ _Branch: `t174-test-updates`_
 | 19  | `t168-account-management` | T168-T170       | Account management              |
 | 20  | `t171-pwa-setup`          | T171-T173       | PWA setup                       |
 | 21  | `t174-test-updates`       | T174-T177       | Test updates & keyboard nav     |
+| 22  | `t179-issue-subscriptions-schema` | T179-T183 | Issue subscriptions schema    |
+| 23  | `t184-subscription-hooks` | T184-T186       | Subscription TanStack hooks     |
+| 24  | `t187-watched-issues-ui`  | T187-T191       | Watched issues UI components    |
+| 25  | `t192-subscription-sync`  | T192-T194       | Daily sync integration          |
+| 26  | `t195-subscriptions-page` | T195-T197       | Unified subscriptions view      |
 
 ---
 
@@ -633,20 +638,130 @@ graph TD
 4. **Parallel Execution**: Tasks marked [P] can run simultaneously if they modify different files
 5. **Environment Setup**: Requires Supabase account, GitHub OAuth app, and Vercel for deployment
 6. **Deployment**: Each phase is independently deployable to Vercel
+7. **Issue Subscriptions**: Can be implemented on current Vite stack; design doc in `docs/potential-plans/027-issue-subscriptions.md`
 
 ---
 
-**Total Tasks**: 141
+**Total Tasks**: 160
 **Completed**: 62 tasks (Slices 1-3 complete, T098-T099)
-**Pending**: 79 tasks
+**Pending**: 98 tasks
 
 - Migration: 38 tasks (T100-T137)
 - Features: 41 tasks (T138-T177, T147a)
+- Issue Subscriptions: 19 tasks (T179-T197)
 - Technical Debt: 1 task (T097)
 
 ---
 
 ## Migration Summary
+
+---
+
+# SLICE 6: Issue Subscriptions (T179-T197)
+
+_Goal: Track specific GitHub issues across repos, surfacing maintainer activity and state changes_
+_See `docs/potential-plans/027-issue-subscriptions.md` for detailed design_
+
+## Phase 6.1: Database & Service Layer (T179-T183)
+
+_Branch: `t179-issue-subscriptions-schema`_
+
+- [ ] T179 Create Supabase migration for `issue_subscriptions` table in `supabase/migrations/`:
+  - Fields: repo_full_name, issue_number, issue_title, issue_url, issue_state, issue_state_reason
+  - Fields: last_checked_at, last_maintainer_comment_at, last_maintainer_login
+  - RLS policies for user isolation
+- [ ] T180 [P] Create Supabase migration for `issue_subscription_events` table:
+  - Fields: subscription_id, event_type (closed/reopened/maintainer_comment), event_data, seen_at
+  - Index on unseen events for notification queries
+- [ ] T181 [P] Update database types in `src/types/database.ts` for subscription entities
+- [ ] T182 Create issue subscription service in `src/services/issue-subscriptions.ts`:
+  - `getSubscriptionsForRepo()`, `getAllSubscriptions()`
+  - `subscribeToIssue()`, `unsubscribeFromIssue()`
+- [ ] T183 Add GitHub issue API functions to `src/services/github.ts`:
+  - `fetchIssue()` - Get single issue details
+  - `searchIssues()` - Search issues in a repo
+
+**Verify**: Migrations apply, service functions work with test data
+
+## Phase 6.2: TanStack Query Hooks (T184-T186)
+
+_Branch: `t184-subscription-hooks`_
+
+- [ ] T184 Create `src/hooks/useIssueSubscriptions.ts`:
+  - `useRepoIssueSubscriptions(repoFullName)` - Subscriptions for a specific repo
+  - `useAllIssueSubscriptions()` - All user subscriptions (for unified view)
+- [ ] T185 [P] Create subscription mutation hooks:
+  - `useSubscribeToIssue()` with cache invalidation
+  - `useUnsubscribeFromIssue()` with cache invalidation
+- [ ] T186 [P] Create `src/hooks/useIssueSearch.ts` for searching issues in AddIssueSheet
+
+**Verify**: Hooks fetch/mutate data correctly, cache invalidates on changes
+
+## Phase 6.3: Repo Detail Page UI (T187-T191)
+
+_Branch: `t187-watched-issues-ui`_
+
+- [ ] T187 Create `src/components/WatchedIssuesSection.tsx`:
+  - Header with "Watched Issues" title and "Watch Issue" button
+  - Empty state when no subscriptions
+  - List of WatchedIssueItem components
+- [ ] T188 [P] Create `src/components/WatchedIssueItem.tsx`:
+  - Issue number, title, state badge (open/closed)
+  - Last maintainer activity indicator
+  - Unsubscribe action
+- [ ] T189 [P] Create `src/components/AddIssueSheet.tsx`:
+  - Search input for finding issues
+  - Results list with issue number, title, state
+  - Click to subscribe action
+- [ ] T190 Add WatchedIssuesSection to repo detail page layout
+- [ ] T191 Write tests for subscription components:
+  - Empty state, loading state, list rendering
+  - Subscribe/unsubscribe flows
+  - Search and selection
+
+**Verify**: Can add/remove issue subscriptions from repo detail page
+
+## Phase 6.4: Daily Sync Integration (T192-T194)
+
+_Branch: `t192-subscription-sync`_
+
+- [ ] T192 Add issue subscription checking to daily sync:
+  - Fetch current state for each subscribed issue
+  - Detect state changes (open→closed, closed→reopened)
+  - Detect maintainer comments (using author_association field)
+- [ ] T193 [P] Create subscription event recording:
+  - Insert events into `issue_subscription_events` table
+  - Include relevant data (comment preview, maintainer login)
+- [ ] T194 [P] Add rate limit consideration:
+  - Document API cost per subscription (2 requests: issue + comments)
+  - Consider batching for repos with multiple subscribed issues
+
+**Verify**: Daily sync updates subscription states, events recorded for changes
+
+## Phase 6.5: Unified Subscriptions View (T195-T197) [Design TBD]
+
+_Branch: `t195-subscriptions-page`_
+
+- [ ] T195 Design decision: Where does subscriptions view live in nav?
+  - Option A: New top-level nav item
+  - Option B: Section within existing page
+  - Option C: Accessible via header menu
+- [ ] T196 Create `/subscriptions` page (or equivalent based on T195):
+  - List all subscribed issues across repos
+  - Filter by state (open/closed), repo
+  - Sort by recent activity, date added
+- [ ] T197 Add "new activity" indicator:
+  - Badge on nav item showing unseen event count
+  - Mark events as seen when viewing subscriptions page
+
+**Verify**: Can view all subscriptions in one place, activity indicators work
+
+## Phase 6.6: Email Notifications [Future - Not Tasked]
+
+_Parking lot for Phase 3 from plan doc. Requires:_
+- _Email infrastructure decisions (Supabase Edge Functions + Resend?)_
+- _Notification preferences table_
+- _Daily digest batching logic_
 
 ---
 
@@ -670,4 +785,5 @@ _Goal: Polish for public deployment and portfolio presentation_
 | Phase 3    | T126-T137 | Server Components Conversion                      |
 | Slice 4    | T138-T155 | Trend Detection (with Next.js patterns)           |
 | Slice 5    | T156-T177 | Full Analytics (with Next.js patterns)            |
+| Slice 6    | T179-T197 | Issue Subscriptions (track issues across repos)   |
 | Deployment | T178+     | Pre-deployment polish                             |
