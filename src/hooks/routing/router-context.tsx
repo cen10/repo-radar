@@ -37,5 +37,5 @@ export function RouterProvider({
   children: ReactNode;
   adapter: RouterAdapter;
 }) {
-  return <RouterContext.Provider value={adapter}>{children}</RouterContext.Provider>;
+  return <RouterContext value={adapter}>{children}</RouterContext>;
 }
