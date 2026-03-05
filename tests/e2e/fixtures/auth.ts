@@ -21,7 +21,7 @@ export const mockSupabaseUser = {
   },
 };
 
-function createMockSession(githubToken: string) {
+export function createMockSession(githubToken: string) {
   const now = Math.floor(Date.now() / 1000);
   return {
     access_token: 'mock-supabase-access-token',
@@ -35,14 +35,13 @@ function createMockSession(githubToken: string) {
   };
 }
 
-function getSupabaseStorageKey(): string {
+function getSupabaseProjectRef(): string {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
   try {
     const url = new URL(supabaseUrl);
-    const projectRef = url.hostname.split('.')[0];
-    return `sb-${projectRef}-auth-token`;
+    return url.hostname.split('.')[0];
   } catch {
-    return 'sb-localhost-auth-token';
+    return 'localhost';
   }
 }
 
@@ -52,9 +51,9 @@ interface SetupAuthOptions {
 }
 
 /**
- * Sets up authenticated state in browser localStorage.
- * Injects a mock Supabase session and GitHub token.
- * By default, marks onboarding tour as completed to prevent it from blocking E2E tests.
+ * Sets up authenticated state using cookies (for @supabase/ssr client).
+ * The SSR client reads auth from cookies, not localStorage.
+ * Also sets localStorage for GitHub token and onboarding state.
  */
 export async function setupAuthState(
   page: Page,
@@ -63,21 +62,36 @@ export async function setupAuthState(
 ) {
   const { skipOnboardingCompletion = false } = options;
   const session = createMockSession(githubToken);
-  const storageKey = getSupabaseStorageKey();
+  const projectRef = getSupabaseProjectRef();
 
+  // Set auth cookies for @supabase/ssr client
+  // The SSR client stores auth in cookies with names like:
+  // sb-<project-ref>-auth-token.0, sb-<project-ref>-auth-token.1, etc.
+  // For simplicity, we'll use a single cookie with the full session
+  const cookieName = `sb-${projectRef}-auth-token`;
+  const cookieValue = encodeURIComponent(JSON.stringify(session));
+
+  await page.context().addCookies([
+    {
+      name: cookieName,
+      value: cookieValue,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: false,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ]);
+
+  // Also set localStorage for GitHub token and onboarding state
   await page.addInitScript(
-    ({ storageKey, session, githubToken, tokenKey, onboardingKey, skipOnboarding }) => {
-      localStorage.setItem(storageKey, JSON.stringify(session));
+    ({ githubToken, tokenKey, onboardingKey, skipOnboarding }) => {
       localStorage.setItem(tokenKey, githubToken);
-      // Mark onboarding tour as completed to prevent overlay from blocking tests
-      // (unless explicitly testing the tour itself)
       if (!skipOnboarding) {
         localStorage.setItem(onboardingKey, JSON.stringify({ hasCompletedTour: true }));
       }
     },
     {
-      storageKey,
-      session,
       githubToken,
       tokenKey: GITHUB_TOKEN_KEY,
       onboardingKey: ONBOARDING_KEY,
@@ -87,17 +101,28 @@ export async function setupAuthState(
 }
 
 /**
- * Sets up mock for Supabase auth/user endpoint.
+ * Sets up mocks for Supabase auth endpoints.
  */
-export async function setupAuthMocks(page: Page) {
+export async function setupAuthMocks(page: Page, githubToken: string = 'mock-github-token') {
   const supabaseUrl = (process.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '');
   if (!supabaseUrl) return;
 
+  // Mock /auth/v1/user endpoint
   await page.route(`${supabaseUrl}/auth/v1/user`, async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(mockSupabaseUser),
+    });
+  });
+
+  // Mock /auth/v1/token endpoint (session refresh)
+  await page.route(`${supabaseUrl}/auth/v1/token*`, async (route: Route) => {
+    const session = createMockSession(githubToken);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(session),
     });
   });
 }
