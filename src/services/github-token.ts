@@ -9,7 +9,11 @@ function getTestGitHubToken(): string | undefined {
   if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_TEST_GITHUB_TOKEN) {
     return process.env.NEXT_PUBLIC_TEST_GITHUB_TOKEN;
   }
-  return import.meta.env.VITE_TEST_GITHUB_TOKEN;
+  // import.meta.env may not exist in Next.js
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.VITE_TEST_GITHUB_TOKEN;
+  }
+  return undefined;
 }
 
 // Track whether we've logged fallback token usage (to avoid spam)

@@ -4,12 +4,13 @@ import type { RouterAdapter } from './router-context';
 export function useReactRouterAdapter(): RouterAdapter {
   const location = useLocation();
   const params = useParams();
+  // useNavigate returns a stable reference when using RouterProvider
   const navigate = useNavigate();
 
   return {
     pathname: location.pathname,
     params: params as Record<string, string>,
-    navigate: (path: string) => navigate(path),
+    navigate,
     isNextJs: false,
   };
 }

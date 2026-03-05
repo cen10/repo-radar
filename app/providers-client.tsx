@@ -35,7 +35,7 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
               logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
             }}
           >
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider isNextJs>{children}</AuthProvider>
           </ErrorBoundary>
         </DemoModeProvider>
       </NextJsRouterProvider>
