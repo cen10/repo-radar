@@ -45,6 +45,45 @@ export default defineConfig(
     },
   },
 
+  // Shared components: ban direct react-router-dom imports to prevent Next.js runtime crashes
+  // Use LinkAdapter/NavLinkAdapter/useAppRouter from src/hooks/routing instead
+  {
+    files: ['src/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-router-dom',
+              message:
+                'Use routing adapters from @/hooks/routing (LinkAdapter, NavLinkAdapter, useAppRouter) instead. Direct react-router-dom imports break the Next.js build.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Next.js app directory: ban react-router-dom entirely (Next.js uses next/navigation)
+  {
+    files: ['app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-router-dom',
+              message:
+                'Next.js uses next/navigation for routing. Use useRouter from next/navigation or routing adapters from @/hooks/routing.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // Node config files
   {
     files: ['vite.config.ts', 'vitest.config.ts'],

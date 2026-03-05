@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppLayout } from './components/AppLayout';
+import { AppLayout } from './layouts/AppLayout';
 import { AuthProvider } from './components/AuthProvider';
 import Home from './views/Home';
 import StarsPage from './views/StarsPage';

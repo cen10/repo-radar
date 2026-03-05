@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { SidebarRadarList } from './SidebarRadarList';
-import { CreateRadarModal } from './CreateRadarModal';
-import { DemoBanner } from './DemoBanner';
-import { OnboardingTour } from './OnboardingTour';
+import { Header } from '../components/Header';
+import { Sidebar } from '../components/Sidebar';
+import { SidebarRadarList } from '../components/SidebarRadarList';
+import { CreateRadarModal } from '../components/CreateRadarModal';
+import { DemoBanner } from '../components/DemoBanner';
+import { OnboardingTour } from '../components/OnboardingTour';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingProvider } from '../contexts/onboarding-context';
 import { ViteRouterProvider } from '../hooks/routing';
