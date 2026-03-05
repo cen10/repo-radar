@@ -7,12 +7,8 @@ import { mockSupabaseUser, createMockSession } from '../../fixtures/auth';
  * when using Next.js experimental testProxy.
  */
 
-// Get Supabase URL from environment (either VITE_ or NEXT_PUBLIC_ prefix)
-const supabaseUrl = (
-  process.env.VITE_SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  ''
-).replace(/\/+$/, '');
+// Get Supabase URL from environment
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 
 export const supabaseAuthHandlers = [
   // Mock getUser() - called by middleware to check authentication

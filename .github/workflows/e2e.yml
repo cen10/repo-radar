@@ -43,9 +43,7 @@ jobs:
       - name: Run Next.js E2E tests
         run: npm run test:e2e:nextjs
         env:
-          # Both VITE_ and NEXT_PUBLIC_ prefixes for compatibility
-          VITE_SUPABASE_URL: https://placeholder.supabase.co
-          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+          # Placeholder values - E2E tests mock all Supabase API calls via MSW
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
 

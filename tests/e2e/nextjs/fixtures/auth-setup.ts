@@ -6,7 +6,7 @@ import { createMockSession } from '../../fixtures/auth';
  * Example: https://pyxtbahcnzwfenddabcz.supabase.co -> pyxtbahcnzwfenddabcz
  */
 function getSupabaseProjectRef(): string {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   try {
     const url = new URL(supabaseUrl);
     return url.hostname.split('.')[0];
