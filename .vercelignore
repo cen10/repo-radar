@@ -1,0 +1,8 @@
+# Exclude Next.js files from Vite deployment
+# Remove this file after Next.js migration is complete
+middleware.ts
+app/
+next.config.ts
+next-env.d.ts
+tsconfig.next.json
+playwright.nextjs.config.ts
