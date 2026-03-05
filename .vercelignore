@@ -3,6 +3,4 @@
 middleware.ts
 app/
 next.config.ts
-next-env.d.ts
-tsconfig.next.json
 playwright.nextjs.config.ts
