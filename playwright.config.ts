@@ -18,7 +18,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: /nextjs.*\.spec\.ts/,
+  testIgnore: '**/nextjs/**',
 
   fullyParallel: true,
 

@@ -8,16 +8,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
 
 /**
- * Playwright E2E test configuration for Next.js app
- * Run with: npx playwright test --config=playwright.nextjs.config.ts
+ * Playwright E2E test configuration for Next.js app with testProxy
+ * Run with: npm run test:e2e:nextjs
  *
- * This is separate from the main playwright.config.ts to avoid starting
- * both dev servers when only one is needed. See:
- * https://github.com/microsoft/playwright/issues/29273
+ * Uses Next.js experimental testProxy for server-side fetch interception,
+ * enabling MSW handlers to mock Supabase auth calls in middleware.
+ *
+ * @see https://nextjs.org/docs/app/building-your-application/testing/playwright
  */
 export default defineConfig({
-  testDir: './tests/e2e',
-  testMatch: /nextjs.*\.spec\.ts/,
+  testDir: './tests/e2e/nextjs',
 
   fullyParallel: true,
 
