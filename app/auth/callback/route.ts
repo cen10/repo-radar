@@ -7,8 +7,11 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/stars';
 
   // Validate redirect path to prevent open redirect attacks
-  // Only allow relative paths starting with / (not // which could be protocol-relative)
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/stars';
+  // - Must start with / (relative path)
+  // - Block // (protocol-relative URLs)
+  // - Block \ (browsers normalize to /, enabling //evil.com via /\evil.com)
+  const safeNext =
+    next.startsWith('/') && !next.startsWith('//') && !next.includes('\\') ? next : '/stars';
 
   if (code) {
     const supabase = await createClient();
