@@ -28,6 +28,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const handleCloseCreateRadarModal = () => setIsCreateRadarModalOpen(false);
   const handleToggleCollapsed = () => setIsSidebarCollapsed((prev) => !prev);
 
+  // Safe because this component only renders client-side (parent Providers uses ssr: false).
+  // TODO: Replace with useMediaQuery hook before enabling SSR in Phase 3.
   const isDesktop = window.innerWidth >= 1024;
 
   return (
