@@ -28,6 +28,10 @@ export function LinkAdapter({
   const adapter = useRouterAdapter();
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    // Let the browser handle modifier-key clicks natively (open in new tab, etc.)
+    if (e.button !== 0 || e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) {
+      return;
+    }
     e.preventDefault();
     onClick?.();
     adapter.navigate(to);
