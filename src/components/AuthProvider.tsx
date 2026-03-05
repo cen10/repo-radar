@@ -39,7 +39,13 @@ const mapSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
   };
 };
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthProviderProps {
+  children: React.ReactNode;
+  /** Pass true when running in Next.js App Router (which doesn't have __NEXT_DATA__) */
+  isNextJs?: boolean;
+}
+
+export function AuthProvider({ children, isNextJs = false }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const { exitDemoMode } = useDemoMode();
   const [providerToken, setProviderToken] = useState<string | null>(null);
@@ -178,11 +184,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, connectionError]);
 
   const signInWithGitHub = useCallback(async () => {
+    const origin = window.location.origin;
+    // Next.js needs PKCE flow with callback route; Vite uses implicit flow
+    const redirectTo = isNextJs ? `${origin}/auth/callback?next=/stars` : `${origin}/stars`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
         scopes: 'read:user user:email public_repo',
-        redirectTo: `${window.location.origin}/stars`,
+        redirectTo,
       },
     });
 
@@ -190,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.error('Error signing in with GitHub:', error);
       throw error;
     }
-  }, []);
+  }, [isNextJs]);
 
   const signOut = useCallback(async () => {
     logger.info('signOut: Starting sign out, clearing local state first...');

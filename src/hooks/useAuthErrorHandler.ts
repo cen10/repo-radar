@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAppRouter } from './routing';
 import { useAuth } from './useAuth';
 import { isGitHubAuthError } from '../utils/error';
 import { logger } from '../utils/logger';
@@ -16,7 +16,7 @@ import { isDemoModeActive } from '../demo/is-demo-mode-active';
  */
 export function useAuthErrorHandler(error: Error | null, hookName: string) {
   const { signOut } = useAuth();
-  const navigate = useNavigate();
+  const { navigate } = useAppRouter();
 
   useEffect(() => {
     if (!error) return;

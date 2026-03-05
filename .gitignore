@@ -12,6 +12,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+stats.html
 *.local
 
 # Editor directories and files
@@ -46,3 +47,4 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 /.playwright-mcp/
+tsconfig.next.tsbuildinfo

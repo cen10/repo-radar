@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { createTestQueryClient } from './query-client';
+import { ViteRouterProvider } from '../../src/hooks/routing/ViteRouterProvider';
 import { OnboardingProvider } from '../../src/contexts/onboarding-context';
 
 interface RenderWithRouterOptions {
@@ -26,7 +27,9 @@ export const renderWithRouter = (
 ): RenderResult => {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <OnboardingProvider>{ui}</OnboardingProvider>
+      <ViteRouterProvider>
+        <OnboardingProvider>{ui}</OnboardingProvider>
+      </ViteRouterProvider>
     </MemoryRouter>
   );
 };
@@ -43,9 +46,11 @@ export const renderWithProviders = (
   return {
     ...render(
       <MemoryRouter initialEntries={[route]}>
-        <QueryClientProvider client={client}>
-          <OnboardingProvider>{ui}</OnboardingProvider>
-        </QueryClientProvider>
+        <ViteRouterProvider>
+          <QueryClientProvider client={client}>
+            <OnboardingProvider>{ui}</OnboardingProvider>
+          </QueryClientProvider>
+        </ViteRouterProvider>
       </MemoryRouter>
     ),
     queryClient: client,

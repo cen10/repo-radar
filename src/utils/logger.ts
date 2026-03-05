@@ -1,6 +1,9 @@
+// Works in both Vite (isDev) and Next.js (process.env.NODE_ENV)
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const logger = {
   error: (message: string, error?: unknown) => {
-    if (import.meta.env.DEV) {
+    if (isDev) {
       if (error !== undefined) {
         console.error(message, error);
       } else {
@@ -11,7 +14,7 @@ export const logger = {
     // like Sentry, LogRocket, etc.
   },
   warn: (message: string, data?: unknown) => {
-    if (import.meta.env.DEV) {
+    if (isDev) {
       if (data !== undefined) {
         console.warn(message, data);
       } else {
@@ -20,7 +23,7 @@ export const logger = {
     }
   },
   info: (message: string, data?: unknown) => {
-    if (import.meta.env.DEV) {
+    if (isDev) {
       if (data !== undefined) {
         console.info(message, data);
       } else {
@@ -29,7 +32,7 @@ export const logger = {
     }
   },
   debug: (message: string, data?: unknown) => {
-    if (import.meta.env.DEV) {
+    if (isDev) {
       if (data !== undefined) {
         console.debug(message, data);
       } else {

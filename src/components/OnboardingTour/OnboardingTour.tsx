@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppRouter } from '../../hooks/routing';
 import { getCurrentPage } from './tourSteps';
 import { getTourSteps } from './tourContent';
 import { useShepherdTour } from './useShepherdTour';
@@ -9,9 +9,9 @@ import { useAllStarredRepositories } from '../../hooks/useAllStarredRepositories
 import { useAuth } from '../../hooks/useAuth';
 
 export function OnboardingTour() {
-  const location = useLocation();
+  const { pathname } = useAppRouter();
   const { isTourActive, startTour, completeTour } = useOnboarding();
-  const currentPage = getCurrentPage(location.pathname);
+  const currentPage = getCurrentPage(pathname);
 
   // Reset tour if active but on a non-tour page (e.g., user navigated away and refreshed)
   useEffect(() => {
@@ -27,7 +27,7 @@ export function OnboardingTour() {
       sessionStorage.removeItem('tour-pending-start');
       startTour();
     }
-  }, [location.pathname, startTour]);
+  }, [pathname, startTour]);
   const { isDemoMode } = useDemoMode();
   const { providerToken } = useAuth();
 

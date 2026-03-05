@@ -20,7 +20,7 @@ export const test = base.extend<{
   // Returning user: has completed onboarding, tour won't show
   returningUserPage: async ({ page }, use) => {
     await setupAuthState(page, MOCK_GITHUB_TOKEN);
-    await setupAuthMocks(page);
+    await setupAuthMocks(page, MOCK_GITHUB_TOKEN);
     await setupSupabaseMocks(page, mockSupabaseUser.id);
     await setupGitHubMocks(page);
     await use(page);
@@ -29,7 +29,7 @@ export const test = base.extend<{
   // First-time user: hasn't completed onboarding, tour will show
   firstTimeUserPage: async ({ page }, use) => {
     await setupAuthState(page, MOCK_GITHUB_TOKEN, { skipOnboardingCompletion: true });
-    await setupAuthMocks(page);
+    await setupAuthMocks(page, MOCK_GITHUB_TOKEN);
     await setupSupabaseMocks(page, mockSupabaseUser.id, { seedDefaultRadar: true });
     await setupGitHubMocks(page);
     await use(page);

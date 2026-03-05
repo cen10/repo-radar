@@ -9,14 +9,23 @@ const Home = () => {
   const { enterDemoMode, isInitializing: isDemoInitializing } = useDemoMode();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [authError, setAuthError] = useState(false);
   const [demoError, setDemoError] = useState(false);
   const signInButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Check if user was redirected here due to session expiration
+  // Check for auth errors or session expiration in URL/sessionStorage
   useEffect(() => {
     if (sessionStorage.getItem('session_expired')) {
       setSessionExpired(true);
       sessionStorage.removeItem('session_expired');
+    }
+
+    // Check for auth callback error from Next.js OAuth flow
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error') === 'auth_callback_failed') {
+      setAuthError(true);
+      // Clean up URL to prevent error persisting on refresh
+      window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
@@ -104,6 +113,12 @@ const Home = () => {
         {sessionExpired && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg" role="alert">
             <p className="text-amber-800">Your session has expired. Please sign in again.</p>
+          </div>
+        )}
+
+        {authError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert">
+            <p className="text-red-800">Sign in failed. Please try again.</p>
           </div>
         )}
 

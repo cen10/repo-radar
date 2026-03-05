@@ -9,13 +9,11 @@ import { Button } from './Button';
 // Global flag: only enable animation after user has clicked on the page.
 // Prevents animation from triggering when the page loads with repos already in radars.
 let userHasInteracted = false;
-if (typeof window !== 'undefined') {
-  const markInteracted = () => {
-    userHasInteracted = true;
-    window.removeEventListener('click', markInteracted);
-  };
-  window.addEventListener('click', markInteracted);
-}
+const markInteracted = () => {
+  userHasInteracted = true;
+  window.removeEventListener('click', markInteracted);
+};
+window.addEventListener('click', markInteracted);
 
 interface RadarIconButtonProps {
   githubRepoId: number;

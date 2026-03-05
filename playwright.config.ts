@@ -8,11 +8,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
 
 /**
- * Playwright E2E test configuration for Repo Radar
+ * Playwright E2E test configuration for Vite app
+ *
+ * For Next.js tests, use: npx playwright test --config=playwright.nextjs.config.ts
+ * Configs are split to avoid starting both dev servers. See:
+ * https://github.com/microsoft/playwright/issues/29273
+ *
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: /nextjs.*\.spec\.ts/,
 
   fullyParallel: true,
 

@@ -82,7 +82,7 @@ const StarsPage = () => {
 
   // Auto-start tour for new desktop users once data has loaded
   // Tour is desktop-only (matches lg: breakpoint)
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const isDesktop = window.innerWidth >= 1024;
 
   useEffect(() => {
     if (!browseResult.isLoading && !hasCompletedTour && !isTourActive && isDesktop) {

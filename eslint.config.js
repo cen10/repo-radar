@@ -8,7 +8,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default defineConfig(
-  globalIgnores(['dist', 'src/types/*.generated.ts']),
+  globalIgnores(['dist', '.next', 'src/types/*.generated.ts']),
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -42,6 +42,45 @@ export default defineConfig(
     rules: {
       '@typescript-eslint/no-floating-promises': 'error',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+
+  // Shared components: ban direct react-router-dom imports to prevent Next.js runtime crashes
+  // Use LinkAdapter/NavLinkAdapter/useAppRouter from src/hooks/routing instead
+  {
+    files: ['src/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-router-dom',
+              message:
+                'Use routing adapters from @/hooks/routing (LinkAdapter, NavLinkAdapter, useAppRouter) instead. Direct react-router-dom imports break the Next.js build.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // Next.js app directory: ban react-router-dom entirely (Next.js uses next/navigation)
+  {
+    files: ['app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'react-router-dom',
+              message:
+                'Next.js uses next/navigation for routing. Use useRouter from next/navigation or routing adapters from @/hooks/routing.',
+            },
+          ],
+        },
+      ],
     },
   },
 

@@ -3,6 +3,7 @@ import { render, type RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AuthContext, type AuthContextType } from '@/contexts/auth-context';
+import { ViteRouterProvider } from '@/hooks/routing/ViteRouterProvider';
 import { OnboardingProvider } from '@/contexts/onboarding-context';
 import { createTestQueryClient } from './query-client';
 import { createMockAuthContext } from '../mocks/factories';
@@ -63,11 +64,13 @@ export function renderForIntegration(
 
   const rendered = render(
     <MemoryRouter initialEntries={[route]}>
-      <QueryClientProvider client={client}>
-        <OnboardingProvider>
-          <AuthContext.Provider value={authContext}>{routeElements}</AuthContext.Provider>
-        </OnboardingProvider>
-      </QueryClientProvider>
+      <ViteRouterProvider>
+        <QueryClientProvider client={client}>
+          <OnboardingProvider>
+            <AuthContext.Provider value={authContext}>{routeElements}</AuthContext.Provider>
+          </OnboardingProvider>
+        </QueryClientProvider>
+      </ViteRouterProvider>
     </MemoryRouter>
   );
 

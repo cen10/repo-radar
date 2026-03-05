@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useAppRouter } from '../hooks/routing';
 import { useAuth } from '../hooks/useAuth';
 import {
   ArrowRightStartOnRectangleIcon,
@@ -94,8 +94,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { isBannerVisible } = useDemoMode();
   const { restartTour } = useOnboarding();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname, navigate } = useAppRouter();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -249,7 +248,7 @@ export function Header({ onMenuToggle, sidebarCollapsed }: HeaderProps) {
                       // depends on location.pathname changing. Starting directly avoids
                       // orphaning the flag, which would cause startTour() to be called again
                       // during tour navigation between pages.
-                      if (location.pathname === '/stars') {
+                      if (pathname === '/stars') {
                         restartTour();
                       } else {
                         restartTour('/stars', navigate);

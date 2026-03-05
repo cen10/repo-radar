@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLinkAdapter } from '../hooks/routing';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { StarIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 import { ChevronDoubleLeftIcon, ChevronDoubleRightIcon } from '@heroicons/react/24/outline';
@@ -90,7 +90,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
     <div className="space-y-1 pt-8 pb-4 px-2">
       {navItems.map(({ to, label, icon: Icon, dataTour }) => (
         <SidebarTooltip key={to} label={label} show={collapsed}>
-          <NavLink
+          <NavLinkAdapter
             to={to}
             onClick={onLinkClick}
             data-tour={dataTour}
@@ -110,7 +110,7 @@ function NavContent({ collapsed, hideText, onLinkClick, children }: NavContentPr
               </span>
               <span className={clsx(labelBase, hideText ? 'w-0' : 'w-auto')}>{label}</span>
             </>
-          </NavLink>
+          </NavLinkAdapter>
         </SidebarTooltip>
       ))}
 

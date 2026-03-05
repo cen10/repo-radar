@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { NavLinkAdapter, useAppRouter } from '../hooks/routing';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import {
   PlusIcon,
@@ -68,7 +68,7 @@ function RadarNavItem({
       )}
     >
       <SidebarTooltip label={radar.name} show={collapsed || isTruncated}>
-        <NavLink
+        <NavLinkAdapter
           to={`/radar/${radar.id}`}
           onClick={onLinkClick}
           aria-label={`${radar.name}, ${radar.repo_count} repositories`}
@@ -97,7 +97,7 @@ function RadarNavItem({
               </div>
             )}
           </>
-        </NavLink>
+        </NavLinkAdapter>
       </SidebarTooltip>
 
       {/* Repo count and kebab menu - positioned outside NavLink to avoid click interference */}
@@ -301,8 +301,8 @@ function CreateButton({ collapsed, hideText, onClick, disabled }: CreateButtonPr
 export function SidebarRadarList({ onLinkClick, onCreateRadar }: SidebarRadarListProps) {
   const { collapsed, hideText } = useSidebarContext();
   const { isTourActive } = useOnboarding();
-  const navigate = useNavigate();
-  const { id: currentRadarId } = useParams<{ id: string }>();
+  const { navigate, params } = useAppRouter();
+  const currentRadarId = params.id;
 
   // Modal state
   const [radarToRename, setRadarToRename] = useState<RadarWithCount | null>(null);

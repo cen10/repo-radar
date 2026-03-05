@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/vitest';
@@ -174,6 +174,68 @@ describe('Home', () => {
     );
 
     expect(sessionStorage.getItem('session_expired')).toBeNull();
+  });
+
+  describe('auth callback error', () => {
+    const originalLocation = window.location;
+    const mockReplaceState = vi.fn();
+
+    beforeEach(() => {
+      // Mock window.location.search
+      Object.defineProperty(window, 'location', {
+        value: { ...originalLocation, search: '', pathname: '/' },
+        writable: true,
+      });
+      // Mock history.replaceState
+      window.history.replaceState = mockReplaceState;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, 'location', {
+        value: originalLocation,
+        writable: true,
+      });
+      mockReplaceState.mockClear();
+    });
+
+    it('shows error message when redirected with auth_callback_failed', () => {
+      window.location.search = '?error=auth_callback_failed';
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      expect(screen.getByRole('alert')).toHaveTextContent(/sign in failed/i);
+    });
+
+    it('cleans up URL after showing auth error', () => {
+      window.location.search = '?error=auth_callback_failed';
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      expect(mockReplaceState).toHaveBeenCalledWith({}, '', '/');
+    });
+
+    it('does not show error when no error param in URL', () => {
+      window.location.search = '';
+      mockUseAuth.mockReturnValue(unauthenticatedContext());
+
+      render(
+        <BrowserRouter>
+          <Home />
+        </BrowserRouter>
+      );
+
+      expect(screen.queryByText(/sign in failed/i)).not.toBeInTheDocument();
+    });
   });
 
   describe('demo mode', () => {

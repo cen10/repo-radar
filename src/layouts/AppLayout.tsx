@@ -1,13 +1,14 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { SidebarRadarList } from './SidebarRadarList';
-import { CreateRadarModal } from './CreateRadarModal';
-import { DemoBanner } from './DemoBanner';
-import { OnboardingTour } from './OnboardingTour';
+import { Header } from '../components/Header';
+import { Sidebar } from '../components/Sidebar';
+import { SidebarRadarList } from '../components/SidebarRadarList';
+import { CreateRadarModal } from '../components/CreateRadarModal';
+import { DemoBanner } from '../components/DemoBanner';
+import { OnboardingTour } from '../components/OnboardingTour';
 import { useDemoMode } from '../demo/use-demo-mode';
 import { OnboardingProvider } from '../contexts/onboarding-context';
+import { ViteRouterProvider } from '../hooks/routing';
 import { ShepherdJourneyProvider } from 'react-shepherd';
 
 /**
@@ -26,28 +27,14 @@ function ProtectedLayout() {
     requestAnimationFrame(() => setTransitionsEnabled(true));
   }, []);
 
-  const handleMenuToggle = useCallback(() => {
-    setIsSidebarOpen((prev) => !prev);
-  }, []);
-
-  const handleSidebarClose = useCallback(() => {
-    setIsSidebarOpen(false);
-  }, []);
-
-  const handleOpenCreateRadarModal = useCallback(() => {
-    setIsCreateRadarModalOpen(true);
-  }, []);
-
-  const handleCloseCreateRadarModal = useCallback(() => {
-    setIsCreateRadarModalOpen(false);
-  }, []);
-
-  const handleToggleCollapsed = useCallback(() => {
-    setIsSidebarCollapsed((prev) => !prev);
-  }, []);
+  const handleMenuToggle = () => setIsSidebarOpen((prev) => !prev);
+  const handleSidebarClose = () => setIsSidebarOpen(false);
+  const handleOpenCreateRadarModal = () => setIsCreateRadarModalOpen(true);
+  const handleCloseCreateRadarModal = () => setIsCreateRadarModalOpen(false);
+  const handleToggleCollapsed = () => setIsSidebarCollapsed((prev) => !prev);
 
   // Skip onboarding tour on mobile - the experience is desktop-optimized
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const isDesktop = window.innerWidth >= 1024;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -87,10 +74,12 @@ function ProtectedLayout() {
  */
 export function AppLayout() {
   return (
-    <ShepherdJourneyProvider>
-      <OnboardingProvider>
-        <ProtectedLayout />
-      </OnboardingProvider>
-    </ShepherdJourneyProvider>
+    <ViteRouterProvider>
+      <ShepherdJourneyProvider>
+        <OnboardingProvider>
+          <ProtectedLayout />
+        </OnboardingProvider>
+      </ShepherdJourneyProvider>
+    </ViteRouterProvider>
   );
 }
