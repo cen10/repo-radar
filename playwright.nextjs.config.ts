@@ -8,17 +8,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
 
 /**
- * Playwright E2E test configuration for Vite app
+ * Playwright E2E test configuration for Next.js app
+ * Run with: npx playwright test --config=playwright.nextjs.config.ts
  *
- * For Next.js tests, use: npx playwright test --config=playwright.nextjs.config.ts
- * Configs are split to avoid starting both dev servers. See:
+ * This is separate from the main playwright.config.ts to avoid starting
+ * both dev servers when only one is needed. See:
  * https://github.com/microsoft/playwright/issues/29273
- *
- * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: /nextjs.*\.spec\.ts/,
+  testMatch: /nextjs.*\.spec\.ts/,
 
   fullyParallel: true,
 
@@ -28,13 +27,13 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Limit parallel workers on CI (2 is stable on GitHub Actions 2-core runners)
+  // Limit parallel workers on CI
   workers: process.env.CI ? 2 : undefined,
 
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:3000',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -48,22 +47,14 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'chromium',
+      name: 'nextjs-chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
     },
   ],
 
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: 'npm run dev:next',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

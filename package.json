@@ -22,6 +22,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
+    "test:e2e:nextjs": "playwright test --config=playwright.nextjs.config.ts",
     "generate:github-types": "openapi-typescript schemas/github-api.yaml -o src/types/github-api.generated.ts",
     "schema:update": "bash scripts/update-github-schema.sh && npm run generate:github-types",
     "prepare": "husky"
