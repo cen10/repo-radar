@@ -1,4 +1,4 @@
-export { RouterProvider, useRouterAdapter, useRouterAdapterOptional } from './router-context';
+export { RouterProvider, useRouterAdapter } from './router-context';
 export type { RouterAdapter } from './router-context';
 export { useNextJsRouterAdapter } from './use-nextjs-router';
 export { useReactRouterAdapter } from './use-react-router';

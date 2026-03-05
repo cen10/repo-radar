@@ -16,14 +16,6 @@ export interface RouterAdapter {
 const RouterContext = createContext<RouterAdapter | null>(null);
 
 /**
- * Get the router adapter from context.
- * Returns null if not in a RouterProvider (e.g., Vite without wrapper).
- */
-export function useRouterAdapterOptional(): RouterAdapter | null {
-  return useContext(RouterContext);
-}
-
-/**
  * Get the router adapter, throwing if not available.
  */
 export function useRouterAdapter(): RouterAdapter {
