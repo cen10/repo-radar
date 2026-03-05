@@ -18,6 +18,9 @@ export function useNextJsRouterAdapter(): RouterAdapter {
 
   return {
     pathname,
+    // Cast is safe for single-segment dynamic routes ([id]) which is all we use.
+    // Catch-all routes ([...slug]) would return arrays - don't use those until
+    // this adapter is removed post-migration.
     params: params as Record<string, string>,
     navigate,
     isNextJs: true,
