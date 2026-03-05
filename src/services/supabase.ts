@@ -2,6 +2,8 @@ import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
 
 // Support both Vite (import.meta.env.VITE_*) and Next.js (process.env.NEXT_PUBLIC_*)
+// Precedence: NEXT_PUBLIC_* > VITE_* (if both are set, Next.js values win)
+// In practice these should be identical; if they diverge, check your .env files
 const supabaseUrl =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL) ||
   import.meta.env?.VITE_SUPABASE_URL;
