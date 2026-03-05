@@ -30,7 +30,7 @@ export default defineConfig({
   // Limit parallel workers on CI
   workers: process.env.CI ? 2 : undefined,
 
-  reporter: [['html', { open: 'never' }], ['list']],
+  reporter: [['html', { open: 'never', outputFolder: 'playwright-report-nextjs' }], ['list']],
 
   use: {
     baseURL: 'http://localhost:3000',
@@ -59,7 +59,7 @@ export default defineConfig({
     timeout: 120 * 1000,
   },
 
-  outputDir: 'tests/e2e/test-results',
+  outputDir: 'tests/e2e/test-results-nextjs',
 
   timeout: 30 * 1000,
 
