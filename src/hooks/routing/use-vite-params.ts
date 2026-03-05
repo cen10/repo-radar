@@ -19,6 +19,7 @@ export function useViteParams(isNextJs: boolean): Record<string, string> {
   // Always call useParams to satisfy rules of hooks.
   // In Vite, this gets the matched route params.
   // In Next.js, there's no react-router Router context, but useParams returns {} instead of throwing.
+  // (Verified empirically: v7.11.0 returns {} without context, does not throw)
   const params = useParams();
 
   // In Next.js, ignore react-router params (they're meaningless without context)
