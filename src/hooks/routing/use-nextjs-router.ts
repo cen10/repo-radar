@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { usePathname, useParams, useRouter } from 'next/navigation';
-import type { RouterAdapter } from './router-context';
+import type { RouterAdapter, NavigateOptions } from './router-context';
 
 export function useNextJsRouterAdapter(): RouterAdapter {
   const pathname = usePathname();
@@ -10,7 +10,11 @@ export function useNextJsRouterAdapter(): RouterAdapter {
   const router = useRouter();
 
   // Stable reference for useEffect dependency arrays
-  const navigate = useCallback((path: string) => router.push(path), [router]);
+  const navigate = useCallback(
+    (path: string, options?: NavigateOptions) =>
+      options?.replace ? router.replace(path) : router.push(path),
+    [router]
+  );
 
   return {
     pathname,

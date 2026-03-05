@@ -228,7 +228,7 @@ describe('OnboardingTour', () => {
       document.dispatchEvent(event);
 
       // Should navigate to the backTo path and set sessionStorage
-      expect(mockNavigate).toHaveBeenCalledWith('/stars');
+      expect(mockNavigate).toHaveBeenCalledWith('/stars', undefined);
       expect(sessionStorage.getItem('tour-start-from-step')).toBe('sidebar-radars');
     });
 

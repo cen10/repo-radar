@@ -346,4 +346,57 @@ describe('RadarPage', () => {
       });
     });
   });
+
+  describe('Tour radar redirect uses replace semantics', () => {
+    it('calls navigate with replace: true to prevent back-button trap', async () => {
+      // This test verifies that the tour radar redirect uses replace: true
+      // Without replace, pressing back would return to the tour radar URL,
+      // trigger another redirect, and trap the user in a loop
+      const mockNavigate = vi.fn();
+
+      mockIsTourActive.mockReturnValue(false);
+
+      vi.mocked(useRadarHook.useRadar).mockReturnValue({
+        radar: null,
+        isLoading: true,
+        error: null,
+        isNotFound: false,
+        refetch: vi.fn(),
+      });
+      vi.mocked(useRadarRepositoriesHook.useRadarRepositories).mockReturnValue({
+        repositories: [],
+        isLoading: true,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      // Use a custom RouterProvider with a mock navigate that we can spy on
+      const { RouterProvider } = await import('@/hooks/routing/router-context');
+
+      render(
+        <MemoryRouter initialEntries={[`/radar/${TOUR_RADAR_ID}`]}>
+          <RouterProvider
+            adapter={{
+              pathname: `/radar/${TOUR_RADAR_ID}`,
+              params: { id: TOUR_RADAR_ID },
+              navigate: mockNavigate,
+              isNextJs: false,
+            }}
+          >
+            <QueryClientProvider client={queryClient}>
+              <OnboardingProvider>
+                <Routes>
+                  <Route path="/radar/:id" element={<RadarPage />} />
+                </Routes>
+              </OnboardingProvider>
+            </QueryClientProvider>
+          </RouterProvider>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/stars', { replace: true });
+      });
+    });
+  });
 });

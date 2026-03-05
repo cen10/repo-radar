@@ -77,7 +77,7 @@ const RadarPage = () => {
   const shouldRedirect = id === TOUR_RADAR_ID && !isTourActive && !isDemoMode;
   useEffect(() => {
     if (shouldRedirect) {
-      navigate('/stars');
+      navigate('/stars', { replace: true });
     }
   }, [shouldRedirect, navigate]);
 

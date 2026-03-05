@@ -2,10 +2,14 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 
+export interface NavigateOptions {
+  replace?: boolean;
+}
+
 export interface RouterAdapter {
   pathname: string;
   params: Record<string, string>;
-  navigate: (path: string) => void;
+  navigate: (path: string, options?: NavigateOptions) => void;
   isNextJs: boolean;
 }
 
