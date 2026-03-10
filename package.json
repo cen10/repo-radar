@@ -24,16 +24,19 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:nextjs": "playwright test --config=playwright.nextjs.config.ts",
     "generate:github-types": "openapi-typescript schemas/github-api.yaml -o src/types/github-api.generated.ts",
+    "codegen": "graphql-codegen --config codegen.ts",
     "schema:update": "bash scripts/update-github-schema.sh && npm run generate:github-types",
     "prepare": "husky"
   },
   "dependencies": {
+    "@apollo/client": "^4.1.6",
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.89.0",
     "clsx": "^2.1.1",
+    "graphql": "^16.13.1",
     "msw": "^2.12.9",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -43,6 +46,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@graphql-codegen/cli": "^6.1.3",
+    "@graphql-codegen/client-preset": "^5.2.4",
     "@playwright/test": "^1.58.1",
     "@tailwindcss/postcss": "^4.2.0",
     "@tailwindcss/vite": "^4.1.13",

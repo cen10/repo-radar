@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { ApolloProvider } from '@apollo/client/react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './layouts/AppLayout';
@@ -9,9 +10,12 @@ import ExplorePage from './views/ExplorePage';
 import RadarPage from './views/RadarPage';
 import RepoDetailPage from './views/RepoDetailPage';
 import { AuthErrorFallback } from './components/AuthErrorFallback';
+import { createApolloClient } from './lib/apollo-client';
 import { requireAuth, redirectIfAuthenticated } from './utils/requireAuth';
 import { logger } from './utils/logger';
 import { DemoModeProvider } from './demo/demo-context';
+
+const apolloClient = createApolloClient();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,20 +47,22 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <DemoModeProvider>
-        <ErrorBoundary
-          FallbackComponent={AuthErrorFallback}
-          onError={(error, errorInfo) => {
-            logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
-          }}
-        >
-          <AuthProvider>
-            <RouterProvider router={router} />
-          </AuthProvider>
-        </ErrorBoundary>
-      </DemoModeProvider>
-    </QueryClientProvider>
+    <ApolloProvider client={apolloClient}>
+      <QueryClientProvider client={queryClient}>
+        <DemoModeProvider>
+          <ErrorBoundary
+            FallbackComponent={AuthErrorFallback}
+            onError={(error, errorInfo) => {
+              logger.error('Auth Error Boundary caught an error:', { error, errorInfo });
+            }}
+          >
+            <AuthProvider>
+              <RouterProvider router={router} />
+            </AuthProvider>
+          </ErrorBoundary>
+        </DemoModeProvider>
+      </QueryClientProvider>
+    </ApolloProvider>
   );
 }
 
