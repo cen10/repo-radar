@@ -1,7 +1,11 @@
-import { defineConfig, devices } from '@playwright/test';
+import { devices } from '@playwright/test';
+import nextTestMode from 'next/experimental/testmode/playwright.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Destructure from default export (CJS module doesn't support named ESM exports)
+const { defineConfig } = nextTestMode;
 
 // Load E2E environment variables from .env.e2e.local
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
