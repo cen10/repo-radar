@@ -44,7 +44,9 @@ next-env.d.ts
 
 # Playwright
 /tests/e2e/test-results/
+/tests/e2e/test-results-nextjs/
 /playwright-report/
+/playwright-report-nextjs/
 /playwright/.cache/
 /.playwright-mcp/
 tsconfig.next.tsbuildinfo
