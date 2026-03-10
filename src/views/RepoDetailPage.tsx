@@ -1,9 +1,7 @@
 import { useAppRouter, LinkAdapter } from '../hooks/routing';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
-import { useRepository } from '../hooks/useRepository';
-import { useReleases } from '../hooks/useReleases';
-import { useIssueCount } from '../hooks/useIssueCount';
+import { useRepositoryGraphQL } from '../hooks/useRepositoryGraphQL';
 import { RepoHeader, RepoStats, RepoReleases, ComingSoon } from '../components/repo-detail';
 import { LoadingSpinner } from '../components/icons';
 
@@ -21,24 +19,12 @@ const RepoDetailPage = () => {
     refetch,
     isRefetching,
     dataUpdatedAt,
-  } = useRepository({
+    releases,
+    releasesLoading,
+    issueCount,
+  } = useRepositoryGraphQL({
     repoId: id,
     token: providerToken,
-  });
-
-  const { releases, isLoading: releasesLoading } = useReleases({
-    token: providerToken,
-    owner: repository?.owner.login ?? '',
-    repo: repository?.name ?? '',
-    enabled: !!repository,
-  });
-
-  // Fetch accurate issue count (excludes PRs)
-  const { issueCount } = useIssueCount({
-    token: providerToken,
-    owner: repository?.owner.login,
-    repo: repository?.name,
-    enabled: !!repository,
   });
 
   // Loading state
