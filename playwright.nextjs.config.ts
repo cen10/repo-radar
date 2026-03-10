@@ -18,10 +18,16 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e.local') });
  * Uses Next.js experimental testProxy for server-side fetch interception,
  * enabling MSW handlers to mock Supabase auth calls in middleware.
  *
+ * NOTE: testMatch is required due to a known bug in Next.js 15 testmode
+ * where tests aren't discovered automatically.
+ * See: https://github.com/vercel/next.js/issues/71773
+ *
  * @see https://nextjs.org/docs/app/building-your-application/testing/playwright
  */
 export default defineConfig({
   testDir: './tests/e2e/nextjs',
+  // Workaround for testmode test discovery bug (GitHub #71773)
+  testMatch: '**/*.spec.ts',
 
   fullyParallel: true,
 
