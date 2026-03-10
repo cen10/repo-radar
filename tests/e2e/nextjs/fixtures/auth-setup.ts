@@ -40,6 +40,6 @@ export async function setupAuthState(page: Page, githubToken = 'mock-github-toke
 
   // Mark onboarding complete to prevent tour overlay during tests
   await page.addInitScript(() => {
-    localStorage.setItem('hasCompletedTour', 'true');
+    localStorage.setItem('repo-radar-onboarding', JSON.stringify({ hasCompletedTour: true }));
   });
 }
