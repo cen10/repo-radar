@@ -1,4 +1,5 @@
 /* eslint-disable */
+// @ts-nocheck - Generated file, types import used when documents exist
 import * as types from './graphql';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 
