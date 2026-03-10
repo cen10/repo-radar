@@ -1,2 +1,5 @@
 # MSW generated file - should not be modified
 public/mockServiceWorker.js
+
+# GraphQL codegen output - regenerate with: npm run codegen
+src/gql/
