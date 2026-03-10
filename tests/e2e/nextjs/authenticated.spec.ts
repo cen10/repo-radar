@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import type { MswFixture } from 'next/experimental/testmode/playwright/msw.js';
 import nextTestMode from 'next/experimental/testmode/playwright/msw.js';
 import { allSupabaseHandlers } from './fixtures/msw-handlers';
-import { setupAuthCookie } from './fixtures/auth-setup';
+import { setupAuthState } from './fixtures/auth-setup';
 
 // Destructure from default export (CJS module doesn't support named ESM exports)
 const { test, expect } = nextTestMode;
@@ -15,7 +15,7 @@ test.describe('Next.js Authenticated Dashboard', () => {
   test.beforeEach(async ({ page, msw }: { page: Page; msw: MswFixture }) => {
     // Register MSW handlers for this test
     msw.use(...allSupabaseHandlers);
-    await setupAuthCookie(page);
+    await setupAuthState(page);
   });
 
   test('can view /stars page without redirect', async ({ page }: { page: Page }) => {

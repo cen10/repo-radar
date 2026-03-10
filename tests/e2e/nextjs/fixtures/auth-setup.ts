@@ -16,10 +16,11 @@ function getSupabaseProjectRef(): string {
 }
 
 /**
- * Sets up authentication cookies for Next.js app.
- * The @supabase/ssr client reads auth state from cookies.
+ * Sets up authentication state for Next.js app.
+ * - Auth cookie: @supabase/ssr client reads auth state from cookies
+ * - localStorage: Marks onboarding complete to prevent tour overlay in tests
  */
-export async function setupAuthCookie(page: Page, githubToken = 'mock-github-token') {
+export async function setupAuthState(page: Page, githubToken = 'mock-github-token') {
   const session = createMockSession(githubToken);
   const projectRef = getSupabaseProjectRef();
   const cookieName = `sb-${projectRef}-auth-token`;
@@ -36,4 +37,9 @@ export async function setupAuthCookie(page: Page, githubToken = 'mock-github-tok
       sameSite: 'Lax',
     },
   ]);
+
+  // Mark onboarding complete to prevent tour overlay during tests
+  await page.addInitScript(() => {
+    localStorage.setItem('hasCompletedTour', 'true');
+  });
 }
