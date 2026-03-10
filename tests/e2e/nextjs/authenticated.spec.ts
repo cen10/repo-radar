@@ -10,6 +10,10 @@ const { test, expect } = nextTestMode;
 /**
  * E2E tests for the Next.js app - authenticated flows.
  * Uses MSW via Next.js testProxy to intercept server-side Supabase auth calls.
+ *
+ * NOTE: GitHub API is not mocked. These tests verify auth/navigation only.
+ * GitHub data display is covered by Vite E2E tests until migration completes.
+ * TODO: Add GitHub MSW handlers when removing Vite app.
  */
 test.describe('Next.js Authenticated Dashboard', () => {
   test.beforeEach(async ({ page, msw }: { page: Page; msw: MswFixture }) => {
